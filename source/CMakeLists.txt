@@ -725,6 +725,22 @@ if(ENABLE_CLI)
     file(GLOB OutputFiles output/output.cpp output/reconplay.cpp output/*.h
                           output/yuv.cpp output/y4m.cpp # recon
                           output/raw.cpp)               # muxers
+    find_package(Vapoursynth)
+    set(ENABLE_VAPOURSYNTH OFF CACHE BOOL "Build with Vapoursynth support")
+    if(ENABLE_VAPOURSYNTH)
+        file(GLOB InputFilesVPY input/vpy.cpp input/vpy.h)
+        list (APPEND InputFiles ${InputFilesVPY})
+        set_source_files_properties(input/input.cpp input/vpy.cpp PROPERTIES INCLUDE_DIRECTORIES "${VS_INCLUDE_DIR}" COMPILE_DEFINITIONS "HAVE_VPY")
+        if(GCC)
+            set_source_files_properties(input/input.cpp input/vpy.cpp PROPERTIES COMPILE_OPTIONS "-std=gnu++11")
+        elseif(MSVC_VERSION GREATER_EQUAL "1900")
+            include(CheckCXXCompilerFlag)
+            CHECK_CXX_COMPILER_FLAG("/std:c++11" _cpp_latest_flag_supported)
+            if (_cpp_latest_flag_supported)
+                set_source_files_properties(input/input.cpp input/vpy.cpp PROPERTIES COMPILE_OPTIONS "/std:c++11")
+            endif()
+        endif()
+    endif()
     source_group(input FILES ${InputFiles})
     source_group(output FILES ${OutputFiles})
 
