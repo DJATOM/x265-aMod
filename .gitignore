@@ -1,0 +1,12 @@
+doc/uncrustify/uncrustify.exe
+build/
+*.exe
+*.rej
+*.orig
+*.hevc
+*.yuv
+*.y4m
+*.vpy
+*.out
+*.swp
+.DS_Store
