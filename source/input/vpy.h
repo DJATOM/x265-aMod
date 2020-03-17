@@ -54,8 +54,8 @@
 #define DECLARE_VS_FUNC(name) func_vsscript_##name name
 
 struct VSFDCallbackData {
-    const VSAPI *vsapi = nullptr;
-    std::map<int, const VSFrameRef *> reorderMap;
+    const VSAPI* vsapi = nullptr;
+    std::map<int, const VSFrameRef*> reorderMap;
     int parallelRequests;
     int outputFrames;
     std::atomic<int> availableRequests;
@@ -73,10 +73,10 @@ typedef int (VS_CC *func_vsscript_init)(void);
 typedef int (VS_CC *func_vsscript_finalize)(void);
 typedef int (VS_CC *func_vsscript_evaluateFile)(VSScript **handle, const char *scriptFilename, int flags);
 typedef void (VS_CC *func_vsscript_freeScript)(VSScript *handle);
-typedef const char * (VS_CC *func_vsscript_getError)(VSScript *handle);
-typedef VSNodeRef * (VS_CC *func_vsscript_getOutput)(VSScript *handle, int index);
-typedef VSCore * (VS_CC *func_vsscript_getCore)(VSScript *handle);
-typedef const VSAPI * (VS_CC *func_vsscript_getVSApi2)(int version);
+typedef const char* (VS_CC *func_vsscript_getError)(VSScript *handle);
+typedef VSNodeRef* (VS_CC *func_vsscript_getOutput)(VSScript *handle, int index);
+typedef VSCore* (VS_CC *func_vsscript_getCore)(VSScript *handle);
+typedef const VSAPI* (VS_CC *func_vsscript_getVSApi2)(int version);
 
 struct VSSFunc {
     DECLARE_VS_FUNC(init);
@@ -112,17 +112,17 @@ protected:
 #if defined(_WIN32_WINNT)
     HMODULE vss_library;
 #else
-    void *vss_library;
+    void* vss_library;
 #endif
-    VSSFunc *vss_func;
+    VSSFunc* vss_func;
 
-    const VSAPI *vsapi = nullptr;
+    const VSAPI* vsapi = nullptr;
 
-    VSScript *script = nullptr;
+    VSScript* script = nullptr;
 
-    VSNodeRef *node = nullptr;
+    VSNodeRef* node = nullptr;
 
-    const VSFrameRef *frame0 = nullptr;
+    const VSFrameRef* frame0 = nullptr;
 
     VSFDCallbackData vpyCallbackData;
 
@@ -140,11 +140,11 @@ public:
 
     void startReader();
 
-    bool isCompletedFrame(const VSFrameRef *f);
+    bool isCompletedFrame(const VSFrameRef* f);
 
     bool readPicture(x265_picture&);
 
-    const char *getName() const { return "vpy"; }
+    const char* getName() const { return "vpy"; }
 
     int getWidth() const { return width; }
 

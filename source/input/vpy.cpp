@@ -30,9 +30,9 @@
 #endif
 #endif
 
-static void frameDoneCallback(void *userData, const VSFrameRef *f, int n, VSNodeRef *node, const char *)
+static void frameDoneCallback(void* userData, const VSFrameRef* f, int n, VSNodeRef* node, const char*)
 {
-    VSFDCallbackData *vpyCallbackData = static_cast<VSFDCallbackData *>(userData);
+    VSFDCallbackData* vpyCallbackData = static_cast<VSFDCallbackData*>(userData);
 
     vpyCallbackData->completedFrames++;
 
@@ -144,9 +144,9 @@ VPYInput::VPYInput(InputFileInfo& info)
         vpyFailed = true;
     }
 
-    const VSCoreInfo *core_info = vsapi->getCoreInfo(vss_func->getCore(script));
+    const VSCoreInfo* core_info = vsapi->getCoreInfo(vss_func->getCore(script));
 
-    const VSVideoInfo *vi = vsapi->getVideoInfo(node);
+    const VSVideoInfo* vi = vsapi->getVideoInfo(node);
     if(!isConstantFormat(vi))
     {
         general_log(NULL, "vpy", X265_LOG_ERROR, "only constant video formats are supported\n");
@@ -170,7 +170,7 @@ VPYInput::VPYInput(InputFileInfo& info)
     vpyCallbackData.reorderMap[0] = frame0;
     vpyCallbackData.completedFrames++;
 
-    const VSMap *frameProps0 = vsapi->getFramePropsRO(frame0);
+    const VSMap* frameProps0 = vsapi->getFramePropsRO(frame0);
 
     info.sarWidth = vsapi->propGetInt(frameProps0, "_SARNum", 0, nullptr);
     info.sarHeight = vsapi->propGetInt(frameProps0, "_SARDen", 0, nullptr);
@@ -244,7 +244,7 @@ VPYInput::~VPYInput()
         vs_close(vss_library);
 }
 
-bool VPYInput::isCompletedFrame(const VSFrameRef *f)
+bool VPYInput::isCompletedFrame(const VSFrameRef* f)
 {
     return (bool)f;
 }
