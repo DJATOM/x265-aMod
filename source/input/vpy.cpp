@@ -76,8 +76,6 @@ VPYInput::VPYInput(InputFileInfo& info) : frameCount(-1), vpyFailed(false)
         vpyFailed = true;
     }
 
-    vss_func = (VSSFunc *)malloc(sizeof(VSSFunc));
-
     vpyCallbackData.outputFrames = 0;
     vpyCallbackData.requestedFrames = 0;
     vpyCallbackData.completedFrames = 0;
@@ -89,53 +87,53 @@ VPYInput::VPYInput(InputFileInfo& info) : frameCount(-1), vpyFailed(false)
     #pragma GCC diagnostic ignored "-Wcast-function-type"
     #endif
 
-    vss_func->init = (func_init)vs_address(vss_library, X86_64 ? "vsscript_init" : "_vsscript_init@0");
-    if(!vss_func->init)
+    vss_func.init = (func_init)vs_address(vss_library, X86_64 ? "vsscript_init" : "_vsscript_init@0");
+    if(!vss_func.init)
         vpyFailed = true;
-    vss_func->finalize = (func_finalize)vs_address(vss_library, X86_64 ? "vsscript_finalize" : "_vsscript_finalize@0");
-    if(!vss_func->finalize)
+    vss_func.finalize = (func_finalize)vs_address(vss_library, X86_64 ? "vsscript_finalize" : "_vsscript_finalize@0");
+    if(!vss_func.finalize)
         vpyFailed = true;
-    vss_func->evaluateFile = (func_evaluateFile)vs_address(vss_library, X86_64 ? "vsscript_evaluateFile" : "_vsscript_evaluateFile@12");
-    if(!vss_func->evaluateFile)
+    vss_func.evaluateFile = (func_evaluateFile)vs_address(vss_library, X86_64 ? "vsscript_evaluateFile" : "_vsscript_evaluateFile@12");
+    if(!vss_func.evaluateFile)
         vpyFailed = true;
-    vss_func->freeScript = (func_freeScript)vs_address(vss_library, X86_64 ? "vsscript_freeScript" : "_vsscript_freeScript@4");
-    if(!vss_func->freeScript)
+    vss_func.freeScript = (func_freeScript)vs_address(vss_library, X86_64 ? "vsscript_freeScript" : "_vsscript_freeScript@4");
+    if(!vss_func.freeScript)
         vpyFailed = true;
-    vss_func->getError = (func_getError)vs_address(vss_library, X86_64 ? "vsscript_getError" : "_vsscript_getError@4");
-    if(!vss_func->getError)
+    vss_func.getError = (func_getError)vs_address(vss_library, X86_64 ? "vsscript_getError" : "_vsscript_getError@4");
+    if(!vss_func.getError)
         vpyFailed = true;
-    vss_func->getOutput = (func_getOutput)vs_address(vss_library, X86_64 ? "vsscript_getOutput" : "_vsscript_getOutput@8");
-    if(!vss_func->getOutput)
+    vss_func.getOutput = (func_getOutput)vs_address(vss_library, X86_64 ? "vsscript_getOutput" : "_vsscript_getOutput@8");
+    if(!vss_func.getOutput)
         vpyFailed = true;
-    vss_func->getCore = (func_getCore)vs_address(vss_library, X86_64 ? "vsscript_getCore" : "_vsscript_getCore@4");
-    if(!vss_func->getCore)
+    vss_func.getCore = (func_getCore)vs_address(vss_library, X86_64 ? "vsscript_getCore" : "_vsscript_getCore@4");
+    if(!vss_func.getCore)
         vpyFailed = true;
-    vss_func->getVSApi2 = (func_getVSApi2)vs_address(vss_library, X86_64 ? "vsscript_getVSApi2" : "_vsscript_getVSApi2@4");
-    if(!vss_func->getVSApi2)
+    vss_func.getVSApi2 = (func_getVSApi2)vs_address(vss_library, X86_64 ? "vsscript_getVSApi2" : "_vsscript_getVSApi2@4");
+    if(!vss_func.getVSApi2)
         vpyFailed = true;
 
     #if defined(__GNUC__) && __GNUC__ >= 8
     #pragma GCC diagnostic pop
     #endif
 
-    if(!vss_func->init())
+    if(!vss_func.init())
     {
         general_log(NULL, "vpy", X265_LOG_ERROR, "failed to initialize VapourSynth environment\n");
         vpyFailed = true;
         return;
     }
 
-    vpyCallbackData.vsapi = vsapi = vss_func->getVSApi2(VAPOURSYNTH_API_VERSION);
-    if(vss_func->evaluateFile(&script, info.filename, efSetWorkingDir))
+    vpyCallbackData.vsapi = vsapi = vss_func.getVSApi2(VAPOURSYNTH_API_VERSION);
+    if(vss_func.evaluateFile(&script, info.filename, efSetWorkingDir))
     {
-        general_log(NULL, "vpy", X265_LOG_ERROR, "Can't evaluate script: %s\n", vss_func->getError(script));
+        general_log(NULL, "vpy", X265_LOG_ERROR, "Can't evaluate script: %s\n", vss_func.getError(script));
         vpyFailed = true;
-        vss_func->freeScript(script);
-        vss_func->finalize();
+        vss_func.freeScript(script);
+        vss_func.finalize();
         return;
     }
 
-    node = vss_func->getOutput(script, 0);
+    node = vss_func.getOutput(script, 0);
     if(!node)
     {
         general_log(NULL, "vpy", X265_LOG_ERROR, "`%s' has no video data\n", info.filename);
@@ -143,7 +141,7 @@ VPYInput::VPYInput(InputFileInfo& info) : frameCount(-1), vpyFailed(false)
         return;
     }
 
-    const VSCoreInfo* core_info = vsapi->getCoreInfo(vss_func->getCore(script));
+    const VSCoreInfo* core_info = vsapi->getCoreInfo(vss_func.getCore(script));
 
     const VSVideoInfo* vi = vsapi->getVideoInfo(node);
     if(!isConstantFormat(vi))
@@ -237,10 +235,8 @@ VPYInput::~VPYInput()
 
     vsapi->freeNode(node);
 
-    vss_func->freeScript(script);
-    vss_func->finalize();
-
-    free(vss_func);
+    vss_func.freeScript(script);
+    vss_func.finalize();
 
     if(vss_library)
         vs_close(vss_library);

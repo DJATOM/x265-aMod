@@ -110,7 +110,7 @@ protected:
 #else
     void* vss_library;
 #endif
-    VSSFunc* vss_func;
+    VSSFunc vss_func;
 
     const VSAPI* vsapi = nullptr;
 
