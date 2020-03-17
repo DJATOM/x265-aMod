@@ -67,11 +67,8 @@ static void frameDoneCallback(void* userData, const VSFrameRef* f, int n, VSNode
 using namespace X265_NS;
 using namespace std;
 
-VPYInput::VPYInput(InputFileInfo& info)
+VPYInput::VPYInput(InputFileInfo& info) : frameCount(-1), vpyFailed(false)
 {
-    frameCount = -1;
-    vpyFailed = false;
-
     vss_library = vs_open();
     if(!vss_library)
     {
@@ -125,6 +122,7 @@ VPYInput::VPYInput(InputFileInfo& info)
     {
         general_log(NULL, "vpy", X265_LOG_ERROR, "failed to initialize VapourSynth environment\n");
         vpyFailed = true;
+        return;
     }
 
     vpyCallbackData.vsapi = vsapi = vss_func->getVSApi2(VAPOURSYNTH_API_VERSION);
@@ -142,6 +140,7 @@ VPYInput::VPYInput(InputFileInfo& info)
     {
         general_log(NULL, "vpy", X265_LOG_ERROR, "`%s' has no video data\n", info.filename);
         vpyFailed = true;
+        return;
     }
 
     const VSCoreInfo* core_info = vsapi->getCoreInfo(vss_func->getCore(script));
@@ -184,12 +183,14 @@ VPYInput::VPYInput(InputFileInfo& info)
         {
             general_log(NULL, "vpy", X265_LOG_ERROR, "VFR: missing FPS values at frame 0");
             vpyFailed = true;
+            return;
         }
 
         if(!rateNum)
         {
             general_log(NULL, "vpy", X265_LOG_ERROR, "VFR: FPS numerator is zero at frame 0");
             vpyFailed = true;
+            return;
         }
 
         /* Force CFR until we have support for VFR by x265 */
@@ -206,7 +207,7 @@ VPYInput::VPYInput(InputFileInfo& info)
     info.frameCount = vpyCallbackData.totalFrames = frameCount = vi->numFrames;
     info.depth = depth = vi->format->bitsPerSample;
 
-    if(vi->format->bitsPerSample >= 8 || vi->format->bitsPerSample <= 16)
+    if(vi->format->bitsPerSample >= 8 && vi->format->bitsPerSample <= 16)
     {
         if(vi->format->colorFamily == cmYUV)
         {
@@ -224,6 +225,7 @@ VPYInput::VPYInput(InputFileInfo& info)
     {
         general_log(NULL, "vpy", X265_LOG_ERROR, "not supported pixel type: %s\n", vi->format->name);
         vpyFailed = true;
+        return;
     }
     info.csp = colorSpace;
 }
