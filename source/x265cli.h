@@ -367,7 +367,7 @@ static const struct option long_options[] =
 
 static void printVersion(x265_param *param, const x265_api* api)
 {
-    x265_log(param, X265_LOG_INFO, "HEVC encoder version %s\n", api->version_str);
+    x265_log(param, X265_LOG_INFO, "HEVC encoder version %s [DJATOM's Mod]\n", api->version_str);
     x265_log(param, X265_LOG_INFO, "build info %s\n", api->build_info_str);
 }
 
