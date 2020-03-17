@@ -140,8 +140,6 @@ public:
 
     void startReader();
 
-    bool isCompletedFrame(const VSFrameRef* f);
-
     bool readPicture(x265_picture&);
 
     const char* getName() const { return "vpy"; }

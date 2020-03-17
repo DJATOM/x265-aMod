@@ -40,7 +40,7 @@ static void frameDoneCallback(void* userData, const VSFrameRef* f, int n, VSNode
     {
         vpyCallbackData->reorderMap[n] = f;
 
-        bool completed = (bool)vpyCallbackData->reorderMap[n];
+        bool completed = !!vpyCallbackData->reorderMap[n];
 
         int retries = 0;
         while(vpyCallbackData->availableRequests == 0)
@@ -244,11 +244,6 @@ VPYInput::~VPYInput()
         vs_close(vss_library);
 }
 
-bool VPYInput::isCompletedFrame(const VSFrameRef* f)
-{
-    return (bool)f;
-}
-
 void VPYInput::startReader()
 {
     general_log(NULL, "vpy", X265_LOG_INFO, "using %d parallel requests\n", vpyCallbackData.parallelRequests);
@@ -264,14 +259,14 @@ void VPYInput::startReader()
 
 bool VPYInput::readPicture(x265_picture& pic)
 {
-    const VSFrameRef *currentFrame = nullptr;
+    const VSFrameRef* currentFrame = nullptr;
 
     if(pic.poc >= frameCount)
         return false;
 
     pic.bitDepth = depth;
 
-    while (!isCompletedFrame(vpyCallbackData.reorderMap[pic.poc]))
+    while (!!!vpyCallbackData.reorderMap[pic.poc])
     {
         Sleep(10); // wait for completition a bit
     }
