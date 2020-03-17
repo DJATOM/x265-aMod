@@ -89,28 +89,28 @@ VPYInput::VPYInput(InputFileInfo& info) : frameCount(-1), vpyFailed(false)
     #pragma GCC diagnostic ignored "-Wcast-function-type"
     #endif
 
-    vss_func->init = (func_vsscript_init)vs_address(vss_library, X86_64 ? "vsscript_init" : "_vsscript_init@0");
+    vss_func->init = (func_init)vs_address(vss_library, X86_64 ? "vsscript_init" : "_vsscript_init@0");
     if(!vss_func->init)
         vpyFailed = true;
-    vss_func->finalize = (func_vsscript_finalize)vs_address(vss_library, X86_64 ? "vsscript_finalize" : "_vsscript_finalize@0");
+    vss_func->finalize = (func_finalize)vs_address(vss_library, X86_64 ? "vsscript_finalize" : "_vsscript_finalize@0");
     if(!vss_func->finalize)
         vpyFailed = true;
-    vss_func->evaluateFile = (func_vsscript_evaluateFile)vs_address(vss_library, X86_64 ? "vsscript_evaluateFile" : "_vsscript_evaluateFile@12");
+    vss_func->evaluateFile = (func_evaluateFile)vs_address(vss_library, X86_64 ? "vsscript_evaluateFile" : "_vsscript_evaluateFile@12");
     if(!vss_func->evaluateFile)
         vpyFailed = true;
-    vss_func->freeScript = (func_vsscript_freeScript)vs_address(vss_library, X86_64 ? "vsscript_freeScript" : "_vsscript_freeScript@4");
+    vss_func->freeScript = (func_freeScript)vs_address(vss_library, X86_64 ? "vsscript_freeScript" : "_vsscript_freeScript@4");
     if(!vss_func->freeScript)
         vpyFailed = true;
-    vss_func->getError = (func_vsscript_getError)vs_address(vss_library, X86_64 ? "vsscript_getError" : "_vsscript_getError@4");
+    vss_func->getError = (func_getError)vs_address(vss_library, X86_64 ? "vsscript_getError" : "_vsscript_getError@4");
     if(!vss_func->getError)
         vpyFailed = true;
-    vss_func->getOutput = (func_vsscript_getOutput)vs_address(vss_library, X86_64 ? "vsscript_getOutput" : "_vsscript_getOutput@8");
+    vss_func->getOutput = (func_getOutput)vs_address(vss_library, X86_64 ? "vsscript_getOutput" : "_vsscript_getOutput@8");
     if(!vss_func->getOutput)
         vpyFailed = true;
-    vss_func->getCore = (func_vsscript_getCore)vs_address(vss_library, X86_64 ? "vsscript_getCore" : "_vsscript_getCore@4");
+    vss_func->getCore = (func_getCore)vs_address(vss_library, X86_64 ? "vsscript_getCore" : "_vsscript_getCore@4");
     if(!vss_func->getCore)
         vpyFailed = true;
-    vss_func->getVSApi2 = (func_vsscript_getVSApi2)vs_address(vss_library, X86_64 ? "vsscript_getVSApi2" : "_vsscript_getVSApi2@4");
+    vss_func->getVSApi2 = (func_getVSApi2)vs_address(vss_library, X86_64 ? "vsscript_getVSApi2" : "_vsscript_getVSApi2@4");
     if(!vss_func->getVSApi2)
         vpyFailed = true;
 

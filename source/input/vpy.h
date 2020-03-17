@@ -51,8 +51,6 @@
 #define vs_address GetProcAddress
 #endif
 
-#define DECLARE_VS_FUNC(name) func_vsscript_##name name
-
 struct VSFDCallbackData {
     const VSAPI* vsapi = nullptr;
     std::map<int, const VSFrameRef*> reorderMap;
@@ -69,27 +67,25 @@ using namespace std;
 namespace X265_NS {
 // x265 private namespace
 
-typedef int (VS_CC *func_vsscript_init)(void);
-typedef int (VS_CC *func_vsscript_finalize)(void);
-typedef int (VS_CC *func_vsscript_evaluateFile)(VSScript **handle, const char *scriptFilename, int flags);
-typedef void (VS_CC *func_vsscript_freeScript)(VSScript *handle);
-typedef const char* (VS_CC *func_vsscript_getError)(VSScript *handle);
-typedef VSNodeRef* (VS_CC *func_vsscript_getOutput)(VSScript *handle, int index);
-typedef VSCore* (VS_CC *func_vsscript_getCore)(VSScript *handle);
-typedef const VSAPI* (VS_CC *func_vsscript_getVSApi2)(int version);
+using func_init = int (VS_CC *)();
+using func_finalize = int (VS_CC *)();
+using func_evaluateFile = int (VS_CC *)(VSScript** handle, const char* scriptFilename, int flags);
+using func_freeScript = void (VS_CC *)(VSScript* handle);
+using func_getError = const char* (VS_CC *)(VSScript* handle);
+using func_getOutput = VSNodeRef* (VS_CC *)(VSScript* handle, int index);
+using func_getCore = VSCore* (VS_CC *)(VSScript* handle);
+using func_getVSApi2 = const VSAPI* (VS_CC *)(int version);
 
 struct VSSFunc {
-    DECLARE_VS_FUNC(init);
-    DECLARE_VS_FUNC(finalize);
-    DECLARE_VS_FUNC(evaluateFile);
-    DECLARE_VS_FUNC(freeScript);
-    DECLARE_VS_FUNC(getError);
-    DECLARE_VS_FUNC(getOutput);
-    DECLARE_VS_FUNC(getCore);
-    DECLARE_VS_FUNC(getVSApi2);
+    func_init init;
+    func_finalize finalize;
+    func_evaluateFile evaluateFile;
+    func_freeScript freeScript;
+    func_getError getError;
+    func_getOutput getOutput;
+    func_getCore getCore;
+    func_getVSApi2 getVSApi2;
 };
-
-#undef DECLARE_VS_FUNC
 
 class VPYInput : public InputFile
 {
