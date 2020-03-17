@@ -24,7 +24,7 @@
 #ifndef X265_VPY_H
 #define X265_VPY_H
 
-#include <map>
+#include <unordered_map>
 #include <atomic>
 
 #ifdef _WIN32
@@ -53,7 +53,7 @@
 
 struct VSFDCallbackData {
     const VSAPI* vsapi = nullptr;
-    std::map<int, const VSFrameRef*> reorderMap;
+    std::unordered_map<int, const VSFrameRef*> reorderMap;
     int parallelRequests;
     int outputFrames;
     std::atomic<int> availableRequests;
