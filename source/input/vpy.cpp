@@ -65,7 +65,6 @@ static void frameDoneCallback(void* userData, const VSFrameRef* f, int n, VSNode
 }
 
 using namespace X265_NS;
-using namespace std;
 
 VPYInput::VPYInput(InputFileInfo& info) : frameCount(-1), vpyFailed(false)
 {
