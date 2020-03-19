@@ -55,10 +55,10 @@ struct VSFDCallbackData {
     const VSAPI* vsapi = nullptr;
     std::unordered_map<int, const VSFrameRef*> reorderMap;
     int parallelRequests;
-    int outputFrames;
+    std::atomic<int> outputFrames;
     std::atomic<int> availableRequests;
-    int requestedFrames;
-    int completedFrames;
+    std::atomic<int> requestedFrames;
+    std::atomic<int> completedFrames;
     int totalFrames;
     int startFrame;
 };
