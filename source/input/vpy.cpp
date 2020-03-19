@@ -24,12 +24,6 @@
 #include "vpy.h"
 #include "common.h"
 
-#if _WIN32
-#if defined(_MSC_VER)
-#pragma warning(disable: 4996) // POSIX setmode and fileno deprecated
-#endif
-#endif
-
 static void frameDoneCallback(void* userData, const VSFrameRef* f, int n, VSNodeRef* node, const char*)
 {
     VSFDCallbackData* vpyCallbackData = static_cast<VSFDCallbackData*>(userData);
