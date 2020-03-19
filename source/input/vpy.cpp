@@ -34,26 +34,18 @@ static void frameDoneCallback(void* userData, const VSFrameRef* f, int n, VSNode
     {
         vpyCallbackData->reorderMap[n] = f;
 
-        bool completed = !!vpyCallbackData->reorderMap[n];
-
-        int retries = 0;
-        while(vpyCallbackData->availableRequests == 0)
+        //size_t retries = 0;
+        while((vpyCallbackData->completedFrames - vpyCallbackData->outputFrames) > vpyCallbackData->parallelRequests) // wait until x265 asks more frames
         {
-            Sleep(15); // probably not too much to slow vapoursynth down
-            if(retries > vpyCallbackData->parallelRequests * 1.5) // we don't want infinite freezes
-                break;
-            retries++;
+            Sleep(15);
+            //retries++;
         }
 
-        if (completed && vpyCallbackData->requestedFrames < vpyCallbackData->totalFrames)
+        if (vpyCallbackData->requestedFrames < vpyCallbackData->totalFrames)
         {
-            //x265::general_log(NULL, "vpy", X265_LOG_FULL, "Callback: retries: %d, current frame: %d, availableRequests: %d, requestedFrames: %d, completedFrames: %d\n", retries, n, vpyCallbackData->availableRequests.load(), vpyCallbackData->requestedFrames, vpyCallbackData->completedFrames);
+            //x265::general_log(NULL, "vpy", X265_LOG_FULL, "Callback: retries: %d, current frame: %d, requested: %d, completed: %d, output: %d  \n", retries, n, vpyCallbackData->requestedFrames.load(), vpyCallbackData->completedFrames.load(), vpyCallbackData->outputFrames.load());
             vpyCallbackData->vsapi->getFrameAsync(vpyCallbackData->requestedFrames, node, frameDoneCallback, vpyCallbackData);
             vpyCallbackData->requestedFrames++;
-            if(vpyCallbackData->availableRequests > 0)
-                vpyCallbackData->availableRequests--;
-            else if(retries == (vpyCallbackData->parallelRequests * 1.5))
-                vpyCallbackData->availableRequests++;
         }
     }
 }
@@ -226,7 +218,8 @@ VPYInput::~VPYInput()
     if(frame0)
         vsapi->freeFrame(frame0);
 
-    vsapi->freeNode(node);
+    if(node)
+        vsapi->freeNode(node);
 
     vss_func.freeScript(script);
     vss_func.finalize();
@@ -242,7 +235,6 @@ void VPYInput::startReader()
     int requestStart = vpyCallbackData.completedFrames;
     int intitalRequestSize = std::min(vpyCallbackData.parallelRequests, frameCount - requestStart);
     vpyCallbackData.requestedFrames = requestStart + intitalRequestSize;
-    vpyCallbackData.availableRequests = 0; // queue is full on start and we allow more requests once x265 takes finished frames
 
     for (int n = requestStart; n < requestStart + intitalRequestSize; n++)
         vsapi->getFrameAsync(n, node, frameDoneCallback, &vpyCallbackData);
@@ -264,7 +256,7 @@ bool VPYInput::readPicture(x265_picture& pic)
 
     currentFrame = vpyCallbackData.reorderMap[pic.poc];
     vpyCallbackData.reorderMap.erase(pic.poc);
-    vpyCallbackData.availableRequests++;
+    vpyCallbackData.outputFrames++;
 
     if(!currentFrame)
     {

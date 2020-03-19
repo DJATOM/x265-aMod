@@ -56,7 +56,6 @@ struct VSFDCallbackData {
     std::unordered_map<int, const VSFrameRef*> reorderMap;
     int parallelRequests;
     std::atomic<int> outputFrames;
-    std::atomic<int> availableRequests;
     std::atomic<int> requestedFrames;
     std::atomic<int> completedFrames;
     int totalFrames;
