@@ -276,7 +276,7 @@ bool VPYInput::readPicture(x265_picture& pic)
     if(!currentFrame)
     {
         general_log(NULL, "vpy", X265_LOG_ERROR, "error occurred while reading frame %d\n", pic.poc);
-        vpyFailed = false;
+        vpyFailed = true;
     }
 
     for(int i = 0; i < x265_cli_csps[colorSpace].planes; i++)
