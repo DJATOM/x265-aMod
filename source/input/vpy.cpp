@@ -30,18 +30,20 @@ static void frameDoneCallback(void* userData, const VSFrameRef* f, int n, VSNode
 
     vpyCallbackData->completedFrames++;
 
-    if (f)
+    if(f)
     {
         vpyCallbackData->reorderMap[n] = f;
 
-        //size_t retries = 0;
+        size_t retries = 0;
         while((vpyCallbackData->completedFrames - vpyCallbackData->outputFrames) > vpyCallbackData->parallelRequests) // wait until x265 asks more frames
         {
             Sleep(15);
-            //retries++;
+            if(retries > vpyCallbackData->parallelRequests * 1.5) // we don't want to wait for eternity 
+                break;
+            retries++;
         }
 
-        if (vpyCallbackData->requestedFrames < vpyCallbackData->totalFrames)
+        if(vpyCallbackData->requestedFrames < vpyCallbackData->totalFrames)
         {
             //x265::general_log(NULL, "vpy", X265_LOG_FULL, "Callback: retries: %d, current frame: %d, requested: %d, completed: %d, output: %d  \n", retries, n, vpyCallbackData->requestedFrames.load(), vpyCallbackData->completedFrames.load(), vpyCallbackData->outputFrames.load());
             vpyCallbackData->vsapi->getFrameAsync(vpyCallbackData->requestedFrames, node, frameDoneCallback, vpyCallbackData);
