@@ -401,6 +401,9 @@ static const struct option long_options[] =
         int64_t startTime;
         int64_t prevUpdateTime;
 
+        int argCnt;
+        char** argString;
+
         /* ABR ladder settings */
         bool enableScaler;
         char*    encName;
@@ -433,19 +436,23 @@ static const struct option long_options[] =
             prevUpdateTime = 0;
             bDither = false;
             enableScaler = false;
+            encName = NULL;
+            reuseName = NULL;
             encId = 0;
             refId = -1;
             loadLevel = 0;
             saveLevel = 0;
             numRefs = 0;
+            argCnt = 0;
         }
- 
+
         void destroy();
         void printStatus(uint32_t frameNum);
         bool parse(int argc, char **argv);
         bool parseZoneParam(int argc, char **argv, x265_param* globalParam, int zonefileCount);
         bool parseQPFile(x265_picture &pic_org);
         bool parseZoneFile();
+        int rpuParser(x265_picture * pic);
     };
 #ifdef __cplusplus
 }
