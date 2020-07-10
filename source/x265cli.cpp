@@ -37,7 +37,7 @@ namespace X265_NS {
 
     static void printVersion(x265_param *param, const x265_api* api)
     {
-        x265_log(param, X265_LOG_INFO, "HEVC encoder version %s\n", api->version_str);
+        x265_log(param, X265_LOG_INFO, "HEVC encoder version %s [DJATOM's Mod]\n", api->version_str);
         x265_log(param, X265_LOG_INFO, "build info %s\n", api->build_info_str);
     }
 
@@ -50,7 +50,7 @@ namespace X265_NS {
 #define H1 if (level >= X265_LOG_DEBUG) printf
 
         H0("\nSyntax: x265 [options] infile [-o] outfile\n");
-        H0("    infile can be YUV or Y4M\n");
+        H0("    infile can be VPY, YUV or Y4M\n");
         H0("    outfile is raw HEVC bitstream\n");
         H0("\nExecutable Options:\n");
         H0("-h/--help                        Show this help text and exit\n");
@@ -411,15 +411,22 @@ namespace X265_NS {
         float bitrate = 0.008f * totalbytes * (param->fpsNum / param->fpsDenom) / ((float)frameNum);
         if (framesToBeEncoded)
         {
+            int ela = (int)(elapsed / 1000000);
             int eta = (int)(elapsed * (framesToBeEncoded - frameNum) / ((int64_t)frameNum * 1000000));
-            sprintf(buf, "x265 [%.1f%%] %d/%d frames, %.2f fps, %.2f kb/s, eta %d:%02d:%02d",
+            double estsz = (double)totalbytes * framesToBeEncoded / (frameNum * 1024.);
+            sprintf(buf, "x265 [%.1f%%] %d/%d frames, %.2f fps, %.2f kb/s, "
+                "elapsed: %d:%02d:%02d, eta: %d:%02d:%02d, "
+                "size: %.2f %1sB, est. size: %.2f %1sB",
                 100. * frameNum / (param->chunkEnd ? param->chunkEnd : param->totalFrames), frameNum, (param->chunkEnd ? param->chunkEnd : param->totalFrames), fps, bitrate,
-                eta / 3600, (eta / 60) % 60, eta % 60);
+                ela / 3600, (ela / 60) % 60, ela % 60, 
+                eta / 3600, (eta / 60) % 60, eta % 60, 
+                totalbytes < 1048576 ? (double)totalbytes / 1024. : (double)totalbytes / 1048576., totalbytes < 1048576 ? "K" : "M",
+                estsz < 1024 ? estsz : estsz / 1024, estsz < 1024 ? "K" : "M");
         }
         else
             sprintf(buf, "x265 %d frames: %.2f fps, %.2f kb/s", frameNum, fps, bitrate);
 
-        fprintf(stderr, "%s  \r", buf + 5);
+        fprintf(stderr, "%s     \r", buf + 5);
         SetConsoleTitle(buf);
         fflush(stderr); // needed in windows
         prevUpdateTime = time;

@@ -805,7 +805,7 @@ ret:
 
             /* clear progress report */
             if (m_cliopt.bProgress)
-                fprintf(stderr, "%*s\r", 80, " ");
+                fprintf(stderr, "%*s\r", 130, " ");
 
         fail:
 
