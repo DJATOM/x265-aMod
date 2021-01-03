@@ -3286,7 +3286,7 @@ void Encoder::getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs)
                 strlen(PFX(build_info_str)) + 200);
             if (buffer)
             {
-                sprintf(buffer, "x265 (build %d) - %s:%s - H.265/HEVC codec - "
+                sprintf(buffer, "x265 (build %d) - %s:[DJATOM's Mod]%s - H.265/HEVC codec - "
                     "Copyright 2013-2018 (c) Multicoreware, Inc - "
                     "http://x265.org - options: %s",
                     X265_BUILD, PFX(version_str), PFX(build_info_str), opts);
