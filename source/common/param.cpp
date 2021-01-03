@@ -2175,8 +2175,8 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     BOOL(p->bEnableHME, "hme");
     if (p->bEnableHME)
     {
-        s += sprintf(s, " Level 0,1,2=%d,%d,%d", p->hmeSearchMethod[0], p->hmeSearchMethod[1], p->hmeSearchMethod[2]);
-        s += sprintf(s, " merange L0,L1,L2=%d,%d,%d", p->hmeRange[0], p->hmeRange[1], p->hmeRange[2]);
+        s += sprintf(s, " hme-level-0,1,2=%d,%d,%d", p->hmeSearchMethod[0], p->hmeSearchMethod[1], p->hmeSearchMethod[2]);
+        s += sprintf(s, " hmerange-level-0,1,2=%d,%d,%d", p->hmeRange[0], p->hmeRange[1], p->hmeRange[2]);
     }
     BOOL(p->bEnableWeightedPred, "weightp");
     BOOL(p->bEnableWeightedBiPred, "weightb");
