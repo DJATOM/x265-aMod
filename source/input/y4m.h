@@ -57,6 +57,8 @@ protected:
 
     bool alphaAvailable;
 
+    int frameCount;
+
     bool threadActive;
 
     ThreadSafeInteger readCount;
