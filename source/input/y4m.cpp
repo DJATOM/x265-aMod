@@ -40,6 +40,7 @@
 using namespace X265_NS;
 using namespace std;
 static const char header[] = {'F','R','A','M','E'};
+static const char magic_xlength[] = {'L','E','N','G','T','H','='};
 Y4MInput::Y4MInput(InputFileInfo& info)
 {
     for (int i = 0; i < QUEUE_SIZE; i++)
@@ -55,6 +56,7 @@ Y4MInput::Y4MInput(InputFileInfo& info)
     rateDenom = info.fpsDenom;
     depth = info.depth;
     framesize = 0;
+    frameCount = -1;
 
     ifs = NULL;
     if (!strcmp(info.filename, "-"))
@@ -103,7 +105,7 @@ Y4MInput::Y4MInput(InputFileInfo& info)
     info.fpsDenom = rateDenom;
     info.csp = colorSpace;
     info.depth = depth;
-    info.frameCount = -1;
+    info.frameCount = frameCount;
     size_t estFrameSize = framesize + sizeof(header) + 1; /* assume basic FRAME\n headers */
     /* try to estimate frame count, if this is not stdin */
     if (ifs != stdin)
@@ -151,6 +153,7 @@ bool Y4MInput::parseHeader()
 
     int csp = 0;
     int d = 0;
+    uint32_t match_length = 0;
     int c;
     while ((c = fgetc(ifs)) != EOF)
     {
@@ -284,6 +287,40 @@ bool Y4MInput::parseHeader()
                 if (d >= 8 && d <= 16)
                     depth = d;
                 break;
+
+            case 'X':
+                // XLENGTH=xxxxx
+                for (match_length = 0; match_length < sizeof(magic_xlength); match_length++)
+                {
+                    if ((c = fgetc(ifs)) != magic_xlength[match_length])
+                        break;
+                }
+                if (match_length == sizeof(magic_xlength))
+                {
+                    frameCount = 0;
+                    while ((c = fgetc(ifs)) != EOF)
+                    {
+                        if (c >= '0' && c <= '9')
+                            frameCount = frameCount * 10 + (c - '0');
+                        else
+                            break;
+                    }
+                    if (frameCount <= 0)
+                        frameCount = -1;
+                }
+                else
+                {
+                    // Clean up rest of the string
+                    if (c == ' ' || c == '\n')
+                        break;
+                    while ((c = fgetc(ifs)) != EOF)
+                    {
+                        if (c == ' ' || c == '\n')
+                            break;
+                    }
+                }
+                break;
+
             default:
                 while ((c = fgetc(ifs)) != EOF)
                 {
