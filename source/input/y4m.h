@@ -55,6 +55,8 @@ protected:
 
     int colorSpace;
 
+    int frameCount;
+
     bool threadActive;
 
     ThreadSafeInteger readCount;
