@@ -114,7 +114,7 @@ x265_encoder *x265_encoder_open(x265_param *p)
     x265_copy_params(param, p);
     x265_copy_params(latestParam, p);
     x265_copy_params(zoneParam, p);
-    x265_log(param, X265_LOG_INFO, "HEVC encoder version %s\n", PFX(version_str));
+    x265_log(param, X265_LOG_INFO, "HEVC encoder version %s [DJATOM's Mod]\n", PFX(version_str));
     x265_log(param, X265_LOG_INFO, "build info %s\n", PFX(build_info_str));
 
     encoder = new Encoder;
