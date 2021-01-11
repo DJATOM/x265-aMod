@@ -38,7 +38,7 @@ static void frameDoneCallback(void* userData, const VSFrameRef* f, const int n, 
         while((vpyCallbackData->completedFrames - vpyCallbackData->outputFrames) > vpyCallbackData->parallelRequests) // wait until x265 asks more frames
         {
             Sleep(15);
-            if(retries > vpyCallbackData->parallelRequests * 1.5) // we don't want to wait for eternity 
+            if(retries > vpyCallbackData->parallelRequests * 1.5) // we don't want to wait for eternity
                 break;
             retries++;
         }
