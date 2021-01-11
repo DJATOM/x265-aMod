@@ -63,11 +63,16 @@ VPYInput::VPYInput(InputFileInfo& info) : nextFrame(0), vpyFailed(false)
         vpyFailed = true;
     }
 
-    vpyCallbackData.outputFrames = 0;
-    vpyCallbackData.requestedFrames = 0;
-    vpyCallbackData.completedFrames = 0;
+    if (info.skipFrames)
+    {
+        nextFrame = info.skipFrames;
+    }
+
+    vpyCallbackData.outputFrames = nextFrame;
+    vpyCallbackData.requestedFrames = nextFrame;
+    vpyCallbackData.completedFrames = nextFrame;
     vpyCallbackData.totalFrames = -1;
-    vpyCallbackData.startFrame = 0;
+    vpyCallbackData.startFrame = nextFrame;
 
     #if defined(__GNUC__) && __GNUC__ >= 8
     #pragma GCC diagnostic push
@@ -143,7 +148,7 @@ VPYInput::VPYInput(InputFileInfo& info) : nextFrame(0), vpyFailed(false)
     vpyCallbackData.parallelRequests = core_info->numThreads;
 
     char errbuf[256];
-    frame0 = vsapi->getFrame(0, node, errbuf, sizeof(errbuf));
+    frame0 = vsapi->getFrame(nextFrame, node, errbuf, sizeof(errbuf));
     if(!frame0)
     {
         general_log(nullptr, "vpy", X265_LOG_ERROR, "%s occurred while getting frame 0\n", errbuf);
@@ -151,7 +156,7 @@ VPYInput::VPYInput(InputFileInfo& info) : nextFrame(0), vpyFailed(false)
         return;
     }
 
-    vpyCallbackData.reorderMap[0] = frame0;
+    vpyCallbackData.reorderMap[nextFrame] = frame0;
     ++vpyCallbackData.completedFrames;
 
     const VSMap* frameProps0 = vsapi->getFramePropsRO(frame0);
