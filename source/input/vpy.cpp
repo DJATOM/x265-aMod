@@ -71,7 +71,6 @@ VPYInput::VPYInput(InputFileInfo& info) : nextFrame(0), vpyFailed(false)
     vpyCallbackData.outputFrames = nextFrame;
     vpyCallbackData.requestedFrames = nextFrame;
     vpyCallbackData.completedFrames = nextFrame;
-    vpyCallbackData.totalFrames = -1;
     vpyCallbackData.startFrame = nextFrame;
     vpyCallbackData.isRunning = true;
 
@@ -195,8 +194,13 @@ VPYInput::VPYInput(InputFileInfo& info) : nextFrame(0), vpyFailed(false)
         info.fpsDenom = vi->fpsDen;
     }
 
-    info.frameCount = vpyCallbackData.totalFrames = vi->numFrames;
+    info.frameCount = vpyCallbackData.framesToRequest = vi->numFrames;
     info.depth = vi->format->bitsPerSample;
+
+    if (info.encodeToFrame)
+    {
+        vpyCallbackData.framesToRequest = info.encodeToFrame + nextFrame;
+    }
 
     if(vi->format->bitsPerSample >= 8 && vi->format->bitsPerSample <= 16)
     {

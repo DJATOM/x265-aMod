@@ -58,7 +58,7 @@ struct VSFDCallbackData {
     std::atomic<int> outputFrames;
     std::atomic<int> requestedFrames;
     std::atomic<int> completedFrames;
-    int totalFrames;
+    int framesToRequest;
     int startFrame;
     std::atomic<bool> isRunning;
 };
