@@ -131,7 +131,7 @@ public:
 
     void startReader();
 
-    void stopReader() {};
+    void stopReader();
 
     bool readPicture(x265_picture&);
 

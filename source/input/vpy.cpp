@@ -231,17 +231,8 @@ VPYInput::VPYInput(InputFileInfo& info) : nextFrame(0), vpyFailed(false)
 
 VPYInput::~VPYInput()
 {
-    if(frame0)
-        vsapi->freeFrame(frame0);
-
-    if(node)
-        vsapi->freeNode(node);
-
-    vss_func.freeScript(script);
-    vss_func.finalize();
-
-    if(vss_library)
-        vs_close(vss_library);
+    if(frame_buffer)
+        x265_free(frame_buffer);
 }
 
 void VPYInput::startReader()
@@ -256,14 +247,14 @@ void VPYInput::startReader()
         vsapi->getFrameAsync(n, node, frameDoneCallback, &vpyCallbackData);
 }
 
-void VPYInput::release()
+void VPYInput::stopReader()
 {
     vpyCallbackData.isRunning = false;
 
     while (vpyCallbackData.requestedFrames != vpyCallbackData.completedFrames)
     {
         general_log(nullptr, "vpy", X265_LOG_INFO, "waiting completion of %d requested frames...    \r", vpyCallbackData.requestedFrames.load() - vpyCallbackData.completedFrames.load());
-        Sleep(100);
+        Sleep(400);
     }
 
     for (int frame = nextFrame; frame < vpyCallbackData.completedFrames; frame++)
@@ -276,6 +267,23 @@ void VPYInput::release()
             vsapi->freeFrame(currentFrame);
         }
     }
+}
+
+void VPYInput::release()
+{
+    vpyCallbackData.isRunning = false;
+
+    if(frame0)
+        vsapi->freeFrame(frame0);
+
+    if(node)
+        vsapi->freeNode(node);
+
+    vss_func.freeScript(script);
+    vss_func.finalize();
+
+    if(vss_library)
+        vs_close(vss_library);
 
     delete this;
 }
@@ -284,7 +292,7 @@ bool VPYInput::readPicture(x265_picture& pic)
 {
     const VSFrameRef* currentFrame = nullptr;
 
-    if(nextFrame >= _info.frameCount)
+    if(nextFrame >= _info.frameCount || !vpyCallbackData.isRunning)
         return false;
 
     while (!!!vpyCallbackData.reorderMap[nextFrame])
