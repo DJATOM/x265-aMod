@@ -838,11 +838,6 @@ ret:
             {
                 general_log(m_param, NULL, X265_LOG_INFO, "aborted at input frame %d, output frame %d in %s\n",
                     m_cliopt.seek + inFrameCount, stats.encodedPictureCount, profileName);
-                if (m_input)
-                {
-                    m_input->release();
-                    m_input = NULL;
-                }
             }
 
             api->param_free(m_param);
@@ -1079,7 +1074,7 @@ ret:
             }
 
             x265_picture* dest = m_parentEnc->m_parent->m_inputPicBuffer[m_id][writeIdx];
-            if (m_input->readPicture(*src))
+            if (m_input->readPicture(*src) && !b_ctrl_c)
             {
                 dest->poc = src->poc;
                 dest->pts = src->pts;
