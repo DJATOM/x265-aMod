@@ -54,6 +54,9 @@ namespace X265_NS {
 #ifdef HAVE_VPY
         x265_extra_readers += "VPY, ";
 #endif
+#ifdef HAVE_AVS
+        x265_extra_readers += "AVS, ";
+#endif
 
         H0("\nSyntax: x265 [options] infile [-o] outfile\n");
         H0("    infile can be %sYUV or Y4M\n", x265_extra_readers.c_str());
