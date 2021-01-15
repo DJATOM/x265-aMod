@@ -31,17 +31,19 @@
 #include <windows.h>
 #endif
 
-#include <vapoursynth\VSScript.h>
-#include <vapoursynth\VSHelper.h>
+#include <vapoursynth/VSScript.h>
+#include <vapoursynth/VSHelper.h>
 
 #include "input.h"
 
 #ifdef __unix__
+#include <unistd.h>
+#define Sleep(x) usleep(x)
 #include <dlfcn.h>
 #ifdef __MACH__
-#define vs_open() dlopen("libvapoursynth-script.dylib", RTLD_LAZY | RTLD_NOW)
+#define vs_open() dlopen("libvapoursynth-script.dylib", RTLD_GLOBAL | RTLD_LAZY | RTLD_NOW)
 #else
-#define vs_open() dlopen("libvapoursynth-script.so", RTLD_LAZY | RTLD_NOW)
+#define vs_open() dlopen("libvapoursynth-script.so", RTLD_GLOBAL | RTLD_LAZY | RTLD_NOW)
 #endif
 #define vs_close dlclose
 #define vs_address dlsym
