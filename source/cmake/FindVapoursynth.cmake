@@ -1,18 +1,22 @@
-include(FindPackageHandleStandardArgs)
+set(PACKAGE_CONFIG_TEXT "Vapoursynth include directory")
 
 if(WIN32)
-    GET_FILENAME_COMPONENT(VS_FOLDER "[HKEY_LOCAL_MACHINE\\SOFTWARE\\VapourSynth;Path]" ABSOLUTE CACHE)
-    SET(VS_INCLUDE_DIR "${VS_FOLDER}/sdk/include")
+    get_filename_component(VS_FOLDER "[HKEY_LOCAL_MACHINE\\SOFTWARE\\VapourSynth;Path]" ABSOLUTE)
+    if (NOT VS_FOLDER MATCHES "/registry") # registry stuff in CMake is pretty obscure
+        set(VPY_INCLUDE_DIR "${VS_FOLDER}/sdk/include" CACHE PATH "${PACKAGE_CONFIG_TEXT}")
+    endif()
 else()
-    find_path(VS_FOLDER NAMES vapoursynth PATHS usr PATH_SUFFIXES include)
+    find_path(VPY_INCLUDE_PREFIX NAMES vapoursynth PATHS usr PATH_SUFFIXES include)
+    if(VPY_INCLUDE_PREFIX)
+        set(VPY_INCLUDE_DIR "${VPY_INCLUDE_PREFIX}" CACHE PATH ${PACKAGE_CONFIG_TEXT})
+    endif()
 endif()
 
-if(VS_FOLDER)
-    SET(ENABLE_VAPOURSYNTH ON)
+if(VPY_INCLUDE_DIR)
+    set(Vapoursynth_FOUND 1)
+    message(STATUS "${PACKAGE_CONFIG_TEXT}: ${VPY_INCLUDE_DIR}")
 else()
-    SET(ENABLE_VAPOURSYNTH OFF)
+    set(Vapoursynth_FOUND 0)
+    set(VPY_INCLUDE_DIR "VPY_INCLUDE_DIR-NOTFOUND" CACHE PATH "${PACKAGE_CONFIG_TEXT}")
+    message(STATUS "${PACKAGE_CONFIG_TEXT} NOT found")
 endif()
-
-# Provide standardized success/failure messages
-find_package_handle_standard_args("Vapoursynth"
-    REQUIRED_VARS VS_INCLUDE_DIR ENABLE_VAPOURSYNTH)
