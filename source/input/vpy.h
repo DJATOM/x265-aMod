@@ -131,6 +131,8 @@ public:
 
     void startReader();
 
+    void stopReader() {};
+
     bool readPicture(x265_picture&);
 
     const char* getName() const { return "vpy"; }
