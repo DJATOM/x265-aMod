@@ -120,8 +120,6 @@ VPYInput::VPYInput(InputFileInfo& info) : nextFrame(0), vpyFailed(false)
     {
         general_log(nullptr, "vpy", X265_LOG_ERROR, "Can't evaluate script: %s\n", vss_func.getError(script));
         vpyFailed = true;
-        vss_func.freeScript(script);
-        vss_func.finalize();
         return;
     }
 
@@ -272,9 +270,6 @@ void VPYInput::stopReader()
 void VPYInput::release()
 {
     vpyCallbackData.isRunning = false;
-
-    if(frame0)
-        vsapi->freeFrame(frame0);
 
     if(node)
         vsapi->freeNode(node);
