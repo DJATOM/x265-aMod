@@ -110,6 +110,8 @@ void AVSInput::openfile(InputFileInfo& info)
     {
         FAIL_IF_ERROR(1, "Video colorspace is not supported\n");
     }
+    if (info.skipFrames)
+        h->next_frame = info.skipFrames;
 }
 
 bool AVSInput::readPicture(x265_picture& pic)
