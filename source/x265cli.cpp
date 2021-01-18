@@ -707,6 +707,7 @@ namespace X265_NS {
                 OPT("tune")    /* handled above */;
                 OPT("output-depth")   /* handled above */;
                 OPT("recon-y4m-exec") reconPlayCmd = optarg;
+                OPT("reader-options") this->readerOpts = optarg;
                 OPT("svt")    /* handled above */;
                 OPT("qpfile")
                 {
@@ -804,6 +805,8 @@ namespace X265_NS {
         info.frameCount = 0;
         getParamAspectRatio(param, info.sarWidth, info.sarHeight);
 
+        /* pass readerOpts to InputFileInfo in case certain reader wants it */
+        info.readerOpts = this->readerOpts;
 
         this->input = InputFile::open(info, this->bForceY4m);
         if (!this->input || this->input->isFail())
