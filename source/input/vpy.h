@@ -95,6 +95,7 @@ class VPYInput : public InputFile
 {
 protected:
     int nextFrame {0};
+    int nodeIndex {0};
     bool vpyFailed {false};
     size_t frame_size {0};
     uint8_t* frame_buffer {nullptr};
@@ -116,6 +117,7 @@ protected:
     func_t vs_address(const char* func) { return dlsym(vss_library, func); }
 #endif
     lib_path_t convertLibraryPath(std::string);
+    void parseVpyOptions(const char* _options);
     VSSFunc vss_func;
     const VSAPI* vsapi = nullptr;
     VSScript* script = nullptr;

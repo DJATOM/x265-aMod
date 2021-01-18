@@ -66,10 +66,55 @@ lib_path_t VPYInput::convertLibraryPath(std::string path)
 #endif
     }
 
+void VPYInput::parseVpyOptions(const char* _options)
 {
+    std::string options {_options}; options += ";";
+    std::string optSeparator {";"};
+    std::string valSeparator {"="};
+    std::map<std::string, int> knownOptions {
+        {std::string {"library"},  1},
+        {std::string {"output"},   2},
+        {std::string {"requests"}, 3}
+    };
+
+    auto start = 0U;
+    auto end = options.find(optSeparator);
+
+    while ((end = options.find(optSeparator, start)) != std::string::npos)
+    {
+        auto option = options.substr(start, end - start);
+        auto valuePos = option.find(valSeparator);
+        if (valuePos != std::string::npos)
+        {
+            auto key = option.substr(0U, valuePos);
+            auto value = option.substr(valuePos + 1, option.length());
+            switch (knownOptions[key])
+            {
+            case 1:
+                vss_library_path = convertLibraryPath(value);
+                general_log(nullptr, "vpy", X265_LOG_INFO, "using external VapourSynth library from %s\n", value.c_str());
+                break;
+            case 2:
+                nodeIndex = std::stoi(value);
+                break;
+            case 3:
+                vpyCallbackData.parallelRequests = std::stoi(value);
+                break;
+            }
+        }
+        else if (option.length() > 0)
+        {
+            general_log(nullptr, "vpy", X265_LOG_ERROR, "invalid option \"%s\" ignored\n", option.c_str());
+        }
+        start = end + optSeparator.length();
+        end = options.find(optSeparator, start);
+    }
+}
 
 VPYInput::VPYInput(InputFileInfo& info)
 {
+    if (info.readerOpts)
+        parseVpyOptions(info.readerOpts);
 
     vs_open();
     if (!vss_library)
@@ -130,11 +175,15 @@ VPYInput::VPYInput(InputFileInfo& info)
         vpyFailed = true;
         return;
     }
+    if (nodeIndex > 0)
+    {
+        general_log(nullptr, "vpy", X265_LOG_INFO, "output node changed to %d\n", nodeIndex);
+    }
 
-    node = vss_func.getOutput(script, 0);
+    node = vss_func.getOutput(script, nodeIndex);
     if (!node)
     {
-        general_log(nullptr, "vpy", X265_LOG_ERROR, "`%s' has no video data\n", info.filename);
+        general_log(nullptr, "vpy", X265_LOG_ERROR, "`%s' at output node %d has no video data\n", info.filename, nodeIndex);
         vpyFailed = true;
         return;
     }
@@ -151,7 +200,8 @@ VPYInput::VPYInput(InputFileInfo& info)
     info.width = vi->width;
     info.height = vi->height;
 
-    vpyCallbackData.parallelRequests = core_info->numThreads;
+    if (vpyCallbackData.parallelRequests == -1 || core_info->numThreads != vpyCallbackData.parallelRequests)
+        vpyCallbackData.parallelRequests = core_info->numThreads;
 
     char errbuf[256];
     frame0 = vsapi->getFrame(nextFrame, node, errbuf, sizeof(errbuf));
