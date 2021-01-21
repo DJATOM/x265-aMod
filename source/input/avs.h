@@ -2,6 +2,8 @@
 #define X265_AVS_H
 
 #include "input.h"
+#include <string>
+#include <map>
 #undef X86_64
 #if defined(__GNUC__) && __GNUC__ >= 8
 #pragma GCC diagnostic push
@@ -14,13 +16,17 @@
 
 #if _WIN32
 #include <windows.h>
-typedef HMODULE lib_t;
-typedef FARPROC func_t;
+#endif
+
+#if defined(_WIN32_WINNT)
+using lib_path_t = std::wstring;
+using lib_t = HMODULE;
+using func_t = FARPROC;
 #else
 #include <dlfcn.h>
-typedef void* lib_t;
-typedef void* func_t;
-#define __stdcall
+using lib_path_t = std::string;
+using lib_t = void*;
+using func_t = void*;
 #endif
 
 #define QUEUE_SIZE 5
@@ -81,20 +87,26 @@ protected:
     void info_avs();
     void openfile(InputFileInfo& info);
     #if _WIN32
-        void avs_open() { h->library = LoadLibraryW(L"avisynth"); }
+        lib_path_t avs_library_path {L"avisynth"};
+        void avs_open() { h->library = LoadLibraryW(avs_library_path.c_str()); }
         void avs_close() { FreeLibrary(h->library); h->library = nullptr; }
         func_t avs_address(LPCSTR func) { return GetProcAddress(h->library, func); }
     #else
-        void avs_open() { h->library = dlopen("libavisynth.so", RTLD_NOW); }
+        lib_path_t avs_library_path {"libavisynth.so"};
+        void avs_open() { h->library = dlopen(avs_library_path.c_str(), RTLD_NOW); }
         void avs_close() { dlclose(h->library); h->library = nullptr; }
         func_t avs_address(const char * func) { return dlsym(h->library, func); }
     #endif
+    lib_path_t convertLibraryPath(std::string);
+    void parseAvsOptions(const char* _options);
 
 public:
     AVSInput(InputFileInfo& info)
     {
         h = &handle;
         memset(h, 0, sizeof(handle));
+        if (info.readerOpts)
+            parseAvsOptions(info.readerOpts);
         load_avs();
         info_avs();
         if (!h->library)

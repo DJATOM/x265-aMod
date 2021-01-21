@@ -32,6 +32,56 @@ if( cond )\
 
 using namespace X265_NS;
 
+
+lib_path_t AVSInput::convertLibraryPath(std::string path)
+    {
+#if defined(_WIN32_WINNT)
+        int size_needed = MultiByteToWideChar(CP_UTF8, 0, &path[0], (int)path.size(), NULL, 0);
+        std::wstring wstrTo( size_needed, 0 );
+        MultiByteToWideChar(CP_UTF8, 0, &path[0], (int)path.size(), &wstrTo[0], size_needed);
+        return wstrTo;
+#else
+        return path;
+#endif
+    }
+
+void AVSInput::parseAvsOptions(const char* _options)
+{
+    std::string options {_options}; options += ";";
+    std::string optSeparator {";"};
+    std::string valSeparator {"="};
+    std::map<std::string, int> knownOptions {
+        {std::string {"library"}, 1}
+    };
+
+    auto start = 0U;
+    auto end = options.find(optSeparator);
+
+    while ((end = options.find(optSeparator, start)) != std::string::npos)
+    {
+        auto option = options.substr(start, end - start);
+        auto valuePos = option.find(valSeparator);
+        if (valuePos != std::string::npos)
+        {
+            auto key = option.substr(0U, valuePos);
+            auto value = option.substr(valuePos + 1, option.length());
+            switch (knownOptions[key])
+            {
+            case 1:
+                avs_library_path = convertLibraryPath(value);
+                general_log(nullptr, "avs+", X265_LOG_INFO, "using external Avisynth library from %s\n", value.c_str());
+                break;
+            }
+        }
+        else if (option.length() > 0)
+        {
+            general_log(nullptr, "avs+", X265_LOG_ERROR, "invalid option \"%s\" ignored\n", option.c_str());
+        }
+        start = end + optSeparator.length();
+        end = options.find(optSeparator, start);
+    }
+}
+
 void AVSInput::load_avs()
 {
     avs_open();
