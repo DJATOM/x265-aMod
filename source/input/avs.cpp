@@ -34,16 +34,16 @@ using namespace X265_NS;
 
 
 lib_path_t AVSInput::convertLibraryPath(std::string path)
-    {
+{
 #if defined(_WIN32_WINNT)
-        int size_needed = MultiByteToWideChar(CP_UTF8, 0, &path[0], (int)path.size(), NULL, 0);
-        std::wstring wstrTo( size_needed, 0 );
-        MultiByteToWideChar(CP_UTF8, 0, &path[0], (int)path.size(), &wstrTo[0], size_needed);
-        return wstrTo;
+    int size_needed = MultiByteToWideChar(CP_UTF8, 0, &path[0], (int)path.size(), NULL, 0);
+    std::wstring wstrTo( size_needed, 0 );
+    MultiByteToWideChar(CP_UTF8, 0, &path[0], (int)path.size(), &wstrTo[0], size_needed);
+    return wstrTo;
 #else
-        return path;
+    return path;
 #endif
-    }
+}
 
 void AVSInput::parseAvsOptions(const char* _options)
 {

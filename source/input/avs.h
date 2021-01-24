@@ -27,6 +27,7 @@ using func_t = FARPROC;
 using lib_path_t = std::string;
 using lib_t = void*;
 using func_t = void*;
+#define __stdcall
 #endif
 
 #define QUEUE_SIZE 5
