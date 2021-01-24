@@ -44,19 +44,14 @@
 #include <unistd.h>
 #include <dlfcn.h>
 #define Sleep(x) usleep(x)
+#define __stdcall
 #endif
 
-struct VSFDCallbackData {
-    const VSAPI* vsapi = nullptr;
-    std::unordered_map<int, const VSFrameRef*> reorderMap;
-    int parallelRequests {-1};
-    std::atomic<int> outputFrames {-1};
-    std::atomic<int> requestedFrames {-1};
-    std::atomic<int> completedFrames {-1};
-    int framesToRequest {-1};
-    int startFrame {-1};
-    std::atomic<bool> isRunning {false};
-};
+#if defined(_WIN32) || defined(_WIN64)
+#define CloseEvent CloseHandle
+#else
+#include "event.h"
+#endif
 
 namespace X265_NS {
 // x265 private namespace
@@ -94,9 +89,16 @@ using func_t = void*;
 class VPYInput : public InputFile
 {
 protected:
+    std::unordered_map<int, std::pair<HANDLE, const VSFrameRef*>> frameMap;
+    int parallelRequests {-1};
+    std::atomic<int> requestedFrames {-1};
+    std::atomic<int> completedFrames {-1};
+    int framesToRequest {-1};
+    std::atomic<bool> isRunning {false};
     int nextFrame {0};
     int nodeIndex {0};
     bool vpyFailed {false};
+    char frameError[512];
     size_t frame_size {0};
     uint8_t* frame_buffer {nullptr};
     InputFileInfo _info;
@@ -118,16 +120,16 @@ protected:
 #endif
     lib_path_t convertLibraryPath(std::string);
     void parseVpyOptions(const char* _options);
+    const VSFrameRef* getAsyncFrame(int n);
     VSSFunc vss_func;
     const VSAPI* vsapi = nullptr;
     VSScript* script = nullptr;
     VSNodeRef* node = nullptr;
-    const VSFrameRef* frame0 = nullptr;
-    VSFDCallbackData vpyCallbackData;
 
 public:
     VPYInput(InputFileInfo& info);
     ~VPYInput() {};
+    void setAsyncFrame(int n, const VSFrameRef* f, const char* errorMsg);
     void release();
     bool isEof() const { return nextFrame >= _info.frameCount; }
     bool isFail() { return vpyFailed; }

@@ -24,35 +24,43 @@
 #include "vpy.h"
 #include "common.h"
 
-static void frameDoneCallback(void* userData, const VSFrameRef* f, const int n, VSNodeRef* node, const char*)
+using namespace X265_NS;
+
+void __stdcall frameDoneCallback(void* userData, const VSFrameRef* f, const int n, VSNodeRef*, const char* errorMsg)
 {
-    VSFDCallbackData* vpyCallbackData = static_cast<VSFDCallbackData*>(userData);
-
-    ++vpyCallbackData->completedFrames;
-
-    if(f)
-    {
-        vpyCallbackData->reorderMap[n] = f;
-
-        size_t retries = 0;
-        while((vpyCallbackData->completedFrames - vpyCallbackData->outputFrames) > vpyCallbackData->parallelRequests) // wait until x265 asks more frames
-        {
-            Sleep(15);
-            if(retries > vpyCallbackData->parallelRequests * 1.5) // we don't want to wait for eternity
-                break;
-            retries++;
-        }
-
-        if(vpyCallbackData->requestedFrames < vpyCallbackData->framesToRequest && vpyCallbackData->isRunning) // don't ask for new frames if user cancelled execution
-        {
-            //x265::general_log(nullptr, "vpy", X265_LOG_FULL, "Callback: retries: %d, current frame: %d, requested: %d, completed: %d, output: %d  \n", retries, n, vpyCallbackData->requestedFrames.load(), vpyCallbackData->completedFrames.load(), vpyCallbackData->outputFrames.load());
-            vpyCallbackData->vsapi->getFrameAsync(vpyCallbackData->requestedFrames, node, frameDoneCallback, vpyCallbackData);
-            ++vpyCallbackData->requestedFrames;
-        }
-    }
+    reinterpret_cast<VPYInput*>(userData)->setAsyncFrame(n, f, errorMsg);
 }
 
-using namespace X265_NS;
+void VPYInput::setAsyncFrame(int n, const VSFrameRef* f, const char* errorMsg)
+{
+    if (errorMsg) {
+        sprintf(frameError, "%s\n", errorMsg);
+        vpyFailed = true;
+    }
+
+    if (f) {
+        ++completedFrames;
+        frameMap[n].second = f;
+    }
+
+    SetEvent(frameMap[n].first);
+}
+
+const VSFrameRef* VPYInput::getAsyncFrame(int n)
+{
+    WaitForSingleObject(frameMap[n].first, INFINITE);
+    const VSFrameRef *frame = frameMap[n].second;
+    CloseEvent(frameMap[n].first);
+    frameMap.erase(n);
+
+    if (requestedFrames < framesToRequest && isRunning)
+    {
+        vsapi->getFrameAsync(requestedFrames, node, frameDoneCallback, this);
+        ++requestedFrames;
+    }
+
+    return frame;
+}
 
 lib_path_t VPYInput::convertLibraryPath(std::string path)
     {
@@ -98,7 +106,7 @@ void VPYInput::parseVpyOptions(const char* _options)
                 nodeIndex = std::stoi(value);
                 break;
             case 3:
-                vpyCallbackData.parallelRequests = std::stoi(value);
+                parallelRequests = std::stoi(value);
                 break;
             }
         }
@@ -128,10 +136,8 @@ VPYInput::VPYInput(InputFileInfo& info)
         nextFrame = info.skipFrames;
     }
 
-    vpyCallbackData.outputFrames = nextFrame;
-    vpyCallbackData.requestedFrames = nextFrame;
-    vpyCallbackData.completedFrames = nextFrame;
-    vpyCallbackData.startFrame = nextFrame;
+    requestedFrames = nextFrame;
+    completedFrames = nextFrame;
 
     #if defined(__GNUC__) && __GNUC__ >= 8
     #pragma GCC diagnostic push
@@ -168,7 +174,7 @@ VPYInput::VPYInput(InputFileInfo& info)
         return;
     }
 
-    vpyCallbackData.vsapi = vsapi = vss_func.getVSApi2(VAPOURSYNTH_API_VERSION);
+    vsapi = vss_func.getVSApi2(VAPOURSYNTH_API_VERSION);
     if (vss_func.evaluateFile(&script, info.filename, efSetWorkingDir))
     {
         general_log(nullptr, "vpy", X265_LOG_ERROR, "can't evaluate script: %s\n", vss_func.getError(script));
@@ -200,20 +206,17 @@ VPYInput::VPYInput(InputFileInfo& info)
     info.width = vi->width;
     info.height = vi->height;
 
-    if (vpyCallbackData.parallelRequests == -1 || core_info->numThreads != vpyCallbackData.parallelRequests)
-        vpyCallbackData.parallelRequests = core_info->numThreads;
+    if (parallelRequests == -1 || core_info->numThreads < parallelRequests)
+        parallelRequests = core_info->numThreads;
 
     char errbuf[256];
-    frame0 = vsapi->getFrame(nextFrame, node, errbuf, sizeof(errbuf));
+    const VSFrameRef* frame0 = vsapi->getFrame(nextFrame, node, errbuf, sizeof(errbuf));
     if (!frame0)
     {
         general_log(nullptr, "vpy", X265_LOG_ERROR, "%s occurred while getting frame 0\n", errbuf);
         vpyFailed = true;
         return;
     }
-
-    vpyCallbackData.reorderMap[nextFrame] = frame0;
-    ++vpyCallbackData.completedFrames;
 
     const VSMap* frameProps0 = vsapi->getFramePropsRO(frame0);
 
@@ -250,12 +253,12 @@ VPYInput::VPYInput(InputFileInfo& info)
         info.fpsDenom = vi->fpsDen;
     }
 
-    info.frameCount = vpyCallbackData.framesToRequest = vi->numFrames;
+    info.frameCount = framesToRequest = vi->numFrames;
     info.depth = vi->format->bitsPerSample;
 
     if (info.encodeToFrame)
     {
-        vpyCallbackData.framesToRequest = info.encodeToFrame + nextFrame;
+        framesToRequest = info.encodeToFrame + nextFrame;
     }
 
     if (vi->format->bitsPerSample >= 8 && vi->format->bitsPerSample <= 16)
@@ -283,48 +286,71 @@ VPYInput::VPYInput(InputFileInfo& info)
         return;
     }
 
-    vpyCallbackData.isRunning = true;
+    vsapi->freeFrame(frame0); // probably a waste of resources, but who cares. I'd like to fire and forget that here rather than leave possible duoble deletion
+
+    isRunning = true;
 
     _info = info;
 }
 
 void VPYInput::startReader()
 {
-    general_log(nullptr, "vpy", X265_LOG_INFO, "using %d parallel requests\n", vpyCallbackData.parallelRequests);
+    general_log(nullptr, "vpy", X265_LOG_INFO, "using %d parallel requests\n", parallelRequests);
 
-    const int requestStart = vpyCallbackData.completedFrames;
-    const int intitalRequestSize = std::min<int>(vpyCallbackData.parallelRequests, _info.frameCount - requestStart);
-    vpyCallbackData.requestedFrames = requestStart + intitalRequestSize;
+    for (int i = nextFrame; i <= framesToRequest; i++)
+    {
+        if (NULL == (frameMap[i].first = CreateEvent(NULL, false, false, NULL)))
+        {
+            general_log(nullptr, "vpy", X265_LOG_ERROR, "failed to create async event for frame %d\n", i);
+            vpyFailed = true;
+            isRunning = false;
+            return;
+        }
+    }
+
+    const int requestStart = completedFrames;
+    const int intitalRequestSize = std::min<int>(parallelRequests, _info.frameCount - requestStart);
+    requestedFrames = requestStart + intitalRequestSize;
 
     for (int n = requestStart; n < requestStart + intitalRequestSize; n++)
-        vsapi->getFrameAsync(n, node, frameDoneCallback, &vpyCallbackData);
+        vsapi->getFrameAsync(n, node, frameDoneCallback, this);
+
 }
 
 void VPYInput::stopReader()
 {
-    vpyCallbackData.isRunning = false;
+    isRunning = false;
 
-    while (vpyCallbackData.requestedFrames != vpyCallbackData.completedFrames)
+    while (requestedFrames != completedFrames)
     {
-        general_log(nullptr, "vpy", X265_LOG_INFO, "waiting completion of %d requested frames...    \r", vpyCallbackData.requestedFrames.load() - vpyCallbackData.completedFrames.load());
+        general_log(nullptr, "vpy", X265_LOG_INFO, "waiting completion of %d requested frames...    \r", requestedFrames.load() - completedFrames.load());
         Sleep(400);
     }
 
-    for (int frame = nextFrame; frame < vpyCallbackData.completedFrames; frame++)
+    for (auto &iter : frameMap)
     {
-        const VSFrameRef* currentFrame = nullptr;
-        currentFrame = vpyCallbackData.reorderMap[frame];
-        vpyCallbackData.reorderMap.erase(frame);
-        if (currentFrame)
-        {
-            vsapi->freeFrame(currentFrame);
-        }
+        if (iter.second.second != nullptr)
+            vsapi->freeFrame(iter.second.second);
     }
 }
 
 void VPYInput::release()
 {
-    vpyCallbackData.isRunning = false;
+    isRunning = false;
+
+    if (vpyFailed)
+        for (auto &iter : frameMap)
+        {
+            if (iter.second.second != nullptr)
+                vsapi->freeFrame(iter.second.second);
+        }
+
+    for (int i = 0; i < framesToRequest; i++)
+    {
+        if (frameMap.count(i)>0)
+            if(frameMap[i].first)
+                CloseEvent(frameMap[i].first);
+    }
 
     if (node)
         vsapi->freeNode(node);
@@ -346,22 +372,18 @@ bool VPYInput::readPicture(x265_picture& pic)
 {
     const VSFrameRef* currentFrame = nullptr;
 
-    if (nextFrame >= _info.frameCount || !vpyCallbackData.isRunning)
+    if (nextFrame >= _info.frameCount || !isRunning)
         return false;
 
-    while (!!!vpyCallbackData.reorderMap[nextFrame])
-    {
-        Sleep(10); // wait for completition a bit
-    }
-
-    currentFrame = vpyCallbackData.reorderMap[nextFrame];
-    vpyCallbackData.reorderMap.erase(nextFrame);
-    ++vpyCallbackData.outputFrames;
+    currentFrame = getAsyncFrame(nextFrame);
 
     if (!currentFrame)
     {
-        general_log(nullptr, "vpy", X265_LOG_ERROR, "error occurred while reading frame %d\n", nextFrame);
+        fprintf(stderr, "%*s\r", 130, " "); // make it more readable
+        general_log(nullptr, "vpy", X265_LOG_ERROR, "error occurred while reading frame %d - %s", nextFrame, frameError);
+        framesToRequest = nextFrame;
         vpyFailed = true;
+        return false;
     }
 
     pic.width = _info.width;
