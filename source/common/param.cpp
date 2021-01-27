@@ -208,7 +208,7 @@ void x265_param_default(x265_param* param)
     param->subpelRefine = 2;
     param->searchRange = 57;
     param->maxNumMergeCand = 3;
-    param->limitReferences = 1;
+    param->limitReferences = 3;
     param->limitModes = 0;
     param->bEnableWeightedPred = 1;
     param->bEnableWeightedBiPred = 0;
@@ -479,7 +479,6 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
         {
             param->mcstfFrameRange = 1;
             param->maxNumMergeCand = 2;
-            param->limitReferences = 3;
             param->bIntraInBFrames = 0;
             param->lookaheadDepth = 15;
             param->bFrameAdaptive = 0;
@@ -493,7 +492,6 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
         {
             param->mcstfFrameRange = 1;
             param->maxNumMergeCand = 2;
-            param->limitReferences = 3;
             param->bIntraInBFrames = 0;
             param->lookaheadDepth = 15;
             param->bFrameAdaptive = 0;
@@ -505,7 +503,6 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
         {
             param->mcstfFrameRange = 1;
             param->maxNumMergeCand = 2;
-            param->limitReferences = 3;
             param->bEnableEarlySkip = 0;
             param->bIntraInBFrames = 0;
             param->lookaheadDepth = 15;
@@ -521,7 +518,6 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
         }
         else if (!strcmp(preset, "slow"))
         {
-            param->limitReferences = 3;
             param->bEnableEarlySkip = 0;
             param->bIntraInBFrames = 0;
             param->bEnableRectInter = 1;
@@ -553,6 +549,7 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
             param->searchMethod = X265_STAR_SEARCH;
             param->maxNumReferences = 5;
             param->limitModes = 1;
+            param->limitReferences = 1;
             param->lookaheadSlices = 0; // disabled for best quality
             param->limitTU = 4;
         }
