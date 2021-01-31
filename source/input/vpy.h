@@ -24,6 +24,12 @@
 #ifndef X265_VPY_H
 #define X265_VPY_H
 
+#ifdef X86_64
+#define VPY_64 1
+#else
+#define VPY_64 0
+#endif
+
 #include <unordered_map>
 #include <atomic>
 #include <string>

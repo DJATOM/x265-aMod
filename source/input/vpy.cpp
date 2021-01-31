@@ -145,14 +145,14 @@ VPYInput::VPYInput(InputFileInfo& info)
     #endif
 
     std::array<std::pair<void **, const char*>, 8> vss_func_list {{
-        { reinterpret_cast<void **>(&vss_func.init),         (X86_64) ? "vsscript_init"         : "_vsscript_init@0"          },
-        { reinterpret_cast<void **>(&vss_func.finalize),     (X86_64) ? "vsscript_finalize"     : "_vsscript_finalize@0"      },
-        { reinterpret_cast<void **>(&vss_func.evaluateFile), (X86_64) ? "vsscript_evaluateFile" : "_vsscript_evaluateFile@12" },
-        { reinterpret_cast<void **>(&vss_func.freeScript),   (X86_64) ? "vsscript_freeScript"   : "_vsscript_freeScript@4"    },
-        { reinterpret_cast<void **>(&vss_func.getError),     (X86_64) ? "vsscript_getError"     : "_vsscript_getError@4"      },
-        { reinterpret_cast<void **>(&vss_func.getOutput),    (X86_64) ? "vsscript_getOutput"    : "_vsscript_getOutput@8"     },
-        { reinterpret_cast<void **>(&vss_func.getCore),      (X86_64) ? "vsscript_getCore"      : "_vsscript_getCore@4"       },
-        { reinterpret_cast<void **>(&vss_func.getVSApi2),    (X86_64) ? "vsscript_getVSApi2"    : "_vsscript_getVSApi2@4"     }
+        { reinterpret_cast<void **>(&vss_func.init),         (VPY_64) ? "vsscript_init"         : "_vsscript_init@0"          },
+        { reinterpret_cast<void **>(&vss_func.finalize),     (VPY_64) ? "vsscript_finalize"     : "_vsscript_finalize@0"      },
+        { reinterpret_cast<void **>(&vss_func.evaluateFile), (VPY_64) ? "vsscript_evaluateFile" : "_vsscript_evaluateFile@12" },
+        { reinterpret_cast<void **>(&vss_func.freeScript),   (VPY_64) ? "vsscript_freeScript"   : "_vsscript_freeScript@4"    },
+        { reinterpret_cast<void **>(&vss_func.getError),     (VPY_64) ? "vsscript_getError"     : "_vsscript_getError@4"      },
+        { reinterpret_cast<void **>(&vss_func.getOutput),    (VPY_64) ? "vsscript_getOutput"    : "_vsscript_getOutput@8"     },
+        { reinterpret_cast<void **>(&vss_func.getCore),      (VPY_64) ? "vsscript_getCore"      : "_vsscript_getCore@4"       },
+        { reinterpret_cast<void **>(&vss_func.getVSApi2),    (VPY_64) ? "vsscript_getVSApi2"    : "_vsscript_getVSApi2@4"     }
     }};
 
     for (auto& vsscriptf : vss_func_list) {
