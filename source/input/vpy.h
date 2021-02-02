@@ -103,6 +103,7 @@ protected:
     std::atomic<bool> isRunning {false};
     int nextFrame {0};
     int nodeIndex {0};
+    bool useScriptSar {false};
     bool vpyFailed {false};
     char frameError[512];
     size_t frame_size {0};

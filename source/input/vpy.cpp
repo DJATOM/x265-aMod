@@ -80,9 +80,10 @@ void VPYInput::parseVpyOptions(const char* _options)
     std::string optSeparator {";"};
     std::string valSeparator {"="};
     std::map<std::string, int> knownOptions {
-        {std::string {"library"},  1},
-        {std::string {"output"},   2},
-        {std::string {"requests"}, 3}
+        {std::string {"library"},        1},
+        {std::string {"output"},         2},
+        {std::string {"requests"},       3},
+        {std::string {"use-script-sar"}, 4}
     };
 
     auto start = 0U;
@@ -107,6 +108,9 @@ void VPYInput::parseVpyOptions(const char* _options)
                 break;
             case 3:
                 parallelRequests = std::stoi(value);
+                break;
+            case 4:
+                useScriptSar = static_cast<bool>(std::stoi(value));
                 break;
             }
         }
@@ -220,8 +224,9 @@ VPYInput::VPYInput(InputFileInfo& info)
 
     const VSMap* frameProps0 = vsapi->getFramePropsRO(frame0);
 
-    info.sarWidth = vsapi->propNumElements(frameProps0, "_SARNum") > 0 ? vsapi->propGetInt(frameProps0, "_SARNum", 0, nullptr) : 0;
-    info.sarHeight =vsapi->propNumElements(frameProps0, "_SARDen") > 0 ? vsapi->propGetInt(frameProps0, "_SARDen", 0, nullptr) : 0;
+    info.sarWidth  = vsapi->propNumElements(frameProps0, "_SARNum") > 0 && useScriptSar ? vsapi->propGetInt(frameProps0, "_SARNum", 0, nullptr) : 0;
+    info.sarHeight = vsapi->propNumElements(frameProps0, "_SARDen") > 0 && useScriptSar ? vsapi->propGetInt(frameProps0, "_SARDen", 0, nullptr) : 0;
+
     if (vi->fpsNum == 0 && vi->fpsDen == 0) // VFR detection
     {
         int errDurNum, errDurDen;
