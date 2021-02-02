@@ -98,6 +98,18 @@ namespace X265_NS {
         H0("   --[no-]field                  Enable or disable field coding. Default %s\n", OPT(param->bField));
         H1("   --dither                      Enable dither if downscaling to 8 bit pixels. Default disabled\n");
         H0("   --[no-]copy-pic               Copy buffers of input picture in frame. Default %s\n", OPT(param->bCopyPicToFrame));
+        H0("   --reader-options              Pass reader-specific options to input file reader\n");
+#ifdef HAVE_AVS
+        H0("\nAvisynth reader options:\n");
+        H0("     library                     Use custom Avisynth library (full path to Avisynth library is required)\n");
+#endif
+#ifdef HAVE_VPY
+        H0("\nVapoursynth reader options:\n");
+        H0("     library                     Use custom Vapoursynth library (full path to VSScript library is required)\n");
+        H0("     output                      Select arbitrary video node. Node 0 is selected by default\n");
+        H0("     requests                    Override async requests (derived from Vapoursynth threads by default)\n");
+        H0("     use-script-sar              Use script's reported SAR. Default 0:0\n");
+#endif
         H0("\nQuality reporting metrics:\n");
         H0("   --[no-]ssim                   Enable reporting SSIM metric scores. Default %s\n", OPT(param->bEnableSsim));
         H0("   --[no-]psnr                   Enable reporting PSNR metric scores. Default %s\n", OPT(param->bEnablePsnr));
