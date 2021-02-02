@@ -79,6 +79,7 @@ static const struct option long_options[] =
     { "cu-stats",             no_argument, NULL, 0 },
     { "y4m",                  no_argument, NULL, 0 },
     { "no-progress",          no_argument, NULL, 0 },
+    { "progress-readframes",  no_argument, NULL, 0 },
     { "output",         required_argument, NULL, 'o' },
     { "output-depth",   required_argument, NULL, 'D' },
     { "input",          required_argument, NULL, 0 },
@@ -407,6 +408,7 @@ static const struct option long_options[] =
         int64_t startTime;
         int64_t prevUpdateTime;
         const char* readerOpts;
+        bool bReadFrames;
 
         int argCnt;
         char** argString;
@@ -454,6 +456,7 @@ static const struct option long_options[] =
             numRefs = 0;
             argCnt = 0;
             readerOpts = NULL;
+            bReadFrames = false;
         }
 
         void destroy();

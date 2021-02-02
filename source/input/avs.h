@@ -139,6 +139,8 @@ public:
     int getWidth() const                          { return _info.width; }
 
     int getHeight() const                         { return _info.height; }
+
+    int outputFrame()                             { return h->next_frame; }
 };
 }
 

@@ -145,6 +145,7 @@ public:
     const char* getName() const { return "vpy"; }
     int getWidth() const { return _info.width; }
     int getHeight() const { return _info.height; }
+    int outputFrame() { return nextFrame; }
 };
 }
 
