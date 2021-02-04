@@ -249,6 +249,7 @@ static const struct option long_options[] =
     { "crop-rect",      required_argument, NULL, 0 }, /* DEPRECATED */
     { "master-display", required_argument, NULL, 0 },
     { "max-cll",        required_argument, NULL, 0 },
+    {"video-signal-type-preset", required_argument, NULL, 0 },
     { "min-luma",       required_argument, NULL, 0 },
     { "max-luma",       required_argument, NULL, 0 },
     { "log2-max-poc-lsb", required_argument, NULL, 8 },

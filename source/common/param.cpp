@@ -318,6 +318,7 @@ void x265_param_default(x265_param* param)
     param->maxLuma = PIXEL_MAX;
     param->log2MaxPocLsb = 8;
     param->maxSlices = 1;
+    param->videoSignalTypePreset = NULL;
 
     /*Conformance window*/
     param->confWinRightOffset = 0;
@@ -1381,6 +1382,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         OPT("vbv-live-multi-pass") p->bliveVBV2pass = atobool(value);
         OPT("min-vbv-fullness") p->minVbvFullness = atof(value);
         OPT("max-vbv-fullness") p->maxVbvFullness = atof(value);
+        OPT("video-signal-type-preset") p->videoSignalTypePreset = strdup(value);
         else
             return X265_PARAM_BAD_NAME;
     }
@@ -2015,6 +2017,8 @@ char *x265_param2string(x265_param* p, int padx, int pady)
         bufSize += strlen(p->numaPools);
     if (p->masteringDisplayColorVolume)
         bufSize += strlen(p->masteringDisplayColorVolume);
+    if (p->videoSignalTypePreset)
+        bufSize += strlen(p->videoSignalTypePreset);
 
     buf = s = X265_MALLOC(char, bufSize);
     if (!buf)
@@ -2616,6 +2620,9 @@ void x265_copy_params(x265_param* dst, x265_param* src)
     dst->confWinRightOffset = src->confWinRightOffset;
     dst->confWinBottomOffset = src->confWinBottomOffset;
     dst->bliveVBV2pass = src->bliveVBV2pass;
+
+    if (src->videoSignalTypePreset) dst->videoSignalTypePreset = strdup(src->videoSignalTypePreset);
+    else dst->videoSignalTypePreset = NULL;
 #ifdef SVT_HEVC
     memcpy(dst->svtHevcParam, src->svtHevcParam, sizeof(EB_H265_ENC_CONFIGURATION));
 #endif

@@ -1932,6 +1932,13 @@ typedef struct x265_param
     /* Maximum VBV fullness to be maintained. Default 80. Keep the buffer
     * at max 80% full */
     double   maxVbvFullness;
+
+    /* Specify combinations of color primaries, transfer characteristics, color matrix,
+     * range of luma and chroma signals, and chroma sample location. This has higher 
+     * precedence than individual VUI parameters. If any individual VUI option is specified 
+     * together with this, which changes the values set corresponding to the system-id 
+     * or color-volume, it will be discarded. */
+    const char* videoSignalTypePreset;
 } x265_param;
 
 /* x265_param_alloc:

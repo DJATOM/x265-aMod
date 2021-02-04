@@ -387,6 +387,8 @@ public:
 
     void configureDolbyVisionParams(x265_param* p);
 
+    void configureVideoSignalTypePreset(x265_param* p);
+
 protected:
 
     void initVPS(VPS *vps);
