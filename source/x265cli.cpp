@@ -127,9 +127,8 @@ namespace X265_NS {
         H0("   --[no-]ssim-rd                Enable ssim rate distortion optimization, 0 to disable. Default %s\n", OPT(param->bSsimRd));
         H0("   --[no-]rd-refine              Enable QP based RD refinement for rd levels 5 and 6. Default %s\n", OPT(param->bEnableRdRefine));
         H0("   --[no-]early-skip             Enable early SKIP detection. Default %s\n", OPT(param->bEnableEarlySkip));
-        H0("   --rskip <mode>                Set mode for early exit from recursion. Mode 1: exit using rdcost & CU homogenity. Mode 2: exit using CU edge density.\n"
-            "                                 Mode 0: disabled. Default %d\n", param->recursionSkipMode);
-        H1("   --rskip-edge-threshold        Threshold in terms of percentage (integer of range [0,100]) for minimum edge density in CUs used to prun the recursion depth. Applicable only for rskip mode 2. Value is preset dependent. Default: %.f\n", param->edgeVarThreshold*100.0f);
+        H0("   --rskip <Integer>             Enable recursion skip for early exit from CTU analysis during inter prediction. 1: exit using RD cost & CU homogeneity. 2: exit using CU edge density. 0: disabled. Default %d\n", param->recursionSkipMode);
+        H1("   --rskip-edge-threshold        Threshold in terms of percentage (an integer of range [0,100]) for minimum edge density in CU's used to prune the recursion depth. Applicable only to rskip mode 2. Value is preset dependent. Default: %.f\n", param->edgeVarThreshold*100.0f);
         H1("   --[no-]tskip-fast             Enable fast intra transform skipping. Default %s\n", OPT(param->bEnableTSkipFast));
         H1("   --[no-]splitrd-skip           Enable skipping split RD analysis when sum of split CU rdCost larger than one split CU rdCost for Intra CU. Default %s\n", OPT(param->bEnableSplitRdSkip));
         H1("   --nr-intra <integer>          An integer value in range of 0 to 2000, which denotes strength of noise reduction in intra CUs. Default 0\n");
@@ -177,10 +176,12 @@ namespace X265_NS {
         H0("   --no-hist-scenecut            Disables histogram based scene-cut detection using histogram based algorithm.\n");
         H1("   --hist-threshold <0.0..1.0>   Luma Edge histogram's Normalized SAD threshold for histogram based scenecut detection Default %.2f\n", param->edgeTransitionThreshold);
         H0("   --[no-]fades                  Enable detection and handling of fade-in regions. Default %s\n", OPT(param->bEnableFades));
-        H1("   --[no-]scenecut-aware-qp      Enable increasing QP for frames inside the scenecut window after scenecut. Default %s\n", OPT(param->bEnableSceneCutAwareQp));
-        H1("   --scenecut-window <0..1000>   QP incremental duration(in milliseconds) when scenecut-aware-qp is enabled. Default %d\n", param->scenecutWindow);
-        H1("   --qp-delta-ref <0..10>        QP offset to increment with base QP for inter-frames. Default %f\n", param->refQpDelta);
-        H1("   --qp-delta-nonref <0..10>     QP offset to increment with base QP for non-referenced inter-frames. Default %f\n", param->nonRefQpDelta);
+        H1("   --scenecut-aware-qp <0..3>    Enable increasing QP for frames inside the scenecut window around scenecut. Default %s\n", OPT(param->bEnableSceneCutAwareQp));
+        H1("                                 0 - Disabled\n");
+        H1("                                 1 - Forward masking\n");
+        H1("                                 2 - Backward masking\n");
+        H1("                                 3 - Bidirectional masking\n");
+        H1("   --masking-strength <string>   Comma separated values which specify the duration and offset for the QP increment for inter-frames when scenecut-aware-qp is enabled.\n");
         H0("   --radl <integer>              Number of RADL pictures allowed in front of IDR. Default %d\n", param->radl);
         H0("   --intra-refresh               Use Periodic Intra Refresh instead of IDR frames\n");
         H0("   --rc-lookahead <integer>      Number of frames for frame-type lookahead (determines encoder latency) Default %d\n", param->lookaheadDepth);

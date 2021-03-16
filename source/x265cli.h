@@ -33,11 +33,9 @@
 
 #include <getopt.h>
 
-#define CONSOLE_TITLE_SIZE 200
 #ifdef _WIN32
 #include <windows.h>
 #define SetThreadExecutionState(es)
-static char orgConsoleTitle[CONSOLE_TITLE_SIZE] = "";
 #else
 #define GetConsoleTitle(t, n)
 #define SetConsoleTitle(t)
@@ -148,11 +146,8 @@ static const struct option long_options[] =
     { "hist-threshold", required_argument, NULL, 0},
     { "fades",                no_argument, NULL, 0 },
     { "no-fades",             no_argument, NULL, 0 },
-    { "scenecut-aware-qp",    no_argument, NULL, 0 },
-    { "no-scenecut-aware-qp", no_argument, NULL, 0 },
-    { "scenecut-window",required_argument, NULL, 0 },
-    { "qp-delta-ref",   required_argument, NULL, 0 },
-    { "qp-delta-nonref",required_argument, NULL, 0 },
+    { "scenecut-aware-qp", required_argument, NULL, 0 },
+    { "masking-strength",  required_argument, NULL, 0 },
     { "radl",           required_argument, NULL, 0 },
     { "ctu-info",       required_argument, NULL, 0 },
     { "intra-refresh",        no_argument, NULL, 0 },

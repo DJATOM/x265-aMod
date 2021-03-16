@@ -47,9 +47,9 @@ struct SPS;
 #define CLIP_DURATION(f) x265_clip3(MIN_FRAME_DURATION, MAX_FRAME_DURATION, f)
 
 /*Scenecut Aware QP*/
-#define WINDOW1_DELTA           0   /* The offset for the frames coming in the window-1*/
-#define WINDOW2_DELTA           0.3 /* The offset for the frames coming in the window-2*/
-#define WINDOW3_DELTA           0.6 /* The offset for the frames coming in the window-3*/
+#define WINDOW1_DELTA           1.0 /* The offset for the frames coming in the window-1*/
+#define WINDOW2_DELTA           0.7 /* The offset for the frames coming in the window-2*/
+#define WINDOW3_DELTA           0.4 /* The offset for the frames coming in the window-3*/
 
 struct Predictor
 {
@@ -164,6 +164,8 @@ public:
     double m_avgPFrameQp;
     double m_bufferFillActual;
     double m_bufferExcess;
+    double m_minBufferFill;
+    double m_maxBufferFill;
     bool   m_isFirstMiniGop;
     Predictor m_pred[4];       /* Slice predictors to preidct bits for each Slice type - I,P,Bref and B */
     int64_t m_leadingNoBSatd;
@@ -269,7 +271,8 @@ public:
     int writeRateControlFrameStats(Frame* curFrame, RateControlEntry* rce);
     bool   initPass2();
 
-    double scenecutAwareMasking(Frame* curFrame, double q);
+    double forwardMasking(Frame* curFrame, double q);
+    double backwardMasking(Frame* curFrame, double q);
 
 protected:
 

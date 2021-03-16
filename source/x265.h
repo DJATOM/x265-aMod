@@ -607,6 +607,9 @@ typedef enum
 #define X265_ANALYSIS_SAVE 1
 #define X265_ANALYSIS_LOAD 2
 
+#define FORWARD                 1
+#define BACKWARD                2
+#define BI_DIRECTIONAL          3
 #define SLICE_TYPE_DELTA        0.3 /* The offset decremented or incremented for P-frames or b-frames respectively*/
 #define BACKWARD_WINDOW         1 /* Scenecut window before a scenecut */
 #define FORWARD_WINDOW          2 /* Scenecut window after a scenecut */
@@ -1847,21 +1850,24 @@ typedef struct x265_param
       Default 1 (Enabled). API only. */
     int       bResetZoneConfig;
 
-    /* It reduces the bits spent on the inter-frames within the scenecutWindow before and after a scenecut
+    /* It reduces the bits spent on the inter-frames within the scenecutWindow before and / or after a scenecut
      * by increasing their QP in ratecontrol pass2 algorithm without any deterioration in visual quality.
-     * Default is disabled. */
+     * 0 - Disabled (default).
+     * 1 - Forward masking.
+     * 2 - Backward masking.
+     * 3 - Bi-directional masking. */
     int       bEnableSceneCutAwareQp;
 
     /* The duration(in milliseconds) for which there is a reduction in the bits spent on the inter-frames after a scenecut
-     * by increasing their QP, when bEnableSceneCutAwareQp is set. Default is 500ms.*/
-    int       scenecutWindow;
+     * by increasing their QP, when bEnableSceneCutAwareQp is 1 or 3. Default is 500ms.*/
+    int       fwdScenecutWindow;
 
-    /* The offset by which QP is incremented for inter-frames when bEnableSceneCutAwareQp is set.
+    /* The offset by which QP is incremented for inter-frames after a scenecut when bEnableSceneCutAwareQp is 1 or 3.
      * Default is +5. */
-    double       refQpDelta;
+    double    fwdRefQpDelta;
 
-    /* The offset by which QP is incremented for non-referenced inter-frames when bEnableSceneCutAwareQp is set. */
-    double       nonRefQpDelta;
+    /* The offset by which QP is incremented for non-referenced inter-frames after a scenecut when bEnableSceneCutAwareQp is 1 or 3. */
+    double    fwdNonRefQpDelta;
 
     /* A genuine threshold used for histogram based scene cut detection.
      * This threshold determines whether a frame is a scenecut or not
@@ -1933,12 +1939,23 @@ typedef struct x265_param
     * at max 80% full */
     double   maxVbvFullness;
 
+    /* The duration(in milliseconds) for which there is a reduction in the bits spent on the inter-frames before a scenecut
+     * by increasing their QP, when bEnableSceneCutAwareQp is 2 or 3. Default is 100ms.*/
+    int       bwdScenecutWindow;
+
+    /* The offset by which QP is incremented for inter-frames before a scenecut when bEnableSceneCutAwareQp is 2 or 3. */
+    double    bwdRefQpDelta;
+
+    /* The offset by which QP is incremented for non-referenced inter-frames before a scenecut when bEnableSceneCutAwareQp is 2 or 3. */
+    double    bwdNonRefQpDelta;
+
     /* Specify combinations of color primaries, transfer characteristics, color matrix,
-     * range of luma and chroma signals, and chroma sample location. This has higher 
-     * precedence than individual VUI parameters. If any individual VUI option is specified 
-     * together with this, which changes the values set corresponding to the system-id 
-     * or color-volume, it will be discarded. */
+    * range of luma and chroma signals, and chroma sample location. This has higher
+    * precedence than individual VUI parameters. If any individual VUI option is specified
+    * together with this, which changes the values set corresponding to the system-id
+    * or color-volume, it will be discarded. */
     const char* videoSignalTypePreset;
+
 } x265_param;
 
 /* x265_param_alloc:

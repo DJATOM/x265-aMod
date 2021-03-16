@@ -356,6 +356,8 @@ bool RateControl::init(const SPS& sps)
         m_bufferFillFinal = m_bufferSize * m_param->rc.vbvBufferInit;
         m_bufferFillActual = m_bufferFillFinal;
         m_bufferExcess = 0;
+        m_minBufferFill = m_param->minVbvFullness / 100;
+        m_maxBufferFill = 1 - (m_param->maxVbvFullness / 100);
         m_initVbv = true;
     }
 
@@ -1858,7 +1860,10 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
         {
             double lqmin = m_lmin[m_sliceType];
             double lqmax = m_lmax[m_sliceType];
-            qScale = scenecutAwareMasking(curFrame, qScale);
+            if (m_param->bEnableSceneCutAwareQp & FORWARD)
+                qScale = forwardMasking(curFrame, qScale);
+            if (m_param->bEnableSceneCutAwareQp & BACKWARD)
+                qScale = backwardMasking(curFrame, qScale);
             qScale = x265_clip3(lqmin, lqmax, qScale);
             q = x265_qScale2qp(qScale);
             rce->qpNoVbv = q;
@@ -1981,7 +1986,12 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
             {
                 double qmin = m_lmin[m_sliceType];
                 double qmax = m_lmax[m_sliceType];
-                q = scenecutAwareMasking(curFrame, q);
+
+                if (m_param->bEnableSceneCutAwareQp & FORWARD)
+                    q = forwardMasking(curFrame, q);
+                if (m_param->bEnableSceneCutAwareQp & BACKWARD)
+                    q = backwardMasking(curFrame, q);
+
                 q = x265_clip3(qmin, qmax, q);
                 rce->qpNoVbv = x265_qScale2qp(q);
             }
@@ -2145,7 +2155,12 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
             {
                 double qmin = m_lmin[m_sliceType];
                 double qmax = m_lmax[m_sliceType];
-                q = scenecutAwareMasking(curFrame, q);
+
+                if (m_param->bEnableSceneCutAwareQp & FORWARD)
+                    q = forwardMasking(curFrame, q);
+                if (m_param->bEnableSceneCutAwareQp & BACKWARD)
+                    q = backwardMasking(curFrame, q);
+
                 q = x265_clip3(qmin, qmax, q);
                 rce->qpNoVbv = x265_qScale2qp(q);
             }
@@ -2380,7 +2395,7 @@ double RateControl::clipQscale(Frame* curFrame, RateControlEntry* rce, double q)
                     {
                         finalDur = x265_clip3(0.4, 1.0, totalDuration);
                     }
-                    targetFill = X265_MIN(m_bufferFill + totalDuration * m_vbvMaxRate * 0.5, m_bufferSize * ((m_param->minVbvFullness / 100) * finalDur));
+                    targetFill = X265_MIN(m_bufferFill + totalDuration * m_vbvMaxRate * 0.5, m_bufferSize * (1 - m_minBufferFill * finalDur));
                     if (bufferFillCur < targetFill)
                     {
                         q *= 1.01;
@@ -2389,7 +2404,7 @@ double RateControl::clipQscale(Frame* curFrame, RateControlEntry* rce, double q)
                     }
                     /* Try to get the buffer not more than 80% filled, but don't set an impossible goal. */
 
-                    targetFill = x265_clip3(m_bufferSize * ((m_param->maxVbvFullness / 100) * finalDur), m_bufferSize, m_bufferFill - totalDuration * m_vbvMaxRate * 0.5);
+                    targetFill = x265_clip3(m_bufferSize * (1 - m_maxBufferFill * finalDur), m_bufferSize, m_bufferFill - totalDuration * m_vbvMaxRate * 0.5);
                     if ((m_isCbr || m_2pass) && bufferFillCur > targetFill && !m_isSceneTransition)
                     {
                         q /= 1.01;
@@ -2406,7 +2421,7 @@ double RateControl::clipQscale(Frame* curFrame, RateControlEntry* rce, double q)
             /* Fallback to old purely-reactive algorithm: no lookahead. */
             if ((m_sliceType == P_SLICE || m_sliceType == B_SLICE ||
                     (m_sliceType == I_SLICE && m_lastNonBPictType == I_SLICE)) &&
-                m_bufferFill / m_bufferSize < (m_param->minVbvFullness / 100))
+                m_bufferFill / m_bufferSize < m_minBufferFill)
             {
                 q /= x265_clip3(0.5, 1.0, 2.0 * m_bufferFill / m_bufferSize);
             }
@@ -3168,19 +3183,18 @@ void RateControl::splitbUsed(char bused[], RateControlEntry *rce)
     }
 }
 
-double RateControl::scenecutAwareMasking(Frame* curFrame, double q)
+double RateControl::forwardMasking(Frame* curFrame, double q)
 {
     double qp = x265_qScale2qp(q);
-    uint32_t maxWindowSize = uint32_t((m_param->scenecutWindow / 1000.0) * (m_param->fpsNum / m_param->fpsDenom) + 0.5);
+    uint32_t maxWindowSize = uint32_t((m_param->fwdScenecutWindow / 1000.0) * (m_param->fpsNum / m_param->fpsDenom) + 0.5);
     uint32_t windowSize = maxWindowSize / 3;
     int lastScenecut = m_top->m_rateControl->m_lastScenecut;
     int lastIFrame = m_top->m_rateControl->m_lastScenecutAwareIFrame;
-    double refQpDelta = double(m_param->refQpDelta);
-    double nonRefQpDelta = double(m_param->nonRefQpDelta);
-    double sliceTypeDelta = SLICE_TYPE_DELTA * refQpDelta;
-    double window2Delta = WINDOW2_DELTA * refQpDelta;
-    double window3Delta = WINDOW3_DELTA * refQpDelta;
+    double fwdRefQpDelta = double(m_param->fwdRefQpDelta);
+    double fwdNonRefQpDelta = double(m_param->fwdNonRefQpDelta);
+    double sliceTypeDelta = SLICE_TYPE_DELTA * fwdRefQpDelta;
 
+    //Check whether the current frame is within the forward window
     if (curFrame->m_poc > lastScenecut && curFrame->m_poc <= (lastScenecut + int(maxWindowSize)))
         curFrame->m_isInsideWindow = FORWARD_WINDOW;
     if (curFrame->m_isInsideWindow == FORWARD_WINDOW)
@@ -3194,11 +3208,13 @@ double RateControl::scenecutAwareMasking(Frame* curFrame, double q)
             if (!(lastIFrame > lastScenecut && lastIFrame <= (lastScenecut + int(maxWindowSize))
                 && curFrame->m_poc >= lastIFrame))
             {
-                qp += refQpDelta - sliceTypeDelta;
-                if (((curFrame->m_poc) > (lastScenecut + int(windowSize))) && ((curFrame->m_poc) <= (lastScenecut + 2 * int(windowSize))))
-                    qp -= window2Delta;
+                //Add offsets corresponding to the window in which the P-frame occurs
+                if (curFrame->m_poc <= (lastScenecut + int(windowSize)))
+                    qp += WINDOW1_DELTA * (fwdRefQpDelta - sliceTypeDelta);
+                else if (((curFrame->m_poc) > (lastScenecut + int(windowSize))) && ((curFrame->m_poc) <= (lastScenecut + 2 * int(windowSize))))
+                    qp += WINDOW2_DELTA * (fwdRefQpDelta - sliceTypeDelta);
                 else if (curFrame->m_poc > lastScenecut + 2 * int(windowSize))
-                    qp -= window3Delta;
+                    qp += WINDOW3_DELTA * (fwdRefQpDelta - sliceTypeDelta);
             }
         }
         else if (curFrame->m_lowres.sliceType == X265_TYPE_BREF)
@@ -3206,11 +3222,13 @@ double RateControl::scenecutAwareMasking(Frame* curFrame, double q)
             if (!(lastIFrame > lastScenecut && lastIFrame <= (lastScenecut + int(maxWindowSize))
                 && curFrame->m_poc >= lastIFrame))
             {
-                qp += refQpDelta;
-                if (((curFrame->m_poc) > (lastScenecut + int(windowSize))) && ((curFrame->m_poc) <= (lastScenecut + 2 * int(windowSize))))
-                    qp -= window2Delta;
+                //Add offsets corresponding to the window in which the B-frame occurs
+                if (curFrame->m_poc <= (lastScenecut + int(windowSize)))
+                    qp += WINDOW1_DELTA * fwdRefQpDelta;
+                else if (((curFrame->m_poc) > (lastScenecut + int(windowSize))) && ((curFrame->m_poc) <= (lastScenecut + 2 * int(windowSize))))
+                    qp += WINDOW2_DELTA * fwdRefQpDelta;
                 else if (curFrame->m_poc > lastScenecut + 2 * int(windowSize))
-                    qp -= window3Delta;
+                    qp += WINDOW3_DELTA * fwdRefQpDelta;
             }
         }
         else if (curFrame->m_lowres.sliceType == X265_TYPE_B)
@@ -3218,24 +3236,40 @@ double RateControl::scenecutAwareMasking(Frame* curFrame, double q)
             if (!(lastIFrame > lastScenecut && lastIFrame <= (lastScenecut + int(maxWindowSize))
                 && curFrame->m_poc >= lastIFrame))
             {
-                qp += nonRefQpDelta;
-                if (((curFrame->m_poc) > (lastScenecut + int(windowSize))) && ((curFrame->m_poc) <= (lastScenecut + 2 * int(windowSize))))
-                    qp -= window2Delta;
+                //Add offsets corresponding to the window in which the b-frame occurs
+                if (curFrame->m_poc <= (lastScenecut + int(windowSize)))
+                    qp += WINDOW1_DELTA * fwdNonRefQpDelta;
+                else if (((curFrame->m_poc) > (lastScenecut + int(windowSize))) && ((curFrame->m_poc) <= (lastScenecut + 2 * int(windowSize))))
+                    qp += WINDOW2_DELTA * fwdNonRefQpDelta;
                 else if (curFrame->m_poc > lastScenecut + 2 * int(windowSize))
-                    qp -= window3Delta;
+                    qp += WINDOW3_DELTA * fwdNonRefQpDelta;
             }
         }
     }
-    else if (curFrame->m_isInsideWindow == BACKWARD_WINDOW)
+
+    return x265_qp2qScale(qp);
+}
+double RateControl::backwardMasking(Frame* curFrame, double q)
+{
+    double qp = x265_qScale2qp(q);
+    double fwdRefQpDelta = double(m_param->fwdRefQpDelta);
+    double bwdRefQpDelta = double(m_param->bwdRefQpDelta);
+    double bwdNonRefQpDelta = double(m_param->bwdNonRefQpDelta);
+
+    if (curFrame->m_isInsideWindow == BACKWARD_WINDOW)
     {
-        refQpDelta -= window3Delta;
-        nonRefQpDelta -= window3Delta;
+        if (bwdRefQpDelta < 0)
+            bwdRefQpDelta = WINDOW3_DELTA * fwdRefQpDelta;
+        double sliceTypeDelta = SLICE_TYPE_DELTA * bwdRefQpDelta;
+        if (bwdNonRefQpDelta < 0)
+            bwdNonRefQpDelta = bwdRefQpDelta + sliceTypeDelta;
+
         if (curFrame->m_lowres.sliceType == X265_TYPE_P)
-            qp += refQpDelta - sliceTypeDelta;
+            qp += bwdRefQpDelta - sliceTypeDelta;
         else if (curFrame->m_lowres.sliceType == X265_TYPE_BREF)
-            qp += refQpDelta;
+            qp += bwdRefQpDelta;
         else if (curFrame->m_lowres.sliceType == X265_TYPE_B)
-            qp += nonRefQpDelta;
+            qp += bwdNonRefQpDelta;
     }
 
     return x265_qp2qScale(qp);
