@@ -51,6 +51,9 @@ namespace X265_NS {
 #define H1 if (level >= X265_LOG_DEBUG) printf
 
         std::string x265_extra_readers;
+#ifdef HAVE_VPY
+        x265_extra_readers += "VPY, ";
+#endif
 
         H0("\nSyntax: x265 [options] infile [-o] outfile\n");
         H0("    infile can be %sYUV or Y4M\n", x265_extra_readers.c_str());
@@ -93,6 +96,13 @@ namespace X265_NS {
         H1("   --dither                      Enable dither if downscaling to 8 bit pixels. Default disabled\n");
         H0("   --[no-]copy-pic               Copy buffers of input picture in frame. Default %s\n", OPT(param->bCopyPicToFrame));
         H0("   --reader-options              Pass reader-specific options to input file reader\n");
+#ifdef HAVE_VPY
+        H0("\nVapoursynth reader options:\n");
+        H0("     library                     Use custom Vapoursynth library (full path to VSScript library is required)\n");
+        H0("     output                      Select arbitrary video node. Node 0 is selected by default\n");
+        H0("     requests                    Override async requests (derived from Vapoursynth threads by default)\n");
+        H0("     use-script-sar              Use script's reported SAR. Default 0:0\n");
+#endif
         H0("\nQuality reporting metrics:\n");
         H0("   --[no-]ssim                   Enable reporting SSIM metric scores. Default %s\n", OPT(param->bEnableSsim));
         H0("   --[no-]psnr                   Enable reporting PSNR metric scores. Default %s\n", OPT(param->bEnablePsnr));
