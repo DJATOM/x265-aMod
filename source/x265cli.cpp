@@ -64,6 +64,7 @@ namespace X265_NS {
         H0("-D/--output-depth 8|10|12        Output bit depth (also internal bit depth). Default %d\n", param->internalBitDepth);
         H0("   --log-level <string>          Logging level: none error warning info debug full. Default %s\n", X265_NS::logLevelNames[param->logLevel + 1]);
         H0("   --no-progress                 Disable CLI progress reports\n");
+        H0("   --progress-readframes         Add read frames counter from input into progress\n");
         H0("   --csv <filename>              Comma separated log file, if csv-log-level > 0 frame level statistics, else one line per run\n");
         H0("   --csv-log-level <integer>     Level of csv logging, if csv-log-level > 0 frame level statistics, else one line per run: 0-2\n");
         H0("\nInput Options:\n");
@@ -447,22 +448,35 @@ namespace X265_NS {
         int64_t elapsed = time - startTime;
         double fps = elapsed > 0 ? frameNum * 1000000. / elapsed : 0;
         float bitrate = 0.008f * totalbytes * (param->fpsNum / param->fpsDenom) / ((float)frameNum);
+        int bufLength = 0;
         if (framesToBeEncoded)
         {
             int ela = (int)(elapsed / 1000000);
             int eta = (int)(elapsed * (framesToBeEncoded - frameNum) / ((int64_t)frameNum * 1000000));
             double estsz = (double)totalbytes * framesToBeEncoded / (frameNum * 1024.);
-            sprintf(buf, "x265 [%.1f%%] %d/%d frames, %.2f fps, %.2f kb/s, "
+            bufLength += sprintf(buf + bufLength, "x265 [%.1f%%] %d", 100. * frameNum / (param->chunkEnd ? param->chunkEnd : param->totalFrames), frameNum);
+            if (bReadFrames)
+            {
+                bufLength += sprintf(buf + bufLength, "(%d)", input->outputFrame());
+            }
+            sprintf(buf + bufLength, "/%d frames, %.2f fps, %.2f kb/s, "
                 "elapsed: %d:%02d:%02d, eta: %d:%02d:%02d, "
                 "size: %.2f %1sB, est. size: %.2f %1sB",
-                100. * frameNum / (param->chunkEnd ? param->chunkEnd : param->totalFrames), frameNum, (param->chunkEnd ? param->chunkEnd : param->totalFrames), fps, bitrate,
+                (param->chunkEnd ? param->chunkEnd : param->totalFrames), fps, bitrate,
                 ela / 3600, (ela / 60) % 60, ela % 60,
                 eta / 3600, (eta / 60) % 60, eta % 60,
                 totalbytes < 1048576 ? (double)totalbytes / 1024. : (double)totalbytes / 1048576., totalbytes < 1048576 ? "K" : "M",
                 estsz < 1024 ? estsz : estsz / 1024, estsz < 1024 ? "K" : "M");
         }
         else
-            sprintf(buf, "x265 %d frames: %.2f fps, %.2f kb/s", frameNum, fps, bitrate);
+        {
+            bufLength += sprintf(buf + bufLength, "x265 %d", frameNum);
+            if (bReadFrames)
+            {
+                bufLength += sprintf(buf + bufLength, "(%d)", input->outputFrame());
+            }
+            sprintf(buf + bufLength, " frames: %.2f fps, %.2f kb/s", fps, bitrate);
+        }
 
         fprintf(stderr, "%s     \r", buf + 5);;
         SetConsoleTitle(buf);
@@ -720,6 +734,7 @@ namespace X265_NS {
                 OPT2("frame-skip", "seek") this->seek = (uint32_t)x265_atoi(optarg, bError);
                 OPT("frames") this->framesToBeEncoded = (uint32_t)x265_atoi(optarg, bError);
                 OPT("no-progress") this->bProgress = false;
+                OPT("progress-readframes") this->bReadFrames = true;
                 OPT("output") outputfn = optarg;
                 OPT("input") inputfn = optarg;
                 OPT("recon") reconfn = optarg;
