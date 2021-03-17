@@ -86,6 +86,8 @@ public:
     int getWidth() const                          { return width; }
 
     int getHeight() const                         { return height; }
+
+    int outputFrame()                             { return readCount.get(); }
 };
 }
 
