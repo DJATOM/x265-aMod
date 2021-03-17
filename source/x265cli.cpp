@@ -887,6 +887,7 @@ namespace X265_NS {
             info[i].sarWidth = param->vui.sarWidth;
             info[i].sarHeight = param->vui.sarHeight;
             info[i].skipFrames = seek;
+            info[i].encodeToFrame = this->framesToBeEncoded;
             info[i].frameCount = 0;
             getParamAspectRatio(param, info[i].sarWidth, info[i].sarHeight);
 
