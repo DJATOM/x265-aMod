@@ -91,6 +91,7 @@ namespace X265_NS {
         H0("   --[no-]field                  Enable or disable field coding. Default %s\n", OPT(param->bField));
         H1("   --dither                      Enable dither if downscaling to 8 bit pixels. Default disabled\n");
         H0("   --[no-]copy-pic               Copy buffers of input picture in frame. Default %s\n", OPT(param->bCopyPicToFrame));
+        H0("   --reader-options              Pass reader-specific options to input file reader\n");
         H0("\nQuality reporting metrics:\n");
         H0("   --[no-]ssim                   Enable reporting SSIM metric scores. Default %s\n", OPT(param->bEnableSsim));
         H0("   --[no-]psnr                   Enable reporting PSNR metric scores. Default %s\n", OPT(param->bEnablePsnr));
@@ -702,6 +703,7 @@ namespace X265_NS {
                 OPT("tune")    /* handled above */;
                 OPT("output-depth")   /* handled above */;
                 OPT("recon-y4m-exec") reconPlayCmd = optarg;
+                OPT("reader-options") this->readerOpts = optarg;
                 OPT("svt")    /* handled above */;
                 OPT("qpfile")
                 {
@@ -799,6 +801,8 @@ namespace X265_NS {
         info.frameCount = 0;
         getParamAspectRatio(param, info.sarWidth, info.sarHeight);
 
+        /* pass readerOpts to InputFileInfo in case certain reader wants it */
+        info.readerOpts = this->readerOpts;
 
         this->input = InputFile::open(info, this->bForceY4m);
         if (!this->input || this->input->isFail())
