@@ -223,7 +223,7 @@ namespace X265_NS {
     {
         if (m_parent->m_numEncodes > 1)
             setReuseLevel();
-                
+
         if (!(m_cliopt.enableScaler && m_id))
             m_reader = new Reader(m_id, this);
         else
@@ -454,7 +454,7 @@ namespace X265_NS {
         }
 
 ret:
-        //increment analysis Write counter 
+        //increment analysis Write counter
         m_parent->m_analysisWriteCnt[m_id].incr();
         m_parent->m_analysisWrite[m_id][index].incr();
         return;
@@ -487,7 +487,7 @@ ret:
                 int analysisWrite = m_parent->m_analysisWriteCnt[analysisQId].get();
                 int written = analysisWrite * m_parent->m_passEnc[analysisQId]->m_cliopt.numRefs;
                 int analysisRead = m_parent->m_analysisReadCnt[analysisQId].get();
-                
+
                 while (m_threadActive && written == analysisRead)
                 {
                     analysisWrite = m_parent->m_analysisWriteCnt[analysisQId].waitForChange(analysisWrite);
@@ -889,7 +889,7 @@ ret:
 
             /* clear progress report */
             if (m_cliopt.bProgress)
-                fprintf(stderr, "%*s\r", 80, " ");
+                fprintf(stderr, "%*s\r", 130, " ");
 
         fail:
 
