@@ -54,6 +54,9 @@ namespace X265_NS {
 #ifdef HAVE_VPY
         x265_extra_readers += "VPY, ";
 #endif
+#ifdef HAVE_AVS
+        x265_extra_readers += "AVS, ";
+#endif
 
         H0("\nSyntax: x265 [options] infile [-o] outfile\n");
         H0("    infile can be %sYUV or Y4M\n", x265_extra_readers.c_str());
@@ -96,6 +99,10 @@ namespace X265_NS {
         H1("   --dither                      Enable dither if downscaling to 8 bit pixels. Default disabled\n");
         H0("   --[no-]copy-pic               Copy buffers of input picture in frame. Default %s\n", OPT(param->bCopyPicToFrame));
         H0("   --reader-options              Pass reader-specific options to input file reader\n");
+#ifdef HAVE_AVS
+        H0("\nAvisynth reader options:\n");
+        H0("     library                     Use custom Avisynth library (full path to Avisynth library is required)\n");
+#endif
 #ifdef HAVE_VPY
         H0("\nVapoursynth reader options:\n");
         H0("     library                     Use custom Vapoursynth library (full path to VSScript library is required)\n");
