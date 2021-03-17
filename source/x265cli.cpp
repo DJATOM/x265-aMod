@@ -27,6 +27,7 @@
 
 #include "x265cli.h"
 #include "svt.h"
+#include <string>
 
 #define START_CODE 0x00000001
 #define START_CODE_BYTES 4
@@ -49,8 +50,10 @@ namespace X265_NS {
 #define H0 printf
 #define H1 if (level >= X265_LOG_DEBUG) printf
 
+        std::string x265_extra_readers;
+
         H0("\nSyntax: x265 [options] infile [-o] outfile\n");
-        H0("    infile can be YUV or Y4M\n");
+        H0("    infile can be %sYUV or Y4M\n", x265_extra_readers.c_str());
         H0("    outfile is raw HEVC bitstream\n");
         H0("\nExecutable Options:\n");
         H0("-h/--help                        Show this help text and exit\n");
@@ -64,7 +67,7 @@ namespace X265_NS {
         H0("   --csv <filename>              Comma separated log file, if csv-log-level > 0 frame level statistics, else one line per run\n");
         H0("   --csv-log-level <integer>     Level of csv logging, if csv-log-level > 0 frame level statistics, else one line per run: 0-2\n");
         H0("\nInput Options:\n");
-        H0("   --input <filename>            Raw YUV or Y4M input file name. `-` for stdin\n");
+        H0("   --input <filename>            %sRaw YUV or Y4M input file name. `-` for stdin\n", x265_extra_readers.c_str());
         H1("   --y4m                         Force parsing of input stream as YUV4MPEG2 regardless of file extension\n");
         H0("   --fps <float|rational>        Source frame rate (float or num/denom), auto-detected if Y4M\n");
         H0("   --input-res WxH               Source picture size [w x h], auto-detected if Y4M\n");
