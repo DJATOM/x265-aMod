@@ -1074,7 +1074,7 @@ ret:
             }
 
             x265_picture* dest = m_parentEnc->m_parent->m_inputPicBuffer[m_id][writeIdx];
-            if (m_input->readPicture(*src))
+            if (m_input->readPicture(*src) && !b_ctrl_c)
             {
                 dest->poc = src->poc;
                 dest->pts = src->pts;
