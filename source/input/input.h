@@ -55,6 +55,9 @@ struct InputFileInfo
     int skipFrames;
     int encodeToFrame;
     const char *filename;
+
+    /* reader specific options  */
+    const char *readerOpts;
 };
 
 class InputFile
