@@ -918,8 +918,11 @@ ret:
             m_cliopt.output->closeFile(largest_pts, second_largest_pts);
 
             if (b_ctrl_c)
+            {
                 general_log(m_param, NULL, X265_LOG_INFO, "aborted at input frame %d, output frame %d in %s\n",
                     m_cliopt.seek + inFrameCount, stats.encodedPictureCount, profileName);
+                m_input->stopReader(); // signal to stop requesting new frames if reader uses any prefetching algo
+            }
 
             api->param_free(m_param);
 
