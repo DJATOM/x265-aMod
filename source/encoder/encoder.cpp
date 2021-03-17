@@ -2736,8 +2736,12 @@ void Encoder::printSummary()
         double elapsedVideoTime = (double)m_analyzeAll.m_numPics * m_param->fpsDenom / m_param->fpsNum;
         double bitrate = (0.001f * m_analyzeAll.m_accBits) / elapsedVideoTime;
 
-        p += sprintf(buffer + p, "\nencoded %d frames in %.2fs (%.2f fps), %.2f kb/s, Avg QP:%2.2lf", m_analyzeAll.m_numPics,
-                     elapsedEncodeTime, m_analyzeAll.m_numPics / elapsedEncodeTime, bitrate, m_analyzeAll.m_totalQp / (double)m_analyzeAll.m_numPics);
+        int hours = static_cast<int>(elapsedEncodeTime) / 3600;
+        int minutes = static_cast<int>(elapsedEncodeTime / 60) % 60;
+        double seconds = static_cast<int>(elapsedEncodeTime) % 60 + (elapsedEncodeTime - static_cast<int>(elapsedEncodeTime));
+
+        p += sprintf(buffer + p, "\nencoded %d frames in %d:%02d:%05.2f (%.2f fps), %.2f kb/s, Avg QP:%2.2lf", m_analyzeAll.m_numPics,
+            hours, minutes, seconds, m_analyzeAll.m_numPics / elapsedEncodeTime, bitrate, m_analyzeAll.m_totalQp / (double)m_analyzeAll.m_numPics);
 
         if (m_param->bEnablePsnr)
         {
