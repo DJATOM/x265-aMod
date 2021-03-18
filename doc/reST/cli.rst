@@ -2529,6 +2529,16 @@ Bitstream options
 	the very first AUD will be skipped since it cannot be placed at the
 	start of the access unit, where it belongs. Default disabled
 
+.. option:: --eob, --no-eob
+
+	Emit an end of bitstream NAL unit at the end of the bitstream.
+	Default disabled
+
+.. option:: --eos, --no-eos
+
+	Emit an end of sequence NAL unit at the end of every coded
+	video sequence. Default disabled
+
 .. option:: --hrd, --no-hrd
 
 	Enable the signaling of HRD parameters to the decoder. The HRD

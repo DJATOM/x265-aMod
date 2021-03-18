@@ -467,6 +467,12 @@ void FrameEncoder::compressFrame()
      * unit) */
     Slice* slice = m_frame->m_encData->m_slice;
 
+    if (m_param->bEnableEndOfSequence && m_frame->m_lowres.sliceType == X265_TYPE_IDR && m_frame->m_poc)
+    {
+        m_bs.resetBits();
+        m_nalList.serialize(NAL_UNIT_EOS, m_bs);
+    }
+
     if (m_param->bEnableAccessUnitDelimiters && (m_frame->m_poc || m_param->bRepeatHeaders))
     {
         m_bs.resetBits();

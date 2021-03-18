@@ -327,6 +327,8 @@ public:
 
     void getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs);
 
+    void getEndNalUnits(NALList& list, Bitstream& bs);
+
     void fetchStats(x265_stats* stats, size_t statsSizeBytes);
 
     void printSummary();

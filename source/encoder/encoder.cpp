@@ -3374,6 +3374,19 @@ void Encoder::getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs)
     }
 }
 
+void Encoder::getEndNalUnits(NALList& list, Bitstream& bs)
+{
+    NALList nalList;
+    bs.resetBits();
+
+    if (m_param->bEnableEndOfSequence)
+        nalList.serialize(NAL_UNIT_EOS, bs);
+    if (m_param->bEnableEndOfBitstream)
+        nalList.serialize(NAL_UNIT_EOB, bs);
+
+    list.takeContents(nalList);
+}
+
 void Encoder::initVPS(VPS *vps)
 {
     /* Note that much of the VPS is initialized by determineLevel() */

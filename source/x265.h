@@ -1956,6 +1956,13 @@ typedef struct x265_param
     * or color-volume, it will be discarded. */
     const char* videoSignalTypePreset;
 
+    /* Flag indicating whether the encoder should emit an End of Bitstream
+     * NAL at the end of bitstream. Default false */
+    int      bEnableEndOfBitstream;
+
+    /* Flag indicating whether the encoder should emit an End of Sequence
+     * NAL at the end of every Coded Video Sequence. Default false */
+    int      bEnableEndOfSequence;
 } x265_param;
 
 /* x265_param_alloc:

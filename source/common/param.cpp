@@ -145,6 +145,8 @@ void x265_param_default(x265_param* param)
     param->bAnnexB = 1;
     param->bRepeatHeaders = 0;
     param->bEnableAccessUnitDelimiters = 0;
+    param->bEnableEndOfBitstream = 0;
+    param->bEnableEndOfSequence = 0;
     param->bEmitHRDSEI = 0;
     param->bEmitInfoSEI = 1;
     param->bEmitHDRSEI = 0; /*Deprecated*/
@@ -1448,6 +1450,8 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         OPT("min-vbv-fullness") p->minVbvFullness = atof(value);
         OPT("max-vbv-fullness") p->maxVbvFullness = atof(value);
         OPT("video-signal-type-preset") p->videoSignalTypePreset = strdup(value);
+        OPT("eob") p->bEnableEndOfBitstream = atobool(value);
+        OPT("eos") p->bEnableEndOfSequence = atobool(value);
         else
             return X265_PARAM_BAD_NAME;
     }
@@ -2130,6 +2134,8 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     BOOL(p->bRepeatHeaders, "repeat-headers");
     BOOL(p->bAnnexB, "annexb");
     BOOL(p->bEnableAccessUnitDelimiters, "aud");
+    BOOL(p->bEnableEndOfBitstream, "eob");
+    BOOL(p->bEnableEndOfSequence, "eos");
     BOOL(p->bEmitHRDSEI, "hrd");
     BOOL(p->bEmitInfoSEI, "info");
     s += sprintf(s, " hash=%d", p->decodedPictureHashSEI);
@@ -2444,6 +2450,8 @@ void x265_copy_params(x265_param* dst, x265_param* src)
     dst->bRepeatHeaders = src->bRepeatHeaders;
     dst->bAnnexB = src->bAnnexB;
     dst->bEnableAccessUnitDelimiters = src->bEnableAccessUnitDelimiters;
+    dst->bEnableEndOfBitstream = src->bEnableEndOfBitstream;
+    dst->bEnableEndOfSequence = src->bEnableEndOfSequence;
     dst->bEmitInfoSEI = src->bEmitInfoSEI;
     dst->decodedPictureHashSEI = src->decodedPictureHashSEI;
     dst->bEnableTemporalSubLayers = src->bEnableTemporalSubLayers;
