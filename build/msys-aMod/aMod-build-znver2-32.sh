@@ -11,7 +11,7 @@ cd ${build_dir}
 export gccver=$(gcc --version | awk '/gcc/ {print $3}')
 export latest_tag=$(git describe --abbrev=0 --tags)
 export tag_distance=$(git rev-list ${latest_tag}.. --count --first-parent)
-export file_prefix="x265-x64-v${latest_tag}+${tag_distance}-aMod-gcc${gccver}"
+export file_prefix="x265-x86-v${latest_tag}+${tag_distance}-aMod-gcc${gccver}"
 strip "${build_dir}/znver2-32/${file_prefix}-opt-znver2.exe"
 upx -9 "${build_dir}/znver2-32/${file_prefix}-opt-znver2.exe"
 
