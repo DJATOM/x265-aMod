@@ -632,9 +632,8 @@ Profile, Level, Tier
 	auto-detection by the encoder. If specified, the encoder will
 	attempt to bring the encode specifications within that specified
 	level. If the encoder is unable to reach the level it issues a
-	warning and aborts the encode. If the requested requirement level is
-	higher than the actual level, the actual requirement level is
-	signaled.
+	warning and aborts the encode. The requested level will be signaled 
+	in the bitstream even if it is higher than the actual level.
 
 	Beware, specifying a decoder level will force the encoder to enable
 	VBV for constant rate factor encodes, which may introduce
@@ -714,11 +713,8 @@ Profile, Level, Tier
 	(main, main10, etc). Second, an encoder is created from this
 	x265_param instance and the :option:`--level-idc` and
 	:option:`--high-tier` parameters are used to reduce bitrate or other
-	features in order to enforce the target level. Finally, the encoder
-	re-examines the final set of parameters and detects the actual
-	minimum decoder requirement level and this is what is signaled in
-	the bitstream headers. The detected decoder level will only use High
-	tier if the user specified a High tier level.
+	features in order to enforce the target level. The detected decoder level
+	will only use High tier if the user specified a High tier level.
 
 	The signaled profile will be determined by the encoder's internal
 	bitdepth and input color space. If :option:`--keyint` is 0 or 1,
