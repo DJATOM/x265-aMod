@@ -1470,7 +1470,8 @@ Slice decision options
 .. option:: --hist-scenecut, --no-hist-scenecut
 
 	Indicates that scenecuts need to be detected using luma edge and chroma histograms.
-	:option:`--hist-scenecut` enables scenecut detection using the histograms and disables the default scene cut algorithm.
+	:option:`--hist-scenecut` enables scenecut detection using the histograms.
+	It also uses the intra and inter cost info to arrive at a scenecut decision from the default scenecut method.
 	:option:`--no-hist-scenecut` disables histogram based scenecut algorithm.
 	
 .. option:: --hist-threshold <0.0..1.0>
@@ -1480,7 +1481,12 @@ Slice decision options
 	greater than 0.2 against the previous frame as scenecut. 
 	Increasing the threshold reduces the number of scenecuts detected.
 	Default 0.03.
-	
+
+.. option:: --traditional-scenecut, --no-traditional-scenecut
+
+	Enable traditional scenecut detection using intra and inter cost when :option:`--hist-scenecut` is used.
+	Default enabled.
+
 .. option:: --radl <integer>
 	
 	Number of RADL pictures allowed infront of IDR. Requires closed gop interval.

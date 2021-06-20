@@ -1963,6 +1963,10 @@ typedef struct x265_param
     /* Flag indicating whether the encoder should emit an End of Sequence
      * NAL at the end of every Coded Video Sequence. Default false */
     int      bEnableEndOfSequence;
+
+    /* Flag to turn on/off traditional scenecut detection in histogram based scenecut detection.
+     * When false, only spatial properties are used for scenecut detection. Default true */
+    int      bEnableTradScdInHscd;
 } x265_param;
 
 /* x265_param_alloc:

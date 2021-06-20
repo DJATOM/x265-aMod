@@ -3680,6 +3680,7 @@ void Encoder::configure(x265_param *p)
         p->keyframeMax = INT_MAX;
         p->scenecutThreshold = 0;
         p->bHistBasedSceneCut = 0;
+        p->bEnableTradScdInHscd = 1;
     }
     else if (p->keyframeMax <= 1)
     {
@@ -3694,6 +3695,7 @@ void Encoder::configure(x265_param *p)
         p->bframes = 0;
         p->scenecutThreshold = 0;
         p->bHistBasedSceneCut = 0;
+        p->bEnableTradScdInHscd = 1;
         p->bFrameAdaptive = 0;
         p->rc.cuTree = 0;
         p->bEnableWeightedPred = 0;
@@ -4421,12 +4423,17 @@ void Encoder::configure(x265_param *p)
             m_param->searchRange = m_param->hmeRange[2];
     }
 
-   if (p->bHistBasedSceneCut && !p->edgeTransitionThreshold)
-   {
-       p->edgeTransitionThreshold = 0.03;
-       x265_log(p, X265_LOG_WARNING, "using  default threshold %.2lf for scene cut detection\n", p->edgeTransitionThreshold);
-   }
+    if (p->bHistBasedSceneCut && !p->edgeTransitionThreshold)
+    {
+        p->edgeTransitionThreshold = 0.03;
+        x265_log(p, X265_LOG_WARNING, "using  default threshold %.2lf for scene cut detection.\n", p->edgeTransitionThreshold);
+    }
 
+    if (!p->bHistBasedSceneCut && !p->bEnableTradScdInHscd)
+    {
+        p->bEnableTradScdInHscd = 1;
+        x265_log(p, X265_LOG_WARNING, "option --no-traditional-scenecut requires --hist-scenecut to be enabled.\n");
+    }
 }
 
 void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc, const x265_picture* picIn, int paramBytes)

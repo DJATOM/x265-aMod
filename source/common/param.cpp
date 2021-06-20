@@ -172,6 +172,7 @@ void x265_param_default(x265_param* param)
     param->scenecutThreshold = 40; /* Magic number pulled in from x264 */
     param->edgeTransitionThreshold = 0.03;
     param->bHistBasedSceneCut = 0;
+    param->bEnableTradScdInHscd = 1;
     param->lookaheadSlices = 8;
     param->lookaheadThreads = 0;
     param->scenecutBias = 5.0;
@@ -598,6 +599,7 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
             param->lookaheadDepth = 0;
             param->scenecutThreshold = 0;
             param->bHistBasedSceneCut = 0;
+            param->bEnableTradScdInHscd = 1;
             param->rc.cuTree = 0;
             param->frameNumThreads = 1;
         }
@@ -953,6 +955,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
            bError = false;
            p->scenecutThreshold = atoi(value);
            p->bHistBasedSceneCut = 0;
+           p->bEnableTradScdInHscd = 1;
        }
     }
     OPT("temporal-layers") p->bEnableTemporalSubLayers = atobool(value);
@@ -1234,6 +1237,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
             }
         }
         OPT("hist-threshold") p->edgeTransitionThreshold = atof(value);
+        OPT("traditional-scenecut") p->bEnableTradScdInHscd = atobool(value);
         OPT("rskip-edge-threshold") p->edgeVarThreshold = atoi(value)/100.0f;
         OPT("lookahead-threads") p->lookaheadThreads = atoi(value);
         OPT("opt-cu-delta-qp") p->bOptCUDeltaQP = atobool(value);
@@ -2151,7 +2155,9 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     s += sprintf(s, " rc-lookahead=%d", p->lookaheadDepth);
     s += sprintf(s, " lookahead-slices=%d", p->lookaheadSlices);
     s += sprintf(s, " scenecut=%d", p->scenecutThreshold);
-    s += sprintf(s, " hist-scenecut=%d", p->bHistBasedSceneCut);
+    BOOL(p->bHistBasedSceneCut, "hist-scenecut");
+    if (p->bHistBasedSceneCut)
+        BOOL(p->bEnableTradScdInHscd, "traditional-scenecut");
     s += sprintf(s, " radl=%d", p->radl);
     BOOL(p->bEnableHRDConcatFlag, "splice");
     BOOL(p->bIntraRefresh, "intra-refresh");
@@ -2467,6 +2473,7 @@ void x265_copy_params(x265_param* dst, x265_param* src)
     dst->lookaheadThreads = src->lookaheadThreads;
     dst->scenecutThreshold = src->scenecutThreshold;
     dst->bHistBasedSceneCut = src->bHistBasedSceneCut;
+    dst->bEnableTradScdInHscd = src->bEnableTradScdInHscd;
     dst->bIntraRefresh = src->bIntraRefresh;
     dst->maxCUSize = src->maxCUSize;
     dst->minCUSize = src->minCUSize;
