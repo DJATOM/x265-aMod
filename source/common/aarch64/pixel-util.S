@@ -24,7 +24,11 @@
 
 #include "asm.S"
 
+#ifdef __APPLE__
+.section __RODATA,__rodata
+#else
 .section .rodata
+#endif
 
 .align 4
 

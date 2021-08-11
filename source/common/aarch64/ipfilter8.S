@@ -23,7 +23,11 @@
 
 #include "asm.S"
 
+#ifdef __APPLE__
+.section __RODATA, __rodata
+#else
 .section .rodata
+#endif
 
 .align 4
 
@@ -197,10 +201,10 @@
     b.eq            15f
     b               7f
 14:
-    HPS_FILTER_4 \a \b \filterhps
+    HPS_FILTER_4 \a, \b, \filterhps
     b               10f
 15:
-    HPS_FILTER_12 \a \b \filterhps
+    HPS_FILTER_12 \a, \b, \filterhps
     b               10f
 7:
     cmp             w5, #0
@@ -371,44 +375,44 @@ function x265_interp_8tap_horiz_ps_\w\()x\h\()_neon
     cmp             w4, #3
     b.eq            3f
 0:
-    HPS_FILTER  \w \h qpel_filter_0_32b
+    HPS_FILTER  \w, \h, qpel_filter_0_32b
     b               5f
 1:
-    HPS_FILTER  \w \h qpel_filter_1_32b
+    HPS_FILTER  \w, \h, qpel_filter_1_32b
     b               5f
 2:
-    HPS_FILTER  \w \h qpel_filter_2_32b
+    HPS_FILTER  \w, \h, qpel_filter_2_32b
     b               5f
 3:
-    HPS_FILTER  \w \h qpel_filter_3_32b
+    HPS_FILTER  \w, \h, qpel_filter_3_32b
     b               5f
 5:
     ret
 endfunc
 .endm
 
-LUMA_HPS    4 4
-LUMA_HPS    4 8
-LUMA_HPS    4 16
-LUMA_HPS    8 4
-LUMA_HPS    8 8
-LUMA_HPS    8 16
-LUMA_HPS    8 32
-LUMA_HPS    12 16
-LUMA_HPS    16 4
-LUMA_HPS    16 8
-LUMA_HPS    16 12
-LUMA_HPS    16 16
-LUMA_HPS    16 32
-LUMA_HPS    16 64
-LUMA_HPS    24 32
-LUMA_HPS    32 8
-LUMA_HPS    32 16
-LUMA_HPS    32 24
-LUMA_HPS    32 32
-LUMA_HPS    32 64
-LUMA_HPS    48 64
-LUMA_HPS    64 16
-LUMA_HPS    64 32
-LUMA_HPS    64 48
-LUMA_HPS    64 64
+LUMA_HPS    4,4
+LUMA_HPS    4,8
+LUMA_HPS    4,16
+LUMA_HPS    8,4
+LUMA_HPS    8,8
+LUMA_HPS    8,16
+LUMA_HPS    8,32
+LUMA_HPS    12,16
+LUMA_HPS    16,4
+LUMA_HPS    16,8
+LUMA_HPS    16,12
+LUMA_HPS    16,16
+LUMA_HPS    16,32
+LUMA_HPS    16,64
+LUMA_HPS    24,32
+LUMA_HPS    32,8
+LUMA_HPS    32,16
+LUMA_HPS    32,24
+LUMA_HPS    32,32
+LUMA_HPS    32,64
+LUMA_HPS    48,64
+LUMA_HPS    64,16
+LUMA_HPS    64,32
+LUMA_HPS    64,48
+LUMA_HPS    64,64
