@@ -101,6 +101,10 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
 {
     if (cpuMask & X265_CPU_NEON)
     {
+        // quant
+        p.quant = PFX(quant_neon);
+
+#if !HIGH_BIT_DEPTH
         p.pu[LUMA_4x4].satd   = PFX(pixel_satd_4x4_neon);
         p.pu[LUMA_4x8].satd   = PFX(pixel_satd_4x8_neon);
         p.pu[LUMA_4x16].satd  = PFX(pixel_satd_4x16_neon);
@@ -149,8 +153,6 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
         p.pu[LUMA_8x16].sad_x4  = PFX(sad_x4_8x16_neon);
         p.pu[LUMA_8x32].sad_x4  = PFX(sad_x4_8x32_neon);
 
-        // quant
-        p.quant = PFX(quant_neon);
         // luma_hps
         p.pu[LUMA_4x4].luma_hps   = PFX(interp_8tap_horiz_ps_4x4_neon);
         p.pu[LUMA_4x8].luma_hps   = PFX(interp_8tap_horiz_ps_4x8_neon);
@@ -210,7 +212,6 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
 #endif
 #endif
 
-#if !HIGH_BIT_DEPTH
         p.cu[BLOCK_4x4].psy_cost_pp = PFX(psyCost_4x4_neon);
 #endif // !HIGH_BIT_DEPTH
 
