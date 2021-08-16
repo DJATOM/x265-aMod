@@ -2556,7 +2556,11 @@ int Encoder::reconfigureParam(x265_param* encParam, x265_param* param)
         encParam->dynamicRd = param->dynamicRd;
         encParam->bEnableTransformSkip = param->bEnableTransformSkip;
         encParam->bEnableAMP = param->bEnableAMP;
-
+		if (param->confWinBottomOffset == 0 && param->confWinRightOffset == 0)
+		{
+			encParam->confWinBottomOffset = param->confWinBottomOffset;
+			encParam->confWinRightOffset = param->confWinRightOffset;
+		}
         /* Resignal changes in params in Parameter Sets */
         m_sps.maxAMPDepth = (m_sps.bUseAMP = param->bEnableAMP && param->bEnableAMP) ? param->maxCUDepth : 0;
         m_pps.bTransformSkipEnabled = param->bEnableTransformSkip ? 1 : 0;
