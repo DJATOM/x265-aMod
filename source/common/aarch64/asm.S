@@ -23,6 +23,10 @@
 
 .arch           armv8-a
 
+#define PFX3(prefix, name) prefix ## _ ## name
+#define PFX2(prefix, name) PFX3(prefix, name)
+#define PFX(name)          PFX2(X265_NS, name)
+
 #ifdef __APPLE__
 #define PREFIX 1
 #endif

@@ -447,6 +447,18 @@ else()
 endif()
 add_definitions(-DX265_NS=${X265_NS})
 
+if(ARM64)
+  if(HIGH_BIT_DEPTH)
+    if(MAIN12)
+      list(APPEND ASM_FLAGS -DHIGH_BIT_DEPTH=1 -DBIT_DEPTH=12 -DX265_NS=${X265_NS})
+    else()
+      list(APPEND ASM_FLAGS -DHIGH_BIT_DEPTH=1 -DBIT_DEPTH=10 -DX265_NS=${X265_NS})
+    endif()
+  else()
+    list(APPEND ASM_FLAGS -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=${X265_NS})
+  endif()
+endif(ARM64)
+
 option(WARNINGS_AS_ERRORS "Stop compiles on first warning" OFF)
 if(WARNINGS_AS_ERRORS)
     if(GCC)
@@ -562,7 +574,7 @@ if((MSVC_IDE OR XCODE OR GCC) AND ENABLE_ASSEMBLY)
             add_custom_command(
                 OUTPUT ${ASM}.${SUFFIX}
                 COMMAND ${CMAKE_CXX_COMPILER}
-                ARGS ${ARM_ARGS} -c ${ASM_SRC} -o ${ASM}.${SUFFIX}
+                ARGS ${ARM_ARGS} ${ASM_FLAGS} -c ${ASM_SRC} -o ${ASM}.${SUFFIX}
                 DEPENDS ${ASM_SRC})
         endforeach()
     elseif(X86)
