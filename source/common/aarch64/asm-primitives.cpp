@@ -22,6 +22,7 @@
  * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
+
 #include "common.h"
 #include "primitives.h"
 #include "x265.h"
@@ -35,18 +36,25 @@
 #define GCC_4_9_0 40900
 #define GCC_5_1_0 50100
 
+#include "pixel-prim.h"
+#include "filter-prim.h"
+#include "dct-prim.h"
+#include "loopfilter-prim.h"
+#include "intrapred-prim.h"
+
 extern "C" {
 #include "pixel.h"
 #include "pixel-util.h"
 #include "ipfilter8.h"
 }
 
-namespace X265_NS {
+namespace X265_NS
+{
 // private x265 namespace
 
 
 template<int size>
-void interp_8tap_hv_pp_cpu(const pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int idxX, int idxY)
+void interp_8tap_hv_pp_cpu(const pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int idxX, int idxY)
 {
     ALIGN_VAR_32(int16_t, immed[MAX_CU_SIZE * (MAX_CU_SIZE + NTAPS_LUMA - 1)]);
     const int halfFilterSize = NTAPS_LUMA >> 1;
@@ -84,7 +92,7 @@ void setupAliasCPrimitives(EncoderPrimitives &cp, EncoderPrimitives &asmp, int c
         asmp.pu[LUMA_64x16].luma_vsp = cp.pu[LUMA_64x16].luma_vsp;
         asmp.pu[LUMA_64x32].luma_vsp = cp.pu[LUMA_64x32].luma_vsp;
         asmp.pu[LUMA_64x48].luma_vsp = cp.pu[LUMA_64x48].luma_vsp;
-        asmp.pu[LUMA_64x64].luma_vsp = cp.pu[LUMA_64x64].luma_vsp;    
+        asmp.pu[LUMA_64x64].luma_vsp = cp.pu[LUMA_64x64].luma_vsp;
 #if !AUTO_VECTORIZE || GCC_VERSION < GCC_4_9_0 /* gcc_version < gcc-4.9.0 */
         asmp.pu[LUMA_4x4].luma_vsp   = cp.pu[LUMA_4x4].luma_vsp;
         asmp.pu[LUMA_4x8].luma_vsp   = cp.pu[LUMA_4x8].luma_vsp;
@@ -97,35 +105,30 @@ void setupAliasCPrimitives(EncoderPrimitives &cp, EncoderPrimitives &asmp, int c
 }
 
 
-void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) 
+void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
 {
     if (cpuMask & X265_CPU_NEON)
     {
-        // quant
+    	  // quant
         p.quant = PFX(quant_neon);
-
+        
 #if !HIGH_BIT_DEPTH
-        p.pu[LUMA_4x4].satd   = PFX(pixel_satd_4x4_neon);
         p.pu[LUMA_4x8].satd   = PFX(pixel_satd_4x8_neon);
         p.pu[LUMA_4x16].satd  = PFX(pixel_satd_4x16_neon);
-        p.pu[LUMA_8x4].satd   = PFX(pixel_satd_8x4_neon);
-        p.pu[LUMA_8x8].satd   = PFX(pixel_satd_8x8_neon);
-        p.pu[LUMA_12x16].satd = PFX(pixel_satd_12x16_neon);
-        
-        p.chroma[X265_CSP_I420].pu[CHROMA_420_4x4].satd    = PFX(pixel_satd_4x4_neon);
+
         p.chroma[X265_CSP_I420].pu[CHROMA_420_4x8].satd    = PFX(pixel_satd_4x8_neon);
         p.chroma[X265_CSP_I420].pu[CHROMA_420_4x16].satd   = PFX(pixel_satd_4x16_neon);
-        p.chroma[X265_CSP_I420].pu[CHROMA_420_8x4].satd    = PFX(pixel_satd_8x4_neon);
-        p.chroma[X265_CSP_I420].pu[CHROMA_420_8x8].satd    = PFX(pixel_satd_8x8_neon);
-        p.chroma[X265_CSP_I420].pu[CHROMA_420_12x16].satd  = PFX(pixel_satd_12x16_neon);
-        
-        p.chroma[X265_CSP_I422].pu[CHROMA_422_4x4].satd    = PFX(pixel_satd_4x4_neon);
+
+
         p.chroma[X265_CSP_I422].pu[CHROMA_422_4x8].satd    = PFX(pixel_satd_4x8_neon);
         p.chroma[X265_CSP_I422].pu[CHROMA_422_4x16].satd   = PFX(pixel_satd_4x16_neon);
         p.chroma[X265_CSP_I422].pu[CHROMA_422_4x32].satd   = PFX(pixel_satd_4x32_neon);
-        p.chroma[X265_CSP_I422].pu[CHROMA_422_8x4].satd    = PFX(pixel_satd_8x4_neon);
-        p.chroma[X265_CSP_I422].pu[CHROMA_422_8x8].satd    = PFX(pixel_satd_8x8_neon);
-        p.chroma[X265_CSP_I422].pu[CHROMA_422_12x32].satd  = PFX(pixel_satd_12x32_neon);
+
+#if defined(__APPLE__)
+        p.pu[LUMA_12x16].satd = PFX(pixel_satd_12x16_neon);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_12x16].satd  = PFX(pixel_satd_12x16_neon);
+#endif // defined(__APPLE__)
+
 
         p.pu[LUMA_4x4].pixelavg_pp[NONALIGNED]   = PFX(pixel_avg_pp_4x4_neon);
         p.pu[LUMA_4x8].pixelavg_pp[NONALIGNED]   = PFX(pixel_avg_pp_4x8_neon);
@@ -153,15 +156,18 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
         p.pu[LUMA_8x16].sad_x4  = PFX(sad_x4_8x16_neon);
         p.pu[LUMA_8x32].sad_x4  = PFX(sad_x4_8x32_neon);
 
+        
         // luma_hps
         p.pu[LUMA_4x4].luma_hps   = PFX(interp_8tap_horiz_ps_4x4_neon);
         p.pu[LUMA_4x8].luma_hps   = PFX(interp_8tap_horiz_ps_4x8_neon);
         p.pu[LUMA_4x16].luma_hps  = PFX(interp_8tap_horiz_ps_4x16_neon);
+        p.pu[LUMA_12x16].luma_hps = PFX(interp_8tap_horiz_ps_12x16_neon);
+        
+#if !defined(__APPLE__)
         p.pu[LUMA_8x4].luma_hps   = PFX(interp_8tap_horiz_ps_8x4_neon);
         p.pu[LUMA_8x8].luma_hps   = PFX(interp_8tap_horiz_ps_8x8_neon);
         p.pu[LUMA_8x16].luma_hps  = PFX(interp_8tap_horiz_ps_8x16_neon);
         p.pu[LUMA_8x32].luma_hps  = PFX(interp_8tap_horiz_ps_8x32_neon);
-        p.pu[LUMA_12x16].luma_hps = PFX(interp_8tap_horiz_ps_12x16_neon);
         p.pu[LUMA_24x32].luma_hps = PFX(interp_8tap_horiz_ps_24x32_neon);
 #if !AUTO_VECTORIZE || GCC_VERSION < GCC_5_1_0 /* gcc_version < gcc-5.1.0 */
         p.pu[LUMA_16x4].luma_hps  = PFX(interp_8tap_horiz_ps_16x4_neon);
@@ -180,14 +186,15 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
         p.pu[LUMA_64x32].luma_hps = PFX(interp_8tap_horiz_ps_64x32_neon);
         p.pu[LUMA_64x48].luma_hps = PFX(interp_8tap_horiz_ps_64x48_neon);
         p.pu[LUMA_64x64].luma_hps = PFX(interp_8tap_horiz_ps_64x64_neon);
-#endif
+#endif // !AUTO_VECTORIZE || GCC_VERSION < GCC_5_1_0
+#endif // !defined(__APPLE__)
 
-        p.pu[LUMA_8x4].luma_hvpp   =  interp_8tap_hv_pp_cpu<LUMA_8x4>;
-        p.pu[LUMA_8x8].luma_hvpp   =  interp_8tap_hv_pp_cpu<LUMA_8x8>;
-        p.pu[LUMA_8x16].luma_hvpp  =  interp_8tap_hv_pp_cpu<LUMA_8x16>;
-        p.pu[LUMA_8x32].luma_hvpp  =  interp_8tap_hv_pp_cpu<LUMA_8x32>;
         p.pu[LUMA_12x16].luma_hvpp =  interp_8tap_hv_pp_cpu<LUMA_12x16>;
-#if !AUTO_VECTORIZE || GCC_VERSION < GCC_5_1_0 /* gcc_version < gcc-5.1.0 */
+#if !AUTO_VECTORIZE || GCC_VERSION < GCC_4_9_0 /* gcc_version < gcc-4.9.0 */
+        p.pu[LUMA_4x4].luma_hvpp   =  interp_8tap_hv_pp_cpu<LUMA_4x4>;
+#endif // !AUTO_VECTORIZE || GCC_VERSION < GCC_4_9_0
+
+#if !defined(__APPLE__) && (!AUTO_VECTORIZE || GCC_VERSION < GCC_5_1_0) /* gcc_version < gcc-5.1.0 */
         p.pu[LUMA_16x4].luma_hvpp  =  interp_8tap_hv_pp_cpu<LUMA_16x4>;
         p.pu[LUMA_16x8].luma_hvpp  =  interp_8tap_hv_pp_cpu<LUMA_16x8>;
         p.pu[LUMA_16x12].luma_hvpp =  interp_8tap_hv_pp_cpu<LUMA_16x12>;
@@ -204,17 +211,21 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
         p.pu[LUMA_64x48].luma_hvpp =  interp_8tap_hv_pp_cpu<LUMA_64x48>;
         p.pu[LUMA_64x64].luma_hvpp =  interp_8tap_hv_pp_cpu<LUMA_64x64>;
 #if !AUTO_VECTORIZE || GCC_VERSION < GCC_4_9_0 /* gcc_version < gcc-4.9.0 */
-        p.pu[LUMA_4x4].luma_hvpp   =  interp_8tap_hv_pp_cpu<LUMA_4x4>;
         p.pu[LUMA_4x8].luma_hvpp   =  interp_8tap_hv_pp_cpu<LUMA_4x8>;
         p.pu[LUMA_4x16].luma_hvpp  =  interp_8tap_hv_pp_cpu<LUMA_4x16>;
         p.pu[LUMA_24x32].luma_hvpp =  interp_8tap_hv_pp_cpu<LUMA_24x32>;
         p.pu[LUMA_32x8].luma_hvpp  =  interp_8tap_hv_pp_cpu<LUMA_32x8>;
-#endif
-#endif
+#endif // !AUTO_VECTORIZE || GCC_VERSION < GCC_4_9_0
+#endif // !defined(__APPLE__) && (!AUTO_VECTORIZE || GCC_VERSION < GCC_5_1_0)
 
         p.cu[BLOCK_4x4].psy_cost_pp = PFX(psyCost_4x4_neon);
 #endif // !HIGH_BIT_DEPTH
 
+        setupPixelPrimitives_neon(p);
+        setupFilterPrimitives_neon(p);
+        setupDCTPrimitives_neon(p);
+        setupLoopFilterPrimitives_neon(p);
+        setupIntraPrimitives_neon(p);
     }
 }
 } // namespace X265_NS
