@@ -61,6 +61,33 @@ extern "C" {
     p.pu[LUMA_16x64].prim = fncdef PFX(fname ## _16x64_ ## cpu)
 #define ALL_LUMA_PU(prim, fname, cpu) ALL_LUMA_PU_TYPED(prim, , fname, cpu)
 
+#define ALL_LUMA_PU_T(prim, fname) \
+    p.pu[LUMA_4x4].prim   = fname<LUMA_4x4>; \
+    p.pu[LUMA_8x8].prim   = fname<LUMA_8x8>; \
+    p.pu[LUMA_16x16].prim = fname<LUMA_16x16>; \
+    p.pu[LUMA_32x32].prim = fname<LUMA_32x32>; \
+    p.pu[LUMA_64x64].prim = fname<LUMA_64x64>; \
+    p.pu[LUMA_8x4].prim   = fname<LUMA_8x4>; \
+    p.pu[LUMA_4x8].prim   = fname<LUMA_4x8>; \
+    p.pu[LUMA_16x8].prim  = fname<LUMA_16x8>; \
+    p.pu[LUMA_8x16].prim  = fname<LUMA_8x16>; \
+    p.pu[LUMA_16x32].prim = fname<LUMA_16x32>; \
+    p.pu[LUMA_32x16].prim = fname<LUMA_32x16>; \
+    p.pu[LUMA_64x32].prim = fname<LUMA_64x32>; \
+    p.pu[LUMA_32x64].prim = fname<LUMA_32x64>; \
+    p.pu[LUMA_16x12].prim = fname<LUMA_16x12>; \
+    p.pu[LUMA_12x16].prim = fname<LUMA_12x16>; \
+    p.pu[LUMA_16x4].prim  = fname<LUMA_16x4>; \
+    p.pu[LUMA_4x16].prim  = fname<LUMA_4x16>; \
+    p.pu[LUMA_32x24].prim = fname<LUMA_32x24>; \
+    p.pu[LUMA_24x32].prim = fname<LUMA_24x32>; \
+    p.pu[LUMA_32x8].prim  = fname<LUMA_32x8>; \
+    p.pu[LUMA_8x32].prim  = fname<LUMA_8x32>; \
+    p.pu[LUMA_64x48].prim = fname<LUMA_64x48>; \
+    p.pu[LUMA_48x64].prim = fname<LUMA_48x64>; \
+    p.pu[LUMA_64x16].prim = fname<LUMA_64x16>; \
+    p.pu[LUMA_16x64].prim = fname<LUMA_16x64>
+
 #define ALL_CHROMA_420_PU_TYPED(prim, fncdef, fname, cpu)               \
     p.chroma[X265_CSP_I420].pu[CHROMA_420_4x4].prim   = fncdef PFX(fname ## _4x4_ ## cpu); \
     p.chroma[X265_CSP_I420].pu[CHROMA_420_8x8].prim   = fncdef PFX(fname ## _8x8_ ## cpu); \
@@ -164,6 +191,64 @@ extern "C" {
     p.chroma[X265_CSP_I444].pu[LUMA_16x64].prim = fncdef PFX(fname ## _16x64_ ## cpu)
 #define ALL_CHROMA_444_PU(prim, fname, cpu) ALL_CHROMA_444_PU_TYPED(prim, , fname, cpu)
 
+#define CHROMA_420_VERT_FILTERS(cpu)                             \
+    ALL_CHROMA_420_4x4_PU(filter_vpp, interp_4tap_vert_pp, cpu); \
+    ALL_CHROMA_420_4x4_PU(filter_vps, interp_4tap_vert_ps, cpu); \
+    ALL_CHROMA_420_4x4_PU(filter_vsp, interp_4tap_vert_sp, cpu); \
+    ALL_CHROMA_420_4x4_PU(filter_vss, interp_4tap_vert_ss, cpu);
+
+#define SETUP_CHROMA_422_VERT_FUNC_DEF(W, H, cpu) \
+    p.chroma[X265_CSP_I422].pu[CHROMA_422_ ## W ## x ## H].filter_vpp = PFX(interp_4tap_vert_pp_ ## W ## x ## H ## _ ## cpu); \
+    p.chroma[X265_CSP_I422].pu[CHROMA_422_ ## W ## x ## H].filter_vps = PFX(interp_4tap_vert_ps_ ## W ## x ## H ## _ ## cpu); \
+    p.chroma[X265_CSP_I422].pu[CHROMA_422_ ## W ## x ## H].filter_vsp = PFX(interp_4tap_vert_sp_ ## W ## x ## H ## _ ## cpu); \
+    p.chroma[X265_CSP_I422].pu[CHROMA_422_ ## W ## x ## H].filter_vss = PFX(interp_4tap_vert_ss_ ## W ## x ## H ## _ ## cpu);
+
+#define CHROMA_422_VERT_FILTERS(cpu) \
+    SETUP_CHROMA_422_VERT_FUNC_DEF(4, 8, cpu); \
+    SETUP_CHROMA_422_VERT_FUNC_DEF(8, 16, cpu); \
+    SETUP_CHROMA_422_VERT_FUNC_DEF(8, 8, cpu); \
+    SETUP_CHROMA_422_VERT_FUNC_DEF(4, 16, cpu); \
+    SETUP_CHROMA_422_VERT_FUNC_DEF(8, 12, cpu); \
+    SETUP_CHROMA_422_VERT_FUNC_DEF(8, 4, cpu); \
+    SETUP_CHROMA_422_VERT_FUNC_DEF(16, 32, cpu); \
+    SETUP_CHROMA_422_VERT_FUNC_DEF(16, 16, cpu); \
+    SETUP_CHROMA_422_VERT_FUNC_DEF(8, 32, cpu); \
+    SETUP_CHROMA_422_VERT_FUNC_DEF(16, 24, cpu); \
+    SETUP_CHROMA_422_VERT_FUNC_DEF(12, 32, cpu); \
+    SETUP_CHROMA_422_VERT_FUNC_DEF(16, 8, cpu); \
+    SETUP_CHROMA_422_VERT_FUNC_DEF(4, 32, cpu); \
+    SETUP_CHROMA_422_VERT_FUNC_DEF(32, 64, cpu); \
+    SETUP_CHROMA_422_VERT_FUNC_DEF(32, 32, cpu); \
+    SETUP_CHROMA_422_VERT_FUNC_DEF(16, 64, cpu); \
+    SETUP_CHROMA_422_VERT_FUNC_DEF(32, 48, cpu); \
+    SETUP_CHROMA_422_VERT_FUNC_DEF(24, 64, cpu); \
+    SETUP_CHROMA_422_VERT_FUNC_DEF(32, 16, cpu); \
+    SETUP_CHROMA_422_VERT_FUNC_DEF(8, 64, cpu);
+
+#define CHROMA_444_VERT_FILTERS(cpu) \
+    ALL_CHROMA_444_PU(filter_vpp, interp_4tap_vert_pp, cpu); \
+    ALL_CHROMA_444_PU(filter_vps, interp_4tap_vert_ps, cpu); \
+    ALL_CHROMA_444_PU(filter_vsp, interp_4tap_vert_sp, cpu); \
+    ALL_CHROMA_444_PU(filter_vss, interp_4tap_vert_ss, cpu);
+
+#define CHROMA_420_FILTERS(cpu)                               \
+    ALL_CHROMA_420_PU(filter_hpp, interp_4tap_horiz_pp, cpu); \
+    ALL_CHROMA_420_PU(filter_hps, interp_4tap_horiz_ps, cpu); \
+    ALL_CHROMA_420_PU(filter_vpp, interp_4tap_vert_pp, cpu);  \
+    ALL_CHROMA_420_PU(filter_vps, interp_4tap_vert_ps, cpu);
+
+#define CHROMA_422_FILTERS(cpu) \
+    ALL_CHROMA_422_PU(filter_hpp, interp_4tap_horiz_pp, cpu); \
+    ALL_CHROMA_422_PU(filter_hps, interp_4tap_horiz_ps, cpu); \
+    ALL_CHROMA_422_PU(filter_vpp, interp_4tap_vert_pp, cpu);  \
+    ALL_CHROMA_422_PU(filter_vps, interp_4tap_vert_ps, cpu);
+
+#define CHROMA_444_FILTERS(cpu) \
+    ALL_CHROMA_444_PU(filter_hpp, interp_4tap_horiz_pp, cpu); \
+    ALL_CHROMA_444_PU(filter_hps, interp_4tap_horiz_ps, cpu); \
+    ALL_CHROMA_444_PU(filter_vpp, interp_4tap_vert_pp, cpu);  \
+    ALL_CHROMA_444_PU(filter_vps, interp_4tap_vert_ps, cpu);
+
 
 #if defined(__GNUC__)
 #define GCC_VERSION (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__)
@@ -181,7 +266,6 @@ extern "C" {
 extern "C" {
 #include "pixel.h"
 #include "pixel-util.h"
-#include "ipfilter8.h"
 }
 
 namespace X265_NS
@@ -198,46 +282,6 @@ void interp_8tap_hv_pp_cpu(const pixel *src, intptr_t srcStride, pixel *dst, int
 
     primitives.pu[size].luma_hps(src, srcStride, immed, immedStride, idxX, 1);
     primitives.pu[size].luma_vsp(immed + (halfFilterSize - 1) * immedStride, immedStride, dst, dstStride, idxY);
-}
-
-
-/* Temporary workaround because luma_vsp assembly primitive has not been completed
- * but interp_8tap_hv_pp_cpu uses mixed C primitive and assembly primitive.
- * Otherwise, segment fault occurs. */
-void setupAliasCPrimitives(EncoderPrimitives &cp, EncoderPrimitives &asmp, int cpuMask)
-{
-    if (cpuMask & X265_CPU_NEON)
-    {
-        asmp.pu[LUMA_8x4].luma_vsp   = cp.pu[LUMA_8x4].luma_vsp;
-        asmp.pu[LUMA_8x8].luma_vsp   = cp.pu[LUMA_8x8].luma_vsp;
-        asmp.pu[LUMA_8x16].luma_vsp  = cp.pu[LUMA_8x16].luma_vsp;
-        asmp.pu[LUMA_8x32].luma_vsp  = cp.pu[LUMA_8x32].luma_vsp;
-        asmp.pu[LUMA_12x16].luma_vsp = cp.pu[LUMA_12x16].luma_vsp;
-#if !AUTO_VECTORIZE || GCC_VERSION < GCC_5_1_0 /* gcc_version < gcc-5.1.0 */
-        asmp.pu[LUMA_16x4].luma_vsp  = cp.pu[LUMA_16x4].luma_vsp;
-        asmp.pu[LUMA_16x8].luma_vsp  = cp.pu[LUMA_16x8].luma_vsp;
-        asmp.pu[LUMA_16x12].luma_vsp = cp.pu[LUMA_16x12].luma_vsp;
-        asmp.pu[LUMA_16x16].luma_vsp = cp.pu[LUMA_16x16].luma_vsp;
-        asmp.pu[LUMA_16x32].luma_vsp = cp.pu[LUMA_16x32].luma_vsp;
-        asmp.pu[LUMA_16x64].luma_vsp = cp.pu[LUMA_16x64].luma_vsp;
-        asmp.pu[LUMA_32x16].luma_vsp = cp.pu[LUMA_32x16].luma_vsp;
-        asmp.pu[LUMA_32x24].luma_vsp = cp.pu[LUMA_32x24].luma_vsp;
-        asmp.pu[LUMA_32x32].luma_vsp = cp.pu[LUMA_32x32].luma_vsp;
-        asmp.pu[LUMA_32x64].luma_vsp = cp.pu[LUMA_32x64].luma_vsp;
-        asmp.pu[LUMA_48x64].luma_vsp = cp.pu[LUMA_48x64].luma_vsp;
-        asmp.pu[LUMA_64x16].luma_vsp = cp.pu[LUMA_64x16].luma_vsp;
-        asmp.pu[LUMA_64x32].luma_vsp = cp.pu[LUMA_64x32].luma_vsp;
-        asmp.pu[LUMA_64x48].luma_vsp = cp.pu[LUMA_64x48].luma_vsp;
-        asmp.pu[LUMA_64x64].luma_vsp = cp.pu[LUMA_64x64].luma_vsp;
-#if !AUTO_VECTORIZE || GCC_VERSION < GCC_4_9_0 /* gcc_version < gcc-4.9.0 */
-        asmp.pu[LUMA_4x4].luma_vsp   = cp.pu[LUMA_4x4].luma_vsp;
-        asmp.pu[LUMA_4x8].luma_vsp   = cp.pu[LUMA_4x8].luma_vsp;
-        asmp.pu[LUMA_4x16].luma_vsp  = cp.pu[LUMA_4x16].luma_vsp;
-        asmp.pu[LUMA_24x32].luma_vsp = cp.pu[LUMA_24x32].luma_vsp;
-        asmp.pu[LUMA_32x8].luma_vsp  = cp.pu[LUMA_32x8].luma_vsp;
-#endif
-#endif
-    }
 }
 
 
@@ -291,68 +335,6 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
         p.pu[LUMA_8x16].sad_x4  = PFX(sad_x4_8x16_neon);
         p.pu[LUMA_8x32].sad_x4  = PFX(sad_x4_8x32_neon);
 
-        
-        // luma_hps
-        p.pu[LUMA_4x4].luma_hps   = PFX(interp_8tap_horiz_ps_4x4_neon);
-        p.pu[LUMA_4x8].luma_hps   = PFX(interp_8tap_horiz_ps_4x8_neon);
-        p.pu[LUMA_4x16].luma_hps  = PFX(interp_8tap_horiz_ps_4x16_neon);
-        p.pu[LUMA_12x16].luma_hps = PFX(interp_8tap_horiz_ps_12x16_neon);
-        
-#if !defined(__APPLE__)
-        p.pu[LUMA_8x4].luma_hps   = PFX(interp_8tap_horiz_ps_8x4_neon);
-        p.pu[LUMA_8x8].luma_hps   = PFX(interp_8tap_horiz_ps_8x8_neon);
-        p.pu[LUMA_8x16].luma_hps  = PFX(interp_8tap_horiz_ps_8x16_neon);
-        p.pu[LUMA_8x32].luma_hps  = PFX(interp_8tap_horiz_ps_8x32_neon);
-        p.pu[LUMA_24x32].luma_hps = PFX(interp_8tap_horiz_ps_24x32_neon);
-#if !AUTO_VECTORIZE || GCC_VERSION < GCC_5_1_0 /* gcc_version < gcc-5.1.0 */
-        p.pu[LUMA_16x4].luma_hps  = PFX(interp_8tap_horiz_ps_16x4_neon);
-        p.pu[LUMA_16x8].luma_hps  = PFX(interp_8tap_horiz_ps_16x8_neon);
-        p.pu[LUMA_16x12].luma_hps = PFX(interp_8tap_horiz_ps_16x12_neon);
-        p.pu[LUMA_16x16].luma_hps = PFX(interp_8tap_horiz_ps_16x16_neon);
-        p.pu[LUMA_16x32].luma_hps = PFX(interp_8tap_horiz_ps_16x32_neon);
-        p.pu[LUMA_16x64].luma_hps = PFX(interp_8tap_horiz_ps_16x64_neon);
-        p.pu[LUMA_32x8].luma_hps  = PFX(interp_8tap_horiz_ps_32x8_neon);
-        p.pu[LUMA_32x16].luma_hps = PFX(interp_8tap_horiz_ps_32x16_neon);
-        p.pu[LUMA_32x24].luma_hps = PFX(interp_8tap_horiz_ps_32x24_neon);
-        p.pu[LUMA_32x32].luma_hps = PFX(interp_8tap_horiz_ps_32x32_neon);
-        p.pu[LUMA_32x64].luma_hps = PFX(interp_8tap_horiz_ps_32x64_neon);
-        p.pu[LUMA_48x64].luma_hps = PFX(interp_8tap_horiz_ps_48x64_neon);
-        p.pu[LUMA_64x16].luma_hps = PFX(interp_8tap_horiz_ps_64x16_neon);
-        p.pu[LUMA_64x32].luma_hps = PFX(interp_8tap_horiz_ps_64x32_neon);
-        p.pu[LUMA_64x48].luma_hps = PFX(interp_8tap_horiz_ps_64x48_neon);
-        p.pu[LUMA_64x64].luma_hps = PFX(interp_8tap_horiz_ps_64x64_neon);
-#endif // !AUTO_VECTORIZE || GCC_VERSION < GCC_5_1_0
-#endif // !defined(__APPLE__)
-
-        p.pu[LUMA_12x16].luma_hvpp =  interp_8tap_hv_pp_cpu<LUMA_12x16>;
-#if !AUTO_VECTORIZE || GCC_VERSION < GCC_4_9_0 /* gcc_version < gcc-4.9.0 */
-        p.pu[LUMA_4x4].luma_hvpp   =  interp_8tap_hv_pp_cpu<LUMA_4x4>;
-#endif // !AUTO_VECTORIZE || GCC_VERSION < GCC_4_9_0
-
-#if !defined(__APPLE__) && (!AUTO_VECTORIZE || GCC_VERSION < GCC_5_1_0) /* gcc_version < gcc-5.1.0 */
-        p.pu[LUMA_16x4].luma_hvpp  =  interp_8tap_hv_pp_cpu<LUMA_16x4>;
-        p.pu[LUMA_16x8].luma_hvpp  =  interp_8tap_hv_pp_cpu<LUMA_16x8>;
-        p.pu[LUMA_16x12].luma_hvpp =  interp_8tap_hv_pp_cpu<LUMA_16x12>;
-        p.pu[LUMA_16x16].luma_hvpp =  interp_8tap_hv_pp_cpu<LUMA_16x16>;
-        p.pu[LUMA_16x32].luma_hvpp =  interp_8tap_hv_pp_cpu<LUMA_16x32>;
-        p.pu[LUMA_16x64].luma_hvpp =  interp_8tap_hv_pp_cpu<LUMA_16x64>;
-        p.pu[LUMA_32x16].luma_hvpp =  interp_8tap_hv_pp_cpu<LUMA_32x16>;
-        p.pu[LUMA_32x24].luma_hvpp =  interp_8tap_hv_pp_cpu<LUMA_32x24>;
-        p.pu[LUMA_32x32].luma_hvpp =  interp_8tap_hv_pp_cpu<LUMA_32x32>;
-        p.pu[LUMA_32x64].luma_hvpp =  interp_8tap_hv_pp_cpu<LUMA_32x64>;
-        p.pu[LUMA_48x64].luma_hvpp =  interp_8tap_hv_pp_cpu<LUMA_48x64>;
-        p.pu[LUMA_64x16].luma_hvpp =  interp_8tap_hv_pp_cpu<LUMA_64x16>;
-        p.pu[LUMA_64x32].luma_hvpp =  interp_8tap_hv_pp_cpu<LUMA_64x32>;
-        p.pu[LUMA_64x48].luma_hvpp =  interp_8tap_hv_pp_cpu<LUMA_64x48>;
-        p.pu[LUMA_64x64].luma_hvpp =  interp_8tap_hv_pp_cpu<LUMA_64x64>;
-#if !AUTO_VECTORIZE || GCC_VERSION < GCC_4_9_0 /* gcc_version < gcc-4.9.0 */
-        p.pu[LUMA_4x8].luma_hvpp   =  interp_8tap_hv_pp_cpu<LUMA_4x8>;
-        p.pu[LUMA_4x16].luma_hvpp  =  interp_8tap_hv_pp_cpu<LUMA_4x16>;
-        p.pu[LUMA_24x32].luma_hvpp =  interp_8tap_hv_pp_cpu<LUMA_24x32>;
-        p.pu[LUMA_32x8].luma_hvpp  =  interp_8tap_hv_pp_cpu<LUMA_32x8>;
-#endif // !AUTO_VECTORIZE || GCC_VERSION < GCC_4_9_0
-#endif // !defined(__APPLE__) && (!AUTO_VECTORIZE || GCC_VERSION < GCC_5_1_0)
-
         p.cu[BLOCK_4x4].psy_cost_pp = PFX(psyCost_4x4_neon);
 #endif // !HIGH_BIT_DEPTH
 
@@ -370,6 +352,22 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
         ALL_CHROMA_422_PU(p2s[NONALIGNED], filterPixelToShort, neon);
         ALL_CHROMA_444_PU(p2s[NONALIGNED], filterPixelToShort, neon);
         ALL_LUMA_PU(convert_p2s[NONALIGNED], filterPixelToShort, neon);
+
+#if !HIGH_BIT_DEPTH
+        ALL_LUMA_PU(luma_vpp, interp_8tap_vert_pp, neon);
+        ALL_LUMA_PU(luma_vsp, interp_8tap_vert_sp, neon);
+        ALL_LUMA_PU(luma_vps, interp_8tap_vert_ps, neon);
+        ALL_LUMA_PU(luma_hpp, interp_horiz_pp, neon);
+        ALL_LUMA_PU(luma_hps, interp_horiz_ps, neon);
+        ALL_LUMA_PU(luma_vss, interp_8tap_vert_ss, neon);
+        ALL_LUMA_PU_T(luma_hvpp, interp_8tap_hv_pp_cpu);
+        CHROMA_420_VERT_FILTERS(neon);
+        CHROMA_422_VERT_FILTERS(neon);
+        CHROMA_444_VERT_FILTERS(neon);
+        CHROMA_420_FILTERS(neon);
+        CHROMA_422_FILTERS(neon);
+        CHROMA_444_FILTERS(neon);
+#endif // !HIGH_BIT_DEPTH
     }
 }
 } // namespace X265_NS

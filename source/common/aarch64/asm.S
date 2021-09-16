@@ -1,7 +1,8 @@
 /*****************************************************************************
- * Copyright (C) 2020 MulticoreWare, Inc
+ * Copyright (C) 2020-2021 MulticoreWare, Inc
  *
  * Authors: Hongbin Liu <liuhongbin1@huawei.com>
+ *          Sebastian Pop <spop@amazon.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -96,6 +97,46 @@ FUNC    .func   \name
 .endif
 .endm
 
+.macro  const   name, align=2
+    .macro endconst
+ELF     .size   \name, . - \name
+        .purgem endconst
+    .endm
+#ifdef __MACH__
+    .const_data
+#else
+    .section .rodata
+#endif
+    .align          \align
+\name:
+.endm
+
+.macro  movrel rd, val, offset=0
+#if defined(__APPLE__)
+  .if \offset < 0
+        adrp            \rd, \val@PAGE
+        add             \rd, \rd, \val@PAGEOFF
+        sub             \rd, \rd, -(\offset)
+  .else
+        adrp            \rd, \val+(\offset)@PAGE
+        add             \rd, \rd, \val+(\offset)@PAGEOFF
+  .endif
+#elif defined(PIC) && defined(_WIN32)
+  .if \offset < 0
+        adrp            \rd, \val
+        add             \rd, \rd, :lo12:\val
+        sub             \rd, \rd, -(\offset)
+  .else
+        adrp            \rd, \val+(\offset)
+        add             \rd, \rd, :lo12:\val+(\offset)
+  .endif
+#elif defined(PIC)
+        adrp            \rd, \val+(\offset)
+        add             \rd, \rd, :lo12:\val+(\offset)
+#else
+        ldr             \rd, =\val+\offset
+#endif
+.endm
 
 #define FENC_STRIDE 64
 #define FDEC_STRIDE 32
