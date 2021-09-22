@@ -30,6 +30,10 @@
 #ifdef PREFIX
 #define EXTERN_ASM _
 #define HAVE_AS_FUNC 0
+#elif defined __clang__
+#define EXTERN_ASM
+#define HAVE_AS_FUNC 0
+#define PREFIX 1
 #else
 #define EXTERN_ASM
 #define HAVE_AS_FUNC 1
