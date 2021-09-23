@@ -137,5 +137,11 @@
     FUNCDEF_PU(void, sad_x3, cpu, const pixel*, const pixel*, const pixel*, const pixel*, intptr_t, int32_t*); \
     FUNCDEF_PU(void, sad_x4, cpu, const pixel*, const pixel*, const pixel*, const pixel*, const pixel*, intptr_t, int32_t*); \
     FUNCDEF_CHROMA_PU(int, pixel_sad, cpu, const pixel*, intptr_t, const pixel*, intptr_t); \
+    FUNCDEF_CHROMA_PU(sse_t, pixel_ssd_s, cpu, const int16_t*, intptr_t); \
+    FUNCDEF_CHROMA_PU(sse_t, pixel_ssd_s_aligned, cpu, const int16_t*, intptr_t); \
+    FUNCDEF_TU_S(sse_t, pixel_ssd_s, cpu, const int16_t*, intptr_t); \
+    FUNCDEF_TU_S(sse_t, pixel_ssd_s_aligned, cpu, const int16_t*, intptr_t); \
+    FUNCDEF_PU(sse_t, pixel_sse_pp, cpu, const pixel*, intptr_t, const pixel*, intptr_t); \
+    FUNCDEF_CHROMA_PU(sse_t, pixel_sse_ss, cpu, const int16_t*, intptr_t, const int16_t*, intptr_t); \
 
 DECLS(neon);

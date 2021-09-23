@@ -107,7 +107,7 @@ if(ENABLE_ASSEMBLY AND (ARM64 OR CROSS_COMPILE_ARM64))
     enable_language(ASM)
 
     # add ARM assembly/intrinsic files here
-    set(A_SRCS asm.S mc-a.S sad-a.S pixel-util.S p2s.S ipfilter.S blockcopy8.S)
+    set(A_SRCS asm.S mc-a.S sad-a.S pixel-util.S p2s.S ipfilter.S blockcopy8.S ssd-a.S)
     set(VEC_PRIMITIVES)
 
     set(ARM_ASMS "${A_SRCS}" CACHE INTERNAL "ARM Assembly Sources")
