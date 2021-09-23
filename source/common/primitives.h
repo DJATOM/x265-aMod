@@ -488,7 +488,7 @@ extern const char* PFX(build_info_str);
 
 #if ENABLE_ASSEMBLY && X265_ARCH_ARM64
 extern "C" {
-#include "aarch64/pixel-util.h"
+#include "aarch64/fun-decls.h"
 }
 #endif
 

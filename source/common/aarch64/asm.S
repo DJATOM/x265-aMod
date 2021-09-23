@@ -140,3 +140,40 @@ ELF     .size   \name, . - \name
 
 #define FENC_STRIDE 64
 #define FDEC_STRIDE 32
+
+.macro SUMSUB_AB sum, diff, a, b
+    add             \sum,  \a, \b
+    sub             \diff, \a, \b
+.endm
+
+.macro SUMSUB_ABCD s1, d1, s2, d2, a, b, c, d
+    SUMSUB_AB       \s1, \d1, \a, \b
+    SUMSUB_AB       \s2, \d2, \c, \d
+.endm
+
+.macro HADAMARD4_V r1, r2, r3, r4, t1, t2, t3, t4
+    SUMSUB_ABCD     \t1, \t2, \t3, \t4, \r1, \r2, \r3, \r4
+    SUMSUB_ABCD     \r1, \r3, \r2, \r4, \t1, \t3, \t2, \t4
+.endm
+
+.macro ABS2 a b
+    abs             \a, \a
+    abs             \b, \b
+.endm
+
+.macro ABS8 v0, v1, v2, v3, v4, v5, v6, v7
+    ABS2            \v0, \v1
+    ABS2            \v2, \v3
+    ABS2            \v4, \v5
+    ABS2            \v6, \v7
+.endm
+
+.macro vtrn t1, t2, s1, s2
+    trn1            \t1, \s1, \s2
+    trn2            \t2, \s1, \s2
+.endm
+
+.macro trn4 t1, t2, t3, t4, s1, s2, s3, s4
+    vtrn            \t1, \t2, \s1, \s2
+    vtrn            \t3, \t4, \s3, \s4
+.endm
