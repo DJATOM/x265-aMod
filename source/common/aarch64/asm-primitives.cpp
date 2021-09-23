@@ -316,23 +316,6 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
         p.chroma[X265_CSP_I420].pu[CHROMA_420_12x16].satd  = PFX(pixel_satd_12x16_neon);
 #endif // defined(__APPLE__)
 
-
-        p.pu[LUMA_4x4].pixelavg_pp[NONALIGNED]   = PFX(pixel_avg_pp_4x4_neon);
-        p.pu[LUMA_4x8].pixelavg_pp[NONALIGNED]   = PFX(pixel_avg_pp_4x8_neon);
-        p.pu[LUMA_4x16].pixelavg_pp[NONALIGNED]  = PFX(pixel_avg_pp_4x16_neon);
-        p.pu[LUMA_8x4].pixelavg_pp[NONALIGNED]   = PFX(pixel_avg_pp_8x4_neon);
-        p.pu[LUMA_8x8].pixelavg_pp[NONALIGNED]   = PFX(pixel_avg_pp_8x8_neon);
-        p.pu[LUMA_8x16].pixelavg_pp[NONALIGNED]  = PFX(pixel_avg_pp_8x16_neon);
-        p.pu[LUMA_8x32].pixelavg_pp[NONALIGNED]  = PFX(pixel_avg_pp_8x32_neon);
-
-        p.pu[LUMA_4x4].pixelavg_pp[ALIGNED]   = PFX(pixel_avg_pp_4x4_neon);
-        p.pu[LUMA_4x8].pixelavg_pp[ALIGNED]   = PFX(pixel_avg_pp_4x8_neon);
-        p.pu[LUMA_4x16].pixelavg_pp[ALIGNED]  = PFX(pixel_avg_pp_4x16_neon);
-        p.pu[LUMA_8x4].pixelavg_pp[ALIGNED]   = PFX(pixel_avg_pp_8x4_neon);
-        p.pu[LUMA_8x8].pixelavg_pp[ALIGNED]   = PFX(pixel_avg_pp_8x8_neon);
-        p.pu[LUMA_8x16].pixelavg_pp[ALIGNED]  = PFX(pixel_avg_pp_8x16_neon);
-        p.pu[LUMA_8x32].pixelavg_pp[ALIGNED]  = PFX(pixel_avg_pp_8x32_neon);
-
         p.pu[LUMA_8x4].sad_x3   = PFX(sad_x3_8x4_neon);
         p.pu[LUMA_8x8].sad_x3   = PFX(sad_x3_8x8_neon);
         p.pu[LUMA_8x16].sad_x3  = PFX(sad_x3_8x16_neon);
@@ -478,6 +461,17 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
         p.cu[BLOCK_16x16].cpy1Dto2D_shr = PFX(cpy1Dto2D_shr_16x16_neon);
         p.cu[BLOCK_32x32].cpy1Dto2D_shr = PFX(cpy1Dto2D_shr_32x32_neon);
 
+#if !HIGH_BIT_DEPTH
+        // pixel_avg_pp
+        ALL_LUMA_PU(pixelavg_pp[NONALIGNED], pixel_avg_pp, neon);
+        ALL_LUMA_PU(pixelavg_pp[ALIGNED], pixel_avg_pp, neon);
+
+        // addAvg
+        ALL_CHROMA_420_PU(addAvg[NONALIGNED], addAvg, neon);
+        ALL_CHROMA_422_PU(addAvg[NONALIGNED], addAvg, neon);
+        ALL_CHROMA_420_PU(addAvg[ALIGNED], addAvg, neon);
+        ALL_CHROMA_422_PU(addAvg[ALIGNED], addAvg, neon);
+#endif
     }
 }
 } // namespace X265_NS
