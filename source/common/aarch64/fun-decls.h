@@ -134,5 +134,8 @@
     FUNCDEF_CHROMA_PU(void, addAvg_aligned, cpu, const int16_t*, const int16_t*, pixel*, intptr_t, intptr_t, intptr_t); \
     FUNCDEF_PU(void, pixel_avg_pp, cpu, pixel* dst, intptr_t dstride, const pixel* src0, intptr_t sstride0, const pixel* src1, intptr_t sstride1, int); \
     FUNCDEF_PU(void, pixel_avg_pp_aligned, cpu, pixel* dst, intptr_t dstride, const pixel* src0, intptr_t sstride0, const pixel* src1, intptr_t sstride1, int); \
+    FUNCDEF_PU(void, sad_x3, cpu, const pixel*, const pixel*, const pixel*, const pixel*, intptr_t, int32_t*); \
+    FUNCDEF_PU(void, sad_x4, cpu, const pixel*, const pixel*, const pixel*, const pixel*, const pixel*, intptr_t, int32_t*); \
+    FUNCDEF_CHROMA_PU(int, pixel_sad, cpu, const pixel*, intptr_t, const pixel*, intptr_t); \
 
 DECLS(neon);

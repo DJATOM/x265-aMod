@@ -316,16 +316,6 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
         p.chroma[X265_CSP_I420].pu[CHROMA_420_12x16].satd  = PFX(pixel_satd_12x16_neon);
 #endif // defined(__APPLE__)
 
-        p.pu[LUMA_8x4].sad_x3   = PFX(sad_x3_8x4_neon);
-        p.pu[LUMA_8x8].sad_x3   = PFX(sad_x3_8x8_neon);
-        p.pu[LUMA_8x16].sad_x3  = PFX(sad_x3_8x16_neon);
-        p.pu[LUMA_8x32].sad_x3  = PFX(sad_x3_8x32_neon);
-
-        p.pu[LUMA_8x4].sad_x4   = PFX(sad_x4_8x4_neon);
-        p.pu[LUMA_8x8].sad_x4   = PFX(sad_x4_8x8_neon);
-        p.pu[LUMA_8x16].sad_x4  = PFX(sad_x4_8x16_neon);
-        p.pu[LUMA_8x32].sad_x4  = PFX(sad_x4_8x32_neon);
-
         p.cu[BLOCK_4x4].psy_cost_pp = PFX(psyCost_4x4_neon);
 #endif // !HIGH_BIT_DEPTH
 
@@ -471,6 +461,11 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
         ALL_CHROMA_422_PU(addAvg[NONALIGNED], addAvg, neon);
         ALL_CHROMA_420_PU(addAvg[ALIGNED], addAvg, neon);
         ALL_CHROMA_422_PU(addAvg[ALIGNED], addAvg, neon);
+
+        // sad
+        ALL_LUMA_PU(sad, pixel_sad, neon);
+        ALL_LUMA_PU(sad_x3, sad_x3, neon);
+        ALL_LUMA_PU(sad_x4, sad_x4, neon);
 #endif
     }
 }
