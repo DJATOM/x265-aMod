@@ -100,6 +100,19 @@
     ret PFX(name ## _24x64_ ## cpu)(__VA_ARGS__);
 
 #define DECLS(cpu) \
+    FUNCDEF_TU(void, cpy2Dto1D_shl, cpu, int16_t* dst, const int16_t* src, intptr_t srcStride, int shift); \
+    FUNCDEF_TU(void, cpy2Dto1D_shr, cpu, int16_t* dst, const int16_t* src, intptr_t srcStride, int shift); \
+    FUNCDEF_TU(void, cpy1Dto2D_shl, cpu, int16_t* dst, const int16_t* src, intptr_t srcStride, int shift); \
+    FUNCDEF_TU(void, cpy1Dto2D_shl_aligned, cpu, int16_t* dst, const int16_t* src, intptr_t srcStride, int shift); \
+    FUNCDEF_TU(void, cpy1Dto2D_shr, cpu, int16_t* dst, const int16_t* src, intptr_t srcStride, int shift); \
+    FUNCDEF_TU_S(uint32_t, copy_cnt, cpu, int16_t* dst, const int16_t* src, intptr_t srcStride); \
+    FUNCDEF_TU_S(int, count_nonzero, cpu, const int16_t* quantCoeff); \
+    FUNCDEF_TU(void, blockfill_s, cpu, int16_t* dst, intptr_t dstride, int16_t val); \
+    FUNCDEF_TU(void, blockfill_s_aligned, cpu, int16_t* dst, intptr_t dstride, int16_t val); \
+    FUNCDEF_CHROMA_PU(void, blockcopy_ss, cpu, int16_t* dst, intptr_t dstStride, const int16_t* src, intptr_t srcStride); \
+    FUNCDEF_CHROMA_PU(void, blockcopy_pp, cpu, pixel* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride); \
+    FUNCDEF_PU(void, blockcopy_sp, cpu, pixel* dst, intptr_t dstStride, const int16_t* src, intptr_t srcStride); \
+    FUNCDEF_PU(void, blockcopy_ps, cpu, int16_t* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride); \
     FUNCDEF_PU(void, interp_8tap_horiz_pp, cpu, const pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int coeffIdx); \
     FUNCDEF_PU(void, interp_8tap_horiz_ps, cpu, const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride, int coeffIdx, int isRowExt); \
     FUNCDEF_PU(void, interp_8tap_vert_pp, cpu, const pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int coeffIdx); \
