@@ -2059,6 +2059,14 @@ Quality, rate control and rate distortion options
    rate control mode.
 
    Default disabled. **Experimental feature**
+   
+
+.. option:: bEncFocusedFramesOnly
+
+	Used to trigger encoding of selective GOPs; Disabled by default.
+	
+	**API ONLY**
+	
 
 Quantization Options
 ====================

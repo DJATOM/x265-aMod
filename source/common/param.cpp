@@ -282,6 +282,7 @@ void x265_param_default(x265_param* param)
     param->rc.bStatRead = 0;
     param->rc.bStatWrite = 0;
     param->rc.statFileName = NULL;
+    param->rc.bEncFocusedFramesOnly = 0;
     param->rc.complexityBlur = 20;
     param->rc.qblur = 0.5;
     param->rc.zoneCount = 0;

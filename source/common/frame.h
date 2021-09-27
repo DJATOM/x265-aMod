@@ -70,6 +70,7 @@ struct RcStats
     double   count[4];
     double   offset[4];
     double   bufferFillFinal;
+    int64_t  currentSatd;
 };
 
 class Frame

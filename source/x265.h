@@ -1443,6 +1443,9 @@ typedef struct x265_param
          * encoder will default to using x265_2pass.log */
         const char* statFileName;
 
+        /* if only the focused frames would be re-encode or not */
+        int       bEncFocusedFramesOnly;
+
         /* temporally blur quants */
         double    qblur;
 

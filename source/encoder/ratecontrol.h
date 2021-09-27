@@ -73,6 +73,7 @@ struct RateControlEntry
     Predictor  rowPreds[3][2];
     Predictor* rowPred[2];
 
+    int64_t currentSatd;
     int64_t lastSatd;      /* Contains the picture cost of the previous frame, required for resetAbr and VBV */
     int64_t leadingNoBSatd;
     int64_t rowTotalBits;  /* update cplxrsum and totalbits at the end of 2 rows */
@@ -87,6 +88,8 @@ struct RateControlEntry
     double  rowCplxrSum;
     double  qpNoVbv;
     double  bufferFill;
+    double  bufferFillFinal;
+    double  bufferFillActual;
     double  targetFill;
     bool    vbvEndAdj;
     double  frameDuration;

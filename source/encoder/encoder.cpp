@@ -2249,6 +2249,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                 outFrame->m_rcData->iCuCount = outFrame->m_encData->m_frameStats.percent8x8Intra * m_rateControl->m_ncu;
                 outFrame->m_rcData->pCuCount = outFrame->m_encData->m_frameStats.percent8x8Inter * m_rateControl->m_ncu;
                 outFrame->m_rcData->skipCuCount = outFrame->m_encData->m_frameStats.percent8x8Skip  * m_rateControl->m_ncu;
+                outFrame->m_rcData->currentSatd = curEncoder->m_rce.coeffBits;
             }
 
             /* Allow this frame to be recycled if no frame encoders are using it for reference */
@@ -4016,6 +4017,11 @@ void Encoder::configure(x265_param *p)
     {
         x265_log(p, X265_LOG_WARNING, "--multi-pass-opt-analysis doesn't support refining analysis through multiple-passes; it only reuses analysis from the second-to-last pass to the last pass.Disabling reading\n");
         p->rc.bStatRead = 0;
+    }
+
+    if (!p->rc.bStatRead || p->rc.rateControlMode != X265_RC_CRF)
+    {
+        p->rc.bEncFocusedFramesOnly = 0;
     }
 
     /* some options make no sense if others are disabled */
