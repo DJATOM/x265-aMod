@@ -41,8 +41,8 @@
 #include <windows.h>
 #endif
 
-#include <vapoursynth/VSScript.h>
-#include <vapoursynth/VSHelper.h>
+#include <vapoursynth/VSScript4.h>
+#include <vapoursynth/VSHelper4.h>
 
 #include "input.h"
 
@@ -62,25 +62,7 @@
 namespace X265_NS {
 // x265 private namespace
 
-using func_init = int (VS_CC *)();
-using func_finalize = int (VS_CC *)();
-using func_evaluateFile = int (VS_CC *)(VSScript** handle, const char* scriptFilename, int flags);
-using func_freeScript = void (VS_CC *)(VSScript* handle);
-using func_getError = const char* (VS_CC *)(VSScript* handle);
-using func_getOutput = VSNodeRef* (VS_CC *)(VSScript* handle, int index);
-using func_getCore = VSCore* (VS_CC *)(VSScript* handle);
-using func_getVSApi2 = const VSAPI* (VS_CC *)(int version);
-
-struct VSSFunc {
-    func_init init;
-    func_finalize finalize;
-    func_evaluateFile evaluateFile;
-    func_freeScript freeScript;
-    func_getError getError;
-    func_getOutput getOutput;
-    func_getCore getCore;
-    func_getVSApi2 getVSApi2;
-};
+using func_vssapi = const VSSCRIPTAPI* (VS_CC *)(int version);
 
 #if defined(_WIN32_WINNT)
 using lib_path_t = std::wstring;
@@ -95,7 +77,7 @@ using func_t = void*;
 class VPYInput : public InputFile
 {
 protected:
-    std::unordered_map<int, std::pair<HANDLE, const VSFrameRef*>> frameMap;
+    std::unordered_map<int, std::pair<HANDLE, const VSFrame*>> frameMap;
     int parallelRequests {-1};
     std::atomic<int> requestedFrames {-1};
     std::atomic<int> completedFrames {-1};
@@ -127,16 +109,18 @@ protected:
 #endif
     lib_path_t convertLibraryPath(std::string);
     void parseVpyOptions(const char* _options);
-    const VSFrameRef* getAsyncFrame(int n);
-    VSSFunc vss_func;
+    const VSFrame* getAsyncFrame(int n);
+    func_vssapi getVSScriptAPI;
+    const VSSCRIPTAPI* vssapi = nullptr;
     const VSAPI* vsapi = nullptr;
+    VSCore *core = nullptr;
     VSScript* script = nullptr;
-    VSNodeRef* node = nullptr;
+    VSNode* node = nullptr;
 
 public:
     VPYInput(InputFileInfo& info);
     ~VPYInput() {};
-    void setAsyncFrame(int n, const VSFrameRef* f, const char* errorMsg);
+    void setAsyncFrame(int n, const VSFrame* f, const char* errorMsg);
     void release();
     bool isEof() const { return nextFrame >= _info.frameCount; }
     bool isFail() { return vpyFailed; }
