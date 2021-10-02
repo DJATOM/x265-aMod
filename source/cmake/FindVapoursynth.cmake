@@ -1,14 +1,21 @@
+include(CheckIncludeFile)
 set(PACKAGE_CONFIG_TEXT "Vapoursynth include directory")
 
 if(WIN32)
     get_filename_component(VS_FOLDER "[HKEY_LOCAL_MACHINE\\SOFTWARE\\VapourSynth;Path]" ABSOLUTE)
     if (NOT VS_FOLDER MATCHES "/registry") # registry stuff in CMake is pretty obscure
-        set(VPY_INCLUDE_DIR "${VS_FOLDER}/sdk/include" CACHE PATH "${PACKAGE_CONFIG_TEXT}")
+        check_include_file("${VS_FOLDER}/sdk/include/vapoursynth/VapourSynth4.h" HAVE_API4_INSTALLATION)
+        if (HAVE_API4_INSTALLATION)
+            set(VPY_INCLUDE_DIR "${VS_FOLDER}/sdk/include" CACHE PATH "${PACKAGE_CONFIG_TEXT}")
+        endif()
     endif()
 else()
     find_path(VPY_INCLUDE_PREFIX NAMES vapoursynth PATHS usr PATH_SUFFIXES include)
     if(VPY_INCLUDE_PREFIX)
-        set(VPY_INCLUDE_DIR "${VPY_INCLUDE_PREFIX}" CACHE PATH ${PACKAGE_CONFIG_TEXT})
+        check_include_file("VapourSynth4.h" HAVE_API4_INSTALLATION)
+        if (HAVE_API4_INSTALLATION)
+            set(VPY_INCLUDE_DIR "${VPY_INCLUDE_PREFIX}" CACHE PATH "${PACKAGE_CONFIG_TEXT}")
+        endif()
     endif()
 endif()
 
