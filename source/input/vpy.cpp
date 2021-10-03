@@ -26,19 +26,6 @@
 
 using namespace X265_NS;
 
-const char *messageTypeToString(int msgType)
-{
-    switch (msgType)
-    {
-        case mtDebug: return "Debug";
-        case mtInformation: return "Information";
-        case mtWarning: return "Warning";
-        case mtCritical: return "Critical";
-        case mtFatal: return "Fatal";
-        default: return "Other";
-    }
-}
-
 void VS_CC frameDoneCallback(void* userData, const VSFrame* f, const int n, VSNode*, const char* errorMsg)
 {
     reinterpret_cast<VPYInput*>(userData)->setAsyncFrame(n, f, errorMsg);
@@ -46,8 +33,19 @@ void VS_CC frameDoneCallback(void* userData, const VSFrame* f, const int n, VSNo
 
 void VS_CC logMessageHandler(int msgType, const char* msg, void*)
 {
-    if (msgType >= mtInformation)
-        general_log(nullptr, "vpy", X265_LOG_INFO, "%s: %s\n", messageTypeToString(msgType), msg);
+    auto vsToX265LogLevel = [msgType]()
+    {
+        switch (msgType)
+        {
+            case mtDebug: return X265_LOG_DEBUG;
+            case mtInformation: return X265_LOG_INFO;
+            case mtWarning: return X265_LOG_WARNING;
+            case mtCritical: return X265_LOG_WARNING;
+            case mtFatal: return X265_LOG_ERROR;
+            default: return X265_LOG_FULL;
+        }
+    };
+    general_log(nullptr, "vpy", vsToX265LogLevel(), "%s\n", msg);
 }
 
 void VPYInput::setAsyncFrame(int n, const VSFrame* f, const char* errorMsg)
