@@ -1000,11 +1000,11 @@ bool RateControl::initPass2()
 {
     uint64_t allConstBits = 0, allCodedBits = 0;
     uint64_t allAvailableBits = uint64_t(m_param->rc.bitrate * 1000. * m_numEntries * m_frameDuration);
-    int startIndex, framesCount, endIndex;
+    int startIndex, endIndex;
     int fps = X265_MIN(m_param->keyframeMax, (int)(m_fps + 0.5));
     int distance = fps << 1;
     distance = distance > m_param->keyframeMax ? (m_param->keyframeMax << 1) : m_param->keyframeMax;
-    startIndex = endIndex = framesCount = 0;
+    startIndex = endIndex = 0;
     double targetBits = 0;
     double expectedBits = 0;
     double targetBits2 = 0;
@@ -1014,7 +1014,7 @@ bool RateControl::initPass2()
 
     if (m_param->rc.rateControlMode == X265_RC_ABR)
     {
-        for (startIndex = m_start, endIndex = m_start; endIndex < m_numEntries; endIndex++)
+        for (endIndex = m_start; endIndex < m_numEntries; endIndex++)
         {
             allConstBits += m_rce2Pass[endIndex].miscBits;
             allCodedBits += m_rce2Pass[endIndex].coeffBits + m_rce2Pass[endIndex].mvBits;
@@ -1023,7 +1023,7 @@ bool RateControl::initPass2()
         if (allAvailableBits < allConstBits)
         {
             x265_log(m_param, X265_LOG_ERROR, "requested bitrate is too low. estimated minimum is %d kbps\n",
-                (int)(allConstBits * m_fps / framesCount * 1000.));
+                (int)(allConstBits * m_fps / (m_numEntries - m_start) * 1000.));
             return false;
         }
         if (!analyseABR2Pass(allAvailableBits))
