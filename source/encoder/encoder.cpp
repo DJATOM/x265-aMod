@@ -1006,6 +1006,7 @@ void Encoder::destroy()
         /* release string arguments that were strdup'd */
         free((char*)m_param->rc.lambdaFileName);
         free((char*)m_param->rc.statFileName);
+        free((char*)m_param->rc.sharedMemName);
         free((char*)m_param->analysisReuseFileName);
         free((char*)m_param->scalingLists);
         free((char*)m_param->csvfn);
@@ -4017,6 +4018,11 @@ void Encoder::configure(x265_param *p)
     {
         x265_log(p, X265_LOG_WARNING, "--multi-pass-opt-analysis doesn't support refining analysis through multiple-passes; it only reuses analysis from the second-to-last pass to the last pass.Disabling reading\n");
         p->rc.bStatRead = 0;
+    }
+
+    if ((p->rc.bStatWrite || p->rc.bStatRead) && p->rc.dataShareMode != X265_SHARE_MODE_FILE && p->rc.dataShareMode != X265_SHARE_MODE_SHAREDMEM)
+    {
+        p->rc.dataShareMode = X265_SHARE_MODE_FILE;
     }
 
     if (!p->rc.bStatRead || p->rc.rateControlMode != X265_RC_CRF)

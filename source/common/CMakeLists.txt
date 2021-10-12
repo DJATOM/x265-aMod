@@ -172,4 +172,5 @@ add_library(common OBJECT
     scalinglist.cpp scalinglist.h
     quant.cpp quant.h contexts.h
     deblock.cpp deblock.h
-    scaler.cpp scaler.h)
+    scaler.cpp scaler.h
+    ringmem.cpp ringmem.h)

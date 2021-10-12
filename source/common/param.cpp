@@ -281,7 +281,9 @@ void x265_param_default(x265_param* param)
     param->rc.rfConstantMin = 0;
     param->rc.bStatRead = 0;
     param->rc.bStatWrite = 0;
+    param->rc.dataShareMode = X265_SHARE_MODE_FILE;
     param->rc.statFileName = NULL;
+    param->rc.sharedMemName = NULL;
     param->rc.bEncFocusedFramesOnly = 0;
     param->rc.complexityBlur = 20;
     param->rc.qblur = 0.5;
@@ -1191,6 +1193,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         int pass = x265_clip3(0, 3, atoi(value));
         p->rc.bStatWrite = pass & 1;
         p->rc.bStatRead = pass & 2;
+        p->rc.dataShareMode = X265_SHARE_MODE_FILE;
     }
     OPT("stats") p->rc.statFileName = strdup(value);
     OPT("scaling-list") p->scalingLists = strdup(value);
@@ -1921,6 +1924,7 @@ int x265_check_params(x265_param* param)
             x265_log(param, X265_LOG_WARNING, "Live VBV enabled without VBV settings.Disabling live VBV in 2 pass\n");
         }
     }
+    CHECK(param->rc.dataShareMode != X265_SHARE_MODE_FILE && param->rc.dataShareMode != X265_SHARE_MODE_SHAREDMEM, "Invalid data share mode. It must be one of the X265_DATA_SHARE_MODES enum values\n" );
     return check_failed;
 }
 
@@ -2561,8 +2565,11 @@ void x265_copy_params(x265_param* dst, x265_param* src)
     dst->rc.rfConstantMin = src->rc.rfConstantMin;
     dst->rc.bStatWrite = src->rc.bStatWrite;
     dst->rc.bStatRead = src->rc.bStatRead;
+    dst->rc.dataShareMode = src->rc.dataShareMode;
     if (src->rc.statFileName) dst->rc.statFileName=strdup(src->rc.statFileName);
     else dst->rc.statFileName = NULL;
+    if (src->rc.sharedMemName) dst->rc.sharedMemName = strdup(src->rc.sharedMemName);
+    else dst->rc.sharedMemName = NULL;
     dst->rc.qblur = src->rc.qblur;
     dst->rc.complexityBlur = src->rc.complexityBlur;
     dst->rc.bEnableSlowFirstPass = src->rc.bEnableSlowFirstPass;

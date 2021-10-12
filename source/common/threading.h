@@ -3,6 +3,7 @@
  *
  * Authors: Steve Borho <steve@borho.org>
  *          Min Chen <chenm003@163.com>
+            liwei <liwei@multicorewareinc.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -253,6 +254,47 @@ protected:
     int                m_val;
 };
 
+class NamedSemaphore
+{
+public:
+    NamedSemaphore() : m_sem(NULL)
+    {
+    }
+
+    ~NamedSemaphore()
+    {
+    }
+
+    bool create(const char* name, const int initcnt, const int maxcnt)
+    {
+        if(!m_sem)
+        {
+            m_sem = CreateSemaphoreA(NULL, initcnt, maxcnt, name);
+        }
+        return m_sem != NULL;
+    }
+
+    bool give(const int32_t cnt)
+    {
+        return ReleaseSemaphore(m_sem, (LONG)cnt, NULL) != FALSE;
+    }
+
+    bool take(const uint32_t time_out = INFINITE)
+    {
+        int32_t rt = WaitForSingleObject(m_sem, time_out);
+        return rt != WAIT_TIMEOUT && rt != WAIT_FAILED;
+    }
+
+    void release()
+    {
+        CloseHandle(m_sem);
+        m_sem = NULL;
+    }
+
+private:
+    HANDLE m_sem;
+};
+
 #else /* POSIX / pthreads */
 
 typedef pthread_t ThreadHandle;
@@ -457,6 +499,101 @@ protected:
     pthread_mutex_t m_mutex;
     pthread_cond_t  m_cond;
     int             m_val;
+};
+
+#define TIMEOUT_INFINITE 0xFFFFFFFF
+
+class NamedSemaphore
+{
+public:
+    NamedSemaphore() 
+        : m_sem(NULL)
+        , m_name(NULL)
+    {
+    }
+
+    ~NamedSemaphore()
+    {
+    }
+
+    bool create(const char* name, const int initcnt, const int maxcnt)
+    {
+        bool ret = false;
+
+        if (initcnt >= maxcnt)
+        {
+            return false;
+        }
+
+        m_sem = sem_open(name, O_CREAT | O_EXCL, 0666, initcnt);
+        if (m_sem != SEM_FAILED) 
+        {
+            m_name = strdup(name);
+            ret = true;
+        }
+        else 
+        {
+            if (EEXIST == errno) 
+            {
+                m_sem = sem_open(name, 0);
+                if (m_sem != SEM_FAILED) 
+                {
+                    m_name = strdup(name);
+                    ret = true;
+                }
+            }
+        }
+
+        return ret;
+    }
+
+    bool give(const int32_t cnt)
+    {
+        int ret = 0;
+        int32_t curCnt = cnt;
+        while (curCnt-- && !ret) {
+            ret = sem_post(m_sem);
+        }
+
+        return 0 == ret;
+    }
+
+    bool take(const uint32_t time_out = TIMEOUT_INFINITE)
+    {
+        if (TIMEOUT_INFINITE == time_out) {
+            return 0 == sem_wait(m_sem);
+        }
+        else 
+        {
+            if (0 == time_out)
+            {
+                return 0 == sem_trywait(m_sem);
+            }
+            else
+            {
+                struct timespec ts;
+                ts.tv_sec = time_out / 1000L;
+                ts.tv_nsec = (time_out * 1000000L) - ts.tv_sec * 1000 * 1000 * 1000;
+                return 0 == sem_timedwait(m_sem, &ts);
+            }
+        }
+    }
+
+    void release()
+    {
+        if (m_sem)
+        {
+            sem_close(m_sem);
+            sem_unlink(m_name);
+            m_sem = NULL;
+            free(m_name);
+            m_name = NULL;
+        }
+    }
+
+private:
+    sem_t *m_sem;
+    char  *m_name;
 };
 
 #endif // ifdef _WIN32
