@@ -508,7 +508,9 @@ class NamedSemaphore
 public:
     NamedSemaphore() 
         : m_sem(NULL)
+#ifndef __APPLE__
         , m_name(NULL)
+#endif //__APPLE__
     {
     }
 
@@ -525,6 +527,59 @@ public:
             return false;
         }
 
+#ifdef __APPLE__
+        do
+        {
+            int32_t pshared = name != NULL ? PTHREAD_PROCESS_SHARED : PTHREAD_PROCESS_PRIVATE;
+
+            m_sem = (mac_sem_t *)malloc(sizeof(mac_sem_t));
+            if (!m_sem)
+            {
+                break;
+            }
+
+            if (pthread_mutexattr_init(&m_sem->mutexAttr))
+            {
+                break;
+            }
+
+            if (pthread_mutexattr_setpshared(&m_sem->mutexAttr, pshared))
+            {
+                break;
+            }
+
+            if (pthread_condattr_init(&m_sem->condAttr))
+            {
+                break;
+            }
+
+            if (pthread_condattr_setpshared(&m_sem->condAttr, pshared))
+            {
+                break;
+            }
+
+            if (pthread_mutex_init(&m_sem->mutex, &m_sem->mutexAttr))
+            {
+                break;
+            }
+
+            if (pthread_cond_init(&m_sem->cond, &m_sem->condAttr))
+            {
+                break;
+            }
+
+            m_sem->curCnt = initcnt;
+            m_sem->maxCnt = maxcnt;
+
+            ret = true;
+        } while (0);
+        
+        if (!ret)
+        {
+            release();
+        }
+
+#else  //__APPLE__
         m_sem = sem_open(name, O_CREAT | O_EXCL, 0666, initcnt);
         if (m_sem != SEM_FAILED) 
         {
@@ -543,12 +598,44 @@ public:
                 }
             }
         }
+#endif //__APPLE__
 
         return ret;
     }
 
     bool give(const int32_t cnt)
     {
+        if (!m_sem)
+        {
+            return false;
+        }
+
+#ifdef __APPLE__
+        if (pthread_mutex_lock(&m_sem->mutex))
+        {
+            return false;
+        }
+
+        int oldCnt = m_sem->curCnt;
+        m_sem->curCnt += cnt;
+        if (m_sem->curCnt > m_sem->maxCnt)
+        {
+            m_sem->curCnt = m_sem->maxCnt;
+        }
+
+        bool ret = true;
+        if (!oldCnt)
+        {
+            ret = 0 == pthread_cond_broadcast(&m_sem->cond);
+        }
+
+        if (pthread_mutex_unlock(&m_sem->mutex))
+        {
+            return false;
+        }
+
+        return ret;
+#else //__APPLE__
         int ret = 0;
         int32_t curCnt = cnt;
         while (curCnt-- && !ret) {
@@ -556,11 +643,82 @@ public:
         }
 
         return 0 == ret;
+#endif //_APPLE__
     }
 
     bool take(const uint32_t time_out = TIMEOUT_INFINITE)
     {
-        if (TIMEOUT_INFINITE == time_out) {
+        if (!m_sem)
+        {
+            return false;
+        }
+
+#ifdef __APPLE__
+
+        if (pthread_mutex_lock(&m_sem->mutex))
+        {
+            return false;
+        }
+
+        bool ret = true;
+        if (TIMEOUT_INFINITE == time_out) 
+        {
+            if (!m_sem->curCnt)
+            {
+                if (pthread_cond_wait(&m_sem->cond, &m_sem->mutex))
+                {
+                    ret = false;
+                } 
+            }
+
+            if (m_sem->curCnt && ret)
+            {
+                m_sem->curCnt--;
+            }
+        }
+        else
+        {
+            if (0 == time_out)
+            {
+                if (m_sem->curCnt)
+                {
+                    m_sem->curCnt--;
+                }
+                else
+                {
+                    ret = false;
+                }
+            }
+            else
+            {
+                if (!m_sem->curCnt)
+                {
+                    struct timespec ts;
+                    ts.tv_sec = time_out / 1000L;
+                    ts.tv_nsec = (time_out * 1000000L) - ts.tv_sec * 1000 * 1000 * 1000;
+
+                    if (pthread_cond_timedwait(&m_sem->cond, &m_sem->mutex, &ts))
+                    {
+                        ret = false;
+                    }
+                }
+
+                if (m_sem->curCnt && ret)
+                {
+                    m_sem->curCnt--;
+                }
+            }
+        }
+
+        if (pthread_mutex_unlock(&m_sem->mutex))
+        {
+            return false;
+        }
+
+        return ret;
+#else //__APPLE__
+        if (TIMEOUT_INFINITE == time_out) 
+        {
             return 0 == sem_wait(m_sem);
         }
         else 
@@ -577,23 +735,46 @@ public:
                 return 0 == sem_timedwait(m_sem, &ts);
             }
         }
+#endif //_APPLE__
     }
 
     void release()
     {
         if (m_sem)
         {
+#ifdef __APPLE__
+            pthread_condattr_destroy(&m_sem->condAttr);
+            pthread_mutexattr_destroy(&m_sem->mutexAttr);
+            pthread_mutex_destroy(&m_sem->mutex);
+            pthread_cond_destroy(&m_sem->cond);
+            free(m_sem);
+            m_sem = NULL;
+#else //__APPLE__
             sem_close(m_sem);
             sem_unlink(m_name);
             m_sem = NULL;
             free(m_name);
             m_name = NULL;
+#endif //__APPLE__
         }
     }
 
 private:
+#ifdef __APPLE__
+    typedef struct
+    {
+        pthread_mutex_t     mutex;
+        pthread_cond_t      cond;
+        pthread_mutexattr_t mutexAttr;
+        pthread_condattr_t  condAttr;
+        uint32_t            curCnt;
+        uint32_t            maxCnt;
+    }mac_sem_t;
+    mac_sem_t *m_sem;
+#else // __APPLE__
     sem_t *m_sem;
     char  *m_name;
+#endif // __APPLE_
 };
 
 #endif // ifdef _WIN32

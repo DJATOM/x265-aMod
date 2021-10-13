@@ -227,7 +227,7 @@ namespace X265_NS {
                 }
 
                 ///< shared memory name
-                snprintf(nameBuf, sizeof(nameBuf - 1), "%s%s", X265_SEMAPHORE_RINGMEM_WRITER_NAME, name);
+                snprintf(nameBuf, sizeof(nameBuf) - 1, "%s%s", X265_SEMAPHORE_RINGMEM_WRITER_NAME, name);
                 if (!m_writeSem->create(nameBuf, m_itemCnt, m_itemCnt))
                 {
                     release();
@@ -242,7 +242,7 @@ namespace X265_NS {
                 }
 
                 ///< shared memory name
-                snprintf(nameBuf, sizeof(nameBuf - 1), "%s%s", X265_SEMAPHORE_RINGMEM_READER_NAME, name);
+                snprintf(nameBuf, sizeof(nameBuf) - 1, "%s%s", X265_SEMAPHORE_RINGMEM_READER_NAME, name);
                 if (!m_readSem->create(nameBuf, 0, m_itemCnt))
                 {
                     release();
