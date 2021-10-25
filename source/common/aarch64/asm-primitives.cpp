@@ -109,10 +109,9 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
 {
     if (cpuMask & X265_CPU_NEON)
     {
+#if !HIGH_BIT_DEPTH
     	  // quant
         p.quant = PFX(quant_neon);
-        
-#if !HIGH_BIT_DEPTH
         p.pu[LUMA_4x8].satd   = PFX(pixel_satd_4x8_neon);
         p.pu[LUMA_4x16].satd  = PFX(pixel_satd_4x16_neon);
 
