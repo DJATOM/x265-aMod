@@ -646,6 +646,13 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
         // ssim_4x4x2_core
         p.ssim_4x4x2_core = PFX(ssim_4x4x2_core_neon);
 
+        // ssimDist
+        p.cu[BLOCK_4x4].ssimDist = PFX(ssimDist4_neon);
+        p.cu[BLOCK_8x8].ssimDist = PFX(ssimDist8_neon);
+        p.cu[BLOCK_16x16].ssimDist = PFX(ssimDist16_neon);
+        p.cu[BLOCK_32x32].ssimDist = PFX(ssimDist32_neon);
+        p.cu[BLOCK_64x64].ssimDist = PFX(ssimDist64_neon);
+
         // psy_cost_pp
         p.cu[BLOCK_4x4].psy_cost_pp = PFX(psyCost_4x4_neon);
 #endif

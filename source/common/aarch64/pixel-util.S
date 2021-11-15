@@ -1936,3 +1936,148 @@ function PFX(nquant_neon)
     add             x0, x4, x12
     ret
 endfunc
+
+// void ssimDist_c(const pixel* fenc, uint32_t fStride, const pixel* recon, intptr_t rstride, uint64_t *ssBlock, int shift, uint64_t *ac_k)
+.macro ssimDist_start
+    movi            v0.16b, #0
+    movi            v1.16b, #0
+.endm
+
+.macro ssimDist_1  v4 v5
+    sub             v20.8h, \v4\().8h, \v5\().8h
+    smull           v16.4s, \v4\().4h, \v4\().4h
+    smull2          v17.4s, \v4\().8h, \v4\().8h
+    smull           v18.4s, v20.4h, v20.4h
+    smull2          v19.4s, v20.8h, v20.8h
+    add             v0.4s, v0.4s, v16.4s
+    add             v0.4s, v0.4s, v17.4s
+    add             v1.4s, v1.4s, v18.4s
+    add             v1.4s, v1.4s, v19.4s
+.endm
+
+.macro ssimDist_end
+    uaddlv          d0, v0.4s
+    uaddlv          d1, v1.4s
+    str             d0, [x6]
+    str             d1, [x4]
+.endm
+
+function PFX(ssimDist4_neon)
+    ssimDist_start
+.rept 4
+    ldr             s4, [x0]
+    ldr             s5, [x2]
+    add             x0, x0, x1
+    add             x2, x2, x3
+    uxtl            v4.8h, v4.8b
+    uxtl            v5.8h, v5.8b
+    sub             v2.4h, v4.4h, v5.4h
+    smull           v3.4s, v4.4h, v4.4h
+    smull           v2.4s, v2.4h, v2.4h
+    add             v0.4s, v0.4s, v3.4s
+    add             v1.4s, v1.4s, v2.4s
+.endr
+    ssimDist_end
+    ret
+endfunc
+
+function PFX(ssimDist8_neon)
+    ssimDist_start
+.rept 8
+    ldr             d4, [x0]
+    ldr             d5, [x2]
+    add             x0, x0, x1
+    add             x2, x2, x3
+    uxtl            v4.8h, v4.8b
+    uxtl            v5.8h, v5.8b
+    ssimDist_1      v4, v5
+.endr
+    ssimDist_end
+    ret
+endfunc
+
+function PFX(ssimDist16_neon)
+    mov w12, #16
+    ssimDist_start
+.loop_ssimDist16:
+    sub             w12, w12, #1
+    ldr             q4, [x0]
+    ldr             q5, [x2]
+    add             x0, x0, x1
+    add             x2, x2, x3
+    uxtl            v6.8h, v4.8b
+    uxtl            v7.8h, v5.8b
+    uxtl2           v4.8h, v4.16b
+    uxtl2           v5.8h, v5.16b
+    ssimDist_1      v6, v7
+    ssimDist_1      v4, v5
+    cbnz            w12, .loop_ssimDist16
+    ssimDist_end
+    ret
+endfunc
+
+function PFX(ssimDist32_neon)
+    mov w12, #32
+    ssimDist_start
+.loop_ssimDist32:
+    sub             w12, w12, #1
+    ldp             q4, q5, [x0]
+    ldp             q6, q7, [x2]
+    add             x0, x0, x1
+    add             x2, x2, x3
+    uxtl            v21.8h, v4.8b
+    uxtl            v22.8h, v6.8b
+    uxtl            v23.8h, v5.8b
+    uxtl            v24.8h, v7.8b
+    uxtl2           v25.8h, v4.16b
+    uxtl2           v26.8h, v6.16b
+    uxtl2           v27.8h, v5.16b
+    uxtl2           v28.8h, v7.16b
+    ssimDist_1      v21, v22
+    ssimDist_1      v23, v24
+    ssimDist_1      v25, v26
+    ssimDist_1      v27, v28
+    cbnz            w12, .loop_ssimDist32
+    ssimDist_end
+    ret
+endfunc
+
+function PFX(ssimDist64_neon)
+    mov w12, #64
+    ssimDist_start
+.loop_ssimDist64:
+    sub             w12, w12, #1
+    ldp             q4, q5, [x0]
+    ldp             q6, q7, [x2]
+    uxtl            v21.8h, v4.8b
+    uxtl            v22.8h, v6.8b
+    uxtl            v23.8h, v5.8b
+    uxtl            v24.8h, v7.8b
+    uxtl2           v25.8h, v4.16b
+    uxtl2           v26.8h, v6.16b
+    uxtl2           v27.8h, v5.16b
+    uxtl2           v28.8h, v7.16b
+    ssimDist_1      v21, v22
+    ssimDist_1      v23, v24
+    ssimDist_1      v25, v26
+    ssimDist_1      v27, v28
+    ldp             q4, q5, [x0, #32]
+    ldp             q6, q7, [x2, #32]
+    add             x0, x0, x1
+    add             x2, x2, x3
+    uxtl            v21.8h, v4.8b
+    uxtl            v22.8h, v6.8b
+    uxtl            v23.8h, v5.8b
+    uxtl            v24.8h, v7.8b
+    uxtl2           v25.8h, v4.16b
+    uxtl2           v26.8h, v6.16b
+    uxtl2           v27.8h, v5.16b
+    uxtl2           v28.8h, v7.16b
+    ssimDist_1      v21, v22
+    ssimDist_1      v23, v24
+    ssimDist_1      v25, v26
+    ssimDist_1      v27, v28
+    cbnz            w12, .loop_ssimDist64
+    ssimDist_end
+    ret
+endfunc
