@@ -2081,3 +2081,99 @@ function PFX(ssimDist64_neon)
     ssimDist_end
     ret
 endfunc
+
+// void normFact_c(const pixel* src, uint32_t blockSize, int shift, uint64_t *z_k)
+
+.macro normFact_start
+    movi            v0.16b, #0
+.endm
+
+.macro normFact_1  v4
+    smull           v16.4s, \v4\().4h, \v4\().4h
+    smull2          v17.4s, \v4\().8h, \v4\().8h
+    add             v0.4s, v0.4s, v16.4s
+    add             v0.4s, v0.4s, v17.4s
+.endm
+
+.macro normFact_end
+    uaddlv          d0, v0.4s
+    str             d0, [x3]
+.endm
+
+
+function PFX(normFact8_neon)
+    normFact_start
+.rept 8
+    ldr             d4, [x0]
+    add             x0, x0, x1
+    uxtl            v4.8h, v4.8b
+    normFact_1      v4
+.endr
+    normFact_end
+    ret
+endfunc
+
+function PFX(normFact16_neon)
+    mov w12, #16
+    normFact_start
+.loop_normFact16:
+    sub             w12, w12, #1
+    ldr             q4, [x0]
+    add             x0, x0, x1
+    uxtl            v5.8h, v4.8b
+    uxtl2           v4.8h, v4.16b
+    normFact_1      v5
+    normFact_1      v4
+    cbnz            w12, .loop_normFact16
+    normFact_end
+    ret
+endfunc
+
+function PFX(normFact32_neon)
+    mov w12, #32
+    normFact_start
+.loop_normFact32:
+    sub             w12, w12, #1
+    ldp             q4, q5, [x0]
+    add             x0, x0, x1
+    uxtl            v6.8h, v4.8b
+    uxtl2           v4.8h, v4.16b
+    uxtl            v7.8h, v5.8b
+    uxtl2           v5.8h, v5.16b
+    normFact_1      v4
+    normFact_1      v5
+    normFact_1      v6
+    normFact_1      v7
+    cbnz            w12, .loop_normFact32
+    normFact_end
+    ret
+endfunc
+
+function PFX(normFact64_neon)
+    mov w12, #64
+    normFact_start
+.loop_normFact64:
+    sub             w12, w12, #1
+    ldp             q4, q5, [x0]
+    uxtl            v6.8h, v4.8b
+    uxtl2           v4.8h, v4.16b
+    uxtl            v7.8h, v5.8b
+    uxtl2           v5.8h, v5.16b
+    normFact_1      v4
+    normFact_1      v5
+    normFact_1      v6
+    normFact_1      v7
+    ldp             q4, q5, [x0, #32]
+    add             x0, x0, x1
+    uxtl            v6.8h, v4.8b
+    uxtl2           v4.8h, v4.16b
+    uxtl            v7.8h, v5.8b
+    uxtl2           v5.8h, v5.16b
+    normFact_1      v4
+    normFact_1      v5
+    normFact_1      v6
+    normFact_1      v7
+    cbnz            w12, .loop_normFact64
+    normFact_end
+    ret
+endfunc

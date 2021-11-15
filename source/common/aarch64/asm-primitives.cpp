@@ -653,6 +653,12 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
         p.cu[BLOCK_32x32].ssimDist = PFX(ssimDist32_neon);
         p.cu[BLOCK_64x64].ssimDist = PFX(ssimDist64_neon);
 
+        // normFact
+        p.cu[BLOCK_8x8].normFact = PFX(normFact8_neon);
+        p.cu[BLOCK_16x16].normFact = PFX(normFact16_neon);
+        p.cu[BLOCK_32x32].normFact = PFX(normFact32_neon);
+        p.cu[BLOCK_64x64].normFact = PFX(normFact64_neon);
+
         // psy_cost_pp
         p.cu[BLOCK_4x4].psy_cost_pp = PFX(psyCost_4x4_neon);
 #endif
