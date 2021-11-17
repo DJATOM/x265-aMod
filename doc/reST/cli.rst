@@ -632,9 +632,8 @@ Profile, Level, Tier
 	auto-detection by the encoder. If specified, the encoder will
 	attempt to bring the encode specifications within that specified
 	level. If the encoder is unable to reach the level it issues a
-	warning and aborts the encode. If the requested requirement level is
-	higher than the actual level, the actual requirement level is
-	signaled.
+	warning and aborts the encode. The requested level will be signaled 
+	in the bitstream even if it is higher than the actual level.
 
 	Beware, specifying a decoder level will force the encoder to enable
 	VBV for constant rate factor encodes, which may introduce
@@ -714,11 +713,8 @@ Profile, Level, Tier
 	(main, main10, etc). Second, an encoder is created from this
 	x265_param instance and the :option:`--level-idc` and
 	:option:`--high-tier` parameters are used to reduce bitrate or other
-	features in order to enforce the target level. Finally, the encoder
-	re-examines the final set of parameters and detects the actual
-	minimum decoder requirement level and this is what is signaled in
-	the bitstream headers. The detected decoder level will only use High
-	tier if the user specified a High tier level.
+	features in order to enforce the target level. The detected decoder level
+	will only use High tier if the user specified a High tier level.
 
 	The signaled profile will be determined by the encoder's internal
 	bitdepth and input color space. If :option:`--keyint` is 0 or 1,
@@ -961,21 +957,21 @@ will not reuse analysis if slice type parameters do not match.
 	Note that :option:`--analysis-save-reuse-level` and :option:`--analysis-load-reuse-level` must be paired
 	with :option:`--analysis-save` and :option:`--analysis-load` respectively.
 
-	+--------------+------------------------------------------+
-	| Level        | Description                              |
-	+==============+==========================================+
-	| 1            | Lookahead information                    |
-	+--------------+------------------------------------------+
-	| 2 to 4       | Level 1 + intra/inter modes, ref's       |
-	+--------------+------------------------------------------+
-	| 5 and 6      | Level 2 + rect-amp                       |
-	+--------------+------------------------------------------+
-	| 7            | Level 5 + AVC size CU refinement         |
-	+--------------+------------------------------------------+
-	| 8 and 9      | Level 5 + AVC size Full CU analysis-info |
-	+--------------+------------------------------------------+
-	| 10           | Level 5 + Full CU analysis-info          |
-	+--------------+------------------------------------------+
+	+--------------+---------------------------------------------------+
+	| Level        | Description                                       |
+	+==============+===================================================+
+	| 1            | Lookahead information                             |
+	+--------------+---------------------------------------------------+
+	| 2 to 4       | Level 1 + intra/inter modes, depth, ref's, cutree |
+	+--------------+---------------------------------------------------+
+	| 5 and 6      | Level 2 + rect-amp                                |
+	+--------------+---------------------------------------------------+
+	| 7            | Level 5 + AVC size CU refinement                  |
+	+--------------+---------------------------------------------------+
+	| 8 and 9      | Level 5 + AVC size Full CU analysis-info          |
+	+--------------+---------------------------------------------------+
+	| 10           | Level 5 + Full CU analysis-info                   |
+	+--------------+---------------------------------------------------+
 
 .. option:: --refine-mv-type <string>
 
@@ -1474,7 +1470,8 @@ Slice decision options
 .. option:: --hist-scenecut, --no-hist-scenecut
 
 	Indicates that scenecuts need to be detected using luma edge and chroma histograms.
-	:option:`--hist-scenecut` enables scenecut detection using the histograms and disables the default scene cut algorithm.
+	:option:`--hist-scenecut` enables scenecut detection using the histograms.
+	It also uses the intra and inter cost info to arrive at a scenecut decision from the default scenecut method.
 	:option:`--no-hist-scenecut` disables histogram based scenecut algorithm.
 	
 .. option:: --hist-threshold <0.0..1.0>
@@ -1484,7 +1481,12 @@ Slice decision options
 	greater than 0.2 against the previous frame as scenecut. 
 	Increasing the threshold reduces the number of scenecuts detected.
 	Default 0.03.
-	
+
+.. option:: --traditional-scenecut, --no-traditional-scenecut
+
+	Enable traditional scenecut detection using intra and inter cost when :option:`--hist-scenecut` is used.
+	Default enabled.
+
 .. option:: --radl <integer>
 	
 	Number of RADL pictures allowed infront of IDR. Requires closed gop interval.
@@ -2057,6 +2059,14 @@ Quality, rate control and rate distortion options
    rate control mode.
 
    Default disabled. **Experimental feature**
+   
+
+.. option:: bEncFocusedFramesOnly
+
+	Used to trigger encoding of selective GOPs; Disabled by default.
+	
+	**API ONLY**
+	
 
 Quantization Options
 ====================
@@ -2427,6 +2437,81 @@ VUI fields must be manually specified.
 	Values in the range 0..12. See D.3.3 of the HEVC spec. for a detailed explanation.
 	Required for HLG (Hybrid Log Gamma) signaling. Not signaled by default.
 
+.. option:: --video-signal-type-preset <string>
+
+	Specify combinations of color primaries, transfer characteristics, color matrix,
+	range of luma and chroma signals, and chroma sample location.
+	String format: <system-id>[:<color-volume>]
+	
+	This has higher precedence than individual VUI parameters. If any individual VUI option
+	is specified together with this, which changes the values set corresponding to the system-id
+	or color-volume, it will be discarded.
+
+	system-id options and their corresponding values:
+	+----------------+---------------------------------------------------------------+
+	| system-id      | Value                                                         |
+	+================+===============================================================+
+	| BT601_525      | --colorprim smpte170m --transfer smpte170m                    |
+	|                | --colormatrix smpte170m --range limited --chromaloc 0         |
+	+----------------+---------------------------------------------------------------+
+	| BT601_626      | --colorprim bt470bg --transfer smpte170m --colormatrix bt470bg|
+	|                | --range limited --chromaloc 0                                 |
+	+----------------+---------------------------------------------------------------+
+	| BT709_YCC      | --colorprim bt709 --transfer bt709 --colormatrix bt709        |
+	|                | --range limited --chromaloc 0                                 |
+	+----------------+---------------------------------------------------------------+
+	| BT709_RGB      | --colorprim bt709 --transfer bt709 --colormatrix gbr          |
+	|                | --range limited                                               |
+	+----------------+---------------------------------------------------------------+
+	| BT2020_YCC_NCL | --colorprim bt2020 --transfer bt2020-10 --colormatrix bt709   |
+	|                | --range limited --chromaloc 2                                 |
+	+----------------+---------------------------------------------------------------+
+	| BT2020_RGB     | --colorprim bt2020 --transfer smpte2084 --colormatrix bt2020nc|
+	|                | --range limited                                               |
+	+----------------+---------------------------------------------------------------+
+	| BT2100_PQ_YCC  | --colorprim bt2020 --transfer smpte2084 --colormatrix bt2020nc|
+	|                | --range limited --chromaloc 2                                 |
+	+----------------+---------------------------------------------------------------+
+	| BT2100_PQ_ICTCP| --colorprim bt2020 --transfer smpte2084 --colormatrix ictcp   |
+	|                | --range limited --chromaloc 2                                 |
+	+----------------+---------------------------------------------------------------+
+	| BT2100_PQ_RGB  | --colorprim bt2020 --transfer smpte2084 --colormatrix gbr     |
+	|                | --range limited                                               |
+	+----------------+---------------------------------------------------------------+
+	| BT2100_HLG_YCC | --colorprim bt2020 --transfer arib-std-b67                    |
+	|                | --colormatrix bt2020nc --range limited --chromaloc 2          |
+	+----------------+---------------------------------------------------------------+
+	| BT2100_HLG_RGB | --colorprim bt2020 --transfer arib-std-b67 --colormatrix gbr  |
+	|                | --range limited                                               |
+	+----------------+---------------------------------------------------------------+
+	| FR709_RGB      | --colorprim bt709 --transfer bt709 --colormatrix gbr          |
+	|                | --range full                                                  |
+	+----------------+---------------------------------------------------------------+
+	| FR2020_RGB     | --colorprim bt2020 --transfer bt2020-10 --colormatrix gbr     |
+	|                | --range full                                                  |
+	+----------------+---------------------------------------------------------------+
+	| FRP3D65_YCC    | --colorprim smpte432 --transfer bt709 --colormatrix smpte170m |
+	|                | --range full --chromaloc 1                                    |
+	+----------------+---------------------------------------------------------------+
+
+	color-volume options and their corresponding values:
+	+----------------+---------------------------------------------------------------+
+	| color-volume   | Value                                                         |
+	+================+===============================================================+
+	| P3D65x1000n0005| --master-display G(13250,34500)B(7500,3000)R(34000,16000)     |
+	|                |                  WP(15635,16450)L(10000000,5)                 |
+	+----------------+---------------------------------------------------------------+
+	| P3D65x4000n005 | --master-display G(13250,34500)B(7500,3000)R(34000,16000)     |
+	|                |                  WP(15635,16450)L(40000000,50)                |
+	+----------------+---------------------------------------------------------------+
+	| BT2100x108n0005| --master-display G(8500,39850)B(6550,2300)R(34000,146000)     |
+	|                |                  WP(15635,16450)L(10000000,1)                 |
+	+----------------+---------------------------------------------------------------+
+
+	Note: The color-volume options can be used only with the system-id options BT2100_PQ_YCC,
+	       BT2100_PQ_ICTCP, and BT2100_PQ_RGB. It is incompatible with other options.
+
+
 Bitstream options
 =================
 
@@ -2454,6 +2539,16 @@ Bitstream options
 	the very first AUD will be skipped since it cannot be placed at the
 	start of the access unit, where it belongs. Default disabled
 
+.. option:: --eob, --no-eob
+
+	Emit an end of bitstream NAL unit at the end of the bitstream.
+	Default disabled
+
+.. option:: --eos, --no-eos
+
+	Emit an end of sequence NAL unit at the end of every coded
+	video sequence. Default disabled
+
 .. option:: --hrd, --no-hrd
 
 	Enable the signaling of HRD parameters to the decoder. The HRD
@@ -2480,7 +2575,7 @@ Bitstream options
     The value is specified as a float or as an integer with the profile times 10,
     for example profile 5 is specified as "5" or "5.0" or "50".
     
-    Currently only profile 5, profile 8.1 and profile 8.2 enabled, Default 0 (disabled)
+    Currently only profile 5, profile 8.1, profile 8.2 and profile 8.4  enabled, Default 0 (disabled)
 
 .. option:: --dolby-vision-rpu <filename>
 

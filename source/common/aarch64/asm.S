@@ -23,32 +23,56 @@
 
 .arch           armv8-a
 
+#ifdef __APPLE__
+#define PREFIX 1
+#endif
+
 #ifdef PREFIX
 #define EXTERN_ASM _
+#define HAVE_AS_FUNC 0
 #else
 #define EXTERN_ASM
+#define HAVE_AS_FUNC 1
 #endif
 
 #ifdef __ELF__
 #define ELF
 #else
+#ifdef PREFIX
+#define ELF #
+#else
 #define ELF @
 #endif
-
-#define HAVE_AS_FUNC 1
+#endif
 
 #if HAVE_AS_FUNC
 #define FUNC
 #else
+#ifdef PREFIX
+#define FUNC #
+#else
 #define FUNC @
+#endif
+#endif
+
+#ifdef __APPLE__
+.macro endfunc
+ELF .size \name, . - \name
+FUNC .endfunc
+.endm
 #endif
 
 .macro function name, export=1
+#ifdef __APPLE__
+    .global \name
+    endfunc
+#else
     .macro endfunc
 ELF     .size   \name, . - \name
 FUNC    .endfunc
         .purgem endfunc
     .endm
+#endif
         .align  2
 .if \export == 1
         .global EXTERN_ASM\name

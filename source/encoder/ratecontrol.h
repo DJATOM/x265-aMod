@@ -28,6 +28,7 @@
 
 #include "common.h"
 #include "sei.h"
+#include "ringmem.h"
 
 namespace X265_NS {
 // encoder namespace
@@ -73,6 +74,7 @@ struct RateControlEntry
     Predictor  rowPreds[3][2];
     Predictor* rowPred[2];
 
+    int64_t currentSatd;
     int64_t lastSatd;      /* Contains the picture cost of the previous frame, required for resetAbr and VBV */
     int64_t leadingNoBSatd;
     int64_t rowTotalBits;  /* update cplxrsum and totalbits at the end of 2 rows */
@@ -87,6 +89,8 @@ struct RateControlEntry
     double  rowCplxrSum;
     double  qpNoVbv;
     double  bufferFill;
+    double  bufferFillFinal;
+    double  bufferFillActual;
     double  targetFill;
     bool    vbvEndAdj;
     double  frameDuration;
@@ -237,6 +241,8 @@ public:
     FILE*   m_statFileOut;
     FILE*   m_cutreeStatFileOut;
     FILE*   m_cutreeStatFileIn;
+    ///< store the cutree data in memory instead of file
+    RingMem *m_cutreeShrMem;
     double  m_lastAccumPNorm;
     double  m_expectedBitsSum;   /* sum of qscale2bits after rceq, ratefactor, and overflow, only includes finished frames */
     int64_t m_predictedBits;
@@ -270,6 +276,9 @@ public:
     void hrdFullness(SEIBufferingPeriod* sei);
     int writeRateControlFrameStats(Frame* curFrame, RateControlEntry* rce);
     bool   initPass2();
+
+    bool initCUTreeSharedMem();
+    void skipCUTreeSharedMemRead(int32_t cnt);
 
     double forwardMasking(Frame* curFrame, double q);
     double backwardMasking(Frame* curFrame, double q);

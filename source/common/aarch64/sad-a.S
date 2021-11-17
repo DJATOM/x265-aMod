@@ -23,7 +23,11 @@
 
 #include "asm.S"
 
+#ifdef __APPLE__
+.section __RODATA,__rodata
+#else
 .section .rodata
+#endif
 
 .align 4
 
@@ -94,12 +98,12 @@ function x265_sad_x\x\()_8x\h\()_neon
 endfunc
 .endm
 
-SAD_X_8xN 3 4
-SAD_X_8xN 3 8
-SAD_X_8xN 3 16
-SAD_X_8xN 3 32
+SAD_X_8xN 3,4
+SAD_X_8xN 3,8
+SAD_X_8xN 3,16
+SAD_X_8xN 3,32
 
-SAD_X_8xN 4 4
-SAD_X_8xN 4 8
-SAD_X_8xN 4 16
-SAD_X_8xN 4 32
+SAD_X_8xN 4,4
+SAD_X_8xN 4,8
+SAD_X_8xN 4,16
+SAD_X_8xN 4,32

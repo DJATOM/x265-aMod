@@ -208,7 +208,6 @@ int main(int argc, char *argv[])
 
         EncoderPrimitives asmprim;
         memset(&asmprim, 0, sizeof(asmprim));
-        setupAssemblyPrimitives(asmprim, test_arch[i].flag);
 
 #if X265_ARCH_ARM64
         /* Temporary workaround because luma_vsp assembly primitive has not been completed
@@ -217,6 +216,7 @@ int main(int argc, char *argv[])
         setupAliasCPrimitives(cprim, asmprim, test_arch[i].flag);
 #endif
 
+        setupAssemblyPrimitives(asmprim, test_arch[i].flag);
         setupAliasPrimitives(asmprim);
         memcpy(&primitives, &asmprim, sizeof(EncoderPrimitives));
         for (size_t h = 0; h < sizeof(harness) / sizeof(TestHarness*); h++)
@@ -239,7 +239,6 @@ int main(int argc, char *argv[])
 #if X265_ARCH_X86
     setupInstrinsicPrimitives(optprim, cpuid);
 #endif
-    setupAssemblyPrimitives(optprim, cpuid);
 
 #if X265_ARCH_ARM64
     /* Temporary workaround because luma_vsp assembly primitive has not been completed
@@ -247,6 +246,8 @@ int main(int argc, char *argv[])
      * Otherwise, segment fault occurs. */
     setupAliasCPrimitives(cprim, optprim, cpuid);
 #endif
+
+    setupAssemblyPrimitives(optprim, cpuid);
 
     /* Note that we do not setup aliases for performance tests, that would be
      * redundant. The testbench only verifies they are correctly aliased */

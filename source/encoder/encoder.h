@@ -327,6 +327,8 @@ public:
 
     void getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs);
 
+    void getEndNalUnits(NALList& list, Bitstream& bs);
+
     void fetchStats(x265_stats* stats, size_t statsSizeBytes);
 
     void printSummary();
@@ -386,6 +388,8 @@ public:
     void copyUserSEIMessages(Frame *frame, const x265_picture* pic_in);
 
     void configureDolbyVisionParams(x265_param* p);
+
+    void configureVideoSignalTypePreset(x265_param* p);
 
 protected:
 

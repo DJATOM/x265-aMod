@@ -2014,7 +2014,7 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
     bool isScenecut = false;
 
     /* Temporal computations for scenecut detection */
-    if (m_param->bHistBasedSceneCut)
+    if (m_param->bHistBasedSceneCut && m_param->bEnableTradScdInHscd)
     {
         for (int i = numFrames - 1; i > 0; i--)
         {
@@ -2047,8 +2047,10 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
     }
 
     /* When scenecut threshold is set, use scenecut detection for I frame placements */
-    if (!m_param->bHistBasedSceneCut || (m_param->bHistBasedSceneCut && frames[1]->bScenecut))
+    if (!m_param->bHistBasedSceneCut || (m_param->bHistBasedSceneCut && m_param->bEnableTradScdInHscd && frames[1]->bScenecut))
         isScenecut = scenecut(frames, 0, 1, true, origNumFrames);
+    else if (m_param->bHistBasedSceneCut && frames[1]->bScenecut)
+        isScenecut = true;
 
     if (isScenecut && (m_param->bHistBasedSceneCut || m_param->scenecutThreshold))
     {
@@ -2061,14 +2063,17 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
         m_extendGopBoundary = false;
         for (int i = m_param->bframes + 1; i < origNumFrames; i += m_param->bframes + 1)
         {
-            if (!m_param->bHistBasedSceneCut || (m_param->bHistBasedSceneCut && frames[i + 1]->bScenecut))
+            if (!m_param->bHistBasedSceneCut || (m_param->bHistBasedSceneCut && m_param->bEnableTradScdInHscd && frames[i + 1]->bScenecut))
                 scenecut(frames, i, i + 1, true, origNumFrames);
 
             for (int j = i + 1; j <= X265_MIN(i + m_param->bframes + 1, origNumFrames); j++)
             {
-                if (frames[j]->bScenecut && scenecutInternal(frames, j - 1, j, true))
+                if (frames[j]->bScenecut)
                 {
-                    m_extendGopBoundary = true;
+                    if (m_param->bEnableTradScdInHscd)
+                        m_extendGopBoundary = scenecutInternal(frames, j - 1, j, true);
+                    else
+                        m_extendGopBoundary = true;
                     break;
                 }
             }

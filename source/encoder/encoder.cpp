@@ -72,7 +72,40 @@ DolbyVisionProfileSpec dovi[] =
 {
     { 1, 1, 1, 1, 1, 5, 1,  2, 2, 2, 50 },
     { 1, 1, 1, 1, 1, 5, 0, 16, 9, 9, 81 },
-    { 1, 1, 1, 1, 1, 5, 0,  1, 1, 1, 82 }
+    { 1, 1, 1, 1, 1, 5, 0,  1, 1, 1, 82 },
+    { 1, 1, 1, 1, 1, 5, 0, 18, 9, 9, 84 }
+};
+
+typedef struct
+{
+    int bEnableVideoSignalTypePresentFlag;
+    int bEnableColorDescriptionPresentFlag;
+    int bEnableChromaLocInfoPresentFlag;
+    int colorPrimaries;
+    int transferCharacteristics;
+    int matrixCoeffs;
+    int bEnableVideoFullRangeFlag;
+    int chromaSampleLocTypeTopField;
+    int chromaSampleLocTypeBottomField;
+    const char* systemId;
+}VideoSignalTypePresets;
+
+VideoSignalTypePresets vstPresets[] =
+{
+    {1, 1, 1, 6, 6, 6, 0, 0, 0, "BT601_525"},
+    {1, 1, 1, 5, 6, 5, 0, 0, 0, "BT601_626"},
+    {1, 1, 1, 1, 1, 1, 0, 0, 0, "BT709_YCC"},
+    {1, 1, 0, 1, 1, 0, 0, 0, 0, "BT709_RGB"},
+    {1, 1, 1, 9, 14, 1, 0, 2, 2, "BT2020_YCC_NCL"},
+    {1, 1, 0, 9, 16, 9, 0, 0, 0, "BT2020_RGB"},
+    {1, 1, 1, 9, 16, 9, 0, 2, 2, "BT2100_PQ_YCC"},
+    {1, 1, 1, 9, 16, 14, 0, 2, 2, "BT2100_PQ_ICTCP"},
+    {1, 1, 0, 9, 16, 0, 0, 0, 0, "BT2100_PQ_RGB"},
+    {1, 1, 1, 9, 18, 9, 0, 2, 2, "BT2100_HLG_YCC"},
+    {1, 1, 0, 9, 18, 0, 0, 0, 0, "BT2100_HLG_RGB"},
+    {1, 1, 0, 1, 1, 0, 1, 0, 0, "FR709_RGB"},
+    {1, 1, 0, 9, 14, 0, 1, 0, 0, "FR2020_RGB"},
+    {1, 1, 1, 12, 1, 6, 1, 1, 1, "FRP3D65_YCC"}
 };
 }
 
@@ -974,6 +1007,7 @@ void Encoder::destroy()
         /* release string arguments that were strdup'd */
         free((char*)m_param->rc.lambdaFileName);
         free((char*)m_param->rc.statFileName);
+        free((char*)m_param->rc.sharedMemName);
         free((char*)m_param->analysisReuseFileName);
         free((char*)m_param->scalingLists);
         free((char*)m_param->csvfn);
@@ -982,6 +1016,7 @@ void Encoder::destroy()
         free((char*)m_param->toneMapFile);
         free((char*)m_param->analysisSave);
         free((char*)m_param->analysisLoad);
+        free((char*)m_param->videoSignalTypePreset);
         PARAM_NS::x265_param_free(m_param);
     }
 }
@@ -2216,6 +2251,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                 outFrame->m_rcData->iCuCount = outFrame->m_encData->m_frameStats.percent8x8Intra * m_rateControl->m_ncu;
                 outFrame->m_rcData->pCuCount = outFrame->m_encData->m_frameStats.percent8x8Inter * m_rateControl->m_ncu;
                 outFrame->m_rcData->skipCuCount = outFrame->m_encData->m_frameStats.percent8x8Skip  * m_rateControl->m_ncu;
+                outFrame->m_rcData->currentSatd = curEncoder->m_rce.coeffBits;
             }
 
             /* Allow this frame to be recycled if no frame encoders are using it for reference */
@@ -2523,7 +2559,11 @@ int Encoder::reconfigureParam(x265_param* encParam, x265_param* param)
         encParam->dynamicRd = param->dynamicRd;
         encParam->bEnableTransformSkip = param->bEnableTransformSkip;
         encParam->bEnableAMP = param->bEnableAMP;
-
+		if (param->confWinBottomOffset == 0 && param->confWinRightOffset == 0)
+		{
+			encParam->confWinBottomOffset = param->confWinBottomOffset;
+			encParam->confWinRightOffset = param->confWinRightOffset;
+		}
         /* Resignal changes in params in Parameter Sets */
         m_sps.maxAMPDepth = (m_sps.bUseAMP = param->bEnableAMP && param->bEnableAMP) ? param->maxCUDepth : 0;
         m_pps.bTransformSkipEnabled = param->bEnableTransformSkip ? 1 : 0;
@@ -3345,6 +3385,19 @@ void Encoder::getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs)
     }
 }
 
+void Encoder::getEndNalUnits(NALList& list, Bitstream& bs)
+{
+    NALList nalList;
+    bs.resetBits();
+
+    if (m_param->bEnableEndOfSequence)
+        nalList.serialize(NAL_UNIT_EOS, bs);
+    if (m_param->bEnableEndOfBitstream)
+        nalList.serialize(NAL_UNIT_EOB, bs);
+
+    list.takeContents(nalList);
+}
+
 void Encoder::initVPS(VPS *vps)
 {
     /* Note that much of the VPS is initialized by determineLevel() */
@@ -3552,6 +3605,65 @@ void Encoder::configureDolbyVisionParams(x265_param* p)
         p->crQpOffset = 3;
 }
 
+void Encoder::configureVideoSignalTypePreset(x265_param* p)
+{
+    char systemId[20] = {};
+    char colorVolume[20] = {};
+    sscanf(p->videoSignalTypePreset, "%[^:]:%s", systemId, colorVolume);
+    uint32_t sysId = 0;
+    while (strcmp(vstPresets[sysId].systemId, systemId))
+    {
+        if (sysId + 1 == sizeof(vstPresets) / sizeof(vstPresets[0]))
+        {
+            x265_log(NULL, X265_LOG_ERROR, "Incorrect system-id, aborting\n");
+            m_aborted = true;
+            break;
+        }
+        sysId++;
+    }
+
+    p->vui.bEnableVideoSignalTypePresentFlag = vstPresets[sysId].bEnableVideoSignalTypePresentFlag;
+    p->vui.bEnableColorDescriptionPresentFlag = vstPresets[sysId].bEnableColorDescriptionPresentFlag;
+    p->vui.bEnableChromaLocInfoPresentFlag = vstPresets[sysId].bEnableChromaLocInfoPresentFlag;
+    p->vui.colorPrimaries = vstPresets[sysId].colorPrimaries;
+    p->vui.transferCharacteristics = vstPresets[sysId].transferCharacteristics;
+    p->vui.matrixCoeffs = vstPresets[sysId].matrixCoeffs;
+    p->vui.bEnableVideoFullRangeFlag = vstPresets[sysId].bEnableVideoFullRangeFlag;
+    p->vui.chromaSampleLocTypeTopField = vstPresets[sysId].chromaSampleLocTypeTopField;
+    p->vui.chromaSampleLocTypeBottomField = vstPresets[sysId].chromaSampleLocTypeBottomField;
+
+    if (colorVolume[0] != '\0')
+    {
+        if (!strcmp(systemId, "BT2100_PQ_YCC") || !strcmp(systemId, "BT2100_PQ_ICTCP") || !strcmp(systemId, "BT2100_PQ_RGB"))
+        {
+            p->bEmitHDR10SEI = 1;
+            if (!strcmp(colorVolume, "P3D65x1000n0005"))
+            {
+                p->masteringDisplayColorVolume = strdup("G(13250,34500)B(7500,3000)R(34000,16000)WP(15635,16450)L(10000000,5)");
+            }
+            else if (!strcmp(colorVolume, "P3D65x4000n005"))
+            {
+                p->masteringDisplayColorVolume = strdup("G(13250,34500)B(7500,3000)R(34000,16000)WP(15635,16450)L(40000000,50)");
+            }
+            else if (!strcmp(colorVolume, "BT2100x108n0005"))
+            {
+                p->masteringDisplayColorVolume = strdup("G(8500,39850)B(6550,2300)R(34000,146000)WP(15635,16450)L(10000000,1)");
+            }
+            else
+            {
+                x265_log(NULL, X265_LOG_ERROR, "Incorrect color-volume, aborting\n");
+                m_aborted = true;
+            }
+        }
+        else
+        {
+            x265_log(NULL, X265_LOG_ERROR, "Color-volume is not supported with the given system-id, aborting\n");
+            m_aborted = true;
+        }
+    }
+
+}
+
 void Encoder::configure(x265_param *p)
 {
     this->m_param = p;
@@ -3579,6 +3691,7 @@ void Encoder::configure(x265_param *p)
         p->keyframeMax = INT_MAX;
         p->scenecutThreshold = 0;
         p->bHistBasedSceneCut = 0;
+        p->bEnableTradScdInHscd = 1;
     }
     else if (p->keyframeMax <= 1)
     {
@@ -3593,6 +3706,7 @@ void Encoder::configure(x265_param *p)
         p->bframes = 0;
         p->scenecutThreshold = 0;
         p->bHistBasedSceneCut = 0;
+        p->bEnableTradScdInHscd = 1;
         p->bFrameAdaptive = 0;
         p->rc.cuTree = 0;
         p->bEnableWeightedPred = 0;
@@ -3909,6 +4023,16 @@ void Encoder::configure(x265_param *p)
     {
         x265_log(p, X265_LOG_WARNING, "--multi-pass-opt-analysis doesn't support refining analysis through multiple-passes; it only reuses analysis from the second-to-last pass to the last pass.Disabling reading\n");
         p->rc.bStatRead = 0;
+    }
+
+    if ((p->rc.bStatWrite || p->rc.bStatRead) && p->rc.dataShareMode != X265_SHARE_MODE_FILE && p->rc.dataShareMode != X265_SHARE_MODE_SHAREDMEM)
+    {
+        p->rc.dataShareMode = X265_SHARE_MODE_FILE;
+    }
+
+    if (!p->rc.bStatRead || p->rc.rateControlMode != X265_RC_CRF)
+    {
+        p->rc.bEncFocusedFramesOnly = 0;
     }
 
     /* some options make no sense if others are disabled */
@@ -4247,6 +4371,9 @@ void Encoder::configure(x265_param *p)
         }
     }
 
+    if (p->videoSignalTypePreset)     // Default disabled.
+        configureVideoSignalTypePreset(p);
+
     if (m_param->toneMapFile || p->bHDR10Opt || p->bEmitHDR10SEI)
     {
         if (!p->bRepeatHeaders)
@@ -4317,12 +4444,17 @@ void Encoder::configure(x265_param *p)
             m_param->searchRange = m_param->hmeRange[2];
     }
 
-   if (p->bHistBasedSceneCut && !p->edgeTransitionThreshold)
-   {
-       p->edgeTransitionThreshold = 0.03;
-       x265_log(p, X265_LOG_WARNING, "using  default threshold %.2lf for scene cut detection\n", p->edgeTransitionThreshold);
-   }
+    if (p->bHistBasedSceneCut && !p->edgeTransitionThreshold)
+    {
+        p->edgeTransitionThreshold = 0.03;
+        x265_log(p, X265_LOG_WARNING, "using  default threshold %.2lf for scene cut detection.\n", p->edgeTransitionThreshold);
+    }
 
+    if (!p->bHistBasedSceneCut && !p->bEnableTradScdInHscd)
+    {
+        p->bEnableTradScdInHscd = 1;
+        x265_log(p, X265_LOG_WARNING, "option --no-traditional-scenecut requires --hist-scenecut to be enabled.\n");
+    }
 }
 
 void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc, const x265_picture* picIn, int paramBytes)
@@ -5171,7 +5303,7 @@ int Encoder::validateAnalysisData(x265_analysis_validate* saveParam, int writeFl
 
         int bcutree;
         X265_FREAD(&bcutree, sizeof(int), 1, m_analysisFileIn, &(saveParam->cuTree));
-        if (loadLevel == 10 && m_param->rc.cuTree && (!bcutree || saveLevel < 2))
+        if (loadLevel >= 2 && m_param->rc.cuTree && (!bcutree || saveLevel < 2))
         {
             x265_log(NULL, X265_LOG_ERROR, "Error reading cu-tree info. Disabling cutree offsets. \n");
             m_param->rc.cuTree = 0;

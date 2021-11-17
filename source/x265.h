@@ -747,6 +747,13 @@ typedef struct x265_vmaf_commondata
 
 static const x265_vmaf_commondata vcd[] = { { NULL, (char *)"/usr/local/share/model/vmaf_v0.6.1.pkl", NULL, NULL, 0, 0, 0, 0, 0, 0, 0, NULL, 0, 1, 0 } };
 
+
+typedef enum
+{
+    X265_SHARE_MODE_FILE = 0,
+    X265_SHARE_MODE_SHAREDMEM
+}X265_DATA_SHARE_MODES;
+
 /* x265 input parameters
  *
  * For version safety you may use x265_param_alloc/free() to manage the
@@ -1433,10 +1440,10 @@ typedef struct x265_param
         double    rfConstantMin;
 
         /* Multi-pass encoding */
-        /* Enable writing the stats in a multi-pass encode to the stat output file */
+        /* Enable writing the stats in a multi-pass encode to the stat output file/memory */
         int       bStatWrite;
 
-        /* Enable loading data from the stat input file in a multi pass encode */
+        /* Enable loading data from the stat input file/memory in a multi pass encode */
         int       bStatRead;
 
         /* Filename of the 2pass output/input stats file, if unspecified the
@@ -1488,6 +1495,21 @@ typedef struct x265_param
 
         /* internally enable if tune grain is set */
         int      bEnableConstVbv;
+
+        /* if only the focused frames would be re-encode or not */
+        int       bEncFocusedFramesOnly;
+
+        /* Share the data with stats file or shared memory.
+        It must be one of the X265_DATA_SHARE_MODES enum values
+        Available if the bStatWrite or bStatRead is true.
+        Use stats file by default.
+        The stats file mode would be used among the encoders running in sequence.
+        The shared memory mode could only be used among the encoders running in parallel.
+        Now only the cutree data could be shared among shared memory. More data would be support in the future.*/
+        int       dataShareMode;
+
+        /* Unique shared memory name. Required if the shared memory mode enabled. NULL by default */
+        const char* sharedMemName;
 
     } rc;
 
@@ -1948,6 +1970,25 @@ typedef struct x265_param
 
     /* The offset by which QP is incremented for non-referenced inter-frames before a scenecut when bEnableSceneCutAwareQp is 2 or 3. */
     double    bwdNonRefQpDelta;
+
+    /* Specify combinations of color primaries, transfer characteristics, color matrix,
+    * range of luma and chroma signals, and chroma sample location. This has higher
+    * precedence than individual VUI parameters. If any individual VUI option is specified
+    * together with this, which changes the values set corresponding to the system-id
+    * or color-volume, it will be discarded. */
+    const char* videoSignalTypePreset;
+
+    /* Flag indicating whether the encoder should emit an End of Bitstream
+     * NAL at the end of bitstream. Default false */
+    int      bEnableEndOfBitstream;
+
+    /* Flag indicating whether the encoder should emit an End of Sequence
+     * NAL at the end of every Coded Video Sequence. Default false */
+    int      bEnableEndOfSequence;
+
+    /* Flag to turn on/off traditional scenecut detection in histogram based scenecut detection.
+     * When false, only spatial properties are used for scenecut detection. Default true */
+    int      bEnableTradScdInHscd;
 } x265_param;
 
 /* x265_param_alloc:
