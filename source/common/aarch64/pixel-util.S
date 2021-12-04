@@ -2177,3 +2177,105 @@ function PFX(normFact64_neon)
     normFact_end
     ret
 endfunc
+
+// void weight_pp_c(const pixel* src, pixel* dst, intptr_t stride, int width, int height, int w0, int round, int shift, int offset)
+function PFX(weight_pp_neon)
+    sub             x2, x2, x3
+    ldr             w9, [sp]              // offset
+    lsl             w5, w5, #6            // w0 << correction
+
+    // count trailing zeros in w5 and compare against shift right amount.
+    rbit            w10, w5
+    clz             w10, w10
+    cmp             w10, w7
+    b.lt            .unfoldedShift
+
+    // shift right only removes trailing zeros: hoist LSR out of the loop.
+    lsr             w10, w5, w7           // w0 << correction >> shift
+    dup             v25.16b, w10
+    lsr             w6, w6, w7            // round >> shift
+    add             w6, w6, w9            // round >> shift + offset
+    dup             v26.8h, w6
+
+    // Check arithmetic range.
+    mov             w11, #255
+    madd            w11, w11, w10, w6
+    add             w11, w11, w9
+    lsr             w11, w11, #16
+    cbnz            w11, .widenTo32Bit
+
+    // 16-bit arithmetic is enough.
+.loopHpp:
+    mov             x12, x3
+.loopWpp:
+    ldr             q0, [x0], #16
+    sub             x12, x12, #16
+    umull           v1.8h, v0.8b, v25.8b  // val *= w0 << correction >> shift
+    umull2          v2.8h, v0.16b, v25.16b
+    add             v1.8h, v1.8h, v26.8h  // val += round >> shift + offset
+    add             v2.8h, v2.8h, v26.8h
+    sqxtun          v0.8b, v1.8h          // val = x265_clip(val)
+    sqxtun2         v0.16b, v2.8h
+    str             q0, [x1], #16
+    cbnz            x12, .loopWpp
+    add             x1, x1, x2
+    add             x0, x0, x2
+    sub             x4, x4, #1
+    cbnz            x4, .loopHpp
+    ret
+
+    // 32-bit arithmetic is needed.
+.widenTo32Bit:
+.loopHpp32:
+    mov             x12, x3
+.loopWpp32:
+    ldr             d0, [x0], #8
+    sub             x12, x12, #8
+    uxtl            v0.8h, v0.8b
+    umull           v1.4s, v0.4h, v25.4h  // val *= w0 << correction >> shift
+    umull2          v2.4s, v0.8h, v25.8h
+    add             v1.4s, v1.4s, v26.4s  // val += round >> shift + offset
+    add             v2.4s, v2.4s, v26.4s
+    sqxtn           v0.4h, v1.4s          // val = x265_clip(val)
+    sqxtn2          v0.8h, v2.4s
+    sqxtun          v0.8b, v0.8h
+    str             d0, [x1], #8
+    cbnz            x12, .loopWpp32
+    add             x1, x1, x2
+    add             x0, x0, x2
+    sub             x4, x4, #1
+    cbnz            x4, .loopHpp32
+    ret
+
+    // The shift right cannot be moved out of the loop.
+.unfoldedShift:
+    dup             v25.8h, w5            // w0 << correction
+    dup             v26.4s, w6            // round
+    neg             w7, w7                // -shift
+    dup             v27.4s, w7
+    dup             v29.4s, w9            // offset
+.loopHppUS:
+    mov             x12, x3
+.loopWppUS:
+    ldr             d0, [x0], #8
+    sub             x12, x12, #8
+    uxtl            v0.8h, v0.8b
+    umull           v1.4s, v0.4h, v25.4h  // val *= w0
+    umull2          v2.4s, v0.8h, v25.8h
+    add             v1.4s, v1.4s, v26.4s  // val += round
+    add             v2.4s, v2.4s, v26.4s
+    sshl            v1.4s, v1.4s, v27.4s  // val >>= shift
+    sshl            v2.4s, v2.4s, v27.4s
+    add             v1.4s, v1.4s, v29.4s  // val += offset
+    add             v2.4s, v2.4s, v29.4s
+    sqxtn           v0.4h, v1.4s          // val = x265_clip(val)
+    sqxtn2          v0.8h, v2.4s
+    sqxtun          v0.8b, v0.8h
+    str             d0, [x1], #8
+    cbnz            x12, .loopWppUS
+    add             x1, x1, x2
+    add             x0, x0, x2
+    sub             x4, x4, #1
+    cbnz            x4, .loopHppUS
+    ret
+endfunc

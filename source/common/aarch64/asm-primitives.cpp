@@ -661,6 +661,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
 
         // psy_cost_pp
         p.cu[BLOCK_4x4].psy_cost_pp = PFX(psyCost_4x4_neon);
+
+        p.weight_pp = PFX(weight_pp_neon);
 #endif
 
         // quant
