@@ -220,3 +220,4 @@ int PFX(psyCost_4x4_neon)(const pixel* source, intptr_t sstride, const pixel* re
 int PFX(psyCost_8x8_neon)(const pixel* source, intptr_t sstride, const pixel* recon, intptr_t rstride);
 void PFX(weight_pp_neon)(const pixel* src, pixel* dst, intptr_t stride, int width, int height, int w0, int round, int shift, int offset);
 void PFX(weight_sp_neon)(const int16_t* src, pixel* dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset);
+int PFX(scanPosLast_neon)(const uint16_t *scan, const coeff_t *coeff, uint16_t *coeffSign, uint16_t *coeffFlag, uint8_t *coeffNum, int numSig, const uint16_t* scanCG4x4, const int trSize);
