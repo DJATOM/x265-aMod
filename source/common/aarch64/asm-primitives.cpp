@@ -664,6 +664,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
 
         p.weight_pp = PFX(weight_pp_neon);
         p.scanPosLast = PFX(scanPosLast_neon);
+        p.costCoeffNxN = PFX(costCoeffNxN_neon);
 #endif
 
         // quant
