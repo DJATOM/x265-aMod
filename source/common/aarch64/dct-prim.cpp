@@ -914,9 +914,7 @@ void setupDCTPrimitives_neon(EncoderPrimitives &p)
     p.cu[BLOCK_16x16].psyRdoQuant = psyRdoQuant_neon<4>;
     p.cu[BLOCK_32x32].psyRdoQuant = psyRdoQuant_neon<5>;
     p.cu[BLOCK_8x8].dct   = dct8_neon;
-#if defined(__APPLE__)
     p.cu[BLOCK_16x16].dct = dct16_neon;
-#endif // defined(__APPLE__)
     p.cu[BLOCK_32x32].dct = dct32_neon;
     p.cu[BLOCK_4x4].idct   = idct4_neon;
     p.cu[BLOCK_16x16].idct = idct16_neon;
