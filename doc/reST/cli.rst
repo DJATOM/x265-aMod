@@ -1328,7 +1328,7 @@ Temporal / motion search options
 	Search range for HME level 0, 1 and 2.
 	The Search Range for each HME level must be between 0 and 32768(excluding).
 	Default search range is 16,32,48 for level 0,1,2 respectively.
-	
+
 .. option:: --mcstf, --no-mcstf
 
     Enable Motion Compensated Temporal filtering.
@@ -1477,7 +1477,7 @@ Slice decision options
 	Scenecuts detected based on histogram, intensity and variance of the picture.
 	:option:`--hist-scenecut` enables or :option:`--no-hist-scenecut` disables scenecut detection based on
 	histogram.
-	
+
 .. option:: --radl <integer>
 	
 	Number of RADL pictures allowed infront of IDR. Requires closed gop interval.
@@ -1733,7 +1733,7 @@ Quality, rate control and rate distortion options
 	ignored. Slower presets will generally achieve better compression
 	efficiency (and generate smaller bitstreams). Default disabled.
 
-.. option:: --aq-mode <0|1|2|3|4>
+.. option:: --aq-mode <0|1|2|3|4|5>
 
 	Adaptive Quantization operating mode. Raise or lower per-block
 	quantization based on complexity analysis of the source image. The
@@ -1748,6 +1748,7 @@ Quality, rate control and rate distortion options
 	recommended for 8-bit encodes or low-bitrate 10-bit encodes, to 
 	prevent color banding/blocking. 
 	4. AQ enabled with auto-variance and edge information.
+	5. AQ enabled with auto-variance, edge information, and bias to dark scenes.
 
 .. option:: --aq-strength <float>
 
@@ -1758,6 +1759,13 @@ Quality, rate control and rate distortion options
 
 	Default 1.0.
 	**Range of values:** 0.0 to 3.0
+
+.. option:: --aq-bias-strength <float>
+
+	Adjust the strength of dark scene bias in AQ modes 3 and 5. Setting this
+	to 0 will disable the dark scene bias, meaning modes will be equivalent to
+	their unbiased counterparts (2 and 4).
+	Default 1.0.
 
 .. option:: --sbrc --no-sbrc
 
@@ -2015,19 +2023,19 @@ Quality, rate control and rate distortion options
 
 	* 1 (Forward masking):
 	--masking-strength <fwdMaxWindow,fwdRefQPDelta,fwdNonRefQPDelta>
-	or 
+	or
 	--masking-strength <fwdWindow1,fwdRefQPDelta1,fwdNonRefQPDelta1,fwdWindow2,fwdRefQPDelta2,fwdNonRefQPDelta2,
 						fwdWindow3,fwdRefQPDelta3,fwdNonRefQPDelta3,fwdWindow4,fwdRefQPDelta4,fwdNonRefQPDelta4,
 						fwdWindow5,fwdRefQPDelta5,fwdNonRefQPDelta5,fwdWindow6,fwdRefQPDelta6,fwdNonRefQPDelta6>
 	* 2 (Backward masking):
 	--masking-strength <bwdMaxWindow,bwdRefQPDelta,bwdNonRefQPDelta>
-	or 
+	or
 	--masking-strength <bwdWindow1,bwdRefQPDelta1,bwdNonRefQPDelta1,bwdWindow2,bwdRefQPDelta2,bwdNonRefQPDelta2,
 						bwdWindow3,bwdRefQPDelta3,bwdNonRefQPDelta3,bwdWindow4,bwdRefQPDelta4,bwdNonRefQPDelta4,
 						bwdWindow5,bwdRefQPDelta5,bwdNonRefQPDelta5,bwdWindow6,bwdRefQPDelta6,bwdNonRefQPDelta6>
 	* 3 (Bi-directional masking):
 	--masking-strength <fwdMaxWindow,fwdRefQPDelta,fwdNonRefQPDelta,bwdMaxWindow,bwdRefQPDelta,bwdNonRefQPDelta>
-	or 
+	or
 	--masking-strength <fwdWindow1,fwdRefQPDelta1,fwdNonRefQPDelta1,fwdWindow2,fwdRefQPDelta2,fwdNonRefQPDelta2,
 						fwdWindow3,fwdRefQPDelta3,fwdNonRefQPDelta3,fwdWindow4,fwdRefQPDelta4,fwdNonRefQPDelta4,
 						fwdWindow5,fwdRefQPDelta5,fwdNonRefQPDelta5,fwdWindow6,fwdRefQPDelta6,fwdNonRefQPDelta6,
@@ -2086,7 +2094,7 @@ Quality, rate control and rate distortion options
 	Sample config file:: (Format 2 Forward masking explained here)
 
 	--scenecut-aware-qp 1 --masking-strength 1000,8,12
-	
+
 	The above sample config file is available in `the downloads page <https://bitbucket.org/multicoreware/x265_git/downloads/scenecut_qp_config.txt>`_
 
 .. option:: --vbv-live-multi-pass, --no-vbv-live-multi-pass
@@ -2427,7 +2435,7 @@ VUI fields must be manually specified.
 .. option:: --hdr10-opt, --no-hdr10-opt
 
 	Enable block-level luma and chroma QP optimization for HDR10 content
-	as suggested in ITU-T H-series Recommendations – Supplement 15.
+	as suggested in ITU-T H-series Recommendations ï¿½ Supplement 15.
 	Source video should have HDR10 characteristics such as 10-bit depth 4:2:0
 	with Bt.2020 color primaries and SMPTE ST.2084 transfer characteristics.
 	It is recommended that AQ-mode be enabled along with this feature. Default disabled.
