@@ -581,6 +581,7 @@ typedef enum
 #define X265_AQ_AUTO_VARIANCE        2
 #define X265_AQ_AUTO_VARIANCE_BIASED 3
 #define X265_AQ_EDGE                 4
+#define X265_AQ_EDGE_BIASED          5
 #define x265_ADAPT_RD_STRENGTH   4
 #define X265_REFINE_INTER_LEVELS 3
 /* NOTE! For this release only X265_CSP_I420 and X265_CSP_I444 are supported */
@@ -1411,6 +1412,9 @@ typedef struct x265_param
         /* Sets the strength of AQ bias towards low detail CTUs. Valid only if
          * AQ is enabled. Default value: 1.0. Acceptable values between 0.0 and 3.0 */
         double    aqStrength;
+
+        /* Sets the bias towards dark scenes in AQ modes 3 and 5. */
+        double    aqBiasStrength;
 
         /* Delta QP range by QP adaptation based on a psycho-visual model.
          * Acceptable values between 1.0 to 6.0 */
