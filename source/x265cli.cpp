@@ -282,7 +282,7 @@ namespace X265_NS {
         H0("   --aq-mode <integer>           Mode for Adaptive Quantization - 0:none 1:uniform AQ 2:auto variance 3:auto variance with bias to dark scenes 4:auto variance with edge information 5:auto variance with edge information and bias to dark scenes. Default %d\n", param->rc.aqMode);
         H0("   --[no-]hevc-aq                Mode for HEVC Adaptive Quantization. Default %s\n", OPT(param->rc.hevcAq));
         H0("   --aq-strength <float>         Reduces blocking and blurring in flat and textured areas (0 to 3.0). Default %.2f\n", param->rc.aqStrength);
-	H0("   --aq-bias-strength <float>    Sets the bias to dark strength in AQ modes 3 and 5. Default %.2f\n", param->rc.aqBiasStrength);
+        H0("   --aq-bias-strength <float>    Sets the bias to dark strength in AQ modes 3 and 5. Default %.2f\n", param->rc.aqBiasStrength);
         H0("   --qp-adaptation-range <float> Delta QP range by QP adaptation based on a psycho-visual model (1.0 to 6.0). Default %.2f\n", param->rc.qpAdaptationRange);
         H0("   --[no-]aq-motion              Block level QP adaptation based on the relative motion between the block and the frame. Default %s\n", OPT(param->bAQMotion));
         H0("   --qg-size <int>               Specifies the size of the quantization group (64, 32, 16, 8). Default %d\n", param->rc.qgSize);
