@@ -1724,7 +1724,7 @@ Quality, rate control and rate distortion options
 	ignored. Slower presets will generally achieve better compression
 	efficiency (and generate smaller bitstreams). Default disabled.
 
-.. option:: --aq-mode <0|1|2|3|4>
+.. option:: --aq-mode <0|1|2|3|4|5>
 
 	Adaptive Quantization operating mode. Raise or lower per-block
 	quantization based on complexity analysis of the source image. The
@@ -1737,6 +1737,7 @@ Quality, rate control and rate distortion options
 	2. AQ enabled with auto-variance **(default)**
 	3. AQ enabled with auto-variance and bias to dark scenes. This is recommended for 8-bit encodes or low-bitrate 10-bit encodes, to prevent color banding/blocking.
 	4. AQ enabled with auto-variance and edge information.
+	5. AQ enabled with auto-variance, edge information, and bias to dark scenes.
 
 .. option:: --aq-strength <float>
 
@@ -1747,6 +1748,13 @@ Quality, rate control and rate distortion options
 
 	Default 1.0.
 	**Range of values:** 0.0 to 3.0
+
+.. option:: --aq-bias-strength <float>
+
+	Adjust the strength of dark scene bias in AQ modes 3 and 5. Setting this
+	to 0 will disable the dark scene bias, meaning modes will be equivalent to
+	their unbiased counterparts (2 and 4).
+	Default 1.0.
 
 .. option:: --sbrc, --no-sbrc
 

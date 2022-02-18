@@ -484,7 +484,7 @@ void FrameEncoder::compressFrame(int layer)
     memset(&(m_frame[layer]->m_encData->m_frameStats), 0, sizeof(m_frame[layer]->m_encData->m_frameStats));
     m_sLayerId = layer;
 
-    if (m_param->rc.aqMode != X265_AQ_EDGE && m_param->recursionSkipMode == EDGE_BASED_RSKIP)
+    if (m_param->rc.aqMode != X265_AQ_EDGE_BIASED && m_param->rc.aqMode != X265_AQ_EDGE && m_param->recursionSkipMode == EDGE_BASED_RSKIP)
     {
         int height = m_frame[layer]->m_fencPic->m_picHeight;
         int width = m_frame[layer]->m_fencPic->m_picWidth;
