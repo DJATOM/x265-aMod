@@ -1989,6 +1989,9 @@ typedef struct x265_param
     /* Flag to turn on/off traditional scenecut detection in histogram based scenecut detection.
      * When false, only spatial properties are used for scenecut detection. Default true */
     int      bEnableTradScdInHscd;
+
+    /* Film Grain Characteristic file */
+    char* filmGrain;
 } x265_param;
 
 /* x265_param_alloc:

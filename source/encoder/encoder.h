@@ -295,6 +295,8 @@ public:
 
     ThreadSafeInteger* zoneReadCount;
     ThreadSafeInteger* zoneWriteCount;
+    /* Film grain model file */
+    FILE* m_filmGrainIn;
 
     Encoder();
     ~Encoder()

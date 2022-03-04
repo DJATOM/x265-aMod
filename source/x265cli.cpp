@@ -391,6 +391,9 @@ namespace X265_NS {
         H1("    2 - unable to open encoder\n");
         H1("    3 - unable to generate stream headers\n");
         H1("    4 - encoder abort\n");
+        H0("\nSEI Message Options\n");
+        H0("   --film-grain <filename>           File containing Film Grain Characteristics to be written as a SEI Message\n");
+
 #undef OPT
 #undef H0
 #undef H1

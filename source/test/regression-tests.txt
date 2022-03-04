@@ -195,4 +195,8 @@ CrowdRun_1920x1080_50_10bit_422.yuv,--no-cutree --analysis-save x265_analysis.da
 #segment encoding
 BasketballDrive_1920x1080_50.y4m, --preset ultrafast --no-open-gop --chunk-start 100 --chunk-end 200
 
+#Test FG SEI message addition
+#OldTownCross_1920x1080_50_10bit_422.yuv,--preset slower --tune grain --film-grain "OldTownCross_1920x1080_50_10bit_422.bin"
+#RaceHorses_416x240_30_10bit.yuv,--preset ultrafast --signhide --colormatrix bt709 --film-grain "RaceHorses_416x240_30_10bit.bin"
+
 # vim: tw=200

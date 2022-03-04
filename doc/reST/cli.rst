@@ -2659,6 +2659,12 @@ Bitstream options
 	Emit SEI messages in a single NAL unit instead of multiple NALs. Default disabled.
 	When HRD SEI is enabled the HM decoder will throw a warning.
 
+.. option:: --film-grain <filename>
+
+    Refers to the film grain model characteristics for signal enhancement information transmission
+
+    **CLI_ONLY**
+
 DCT Approximations
 =================
 

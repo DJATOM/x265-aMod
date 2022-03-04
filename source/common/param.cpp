@@ -384,6 +384,8 @@ void x265_param_default(x265_param* param)
     param->svtHevcParam = svtParam;
     svt_param_default(param);
 #endif
+    /* Film grain characteristics model filename */
+    param->filmGrain = NULL;
 }
 
 int x265_param_default_preset(x265_param* param, const char* preset, const char* tune)
@@ -1460,6 +1462,8 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         OPT("video-signal-type-preset") p->videoSignalTypePreset = strdup(value);
         OPT("eob") p->bEnableEndOfBitstream = atobool(value);
         OPT("eos") p->bEnableEndOfSequence = atobool(value);
+        /* Film grain characterstics model filename */
+        OPT("film-grain") p->filmGrain = (char* )value;
         else
             return X265_PARAM_BAD_NAME;
     }
@@ -2353,6 +2357,8 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     s += sprintf(s, "conformance-window-offsets right=%d bottom=%d", p->confWinRightOffset, p->confWinBottomOffset);
     s += sprintf(s, " decoder-max-rate=%d", p->decoderVbvMaxRate);
     BOOL(p->bliveVBV2pass, "vbv-live-multi-pass");
+    if (p->filmGrain)
+        s += sprintf(s, " film-grain=%s", p->filmGrain); // Film grain characteristics model filename
 #undef BOOL
     return buf;
 }
@@ -2726,6 +2732,9 @@ void x265_copy_params(x265_param* dst, x265_param* src)
 #ifdef SVT_HEVC
     memcpy(dst->svtHevcParam, src->svtHevcParam, sizeof(EB_H265_ENC_CONFIGURATION));
 #endif
+    /* Film grain */
+    if (src->filmGrain)
+        dst->filmGrain = src->filmGrain;
 }
 
 #ifdef SVT_HEVC

@@ -380,6 +380,7 @@ static const struct option long_options[] =
     { "abr-ladder", required_argument, NULL, 0 },
     { "min-vbv-fullness", required_argument, NULL, 0 },
     { "max-vbv-fullness", required_argument, NULL, 0 },
+    { "film-grain", required_argument, NULL, 0 },
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },

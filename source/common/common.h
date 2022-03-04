@@ -340,6 +340,7 @@ typedef int16_t  coeff_t;      // transform coefficient
 #define FILLER_OVERHEAD (NAL_TYPE_OVERHEAD + START_CODE_OVERHEAD + 1)
 
 #define MAX_NUM_DYN_REFINE          (NUM_CU_DEPTH * X265_REFINE_INTER_LEVELS)
+#define X265_BYTE 8
 
 namespace X265_NS {
 
@@ -434,6 +435,14 @@ int      x265_rename(const char* oldName, const char* newName);
 #define  x265_unlink(fileName) unlink(fileName)
 #define  x265_rename(oldName, newName) rename(oldName, newName)
 #endif
+/* Close a file */
+#define  x265_fclose(file) if (file != NULL) fclose(file); file=NULL;
+#define x265_fread(val, size, readSize, fileOffset,errorMessage)\
+    if (fread(val, size, readSize, fileOffset) != readSize)\
+    {\
+        x265_log(NULL, X265_LOG_ERROR, errorMessage); \
+        return; \
+    }
 int      x265_exp2fix8(double x);
 
 double   x265_ssim2dB(double ssim);
