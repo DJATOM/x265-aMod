@@ -1052,7 +1052,6 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
     OPT("qblur") p->rc.qblur = atof(value);
     OPT("aq-mode") p->rc.aqMode = atoi(value);
     OPT("aq-strength") p->rc.aqStrength = atof(value);
-    OPT("aq-bias-strength") p->rc.aqBiasStrength = atof(value);
     OPT("vbv-maxrate") p->rc.vbvMaxBitrate = atoi(value);
     OPT("vbv-bufsize") p->rc.vbvBufferSize = atoi(value);
     OPT("vbv-init")    p->rc.vbvBufferInit = atof(value);
@@ -1446,6 +1445,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         OPT("vbv-live-multi-pass") p->bliveVBV2pass = atobool(value);
         OPT("min-vbv-fullness") p->minVbvFullness = atof(value);
         OPT("max-vbv-fullness") p->maxVbvFullness = atof(value);
+        OPT("aq-bias-strength") p->rc.aqBiasStrength = atof(value);
         else
             return X265_PARAM_BAD_NAME;
     }
