@@ -951,13 +951,13 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
     OPT2("level-idc", "level")
     {
         /* allow "5.1" or "51", both converted to integer 51 */
-        /* if level-idc specifies an obviously wrong value in either float or int, 
+        /* if level-idc specifies an obviously wrong value in either float or int,
         throw error consistently. Stronger level checking will be done in encoder_open() */
         if (atof(value) < 10)
             p->levelIdc = (int)(10 * atof(value) + .5);
         else if (atoi(value) < 100)
             p->levelIdc = atoi(value);
-        else 
+        else
             bError = true;
     }
     OPT("high-tier") p->bHighTier = atobool(value);
@@ -1111,7 +1111,6 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
     OPT("qblur") p->rc.qblur = atof(value);
     OPT("aq-mode") p->rc.aqMode = atoi(value);
     OPT("aq-strength") p->rc.aqStrength = atof(value);
-    OPT("aq-bias-strength") p->rc.aqBiasStrength = atof(value);
     OPT("vbv-maxrate") p->rc.vbvMaxBitrate = atoi(value);
     OPT("vbv-bufsize") p->rc.vbvBufferSize = atoi(value);
     OPT("vbv-init")    p->rc.vbvBufferInit = atof(value);
@@ -1433,6 +1432,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         OPT("eos") p->bEnableEndOfSequence = atobool(value);
         /* Film grain characterstics model filename */
         OPT("film-grain") p->filmGrain = (char* )value;
+        OPT("aq-bias-strength") p->rc.aqBiasStrength = atof(value);
         OPT("mcstf") p->bEnableTemporalFilter = atobool(value);
         OPT("sbrc") p->bEnableSBRC = atobool(value);
         else
@@ -1962,10 +1962,10 @@ void x265_print_params(x265_param* param)
         x265_log(param, X265_LOG_INFO, "ME / range / subpel / merge         : %s / %d / %d / %d\n",
             x265_motion_est_names[param->searchMethod], param->searchRange, param->subpelRefine, param->maxNumMergeCand);
 
-    if (param->scenecutThreshold && param->keyframeMax != INT_MAX) 
+    if (param->scenecutThreshold && param->keyframeMax != INT_MAX)
         x265_log(param, X265_LOG_INFO, "Keyframe min / max / scenecut / bias  : %d / %d / %d / %.2lf \n",
                  param->keyframeMin, param->keyframeMax, param->scenecutThreshold, param->scenecutBias * 100);
-    else if (param->bHistBasedSceneCut && param->keyframeMax != INT_MAX) 
+    else if (param->bHistBasedSceneCut && param->keyframeMax != INT_MAX)
         x265_log(param, X265_LOG_INFO, "Keyframe min / max / scenecut  : %d / %d / %d\n",
                  param->keyframeMin, param->keyframeMax, param->bHistBasedSceneCut);
     else if (param->keyframeMax == INT_MAX)
@@ -2009,7 +2009,7 @@ void x265_print_params(x265_param* param)
             x265_log(param, X265_LOG_INFO, "VBV/HRD buffer / max-rate / init    : %d / %d / %.3f\n",
             param->rc.vbvBufferSize, param->rc.vbvMaxBitrate, param->rc.vbvBufferInit);
     }
-    
+
     char buf[80] = { 0 };
     char tmp[40];
 #define TOOLOPT(FLAG, STR) if (FLAG) appendtool(param, buf, sizeof(buf), STR);
@@ -2229,7 +2229,7 @@ char *x265_param2string(x265_param* p, int padx, int pady)
             if (p->vbvBufferEnd)
                 s += sprintf(s, " vbv-end=%.1f vbv-end-fr-adj=%.1f", p->vbvBufferEnd, p->vbvEndFrameAdjust);
             if (p->rc.rateControlMode == X265_RC_CRF)
-                s += sprintf(s, " crf-max=%.1f crf-min=%.1f", p->rc.rfConstantMax, p->rc.rfConstantMin);   
+                s += sprintf(s, " crf-max=%.1f crf-min=%.1f", p->rc.rfConstantMax, p->rc.rfConstantMin);
         }
     }
     else if (p->rc.rateControlMode == X265_RC_CQP)
@@ -2891,7 +2891,7 @@ void svt_param_default(x265_param* param)
     svtHevcParam->encMode = 7;
     svtHevcParam->tune = 1;
 
-    // Interlaced Video 
+    // Interlaced Video
     svtHevcParam->interlacedVideo = 0;
 
     // Quantization
@@ -2985,7 +2985,7 @@ void svt_param_default(x265_param* param)
 int svt_set_preset(x265_param* param, const char* preset)
 {
     EB_H265_ENC_CONFIGURATION* svtHevcParam = (EB_H265_ENC_CONFIGURATION*)param->svtHevcParam;
-    
+
     if (preset)
     {
         if (!strcmp(preset, "ultrafast")) svtHevcParam->encMode = 11;
