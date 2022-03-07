@@ -184,7 +184,7 @@ void edgeFilter(Frame *curFrame, x265_param* param)
     {
         for (int colNum = 0; colNum < width; colNum++)
         {
-            if ((rowNum >= 2) && (colNum >= 2) && (rowNum != height - 2) && (colNum != width - 2)) //Ignoring the border pixels of the picture
+            if ((rowNum >= 2) && (colNum >= 2) && (rowNum < height - 2) && (colNum < width - 2)) //Ignoring the border pixels of the picture
             {
                 /*  5x5 Gaussian filter
                     [2   4   5   4   2]
