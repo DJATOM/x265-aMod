@@ -802,6 +802,20 @@ function PFX(blockfill_s_32x32_neon)
     ret
 endfunc
 
+function PFX(blockfill_s_64x64_neon)
+    dup             v0.8h, w2
+    mov             v1.16b, v0.16b
+    mov             v2.16b, v0.16b
+    mov             v3.16b, v0.16b
+    lsl             x1, x1, #1
+    sub             x1, x1, #64
+.rept 64
+    st1             {v0.8h-v3.8h}, [x0], #64
+    st1             {v0.8h-v3.8h}, [x0], x1
+.endr
+    ret
+endfunc
+
 // uint32_t copy_count(int16_t* coeff, const int16_t* residual, intptr_t resiStride)
 function PFX(copy_cnt_4_neon)
     lsl             x2, x2, #1
@@ -1032,6 +1046,34 @@ function PFX(cpy2Dto1D_shl_32x32_neon)
     ret
 endfunc
 
+function PFX(cpy2Dto1D_shl_64x64_neon)
+    cpy2Dto1D_shl_start
+    mov             w12, #32
+.loop_cpy2Dto1D_shl_64:
+    sub             w12, w12, #1
+.rept 2
+    ldp             q2, q3, [x1]
+    ldp             q4, q5, [x1, #32]
+    ldp             q6, q7, [x1, #64]
+    ldp             q16, q17, [x1, #96]
+    add             x1, x1, x2
+    sshl            v2.8h, v2.8h, v0.8h
+    sshl            v3.8h, v3.8h, v0.8h
+    sshl            v4.8h, v4.8h, v0.8h
+    sshl            v5.8h, v5.8h, v0.8h
+    sshl            v6.8h, v6.8h, v0.8h
+    sshl            v7.8h, v7.8h, v0.8h
+    sshl            v16.8h, v16.8h, v0.8h
+    sshl            v17.8h, v17.8h, v0.8h
+    stp             q2, q3, [x0], #32
+    stp             q4, q5, [x0], #32
+    stp             q6, q7, [x0], #32
+    stp             q16, q17, [x0], #32
+.endr
+    cbnz            w12, .loop_cpy2Dto1D_shl_64
+    ret
+endfunc
+
 // void cpy2Dto1D_shr(int16_t* dst, const int16_t* src, intptr_t srcStride, int shift)
 .macro cpy2Dto1D_shr_start
     add             x2, x2, x2
@@ -1176,6 +1218,34 @@ function PFX(cpy1Dto2D_shl_32x32_neon)
     ret
 endfunc
 
+function PFX(cpy1Dto2D_shl_64x64_neon)
+    cpy1Dto2D_shl_start
+    mov             w12, #32
+.loop_cpy1Dto2D_shl_64:
+    sub             w12, w12, #1
+.rept 2
+    ldp             q2, q3, [x1], #32
+    ldp             q4, q5, [x1], #32
+    ldp             q6, q7, [x1], #32
+    ldp             q16, q17, [x1], #32
+    sshl            v2.8h, v2.8h, v0.8h
+    sshl            v3.8h, v3.8h, v0.8h
+    sshl            v4.8h, v4.8h, v0.8h
+    sshl            v5.8h, v5.8h, v0.8h
+    sshl            v6.8h, v6.8h, v0.8h
+    sshl            v7.8h, v7.8h, v0.8h
+    sshl            v16.8h, v16.8h, v0.8h
+    sshl            v17.8h, v17.8h, v0.8h
+    stp             q2, q3, [x0]
+    stp             q4, q5, [x0, #32]
+    stp             q6, q7, [x0, #64]
+    stp             q16, q17, [x0, #96]
+    add             x0, x0, x2
+.endr
+    cbnz            w12, .loop_cpy1Dto2D_shl_64
+    ret
+endfunc
+
 // void cpy1Dto2D_shr(int16_t* dst, const int16_t* src, intptr_t dstStride, int shift)
 .macro cpy1Dto2D_shr_start
     add             x2, x2, x2
@@ -1252,6 +1322,42 @@ function PFX(cpy1Dto2D_shr_32x32_neon)
     add             x0, x0, x2
 .endr
     cbnz            w12, .loop_cpy1Dto2D_shr_32
+    ret
+endfunc
+
+function PFX(cpy1Dto2D_shr_64x64_neon)
+    cpy1Dto2D_shr_start
+    mov             w12, #32
+.loop_cpy1Dto2D_shr_64:
+    sub             w12, w12, #1
+.rept 2
+    ldp             q2, q3, [x1], #32
+    ldp             q4, q5, [x1], #32
+    ldp             q6, q7, [x1], #32
+    ldp             q16, q17, [x1], #32
+    sub             v2.8h, v2.8h, v1.8h
+    sub             v3.8h, v3.8h, v1.8h
+    sub             v4.8h, v4.8h, v1.8h
+    sub             v5.8h, v5.8h, v1.8h
+    sub             v6.8h, v6.8h, v1.8h
+    sub             v7.8h, v7.8h, v1.8h
+    sub             v16.8h, v16.8h, v1.8h
+    sub             v17.8h, v17.8h, v1.8h
+    sshl            v2.8h, v2.8h, v0.8h
+    sshl            v3.8h, v3.8h, v0.8h
+    sshl            v4.8h, v4.8h, v0.8h
+    sshl            v5.8h, v5.8h, v0.8h
+    sshl            v6.8h, v6.8h, v0.8h
+    sshl            v7.8h, v7.8h, v0.8h
+    sshl            v16.8h, v16.8h, v0.8h
+    sshl            v17.8h, v17.8h, v0.8h
+    stp             q2, q3, [x0]
+    stp             q4, q5, [x0, #32]
+    stp             q6, q7, [x0, #64]
+    stp             q16, q17, [x0, #96]
+    add             x0, x0, x2
+.endr
+    cbnz            w12, .loop_cpy1Dto2D_shr_64
     ret
 endfunc
 
