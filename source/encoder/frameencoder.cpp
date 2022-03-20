@@ -762,7 +762,14 @@ void FrameEncoder::compressFrame()
         m_seiAlternativeTC.m_preferredTransferCharacteristics = m_param->preferredTransferCharacteristics;
         m_seiAlternativeTC.writeSEImessages(m_bs, *slice->m_sps, NAL_UNIT_PREFIX_SEI, m_nalList, m_param->bSingleSeiNal);
     }
-
+    /* Write Film grain characteristics if present */
+    if (this->m_top->m_filmGrainIn)
+    {
+        FilmGrainCharacteristics m_filmGrain;
+        /* Read the Film grain model file */
+        readModel(&m_filmGrain, this->m_top->m_filmGrainIn);
+        m_filmGrain.writeSEImessages(m_bs, *slice->m_sps, NAL_UNIT_PREFIX_SEI, m_nalList, m_param->bSingleSeiNal);
+    }
     /* Write user SEI */
     for (int i = 0; i < m_frame->m_userSEI.numPayloads; i++)
     {
@@ -2131,6 +2138,54 @@ void FrameEncoder::noiseReductionUpdate()
 
         // Don't denoise DC coefficients
         m_nr->nrOffsetDenoise[cat][0] = 0;
+    }
+}
+
+void FrameEncoder::readModel(FilmGrainCharacteristics* m_filmGrain, FILE* filmgrain)
+{
+    char const* errorMessage = "Error reading FilmGrain characteristics\n";
+    FilmGrain m_fg;
+    x265_fread((char* )&m_fg, sizeof(bool) * 3 + sizeof(uint8_t), 1, filmgrain, errorMessage);
+    m_filmGrain->m_filmGrainCharacteristicsCancelFlag = m_fg.m_filmGrainCharacteristicsCancelFlag;
+    m_filmGrain->m_filmGrainCharacteristicsPersistenceFlag = m_fg.m_filmGrainCharacteristicsPersistenceFlag;
+    m_filmGrain->m_filmGrainModelId = m_fg.m_filmGrainModelId;
+    m_filmGrain->m_separateColourDescriptionPresentFlag = m_fg.m_separateColourDescriptionPresentFlag;
+    if (m_filmGrain->m_separateColourDescriptionPresentFlag)
+    {
+        ColourDescription m_clr;
+        x265_fread((char* )&m_clr, sizeof(bool) + sizeof(uint8_t) * 5, 1, filmgrain, errorMessage);
+        m_filmGrain->m_filmGrainBitDepthLumaMinus8 = m_clr.m_filmGrainBitDepthLumaMinus8;
+        m_filmGrain->m_filmGrainBitDepthChromaMinus8 = m_clr.m_filmGrainBitDepthChromaMinus8;
+        m_filmGrain->m_filmGrainFullRangeFlag = m_clr.m_filmGrainFullRangeFlag;
+        m_filmGrain->m_filmGrainColourPrimaries = m_clr.m_filmGrainColourPrimaries;
+        m_filmGrain->m_filmGrainTransferCharacteristics = m_clr.m_filmGrainTransferCharacteristics;
+        m_filmGrain->m_filmGrainMatrixCoeffs = m_clr.m_filmGrainMatrixCoeffs;
+    }
+    FGPresent m_present;
+    x265_fread((char* )&m_present, sizeof(bool) * 3 + sizeof(uint8_t) * 2, 1, filmgrain, errorMessage);
+    m_filmGrain->m_blendingModeId = m_present.m_blendingModeId;
+    m_filmGrain->m_log2ScaleFactor = m_present.m_log2ScaleFactor;
+    m_filmGrain->m_compModel[0].bPresentFlag = m_present.m_presentFlag[0];
+    m_filmGrain->m_compModel[1].bPresentFlag = m_present.m_presentFlag[1];
+    m_filmGrain->m_compModel[2].bPresentFlag = m_present.m_presentFlag[2];
+    for (int i = 0; i < MAX_NUM_COMPONENT; i++)
+    {
+        if (m_filmGrain->m_compModel[i].bPresentFlag)
+        {
+            x265_fread((char* )(&m_filmGrain->m_compModel[i].m_filmGrainNumIntensityIntervalMinus1), sizeof(uint8_t), 1, filmgrain, errorMessage);
+            x265_fread((char* )(&m_filmGrain->m_compModel[i].numModelValues), sizeof(uint8_t), 1, filmgrain, errorMessage);
+            m_filmGrain->m_compModel[i].intensityValues = (FilmGrainCharacteristics::CompModelIntensityValues* ) malloc(sizeof(FilmGrainCharacteristics::CompModelIntensityValues) * (m_filmGrain->m_compModel[i].m_filmGrainNumIntensityIntervalMinus1+1)) ;
+            for (int j = 0; j <= m_filmGrain->m_compModel[i].m_filmGrainNumIntensityIntervalMinus1; j++)
+            {
+                x265_fread((char* )(&m_filmGrain->m_compModel[i].intensityValues[j].intensityIntervalLowerBound), sizeof(uint8_t), 1, filmgrain, errorMessage);
+                x265_fread((char* )(&m_filmGrain->m_compModel[i].intensityValues[j].intensityIntervalUpperBound), sizeof(uint8_t), 1, filmgrain, errorMessage);
+                m_filmGrain->m_compModel[i].intensityValues[j].compModelValue = (int* ) malloc(sizeof(int) * (m_filmGrain->m_compModel[i].numModelValues));
+                for (int k = 0; k < m_filmGrain->m_compModel[i].numModelValues; k++)
+                {
+                    x265_fread((char* )(&m_filmGrain->m_compModel[i].intensityValues[j].compModelValue[k]), sizeof(int), 1, filmgrain, errorMessage);
+                }
+            }
+        }
     }
 }
 #if ENABLE_LIBVMAF

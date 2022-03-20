@@ -103,11 +103,11 @@ if(ENABLE_ASSEMBLY AND (ARM64 OR CROSS_COMPILE_ARM64))
         add_definitions(-DAUTO_VECTORIZE=1)
     endif()
 
-    set(C_SRCS asm-primitives.cpp pixel-prim.h pixel-prim.cpp  filter-prim.h filter-prim.cpp dct-prim.h dct-prim.cpp loopfilter-prim.cpp loopfilter-prim.h intrapred-prim.cpp arm64-utils.cpp arm64-utils.h ipfilter8.h)
+    set(C_SRCS asm-primitives.cpp pixel-prim.h pixel-prim.cpp filter-prim.h filter-prim.cpp dct-prim.h dct-prim.cpp loopfilter-prim.cpp loopfilter-prim.h intrapred-prim.cpp arm64-utils.cpp arm64-utils.h fun-decls.h)
     enable_language(ASM)
 
     # add ARM assembly/intrinsic files here
-    set(A_SRCS asm.S mc-a.S sad-a.S pixel-util.S ipfilter8.S)
+    set(A_SRCS asm.S mc-a.S sad-a.S pixel-util.S p2s.S ipfilter.S blockcopy8.S ssd-a.S)
     set(VEC_PRIMITIVES)
 
     set(ARM_ASMS "${A_SRCS}" CACHE INTERNAL "ARM Assembly Sources")

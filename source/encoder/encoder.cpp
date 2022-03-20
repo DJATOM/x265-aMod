@@ -142,6 +142,7 @@ Encoder::Encoder()
     m_threadPool = NULL;
     m_analysisFileIn = NULL;
     m_analysisFileOut = NULL;
+    m_filmGrainIn = NULL;
     m_naluFile = NULL;
     m_offsetEmergency = NULL;
     m_iFrameNum = 0;
@@ -551,6 +552,15 @@ void Encoder::create()
             }
         }
     }
+    if (m_param->filmGrain)
+    {
+        m_filmGrainIn = x265_fopen(m_param->filmGrain, "rb");
+        if (!m_filmGrainIn)
+        {
+            x265_log_file(NULL, X265_LOG_ERROR, "Failed to open film grain characteristics binary file %s\n", m_param->filmGrain);
+        }
+    }
+
     m_bZeroLatency = !m_param->bframes && !m_param->lookaheadDepth && m_param->frameNumThreads == 1 && m_param->maxSlices == 1;
     m_aborted |= parseLambdaFile(m_param);
 
@@ -996,6 +1006,8 @@ void Encoder::destroy()
      }
     if (m_naluFile)
         fclose(m_naluFile);
+    if (m_filmGrainIn)
+        x265_fclose(m_filmGrainIn);
 
 #ifdef SVT_HEVC
     X265_FREE(m_svtAppData);

@@ -209,13 +209,6 @@ int main(int argc, char *argv[])
         EncoderPrimitives asmprim;
         memset(&asmprim, 0, sizeof(asmprim));
 
-#if X265_ARCH_ARM64
-        /* Temporary workaround because luma_vsp assembly primitive has not been completed
-         * but interp_8tap_hv_pp_cpu uses mixed C primitive and assembly primitive.
-         * Otherwise, segment fault occurs. */
-        setupAliasCPrimitives(cprim, asmprim, test_arch[i].flag);
-#endif
-
         setupAssemblyPrimitives(asmprim, test_arch[i].flag);
         setupAliasPrimitives(asmprim);
         memcpy(&primitives, &asmprim, sizeof(EncoderPrimitives));
@@ -238,13 +231,6 @@ int main(int argc, char *argv[])
     memset(&optprim, 0, sizeof(optprim));
 #if X265_ARCH_X86
     setupInstrinsicPrimitives(optprim, cpuid);
-#endif
-
-#if X265_ARCH_ARM64
-    /* Temporary workaround because luma_vsp assembly primitive has not been completed
-     * but interp_8tap_hv_pp_cpu uses mixed C primitive and assembly primitive.
-     * Otherwise, segment fault occurs. */
-    setupAliasCPrimitives(cprim, optprim, cpuid);
 #endif
 
     setupAssemblyPrimitives(optprim, cpuid);

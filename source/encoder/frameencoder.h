@@ -113,6 +113,34 @@ struct CTURow
     }
 };
 
+/*Film grain characteristics*/
+struct FilmGrain
+{
+    bool    m_filmGrainCharacteristicsCancelFlag;
+    bool    m_filmGrainCharacteristicsPersistenceFlag;
+    bool    m_separateColourDescriptionPresentFlag;
+    uint8_t m_filmGrainModelId;
+    uint8_t m_blendingModeId;
+    uint8_t m_log2ScaleFactor;
+};
+
+struct ColourDescription
+{
+    bool        m_filmGrainFullRangeFlag;
+    uint8_t     m_filmGrainBitDepthLumaMinus8;
+    uint8_t     m_filmGrainBitDepthChromaMinus8;
+    uint8_t     m_filmGrainColourPrimaries;
+    uint8_t     m_filmGrainTransferCharacteristics;
+    uint8_t     m_filmGrainMatrixCoeffs;
+};
+
+struct FGPresent
+{
+    uint8_t     m_blendingModeId;
+    uint8_t     m_log2ScaleFactor;
+    bool        m_presentFlag[3];
+};
+
 // Manages the wave-front processing of a single encoding frame
 class FrameEncoder : public WaveFront, public Thread
 {
@@ -250,6 +278,7 @@ protected:
     void collectDynDataFrame();
     void computeAvgTrainingData();
     void collectDynDataRow(CUData& ctu, FrameStats* rowStats);    
+    void readModel(FilmGrainCharacteristics* m_filmGrain, FILE* filmgrain);
 };
 }
 
