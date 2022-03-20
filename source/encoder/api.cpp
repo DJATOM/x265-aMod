@@ -608,6 +608,14 @@ fail:
     if (numEncoded < 0)
         encoder->m_aborted = true;
 
+    if ((!encoder->m_numDelayedPic && !numEncoded) && (encoder->m_param->bEnableEndOfSequence || encoder->m_param->bEnableEndOfBitstream))
+    {
+        Bitstream bs;
+        encoder->getEndNalUnits(encoder->m_nalList, bs);
+        *pp_nal = &encoder->m_nalList.m_nal[0];
+        if (pi_nal) *pi_nal = encoder->m_nalList.m_numNal;
+    }
+
     return numEncoded;
 }
 

@@ -295,6 +295,8 @@ public:
 
     ThreadSafeInteger* zoneReadCount;
     ThreadSafeInteger* zoneWriteCount;
+    /* Film grain model file */
+    FILE* m_filmGrainIn;
 
     Encoder();
     ~Encoder()
@@ -326,6 +328,8 @@ public:
     int setAnalysisData(x265_analysis_data *analysis_data, int poc, uint32_t cuBytes);
 
     void getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs);
+
+    void getEndNalUnits(NALList& list, Bitstream& bs);
 
     void fetchStats(x265_stats* stats, size_t statsSizeBytes);
 
@@ -386,6 +390,8 @@ public:
     void copyUserSEIMessages(Frame *frame, const x265_picture* pic_in);
 
     void configureDolbyVisionParams(x265_param* p);
+
+    void configureVideoSignalTypePreset(x265_param* p);
 
 protected:
 

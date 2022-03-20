@@ -337,6 +337,30 @@ namespace X265_NS {
         H0("   --master-display <string>     SMPTE ST 2086 master display color volume info SEI (HDR)\n");
         H0("                                    format: G(x,y)B(x,y)R(x,y)WP(x,y)L(max,min)\n");
         H0("   --max-cll <string>            Specify content light level info SEI as \"cll,fall\" (HDR).\n");
+        H0("   --video-signal-type-preset <string>    Specify combinations of color primaries, transfer characteristics, color matrix, range of luma and chroma signals, and chroma sample location\n");
+        H0("                                            format: <system-id>[:<color-volume>]\n");
+        H0("                                            This has higher precedence than individual VUI parameters. If any individual VUI option is specified together with this,\n");
+        H0("                                            which changes the values set corresponding to the system-id or color-volume, it will be discarded.\n");
+        H0("                                            The color-volume can be used only with the system-id options BT2100_PQ_YCC, BT2100_PQ_ICTCP, and BT2100_PQ_RGB.\n");
+        H0("                                            system-id options and their corresponding values:\n");
+        H0("                                              BT601_525:       --colorprim smpte170m --transfer smpte170m --colormatrix smpte170m --range limited --chromaloc 0\n");
+        H0("                                              BT601_626:       --colorprim bt470bg --transfer smpte170m --colormatrix bt470bg --range limited --chromaloc 0\n");
+        H0("                                              BT709_YCC:       --colorprim bt709 --transfer bt709 --colormatrix bt709 --range limited --chromaloc 0\n");
+        H0("                                              BT709_RGB:       --colorprim bt709 --transfer bt709 --colormatrix gbr --range limited\n");
+        H0("                                              BT2020_YCC_NCL:  --colorprim bt2020 --transfer bt2020-10 --colormatrix bt709 --range limited --chromaloc 2\n");
+        H0("                                              BT2020_RGB:      --colorprim bt2020 --transfer smpte2084 --colormatrix bt2020nc --range limited\n");
+        H0("                                              BT2100_PQ_YCC:   --colorprim bt2020 --transfer smpte2084 --colormatrix bt2020nc --range limited --chromaloc 2\n");
+        H0("                                              BT2100_PQ_ICTCP: --colorprim bt2020 --transfer smpte2084 --colormatrix ictcp --range limited --chromaloc 2\n");
+        H0("                                              BT2100_PQ_RGB:   --colorprim bt2020 --transfer smpte2084 --colormatrix gbr --range limited\n");
+        H0("                                              BT2100_HLG_YCC:  --colorprim bt2020 --transfer arib-std-b67 --colormatrix bt2020nc --range limited --chromaloc 2\n");
+        H0("                                              BT2100_HLG_RGB:  --colorprim bt2020 --transfer arib-std-b67 --colormatrix gbr --range limited\n");
+        H0("                                              FR709_RGB:       --colorprim bt709 --transfer bt709 --colormatrix gbr --range full\n");
+        H0("                                              FR2020_RGB:      --colorprim bt2020 --transfer bt2020-10 --colormatrix gbr --range full\n");
+        H0("                                              FRP3D65_YCC:     --colorprim smpte432 --transfer bt709 --colormatrix smpte170m --range full --chromaloc 1\n");
+        H0("                                            color-volume options and their corresponding values:\n");
+        H0("                                              P3D65x1000n0005: --master-display G(13250,34500)B(7500,3000)R(34000,16000)WP(15635,16450)L(10000000,5)\n");
+        H0("                                              P3D65x4000n005:  --master-display G(13250,34500)B(7500,3000)R(34000,16000)WP(15635,16450)L(40000000,50)\n");
+        H0("                                              BT2100x108n0005: --master-display G(8500,39850)B(6550,2300)R(34000,146000)WP(15635,16450)L(10000000,1)\n");
         H0("   --[no-]cll                    Emit content light level info SEI. Default %s\n", OPT(param->bEmitCLL));
         H0("   --[no-]hdr10                  Control dumping of HDR10 SEI packet. If max-cll or master-display has non-zero values, this is enabled. Default %s\n", OPT(param->bEmitHDR10SEI));
         H0("   --[no-]hdr-opt                Add luma and chroma offsets for HDR/WCG content. Default %s. Now deprecated.\n", OPT(param->bHDROpt));
@@ -350,6 +374,8 @@ namespace X265_NS {
         H0("   --[no-]idr-recovery-sei      Emit recovery point infor SEI at each IDR frame \n");
         H0("   --[no-]temporal-layers        Enable a temporal sublayer for unreferenced B frames. Default %s\n", OPT(param->bEnableTemporalSubLayers));
         H0("   --[no-]aud                    Emit access unit delimiters at the start of each access unit. Default %s\n", OPT(param->bEnableAccessUnitDelimiters));
+        H0("   --[no-]eob                    Emit end of bitstream nal unit at the end of the bitstream. Default %s\n", OPT(param->bEnableEndOfBitstream));
+        H0("   --[no-]eos                    Emit end of sequence nal unit at the end of every coded video sequence. Default %s\n", OPT(param->bEnableEndOfSequence));
         H1("   --hash <integer>              Decoded Picture Hash SEI 0: disabled, 1: MD5, 2: CRC, 3: Checksum. Default %d\n", param->decodedPictureHashSEI);
         H0("   --atc-sei <integer>           Emit the alternative transfer characteristics SEI message where the integer is the preferred transfer characteristics. Default disabled\n");
         H0("   --pic-struct <integer>        Set the picture structure and emits it in the picture timing SEI message. Values in the range 0..12. See D.3.3 of the HEVC spec. for a detailed explanation.\n");
@@ -388,6 +414,9 @@ namespace X265_NS {
         H1("    2 - unable to open encoder\n");
         H1("    3 - unable to generate stream headers\n");
         H1("    4 - encoder abort\n");
+        H0("\nSEI Message Options\n");
+        H0("   --film-grain <filename>           File containing Film Grain Characteristics to be written as a SEI Message\n");
+
 #undef OPT
 #undef H0
 #undef H1

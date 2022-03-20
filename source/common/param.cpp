@@ -145,6 +145,8 @@ void x265_param_default(x265_param* param)
     param->bAnnexB = 1;
     param->bRepeatHeaders = 0;
     param->bEnableAccessUnitDelimiters = 0;
+    param->bEnableEndOfBitstream = 0;
+    param->bEnableEndOfSequence = 0;
     param->bEmitHRDSEI = 0;
     param->bEmitInfoSEI = 1;
     param->bEmitHDRSEI = 0; /*Deprecated*/
@@ -170,6 +172,7 @@ void x265_param_default(x265_param* param)
     param->scenecutThreshold = 40; /* Magic number pulled in from x264 */
     param->edgeTransitionThreshold = 0.03;
     param->bHistBasedSceneCut = 0;
+    param->bEnableTradScdInHscd = 1;
     param->lookaheadSlices = 8;
     param->lookaheadThreads = 0;
     param->scenecutBias = 5.0;
@@ -279,7 +282,10 @@ void x265_param_default(x265_param* param)
     param->rc.rfConstantMin = 0;
     param->rc.bStatRead = 0;
     param->rc.bStatWrite = 0;
+    param->rc.dataShareMode = X265_SHARE_MODE_FILE;
     param->rc.statFileName = NULL;
+    param->rc.sharedMemName = NULL;
+    param->rc.bEncFocusedFramesOnly = 0;
     param->rc.complexityBlur = 20;
     param->rc.qblur = 0.5;
     param->rc.zoneCount = 0;
@@ -322,6 +328,7 @@ void x265_param_default(x265_param* param)
     param->maxLuma = PIXEL_MAX;
     param->log2MaxPocLsb = 8;
     param->maxSlices = 1;
+    param->videoSignalTypePreset = NULL;
 
     /*Conformance window*/
     param->confWinRightOffset = 0;
@@ -378,6 +385,8 @@ void x265_param_default(x265_param* param)
     param->svtHevcParam = svtParam;
     svt_param_default(param);
 #endif
+    /* Film grain characteristics model filename */
+    param->filmGrain = NULL;
 }
 
 int x265_param_default_preset(x265_param* param, const char* preset, const char* tune)
@@ -593,6 +602,7 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
             param->lookaheadDepth = 0;
             param->scenecutThreshold = 0;
             param->bHistBasedSceneCut = 0;
+            param->bEnableTradScdInHscd = 1;
             param->rc.cuTree = 0;
             param->frameNumThreads = 1;
         }
@@ -949,6 +959,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
            bError = false;
            p->scenecutThreshold = atoi(value);
            p->bHistBasedSceneCut = 0;
+           p->bEnableTradScdInHscd = 1;
        }
     }
     OPT("temporal-layers") p->bEnableTemporalSubLayers = atobool(value);
@@ -1183,6 +1194,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         int pass = x265_clip3(0, 3, atoi(value));
         p->rc.bStatWrite = pass & 1;
         p->rc.bStatRead = pass & 2;
+        p->rc.dataShareMode = X265_SHARE_MODE_FILE;
     }
     OPT("stats") p->rc.statFileName = strdup(value);
     OPT("scaling-list") p->scalingLists = strdup(value);
@@ -1230,6 +1242,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
             }
         }
         OPT("hist-threshold") p->edgeTransitionThreshold = atof(value);
+        OPT("traditional-scenecut") p->bEnableTradScdInHscd = atobool(value);
         OPT("rskip-edge-threshold") p->edgeVarThreshold = atoi(value)/100.0f;
         OPT("lookahead-threads") p->lookaheadThreads = atoi(value);
         OPT("opt-cu-delta-qp") p->bOptCUDeltaQP = atobool(value);
@@ -1445,6 +1458,11 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         OPT("vbv-live-multi-pass") p->bliveVBV2pass = atobool(value);
         OPT("min-vbv-fullness") p->minVbvFullness = atof(value);
         OPT("max-vbv-fullness") p->maxVbvFullness = atof(value);
+        OPT("video-signal-type-preset") p->videoSignalTypePreset = strdup(value);
+        OPT("eob") p->bEnableEndOfBitstream = atobool(value);
+        OPT("eos") p->bEnableEndOfSequence = atobool(value);
+        /* Film grain characterstics model filename */
+        OPT("film-grain") p->filmGrain = (char* )value;
         OPT("aq-bias-strength") p->rc.aqBiasStrength = atof(value);
         else
             return X265_PARAM_BAD_NAME;
@@ -1824,15 +1842,15 @@ int x265_check_params(x265_param* param)
         "Invalid refine-ctu-distortion value, must be either 0 or 1");
     CHECK(param->maxAUSizeFactor < 0.5 || param->maxAUSizeFactor > 1.0,
         "Supported factor for controlling max AU size is from 0.5 to 1");
-    CHECK((param->dolbyProfile != 0) && (param->dolbyProfile != 50) && (param->dolbyProfile != 81) && (param->dolbyProfile != 82),
-        "Unsupported Dolby Vision profile, only profile 5, profile 8.1 and profile 8.2 enabled");
+    CHECK((param->dolbyProfile != 0) && (param->dolbyProfile != 50) && (param->dolbyProfile != 81) && (param->dolbyProfile != 82) && (param->dolbyProfile != 84),
+        "Unsupported Dolby Vision profile, only profile 5, profile 8.1, profile 8.2 and profile 8.4 enabled");
     CHECK(param->dupThreshold < 1 || 99 < param->dupThreshold,
         "Invalid frame-duplication threshold. Value must be between 1 and 99.");
     if (param->dolbyProfile)
     {
         CHECK((param->rc.vbvMaxBitrate <= 0 || param->rc.vbvBufferSize <= 0), "Dolby Vision requires VBV settings to enable HRD.\n");
-        CHECK((param->internalBitDepth != 10), "Dolby Vision profile - 5, profile - 8.1 and profile - 8.2 is Main10 only\n");
-        CHECK((param->internalCsp != X265_CSP_I420), "Dolby Vision profile - 5, profile - 8.1 and profile - 8.2 requires YCbCr 4:2:0 color space\n");
+        CHECK((param->internalBitDepth != 10), "Dolby Vision profile - 5, profile - 8.1, profile - 8.2 and profile - 8.4 are Main10 only\n");
+        CHECK((param->internalCsp != X265_CSP_I420), "Dolby Vision profile - 5, profile - 8.1, profile - 8.2 and profile - 8.4 requires YCbCr 4:2:0 color space\n");
         if (param->dolbyProfile == 81)
             CHECK(!(param->masteringDisplayColorVolume), "Dolby Vision profile - 8.1 requires Mastering display color volume information\n");
     }
@@ -1910,6 +1928,7 @@ int x265_check_params(x265_param* param)
             x265_log(param, X265_LOG_WARNING, "Live VBV enabled without VBV settings.Disabling live VBV in 2 pass\n");
         }
     }
+    CHECK(param->rc.dataShareMode != X265_SHARE_MODE_FILE && param->rc.dataShareMode != X265_SHARE_MODE_SHAREDMEM, "Invalid data share mode. It must be one of the X265_DATA_SHARE_MODES enum values\n" );
     return check_failed;
 }
 
@@ -2089,6 +2108,8 @@ char *x265_param2string(x265_param* p, int padx, int pady)
         bufSize += strlen(p->numaPools);
     if (p->masteringDisplayColorVolume)
         bufSize += strlen(p->masteringDisplayColorVolume);
+    if (p->videoSignalTypePreset)
+        bufSize += strlen(p->videoSignalTypePreset);
 
     buf = s = X265_MALLOC(char, bufSize);
     if (!buf)
@@ -2126,6 +2147,8 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     BOOL(p->bRepeatHeaders, "repeat-headers");
     BOOL(p->bAnnexB, "annexb");
     BOOL(p->bEnableAccessUnitDelimiters, "aud");
+    BOOL(p->bEnableEndOfBitstream, "eob");
+    BOOL(p->bEnableEndOfSequence, "eos");
     BOOL(p->bEmitHRDSEI, "hrd");
     BOOL(p->bEmitInfoSEI, "info");
     s += sprintf(s, " hash=%d", p->decodedPictureHashSEI);
@@ -2141,7 +2164,9 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     s += sprintf(s, " rc-lookahead=%d", p->lookaheadDepth);
     s += sprintf(s, " lookahead-slices=%d", p->lookaheadSlices);
     s += sprintf(s, " scenecut=%d", p->scenecutThreshold);
-    s += sprintf(s, " hist-scenecut=%d", p->bHistBasedSceneCut);
+    BOOL(p->bHistBasedSceneCut, "hist-scenecut");
+    if (p->bHistBasedSceneCut)
+        BOOL(p->bEnableTradScdInHscd, "traditional-scenecut");
     s += sprintf(s, " radl=%d", p->radl);
     BOOL(p->bEnableHRDConcatFlag, "splice");
     BOOL(p->bIntraRefresh, "intra-refresh");
@@ -2333,6 +2358,8 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     s += sprintf(s, "conformance-window-offsets right=%d bottom=%d", p->confWinRightOffset, p->confWinBottomOffset);
     s += sprintf(s, " decoder-max-rate=%d", p->decoderVbvMaxRate);
     BOOL(p->bliveVBV2pass, "vbv-live-multi-pass");
+    if (p->filmGrain)
+        s += sprintf(s, " film-grain=%s", p->filmGrain); // Film grain characteristics model filename
 #undef BOOL
     return buf;
 }
@@ -2441,6 +2468,8 @@ void x265_copy_params(x265_param* dst, x265_param* src)
     dst->bRepeatHeaders = src->bRepeatHeaders;
     dst->bAnnexB = src->bAnnexB;
     dst->bEnableAccessUnitDelimiters = src->bEnableAccessUnitDelimiters;
+    dst->bEnableEndOfBitstream = src->bEnableEndOfBitstream;
+    dst->bEnableEndOfSequence = src->bEnableEndOfSequence;
     dst->bEmitInfoSEI = src->bEmitInfoSEI;
     dst->decodedPictureHashSEI = src->decodedPictureHashSEI;
     dst->bEnableTemporalSubLayers = src->bEnableTemporalSubLayers;
@@ -2456,6 +2485,7 @@ void x265_copy_params(x265_param* dst, x265_param* src)
     dst->lookaheadThreads = src->lookaheadThreads;
     dst->scenecutThreshold = src->scenecutThreshold;
     dst->bHistBasedSceneCut = src->bHistBasedSceneCut;
+    dst->bEnableTradScdInHscd = src->bEnableTradScdInHscd;
     dst->bIntraRefresh = src->bIntraRefresh;
     dst->maxCUSize = src->maxCUSize;
     dst->minCUSize = src->minCUSize;
@@ -2543,8 +2573,11 @@ void x265_copy_params(x265_param* dst, x265_param* src)
     dst->rc.rfConstantMin = src->rc.rfConstantMin;
     dst->rc.bStatWrite = src->rc.bStatWrite;
     dst->rc.bStatRead = src->rc.bStatRead;
+    dst->rc.dataShareMode = src->rc.dataShareMode;
     if (src->rc.statFileName) dst->rc.statFileName=strdup(src->rc.statFileName);
     else dst->rc.statFileName = NULL;
+    if (src->rc.sharedMemName) dst->rc.sharedMemName = strdup(src->rc.sharedMemName);
+    else dst->rc.sharedMemName = NULL;
     dst->rc.qblur = src->rc.qblur;
     dst->rc.complexityBlur = src->rc.complexityBlur;
     dst->rc.bEnableSlowFirstPass = src->rc.bEnableSlowFirstPass;
@@ -2695,9 +2728,15 @@ void x265_copy_params(x265_param* dst, x265_param* src)
     dst->confWinRightOffset = src->confWinRightOffset;
     dst->confWinBottomOffset = src->confWinBottomOffset;
     dst->bliveVBV2pass = src->bliveVBV2pass;
+
+    if (src->videoSignalTypePreset) dst->videoSignalTypePreset = strdup(src->videoSignalTypePreset);
+    else dst->videoSignalTypePreset = NULL;
 #ifdef SVT_HEVC
     memcpy(dst->svtHevcParam, src->svtHevcParam, sizeof(EB_H265_ENC_CONFIGURATION));
 #endif
+    /* Film grain */
+    if (src->filmGrain)
+        dst->filmGrain = src->filmGrain;
 }
 
 #ifdef SVT_HEVC
