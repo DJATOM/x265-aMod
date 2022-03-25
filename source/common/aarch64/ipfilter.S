@@ -127,27 +127,23 @@
 .macro qpel_load_32b v
 .if \v == 0
     add             x6, x6, x11       // do not load 3 values that are not used in qpel_filter_0
-    ldr             d3, [x6]
-    add             x6, x6, x1
+    ld1             {v3.8b}, [x6], x1
 .elseif \v == 1 || \v == 2 || \v == 3
 .if \v != 3                           // not used in qpel_filter_3
-    ldr             d0, [x6]
+    ld1             {v0.8b}, [x6], x1
+.else
+    add             x6, x6, x1
 .endif
-    add             x6, x6, x1
-    ldr             d1, [x6]
-    add             x6, x6, x1
-    ldr             d2, [x6]
-    add             x6, x6, x1
-    ldr             d3, [x6]
-    add             x6, x6, x1
-    ldr             d4, [x6]
-    add             x6, x6, x1
-    ldr             d5, [x6]
-    add             x6, x6, x1
-    ldr             d6, [x6]
+    ld1             {v1.8b}, [x6], x1
+    ld1             {v2.8b}, [x6], x1
+    ld1             {v3.8b}, [x6], x1
+    ld1             {v4.8b}, [x6], x1
+    ld1             {v5.8b}, [x6], x1
 .if \v != 1                           // not used in qpel_filter_1
-    add             x6, x6, x1
-    ldr             d7, [x6]
+    ld1             {v6.8b}, [x6], x1
+    ld1             {v7.8b}, [x6]
+.else
+    ld1             {v6.8b}, [x6]
 .endif
 .endif
 .endm
@@ -155,27 +151,23 @@
 .macro qpel_load_64b v
 .if \v == 0
     add             x6, x6, x11       // do not load 3 values that are not used in qpel_filter_0
-    ldr             q3, [x6]
-    add             x6, x6, x1
+    ld1             {v3.16b}, [x6], x1
 .elseif \v == 1 || \v == 2 || \v == 3
 .if \v != 3                           // not used in qpel_filter_3
-    ldr             q0, [x6]
+    ld1             {v0.16b}, [x6], x1
+.else
+    add             x6, x6, x1
 .endif
-    add             x6, x6, x1
-    ldr             q1, [x6]
-    add             x6, x6, x1
-    ldr             q2, [x6]
-    add             x6, x6, x1
-    ldr             q3, [x6]
-    add             x6, x6, x1
-    ldr             q4, [x6]
-    add             x6, x6, x1
-    ldr             q5, [x6]
-    add             x6, x6, x1
-    ldr             q6, [x6]
+    ld1             {v1.16b}, [x6], x1
+    ld1             {v2.16b}, [x6], x1
+    ld1             {v3.16b}, [x6], x1
+    ld1             {v4.16b}, [x6], x1
+    ld1             {v5.16b}, [x6], x1
 .if \v != 1                           // not used in qpel_filter_1
-    add             x6, x6, x1
-    ldr             q7, [x6]
+    ld1             {v6.16b}, [x6], x1
+    ld1             {v7.16b}, [x6]
+.else
+    ld1             {v6.16b}, [x6]
 .endif
 .endif
 .endm
@@ -186,13 +178,10 @@
     add             x6, x6, x1
     ldr             d1, [x6]
 .else
-    ldr             d0, [x6]
-    add             x6, x6, x1
-    ldr             d1, [x6]
-    add             x6, x6, x1
-    ldr             d2, [x6]
-    add             x6, x6, x1
-    ldr             d3, [x6]
+    ld1             {v0.8b}, [x6], x1
+    ld1             {v1.8b}, [x6], x1
+    ld1             {v2.8b}, [x6], x1
+    ld1             {v3.8b}, [x6]
 .endif
 .endm
 
@@ -202,13 +191,10 @@
     add             x6, x6, x1
     ldr             q1, [x6]
 .else
-    ldr             q0, [x6]
-    add             x6, x6, x1
-    ldr             q1, [x6]
-    add             x6, x6, x1
-    ldr             q2, [x6]
-    add             x6, x6, x1
-    ldr             q3, [x6]
+    ld1             {v0.16b}, [x6], x1
+    ld1             {v1.16b}, [x6], x1
+    ld1             {v2.16b}, [x6], x1
+    ld1             {v3.16b}, [x6]
 .endif
 .endm
 
@@ -884,8 +870,7 @@ function x265_interp_8tap_vert_pp_4x\h\()_neon
     add             v16.8h, v20.8h, v21.8h
 
     sqrshrun        v16.8b,  v16.8h,  #6
-    str             s16, [x2]
-    add             x2, x2, x3
+    st1             {v16.s}[0], [x2], x3
     st1             {v16.s}[1], [x2], x3
 
     sub             x9, x9, #2
@@ -1024,49 +1009,41 @@ function x265_interp_8tap_vert_ps_4x\h\()_neon
 .loop_vps_4x\h:
     mov             x6, x0
 
-    ldr             s0, [x6]
-    add             x6, x6, x1
+    ld1             {v0.s}[0], [x6], x1
+    ld1             {v1.s}[0], [x6], x1
+    ld1             {v2.s}[0], [x6], x1
+    ld1             {v3.s}[0], [x6], x1
+    ld1             {v4.s}[0], [x6], x1
+    ld1             {v5.s}[0], [x6], x1
+    ld1             {v6.s}[0], [x6], x1
+    ld1             {v7.s}[0], [x6], x1
     uxtl            v0.8h, v0.8b
     uxtl            v0.4s, v0.4h
 
-    ldr             s1, [x6]
-    add             x6, x6, x1
     uxtl            v1.8h, v1.8b
     uxtl            v1.4s, v1.4h
     mul             v0.4s, v0.4s, v16.4s
 
-    ldr             s2, [x6]
-    add             x6, x6, x1
     uxtl            v2.8h, v2.8b
     uxtl            v2.4s, v2.4h
     mla             v0.4s, v1.4s, v17.4s
 
-    ldr             s3, [x6]
-    add             x6, x6, x1
     uxtl            v3.8h, v3.8b
     uxtl            v3.4s, v3.4h
     mla             v0.4s, v2.4s, v18.4s
 
-    ldr             s4, [x6]
-    add             x6, x6, x1
     uxtl            v4.8h, v4.8b
     uxtl            v4.4s, v4.4h
     mla             v0.4s, v3.4s, v19.4s
 
-    ldr             s5, [x6]
-    add             x6, x6, x1
     uxtl            v5.8h, v5.8b
     uxtl            v5.4s, v5.4h
     mla             v0.4s, v4.4s, v20.4s
 
-    ldr             s6, [x6]
-    add             x6, x6, x1
     uxtl            v6.8h, v6.8b
     uxtl            v6.4s, v6.4h
     mla             v0.4s, v5.4s, v21.4s
 
-    ldr             s7, [x6]
-    add             x6, x6, x1
     uxtl            v7.8h, v7.8b
     uxtl            v7.4s, v7.4h
     mla             v0.4s, v6.4s, v22.4s
@@ -1075,8 +1052,7 @@ function x265_interp_8tap_vert_ps_4x\h\()_neon
 
     sub             v0.4s, v0.4s, v28.4s
     sqxtn           v0.4h, v0.4s
-    str             d0, [x2]
-    add             x2, x2, x3
+    st1             {v0.8b}, [x2], x3
 
     add             x0, x0, x1
     sub             x4, x4, #1
@@ -1214,42 +1190,28 @@ function x265_interp_8tap_vert_sp_4x\h\()_neon
 .loop_vsp_4x\h:
     mov             x6, x0
 
-    ldr             d0, [x6]
-    add             x6, x6, x1
-    sshll           v0.4s, v0.4h, #0
+    ld1             {v0.8b}, [x6], x1
+    ld1             {v1.8b}, [x6], x1
+    ld1             {v2.8b}, [x6], x1
+    ld1             {v3.8b}, [x6], x1
+    ld1             {v4.8b}, [x6], x1
+    ld1             {v5.8b}, [x6], x1
+    ld1             {v6.8b}, [x6], x1
+    ld1             {v7.8b}, [x6], x1
 
-    ldr             d1, [x6]
-    add             x6, x6, x1
+    sshll           v0.4s, v0.4h, #0
     sshll           v1.4s, v1.4h, #0
     mul             v0.4s, v0.4s, v16.4s
-
-    ldr             d2, [x6]
-    add             x6, x6, x1
     sshll           v2.4s, v2.4h, #0
     mla             v0.4s, v1.4s, v17.4s
-
-    ldr             d3, [x6]
-    add             x6, x6, x1
     sshll           v3.4s, v3.4h, #0
     mla             v0.4s, v2.4s, v18.4s
-
-    ldr             d4, [x6]
-    add             x6, x6, x1
     sshll           v4.4s, v4.4h, #0
     mla             v0.4s, v3.4s, v19.4s
-
-    ldr             d5, [x6]
-    add             x6, x6, x1
     sshll           v5.4s, v5.4h, #0
     mla             v0.4s, v4.4s, v20.4s
-
-    ldr             d6, [x6]
-    add             x6, x6, x1
     sshll           v6.4s, v6.4h, #0
     mla             v0.4s, v5.4s, v21.4s
-
-    ldr             d7, [x6]
-    add             x6, x6, x1
     sshll           v7.4s, v7.4h, #0
     mla             v0.4s, v6.4s, v22.4s
 
@@ -1258,8 +1220,7 @@ function x265_interp_8tap_vert_sp_4x\h\()_neon
     add             v0.4s, v0.4s, v24.4s
     sqshrun         v0.4h, v0.4s, #12
     sqxtun          v0.8b, v0.8h
-    str             s0, [x2]
-    add             x2, x2, x3
+    st1             {v0.s}[0], [x2], x3
 
     add             x0, x0, x1
     sub             x4, x4, #1

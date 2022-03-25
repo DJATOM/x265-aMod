@@ -42,54 +42,39 @@
 .endm
 
 function PFX(pixel_sse_pp_4x4_neon)
-    ldr             s16, [x0]
-    add             x0, x0, x1
-    ldr             s17, [x2]
-    add             x2, x2, x3
+    ld1             {v16.s}[0], [x0], x1
+    ld1             {v17.s}[0], [x2], x3
+    ld1             {v18.s}[0], [x0], x1
+    ld1             {v19.s}[0], [x2], x3
+    ld1             {v20.s}[0], [x0], x1
+    ld1             {v21.s}[0], [x2], x3
+    ld1             {v22.s}[0], [x0], x1
+    ld1             {v23.s}[0], [x2], x3
+
     usubl           v1.8h, v16.8b, v17.8b
-    ldr             s18, [x0]
-    add             x0, x0, x1
-    smull           v0.4s, v1.4h, v1.4h
-    ldr             s19, [x2]
-    add             x2, x2, x3
-
     usubl           v2.8h, v18.8b, v19.8b
-    ldr             s20, [x0]
-    add             x0, x0, x1
-    smlal           v0.4s, v2.4h, v2.4h
-    ldr             s21, [x2]
-    add             x2, x2, x3
-
     usubl           v3.8h, v20.8b, v21.8b
-    ldr             s22, [x0]
-    add             x0, x0, x1
-    smlal           v0.4s, v3.4h, v3.4h
-    ldr             s23, [x2]
-    add             x2, x2, x3
-
     usubl           v4.8h, v22.8b, v23.8b
+
+    smull           v0.4s, v1.4h, v1.4h
+    smlal           v0.4s, v2.4h, v2.4h
+    smlal           v0.4s, v3.4h, v3.4h
     smlal           v0.4s, v4.4h, v4.4h
     ret_v0_w0
 endfunc
 
 function PFX(pixel_sse_pp_4x8_neon)
-    ldr             s16, [x0]
-    add             x0, x0, x1
-    ldr             s17, [x2]
-    add             x2, x2, x3
+    ld1             {v16.s}[0], [x0], x1
+    ld1             {v17.s}[0], [x2], x3
     usubl           v1.8h, v16.8b, v17.8b
-    ldr             s16, [x0]
-    add             x0, x0, x1
+    ld1             {v16.s}[0], [x0], x1
+    ld1             {v17.s}[0], [x2], x3
     smull           v0.4s, v1.4h, v1.4h
-    ldr             s17, [x2]
-    add             x2, x2, x3
 .rept 6
     usubl           v1.8h, v16.8b, v17.8b
-    ldr             s16, [x0]
-    add             x0, x0, x1
+    ld1             {v16.s}[0], [x0], x1
     smlal           v0.4s, v1.4h, v1.4h
-    ldr             s17, [x2]
-    add             x2, x2, x3
+    ld1             {v17.s}[0], [x2], x3
 .endr
     usubl           v1.8h, v16.8b, v17.8b
     smlal           v0.4s, v1.4h, v1.4h

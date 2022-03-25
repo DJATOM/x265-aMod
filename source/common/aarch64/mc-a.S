@@ -37,13 +37,10 @@
 .macro pixel_avg_pp_4xN_neon h
 function PFX(pixel_avg_pp_4x\h\()_neon)
 .rept \h
-    ldr             s0, [x2]
-    ldr             s1, [x4]
-    add             x2, x2, x3
-    add             x4, x4, x5
+    ld1             {v0.s}[0], [x2], x3
+    ld1             {v1.s}[0], [x4], x5
     urhadd          v2.8b, v0.8b, v1.8b
-    str             s2, [x0]
-    add             x0, x0, x1
+    st1             {v2.s}[0], [x0], x1
 .endr
     ret
 endfunc
@@ -56,13 +53,10 @@ pixel_avg_pp_4xN_neon 16
 .macro pixel_avg_pp_8xN_neon h
 function PFX(pixel_avg_pp_8x\h\()_neon)
 .rept \h
-    ldr             d0, [x2]
-    ldr             d1, [x4]
-    add             x2, x2, x3
-    add             x4, x4, x5
+    ld1             {v0.8b}, [x2], x3
+    ld1             {v1.8b}, [x4], x5
     urhadd          v2.8b, v0.8b, v1.8b
-    str             d2, [x0]
-    add             x0, x0, x1
+    st1             {v2.8b}, [x0], x1
 .endr
     ret
 endfunc
@@ -74,18 +68,18 @@ pixel_avg_pp_8xN_neon 16
 pixel_avg_pp_8xN_neon 32
 
 function PFX(pixel_avg_pp_12x16_neon)
+    sub             x1, x1, #4
+    sub             x3, x3, #4
+    sub             x5, x5, #4
 .rept 16
-    ldr             s0, [x2]
-    ldr             d1, [x2, #4]
-    ldr             s2, [x4]
-    ldr             d3, [x4, #4]
-    add             x2, x2, x3
-    add             x4, x4, x5
+    ld1             {v0.s}[0], [x2], #4
+    ld1             {v1.8b}, [x2], x3
+    ld1             {v2.s}[0], [x4], #4
+    ld1             {v3.8b}, [x4], x5
     urhadd          v4.8b, v0.8b, v2.8b
     urhadd          v5.8b, v1.8b, v3.8b
-    str             s4, [x0]
-    str             d5, [x0, #4]
-    add             x0, x0, x1
+    st1             {v4.s}[0], [x0], #4
+    st1             {v5.8b}, [x0], x1
 .endr
     ret
 endfunc
@@ -123,21 +117,21 @@ function PFX(pixel_avg_pp_16x64_neon)
 endfunc
 
 function PFX(pixel_avg_pp_24x32_neon)
+    sub             x1, x1, #16
+    sub             x3, x3, #16
+    sub             x5, x5, #16
     mov             w12, #4
 .lpavg_24x32:
     sub             w12, w12, #1
 .rept 8
-    ldr             q0, [x2]
-    ldr             d1, [x2, #16]
-    ldr             q2, [x4]
-    ldr             d3, [x4, #16]
-    add             x2, x2, x3
-    add             x4, x4, x5
+    ld1             {v0.16b}, [x2], #16
+    ld1             {v1.8b}, [x2], x3
+    ld1             {v2.16b}, [x4], #16
+    ld1             {v3.8b}, [x4], x5
     urhadd          v0.16b, v0.16b, v2.16b
     urhadd          v1.8b, v1.8b, v3.8b
-    str             q0, [x0]
-    str             d1, [x0, #16]
-    add             x0, x0, x1
+    st1             {v0.16b}, [x0], #16
+    st1             {v1.8b}, [x0], x1
 .endr
     cbnz            w12, .lpavg_24x32
     ret
@@ -146,14 +140,11 @@ endfunc
 .macro pixel_avg_pp_32xN_neon h
 function PFX(pixel_avg_pp_32x\h\()_neon)
 .rept \h
-    ldp             q0, q1, [x2]
-    ldp             q2, q3, [x4]
-    add             x2, x2, x3
-    add             x4, x4, x5
+    ld1             {v0.16b-v1.16b}, [x2], x3
+    ld1             {v2.16b-v3.16b}, [x4], x5
     urhadd          v0.16b, v0.16b, v2.16b
     urhadd          v1.16b, v1.16b, v3.16b
-    stp             q0, q1, [x0]
-    add             x0, x0, x1
+    st1             {v0.16b-v1.16b}, [x0], x1
 .endr
     ret
 endfunc
@@ -169,14 +160,11 @@ function PFX(pixel_avg_pp_32x\h\()_neon)
 .lpavg_32x\h\():
     sub             w12, w12, #1
 .rept 8
-    ldp             q0, q1, [x2]
-    ldp             q2, q3, [x4]
-    add             x2, x2, x3
-    add             x4, x4, x5
+    ld1             {v0.16b-v1.16b}, [x2], x3
+    ld1             {v2.16b-v3.16b}, [x4], x5
     urhadd          v0.16b, v0.16b, v2.16b
     urhadd          v1.16b, v1.16b, v3.16b
-    stp             q0, q1, [x0]
-    add             x0, x0, x1
+    st1             {v0.16b-v1.16b}, [x0], x1
 .endr
     cbnz            w12, .lpavg_32x\h
     ret
@@ -191,18 +179,12 @@ function PFX(pixel_avg_pp_48x64_neon)
 .lpavg_48x64:
     sub             w12, w12, #1
 .rept 8
-    ldr             q0, [x2]
-    ldr             q3, [x4]
-    ldp             q1, q2, [x2, #16]
-    ldp             q4, q5, [x4, #16]
-    add             x2, x2, x3
-    add             x4, x4, x5
+    ld1             {v0.16b-v2.16b}, [x2], x3
+    ld1             {v3.16b-v5.16b}, [x4], x5
     urhadd          v0.16b, v0.16b, v3.16b
     urhadd          v1.16b, v1.16b, v4.16b
     urhadd          v2.16b, v2.16b, v5.16b
-    str             q0, [x0]
-    stp             q1, q2, [x0, #16]
-    add             x0, x0, x1
+    st1             {v0.16b-v2.16b}, [x0], x1
 .endr
     cbnz            w12, .lpavg_48x64
     ret
@@ -214,19 +196,13 @@ function PFX(pixel_avg_pp_64x\h\()_neon)
 .lpavg_64x\h\():
     sub             w12, w12, #1
 .rept 4
-    ldp             q0, q1, [x2]
-    ldp             q4, q5, [x4]
-    ldp             q2, q3, [x2, #32]
-    ldp             q6, q7, [x4, #32]
-    add             x2, x2, x3
-    add             x4, x4, x5
+    ld1             {v0.16b-v3.16b}, [x2], x3
+    ld1             {v4.16b-v7.16b}, [x4], x5
     urhadd          v0.16b, v0.16b, v4.16b
     urhadd          v1.16b, v1.16b, v5.16b
     urhadd          v2.16b, v2.16b, v6.16b
     urhadd          v3.16b, v3.16b, v7.16b
-    stp             q0, q1, [x0]
-    stp             q2, q3, [x0, #32]
-    add             x0, x0, x1
+    st1             {v0.16b-v3.16b}, [x0], x1
 .endr
     cbnz            w12, .lpavg_64x\h
     ret
@@ -284,14 +260,10 @@ addAvg_2xN 16
 function PFX(addAvg_4x\h\()_neon)
     addAvg_start
 .rept \h / 2
-    ldr             d0, [x0]
-    ldr             d1, [x1]
-    add             x0, x0, x3
-    add             x1, x1, x4
-    ldr             d2, [x0]
-    ldr             d3, [x1]
-    add             x0, x0, x3
-    add             x1, x1, x4
+    ld1             {v0.8b}, [x0], x3
+    ld1             {v1.8b}, [x1], x4
+    ld1             {v2.8b}, [x0], x3
+    ld1             {v3.8b}, [x1], x4
     add             v0.4h, v0.4h, v1.4h
     add             v2.4h, v2.4h, v3.4h
     saddl           v0.4s, v0.4h, v30.4h
@@ -299,8 +271,7 @@ function PFX(addAvg_4x\h\()_neon)
     shrn            v0.4h, v0.4s, #7
     shrn2           v0.8h, v2.4s, #7
     sqxtun          v0.8b, v0.8h
-    str             s0, [x2]
-    add             x2, x2, x5
+    st1             {v0.s}[0], [x2], x5
     st1             {v0.s}[1], [x2], x5
 .endr
     ret
@@ -320,14 +291,10 @@ function PFX(addAvg_6x\h\()_neon)
     sub             x5, x5, #4
 .loop_addavg_6x\h:
     sub             w12, w12, #1
-    ldr             q0, [x0]
-    ldr             q1, [x1]
-    add             x0, x0, x3
-    add             x1, x1, x4
-    ldr             q2, [x0]
-    ldr             q3, [x1]
-    add             x0, x0, x3
-    add             x1, x1, x4
+    ld1             {v0.16b}, [x0], x3
+    ld1             {v1.16b}, [x1], x4
+    ld1             {v2.16b}, [x0], x3
+    ld1             {v3.16b}, [x1], x4
     add             v0.8h, v0.8h, v1.8h
     add             v2.8h, v2.8h, v3.8h
     saddl           v16.4s, v0.4h, v30.4h
@@ -356,14 +323,10 @@ addAvg_6xN 16
 function PFX(addAvg_8x\h\()_neon)
     addAvg_start
 .rept \h / 2
-    ldr             q0, [x0]
-    ldr             q1, [x1]
-    add             x0, x0, x3
-    add             x1, x1, x4
-    ldr             q2, [x0]
-    ldr             q3, [x1]
-    add             x0, x0, x3
-    add             x1, x1, x4
+    ld1             {v0.16b}, [x0], x3
+    ld1             {v1.16b}, [x1], x4
+    ld1             {v2.16b}, [x0], x3
+    ld1             {v3.16b}, [x1], x4
     add             v0.8h, v0.8h, v1.8h
     add             v2.8h, v2.8h, v3.8h
     saddl           v16.4s, v0.4h, v30.4h
@@ -376,10 +339,8 @@ function PFX(addAvg_8x\h\()_neon)
     shrn2           v1.8h, v19.4s, #7
     sqxtun          v0.8b, v0.8h
     sqxtun          v1.8b, v1.8h
-    str             d0, [x2]
-    add             x2, x2, x5
-    str             d1, [x2]
-    add             x2, x2, x5
+    st1             {v0.8b}, [x2], x5
+    st1             {v1.8b}, [x2], x5
 .endr
     ret
 endfunc
@@ -391,14 +352,10 @@ function PFX(addAvg_8x\h\()_neon)
     mov             w12, #\h / 2
 .loop_addavg_8x\h:
     sub             w12, w12, #1
-    ldr             q0, [x0]
-    ldr             q1, [x1]
-    add             x0, x0, x3
-    add             x1, x1, x4
-    ldr             q2, [x0]
-    ldr             q3, [x1]
-    add             x0, x0, x3
-    add             x1, x1, x4
+    ld1             {v0.16b}, [x0], x3
+    ld1             {v1.16b}, [x1], x4
+    ld1             {v2.16b}, [x0], x3
+    ld1             {v3.16b}, [x1], x4
     add             v0.8h, v0.8h, v1.8h
     add             v2.8h, v2.8h, v3.8h
     saddl           v16.4s, v0.4h, v30.4h
@@ -411,10 +368,8 @@ function PFX(addAvg_8x\h\()_neon)
     shrn2           v1.8h, v19.4s, #7
     sqxtun          v0.8b, v0.8h
     sqxtun          v1.8b, v1.8h
-    str             d0, [x2]
-    add             x2, x2, x5
-    str             d1, [x2]
-    add             x2, x2, x5
+    st1             {v0.8b}, [x2], x5
+    st1             {v1.8b}, [x2], x5
     cbnz            w12, .loop_addavg_8x\h
     ret
 endfunc
@@ -432,15 +387,16 @@ addAvg_8xN1 64
 .macro addAvg_12xN h
 function PFX(addAvg_12x\h\()_neon)
     addAvg_start
+    sub             x3, x3, #16
+    sub             x4, x4, #16
+    sub             x5, x5, #8
     mov             w12, #\h
 .loop_addAvg_12X\h\():
     sub             w12, w12, #1
-    ldr             q0, [x0]
-    ldr             q1, [x1]
-    ldr             d2, [x0, #16]
-    ldr             d3, [x1, #16]
-    add             x0, x0, x3
-    add             x1, x1, x4
+    ld1             {v0.16b}, [x0], #16
+    ld1             {v1.16b}, [x1], #16
+    ld1             {v2.8b}, [x0], x3
+    ld1             {v3.8b}, [x1], x4
     add             v0.8h, v0.8h, v1.8h
     add             v2.4h, v2.4h, v3.4h
     saddl           v16.4s, v0.4h, v30.4h
@@ -451,9 +407,8 @@ function PFX(addAvg_12x\h\()_neon)
     shrn            v1.4h, v18.4s, #7
     sqxtun          v0.8b, v0.8h
     sqxtun          v1.8b, v1.8h
-    str             d0, [x2]
-    str             s1, [x2, #8]
-    add             x2, x2, x5
+    st1             {v0.8b}, [x2], #8
+    st1             {v1.s}[0], [x2], x5
     cbnz            w12, .loop_addAvg_12X\h
     ret
 endfunc
@@ -502,21 +457,15 @@ function PFX(addAvg_24x\h\()_neon)
     mov             w12, #\h
 .loop_addavg_24x\h\():
     sub             w12, w12, #1
-    ldr             q0, [x0]
-    ldr             q3, [x1]
-    ldp             q1, q2, [x0, #16]
-    ldp             q4, q5, [x1, #16]
-    add             x0, x0, x3
-    add             x1, x1, x4
+    ld1             {v0.16b-v2.16b}, [x0], x3
+    ld1             {v3.16b-v5.16b}, [x1], x4
     addavg_1        v0, v3
     addavg_1        v1, v4
     addavg_1        v2, v5
     sqxtun          v0.8b, v0.8h
     sqxtun          v1.8b, v1.8h
-    sqxtun2         v1.16b, v2.8h
-    str             d0, [x2]
-    str             q1, [x2, #8]
-    add             x2, x2, x5
+    sqxtun          v2.8b, v2.8h
+    st1             {v0.8b-v2.8b}, [x2], x5
     cbnz            w12, .loop_addavg_24x\h
     ret
 endfunc

@@ -37,15 +37,13 @@
 
 // uint64_t pixel_var(const pixel* pix, intptr_t i_stride)
 function PFX(pixel_var_8x8_neon)
-    ldr             d4, [x0]                 // pix[x]
-    add             x0, x0, x1
+    ld1             {v4.8b}, [x0], x1        // pix[x]
     uxtl            v0.8h, v4.8b             // sum = pix[x]
     umull           v1.8h, v4.8b, v4.8b
     uaddlp          v1.4s, v1.8h             // sqr = pix[x] * pix[x]
 
 .rept 7
-    ldr             d4, [x0]                 // pix[x]
-    add             x0, x0, x1
+    ld1             {v4.8b}, [x0], x1        // pix[x]
     umull           v31.8h, v4.8b, v4.8b
     uaddw           v0.8h, v0.8h, v4.8b      // sum += pix[x]
     uadalp          v1.4s, v31.8h            // sqr += pix[x] * pix[x]
@@ -90,8 +88,7 @@ function PFX(pixel_var_16x16_neon)
     mov             w12, #16
 .loop_var_16:
     sub             w12, w12, #1
-    ldr             q4, [x0]
-    add             x0, x0, x1
+    ld1             {v4.16b}, [x0], x1
     pixel_var_1 v4
     cbnz            w12, .loop_var_16
     pixel_var_end
@@ -130,20 +127,14 @@ endfunc
 function PFX(getResidual4_neon)
     lsl             x4, x3, #1
 .rept 2
-    ldr             d0, [x0]
-    ldr             d1, [x1]
-    add             x0, x0, x3
-    add             x1, x1, x3
-    ldr             d2, [x0]
-    ldr             d3, [x1]
-    add             x0, x0, x3
-    add             x1, x1, x3
+    ld1             {v0.8b}, [x0], x3
+    ld1             {v1.8b}, [x1], x3
+    ld1             {v2.8b}, [x0], x3
+    ld1             {v3.8b}, [x1], x3
     usubl           v4.8h, v0.8b, v1.8b
     usubl           v5.8h, v2.8b, v3.8b
-    str             d4, [x2]
-    add             x2, x2, x4
-    str             d5, [x2]
-    add             x2, x2, x4
+    st1             {v4.8b}, [x2], x4
+    st1             {v5.8b}, [x2], x4
 .endr
     ret
 endfunc
@@ -151,20 +142,14 @@ endfunc
 function PFX(getResidual8_neon)
     lsl             x4, x3, #1
 .rept 4
-    ldr             d0, [x0]
-    ldr             d1, [x1]
-    add             x0, x0, x3
-    add             x1, x1, x3
-    ldr             d2, [x0]
-    ldr             d3, [x1]
-    add             x0, x0, x3
-    add             x1, x1, x3
+    ld1             {v0.8b}, [x0], x3
+    ld1             {v1.8b}, [x1], x3
+    ld1             {v2.8b}, [x0], x3
+    ld1             {v3.8b}, [x1], x3
     usubl           v4.8h, v0.8b, v1.8b
     usubl           v5.8h, v2.8b, v3.8b
-    str             q4, [x2]
-    add             x2, x2, x4
-    str             q5, [x2]
-    add             x2, x2, x4
+    st1             {v4.16b}, [x2], x4
+    st1             {v5.16b}, [x2], x4
 .endr
     ret
 endfunc
@@ -650,19 +635,14 @@ endfunc
 
 //******* satd *******
 .macro satd_4x4_neon
-    ldr             s1, [x2]
-    ldr             s0, [x0]
-    add             x2, x2, x3
-    add             x0, x0, x1
-    ldr             s3, [x2]
-    ldr             s2, [x0]
-    add             x2, x2, x3
-    add             x0, x0, x1
-
-    ld1             {v1.s}[1], [x2], x3
+    ld1             {v0.s}[0], [x0], x1
     ld1             {v0.s}[1], [x0], x1
-    ld1             {v3.s}[1], [x2], x3
+    ld1             {v1.s}[0], [x2], x3
+    ld1             {v1.s}[1], [x2], x3
+    ld1             {v2.s}[0], [x0], x1
     ld1             {v2.s}[1], [x0], x1
+    ld1             {v3.s}[0], [x2], x3
+    ld1             {v3.s}[1], [x2], x3
 
     usubl           v4.8h, v0.8b, v1.8b
     usubl           v5.8h, v2.8b, v3.8b
@@ -1965,10 +1945,8 @@ endfunc
 function PFX(ssimDist4_neon)
     ssimDist_start
 .rept 4
-    ldr             s4, [x0]
-    ldr             s5, [x2]
-    add             x0, x0, x1
-    add             x2, x2, x3
+    ld1             {v4.s}[0], [x0], x1
+    ld1             {v5.s}[0], [x2], x3
     uxtl            v4.8h, v4.8b
     uxtl            v5.8h, v5.8b
     sub             v2.4h, v4.4h, v5.4h
@@ -1984,10 +1962,8 @@ endfunc
 function PFX(ssimDist8_neon)
     ssimDist_start
 .rept 8
-    ldr             d4, [x0]
-    ldr             d5, [x2]
-    add             x0, x0, x1
-    add             x2, x2, x3
+    ld1             {v4.8b}, [x0], x1
+    ld1             {v5.8b}, [x2], x3
     uxtl            v4.8h, v4.8b
     uxtl            v5.8h, v5.8b
     ssimDist_1      v4, v5
@@ -2001,10 +1977,8 @@ function PFX(ssimDist16_neon)
     ssimDist_start
 .loop_ssimDist16:
     sub             w12, w12, #1
-    ldr             q4, [x0]
-    ldr             q5, [x2]
-    add             x0, x0, x1
-    add             x2, x2, x3
+    ld1             {v4.16b}, [x0], x1
+    ld1             {v5.16b}, [x2], x3
     uxtl            v6.8h, v4.8b
     uxtl            v7.8h, v5.8b
     uxtl2           v4.8h, v4.16b
@@ -2021,10 +1995,8 @@ function PFX(ssimDist32_neon)
     ssimDist_start
 .loop_ssimDist32:
     sub             w12, w12, #1
-    ldp             q4, q5, [x0]
-    ldp             q6, q7, [x2]
-    add             x0, x0, x1
-    add             x2, x2, x3
+    ld1             {v4.16b-v5.16b}, [x0], x1
+    ld1             {v6.16b-v7.16b}, [x2], x3
     uxtl            v21.8h, v4.8b
     uxtl            v22.8h, v6.8b
     uxtl            v23.8h, v5.8b
@@ -2047,32 +2019,28 @@ function PFX(ssimDist64_neon)
     ssimDist_start
 .loop_ssimDist64:
     sub             w12, w12, #1
-    ldp             q4, q5, [x0]
-    ldp             q6, q7, [x2]
+    ld1             {v4.16b-v7.16b}, [x0], x1
+    ld1             {v16.16b-v19.16b}, [x2], x3
     uxtl            v21.8h, v4.8b
-    uxtl            v22.8h, v6.8b
+    uxtl            v22.8h, v16.8b
     uxtl            v23.8h, v5.8b
-    uxtl            v24.8h, v7.8b
+    uxtl            v24.8h, v17.8b
     uxtl2           v25.8h, v4.16b
-    uxtl2           v26.8h, v6.16b
+    uxtl2           v26.8h, v16.16b
     uxtl2           v27.8h, v5.16b
-    uxtl2           v28.8h, v7.16b
+    uxtl2           v28.8h, v17.16b
     ssimDist_1      v21, v22
     ssimDist_1      v23, v24
     ssimDist_1      v25, v26
     ssimDist_1      v27, v28
-    ldp             q4, q5, [x0, #32]
-    ldp             q6, q7, [x2, #32]
-    add             x0, x0, x1
-    add             x2, x2, x3
-    uxtl            v21.8h, v4.8b
-    uxtl            v22.8h, v6.8b
-    uxtl            v23.8h, v5.8b
-    uxtl            v24.8h, v7.8b
-    uxtl2           v25.8h, v4.16b
-    uxtl2           v26.8h, v6.16b
-    uxtl2           v27.8h, v5.16b
-    uxtl2           v28.8h, v7.16b
+    uxtl            v21.8h, v6.8b
+    uxtl            v22.8h, v18.8b
+    uxtl            v23.8h, v7.8b
+    uxtl            v24.8h, v19.8b
+    uxtl2           v25.8h, v6.16b
+    uxtl2           v26.8h, v18.16b
+    uxtl2           v27.8h, v7.16b
+    uxtl2           v28.8h, v19.16b
     ssimDist_1      v21, v22
     ssimDist_1      v23, v24
     ssimDist_1      v25, v26
@@ -2104,8 +2072,7 @@ endfunc
 function PFX(normFact8_neon)
     normFact_start
 .rept 8
-    ldr             d4, [x0]
-    add             x0, x0, x1
+    ld1             {v4.8b}, [x0], x1
     uxtl            v4.8h, v4.8b
     normFact_1      v4
 .endr
@@ -2118,8 +2085,7 @@ function PFX(normFact16_neon)
     normFact_start
 .loop_normFact16:
     sub             w12, w12, #1
-    ldr             q4, [x0]
-    add             x0, x0, x1
+    ld1             {v4.16b}, [x0], x1
     uxtl            v5.8h, v4.8b
     uxtl2           v4.8h, v4.16b
     normFact_1      v5
@@ -2134,8 +2100,7 @@ function PFX(normFact32_neon)
     normFact_start
 .loop_normFact32:
     sub             w12, w12, #1
-    ldp             q4, q5, [x0]
-    add             x0, x0, x1
+    ld1             {v4.16b-v5.16b}, [x0], x1
     uxtl            v6.8h, v4.8b
     uxtl2           v4.8h, v4.16b
     uxtl            v7.8h, v5.8b
@@ -2154,25 +2119,23 @@ function PFX(normFact64_neon)
     normFact_start
 .loop_normFact64:
     sub             w12, w12, #1
-    ldp             q4, q5, [x0]
-    uxtl            v6.8h, v4.8b
-    uxtl2           v4.8h, v4.16b
-    uxtl            v7.8h, v5.8b
-    uxtl2           v5.8h, v5.16b
-    normFact_1      v4
-    normFact_1      v5
-    normFact_1      v6
-    normFact_1      v7
-    ldp             q4, q5, [x0, #32]
-    add             x0, x0, x1
-    uxtl            v6.8h, v4.8b
-    uxtl2           v4.8h, v4.16b
-    uxtl            v7.8h, v5.8b
-    uxtl2           v5.8h, v5.16b
-    normFact_1      v4
-    normFact_1      v5
-    normFact_1      v6
-    normFact_1      v7
+    ld1             {v4.16b-v7.16b}, [x0], x1
+    uxtl            v26.8h, v4.8b
+    uxtl2           v24.8h, v4.16b
+    uxtl            v27.8h, v5.8b
+    uxtl2           v25.8h, v5.16b
+    normFact_1      v24
+    normFact_1      v25
+    normFact_1      v26
+    normFact_1      v27
+    uxtl            v26.8h, v6.8b
+    uxtl2           v24.8h, v6.16b
+    uxtl            v27.8h, v7.8b
+    uxtl2           v25.8h, v7.16b
+    normFact_1      v24
+    normFact_1      v25
+    normFact_1      v26
+    normFact_1      v27
     cbnz            w12, .loop_normFact64
     normFact_end
     ret
@@ -2402,14 +2365,10 @@ endfunc
 function PFX(costCoeffNxN_neon)
     // abs(coeff)
     add             x2, x2, x2
-    ldr             d1, [x1]
-    ldr             x9, [x1, x2]
-    add             x1, x1, x2
-    ldr             d2, [x1, x2]
-    add             x1, x1, x2
-    ldr             x10, [x1, x2]
-    mov             v1.d[1], x9
-    mov             v2.d[1], x10
+    ld1             {v1.d}[0], [x1], x2
+    ld1             {v1.d}[1], [x1], x2
+    ld1             {v2.d}[0], [x1], x2
+    ld1             {v2.d}[1], [x1], x2
     abs             v1.8h, v1.8h
     abs             v2.8h, v2.8h
 

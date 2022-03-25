@@ -35,12 +35,10 @@
 .text
 
 .macro SAD_START_4 f
-    ldr             s0, [x0]
-    add             x0, x0, x1
-    ldr             s1, [x2]
-    add             x2, x2, x3
-    ld1             {v1.s}[1], [x2], x3
+    ld1             {v0.s}[0], [x0], x1
     ld1             {v0.s}[1], [x0], x1
+    ld1             {v1.s}[0], [x2], x3
+    ld1             {v1.s}[1], [x2], x3
     \f              v16.8h, v0.8b, v1.8b
 .endm
 
@@ -328,17 +326,13 @@ SAD_FUNC_LOOP  48, 64
 // SAD_X3 and SAD_X4 code start
 
 .macro SAD_X_START_4 h, x, f
-    ldr             s0, [x0]
-    add             x0, x0, x9
+    ld1             {v0.s}[0], [x0], x9
     ld1             {v0.s}[1], [x0], x9
-    ldr             s1, [x1]
-    add             x1, x1, x5
+    ld1             {v1.s}[0], [x1], x5
     ld1             {v1.s}[1], [x1], x5
-    ldr             s2, [x2]
-    add             x2, x2, x5
+    ld1             {v2.s}[0], [x2], x5
     ld1             {v2.s}[1], [x2], x5
-    ldr             s3, [x3]
-    add             x3, x3, x5
+    ld1             {v3.s}[0], [x3], x5
     ld1             {v3.s}[1], [x3], x5
     \f              v16.8h, v0.8b, v1.8b
     \f              v17.8h, v0.8b, v2.8b
