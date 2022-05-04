@@ -2293,20 +2293,18 @@ function PFX(scanPosLast_neon)
     // val - w13 = pmovmskb(v3)
     and             v3.16b, v3.16b, v28.16b
     mov             d4, v3.d[1]
-    addv            b13, v3.8b
-    addv            b14, v4.8b
-    fmov            w13, s13
-    fmov            w14, s14
-    orr             w13, w13, w14, lsl #8
+    addv            b23, v3.8b
+    addv            b24, v4.8b
+    mov             v23.b[1], v24.b[0]
+    fmov            w13, s23
 
     // mask - w15 = pmovmskb(v5)
     and             v5.16b, v5.16b, v28.16b
     mov             d6, v5.d[1]
     addv            b25, v5.8b
     addv            b26, v6.8b
+    mov             v25.b[1], v26.b[0]
     fmov            w15, s25
-    fmov            w14, s26
-    orr             w15, w15, w14, lsl #8
 
     // coeffFlag = reverse_bit(w15) in 16-bit
     rbit            w12, w15
