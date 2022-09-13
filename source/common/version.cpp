@@ -71,7 +71,7 @@
 #define ONOS    "[Unk-OS]"
 #endif
 
-#if X86_64
+#if X86_64 || X265_ARCH_ARM64
 #define BITS    "[64 bit]"
 #else
 #define BITS    "[32 bit]"
