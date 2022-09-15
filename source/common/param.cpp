@@ -298,6 +298,7 @@ void x265_param_default(x265_param* param)
     param->rc.bEnableConstVbv = 0;
     param->bResetZoneConfig = 1;
     param->reconfigWindowSize = 0;
+    param->rc.frameSegment = 0;
     param->decoderVbvMaxRate = 0;
     param->bliveVBV2pass = 0;
 
@@ -1250,6 +1251,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         OPT("multi-pass-opt-analysis") p->analysisMultiPassRefine = atobool(value);
         OPT("multi-pass-opt-distortion") p->analysisMultiPassDistortion = atobool(value);
         OPT("aq-motion") p->bAQMotion = atobool(value);
+        OPT("sbrc") p->rc.frameSegment = atobool(value);
         OPT("dynamic-rd") p->dynamicRd = atof(value);
         OPT("analysis-reuse-level")
         {
@@ -2007,9 +2009,11 @@ void x265_print_params(x265_param* param)
              param->maxNumReferences, (param->limitReferences & X265_REF_LIMIT_CU) ? "on" : "off",
              (param->limitReferences & X265_REF_LIMIT_DEPTH) ? "on" : "off");
 
-    if (param->rc.aqMode)
+    if (param->rc.aqMode && !param->rc.frameSegment)
         x265_log(param, X265_LOG_INFO, "AQ: mode / str / qg-size / cu-tree  : %d / %0.1f / %d / %d\n", param->rc.aqMode,
                  param->rc.aqStrength, param->rc.qgSize, param->rc.cuTree);
+	else if (param->rc.frameSegment)
+        x265_log(param, X265_LOG_INFO, "AQ: mode / str / qg-size / cu-tree  : auto / %0.1f / %d / %d\n", param->rc.aqStrength, param->rc.qgSize, param->rc.cuTree);
 
     if (param->bLossless)
         x265_log(param, X265_LOG_INFO, "Rate Control                        : Lossless\n");
@@ -2323,6 +2327,7 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     s += sprintf(s, " hist-threshold=%.2f", p->edgeTransitionThreshold);
     BOOL(p->bOptCUDeltaQP, "opt-cu-delta-qp");
     BOOL(p->bAQMotion, "aq-motion");
+    BOOL(p->rc.frameSegment, "sbrc");
     BOOL(p->bEmitHDR10SEI, "hdr10");
     BOOL(p->bHDR10Opt, "hdr10-opt");
     BOOL(p->bDhdr10opt, "dhdr10-opt");
@@ -2617,6 +2622,7 @@ void x265_copy_params(x265_param* dst, x265_param* src)
     dst->rc.bEnableConstVbv = src->rc.bEnableConstVbv;
     dst->rc.hevcAq = src->rc.hevcAq;
     dst->rc.qpAdaptationRange = src->rc.qpAdaptationRange;
+    dst->rc.frameSegment = src->rc.frameSegment;
 
     dst->vui.aspectRatioIdc = src->vui.aspectRatioIdc;
     dst->vui.sarWidth = src->vui.sarWidth;

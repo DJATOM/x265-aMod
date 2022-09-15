@@ -1768,6 +1768,11 @@ Quality, rate control and rate distortion options
 	Default 1.0.
 	**Range of values:** 0.0 to 3.0
 
+.. option:: --sbrc --no-sbrc
+
+	To enable and disable segment based rate control.
+	Default: disabled.
+
 .. option:: --hevc-aq
 
 	Enable adaptive quantization

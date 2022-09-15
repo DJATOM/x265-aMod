@@ -44,6 +44,9 @@ struct ReferencePlanes
     pixel*   fpelLowerResPlane[3];
     pixel*   lowerResPlane[4];
 
+    /* Edge Plane in Lowres */
+    pixel*   lowresEdgePlane;
+
     bool     isWeighted;
     bool     isLowres;
     bool     isHMELowres;

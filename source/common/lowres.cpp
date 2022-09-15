@@ -190,6 +190,9 @@ bool Lowres::create(x265_param* param, PicYuv *origPic, uint32_t qgSize)
         }
     }
 
+    if (param->rc.frameSegment)
+        lowresEdgePlane = X265_MALLOC(pixel, lumaStride * (lines + (origPic->m_lumaMarginY * 2)));
+
     return true;
 
 fail:
@@ -235,6 +238,7 @@ void Lowres::destroy()
     X265_FREE(edgeInclined);
     X265_FREE(qpAqMotionOffset);
     X265_FREE(blockVariance);
+    X265_FREE(lowresEdgePlane);
     if (maxAQDepth > 0)
     {
         for (uint32_t d = 0; d < 4; d++)
