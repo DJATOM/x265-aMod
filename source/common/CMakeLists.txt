@@ -173,4 +173,5 @@ add_library(common OBJECT
     quant.cpp quant.h contexts.h
     deblock.cpp deblock.h
     scaler.cpp scaler.h
-    ringmem.cpp ringmem.h)
+    ringmem.cpp ringmem.h
+    temporalfilter.cpp temporalfilter.h)
