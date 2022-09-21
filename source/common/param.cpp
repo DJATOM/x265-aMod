@@ -381,6 +381,10 @@ void x265_param_default(x265_param* param)
     param->bEnableSvtHevc = 0;
     param->svtHevcParam = NULL;
 
+    /* MCTF */
+    param->bEnableGopBasedTemporalFilter = 0;
+    param->temporalFilterStrength = 0.95;
+
 #ifdef SVT_HEVC
     param->svtHevcParam = svtParam;
     svt_param_default(param);
@@ -1466,6 +1470,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         OPT("eos") p->bEnableEndOfSequence = atobool(value);
         /* Film grain characterstics model filename */
         OPT("film-grain") p->filmGrain = (char* )value;
+        OPT("mctf") p->bEnableGopBasedTemporalFilter = atobool(value);
         else
             return X265_PARAM_BAD_NAME;
     }
@@ -1918,6 +1923,11 @@ int x265_check_params(x265_param* param)
         param->bSingleSeiNal = 0;
         x265_log(param, X265_LOG_WARNING, "None of the SEI messages are enabled. Disabling Single SEI NAL\n");
     }
+    if (param->bEnableGopBasedTemporalFilter && (param->frameNumThreads > 1))
+    {
+        param->bEnableGopBasedTemporalFilter = 0;
+        x265_log(param, X265_LOG_WARNING, "MCTF can be enabled with frame thread = 1 only. Disabling MCTF\n");
+    }
     CHECK(param->confWinRightOffset < 0, "Conformance Window Right Offset must be 0 or greater");
     CHECK(param->confWinBottomOffset < 0, "Conformance Window Bottom Offset must be 0 or greater");
     CHECK(param->decoderVbvMaxRate < 0, "Invalid Decoder Vbv Maxrate. Value can not be less than zero");
@@ -2364,6 +2374,7 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     BOOL(p->bliveVBV2pass, "vbv-live-multi-pass");
     if (p->filmGrain)
         s += sprintf(s, " film-grain=%s", p->filmGrain); // Film grain characteristics model filename
+    BOOL(p->bEnableGopBasedTemporalFilter, "mctf");
 #undef BOOL
     return buf;
 }
@@ -2728,7 +2739,8 @@ void x265_copy_params(x265_param* dst, x265_param* src)
     dst->bwdRefQpDelta = src->bwdRefQpDelta;
     dst->bwdNonRefQpDelta = src->bwdNonRefQpDelta;
     dst->bField = src->bField;
-
+    dst->bEnableGopBasedTemporalFilter = src->bEnableGopBasedTemporalFilter;
+    dst->temporalFilterStrength = src->temporalFilterStrength;
     dst->confWinRightOffset = src->confWinRightOffset;
     dst->confWinBottomOffset = src->confWinBottomOffset;
     dst->bliveVBV2pass = src->bliveVBV2pass;

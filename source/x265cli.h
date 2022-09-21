@@ -358,6 +358,8 @@ static const struct option long_options[] =
     { "frame-dup",            no_argument, NULL, 0 },
     { "no-frame-dup", no_argument, NULL, 0 },
     { "dup-threshold", required_argument, NULL, 0 },
+    { "mctf",                 no_argument, NULL, 0 },
+    { "no-mctf",              no_argument, NULL, 0 },
 #ifdef SVT_HEVC
     { "svt",     no_argument, NULL, 0 },
     { "no-svt",  no_argument, NULL, 0 },

@@ -1996,6 +1996,10 @@ typedef struct x265_param
 
     /* Film Grain Characteristic file */
     char* filmGrain;
+
+    /*Motion compensated temporal filter*/
+    int      bEnableGopBasedTemporalFilter;
+    double   temporalFilterStrength;
 } x265_param;
 
 /* x265_param_alloc:
