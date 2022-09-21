@@ -65,12 +65,38 @@ Frame::Frame()
     m_edgeBitPic = NULL;
     m_frameSegment = X265_AQ_NONE;
     m_isInsideWindow = 0;
+
+    // mcstf
+    m_isSubSampled = NULL;
+    m_mcstf = NULL;
+    m_refPicCnt[0] = 0;
+    m_refPicCnt[1] = 0;
+    m_nextMCSTF = NULL;
+    m_prevMCSTF = NULL;
+
 }
 
 bool Frame::create(x265_param *param, float* quantOffsets)
 {
     m_fencPic = new PicYuv;
     m_param = param;
+
+    if (m_param->bEnableGopBasedTemporalFilter)
+    {
+        m_mcstf = new TemporalFilter;
+        m_mcstf->init(param);
+
+        m_fencPicSubsampled2 = new PicYuv;
+        m_fencPicSubsampled4 = new PicYuv;
+
+        if (!m_fencPicSubsampled2->createScaledPicYUV(param, 2))
+            return false;
+        if (!m_fencPicSubsampled4->createScaledPicYUV(param, 4))
+            return false;
+
+        CHECKED_MALLOC_ZERO(m_isSubSampled, int, 1);
+    }
+
     CHECKED_MALLOC_ZERO(m_rcData, RcStats, 1);
 
     if (param->bCTUInfo)
@@ -152,6 +178,24 @@ fail:
     return false;
 }
 
+bool Frame::createSubSample()
+{
+
+    //m_param = param;
+
+    m_fencPicSubsampled2 = new PicYuv;
+    m_fencPicSubsampled4 = new PicYuv;
+
+    if (!m_fencPicSubsampled2->createScaledPicYUV(m_param, 2))
+        return false;
+    if (!m_fencPicSubsampled4->createScaledPicYUV(m_param, 4))
+        return false;
+    CHECKED_MALLOC_ZERO(m_isSubSampled, int, 1);
+    return true;
+fail:
+    return false;
+}
+
 bool Frame::allocEncodeData(x265_param *param, const SPS& sps)
 {
     m_encData = new FrameData;
@@ -206,6 +250,26 @@ void Frame::destroy()
             m_fencPic->destroy();
         delete m_fencPic;
         m_fencPic = NULL;
+    }
+
+    if (m_param->bEnableGopBasedTemporalFilter)
+    {
+
+        if (m_fencPicSubsampled2)
+        {
+            m_fencPicSubsampled2->destroy();
+            delete m_fencPicSubsampled2;
+            m_fencPicSubsampled2 = NULL;
+        }
+
+        if (m_fencPicSubsampled4)
+        {
+            m_fencPicSubsampled4->destroy();
+            delete m_fencPicSubsampled4;
+            m_fencPicSubsampled4 = NULL;
+        }
+        delete m_mcstf;
+        X265_FREE(m_isSubSampled);
     }
 
     if (m_reconPic)

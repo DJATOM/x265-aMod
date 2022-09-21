@@ -363,6 +363,7 @@ public:
     int         m_iNumRPSInSPS;
     const x265_param *m_param;
     int         m_fieldNum;
+    Frame*      m_mcstfRefFrameList[2][MAX_MCTF_TEMPORAL_WINDOW_LENGTH];
 
     Slice()
     {

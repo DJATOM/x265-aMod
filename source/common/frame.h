@@ -28,6 +28,7 @@
 #include "common.h"
 #include "lowres.h"
 #include "threading.h"
+#include "temporalfilter.h"
 
 namespace X265_NS {
 // private namespace
@@ -84,6 +85,9 @@ public:
 
     /* Data associated with x265_picture */
     PicYuv*                m_fencPic;
+    PicYuv*                m_fencPicSubsampled2;
+    PicYuv*                m_fencPicSubsampled4;
+
     int                    m_poc;
     int                    m_encodeOrder;
     int64_t                m_pts;                // user provided presentation time stamp
@@ -133,6 +137,13 @@ public:
     bool                   m_classifyFrame;
     int                    m_fieldNum;
 
+    /*MCSTF*/
+    TemporalFilter*        m_mcstf;
+    int                    m_refPicCnt[2];
+    Frame*                 m_nextMCSTF;           // PicList doubly linked list pointers
+    Frame*                 m_prevMCSTF;
+    int*                   m_isSubSampled;
+
     /* aq-mode 4 : Gaussian, edge and theta frames for edge information */
     pixel*                 m_edgePic;
     pixel*                 m_gaussianPic;
@@ -151,6 +162,7 @@ public:
     Frame();
 
     bool create(x265_param *param, float* quantOffsets);
+    bool createSubSample();
     bool allocEncodeData(x265_param *param, const SPS& sps);
     void reinit(const SPS& sps);
     void destroy();
