@@ -34,6 +34,7 @@
 #include "common.h"
 #include "slicetype.h"
 #include "nal.h"
+#include "temporalfilter.h"
 
 namespace X265_NS {
 void weightAnalyse(Slice& slice, Frame& frame, x265_param& param);
@@ -100,6 +101,14 @@ void FrameEncoder::destroy()
     {
         delete m_rce.picTimingSEI;
         delete m_rce.hrdTiming;
+    }
+
+    if (m_param->bEnableGopBasedTemporalFilter)
+    {
+        for (int i = 0; i < (m_frameEncTF->s_range << 1); i++)
+            m_frameEncTF->destroyRefPicInfo(&m_mcstfRefList[i]);
+
+        delete m_frameEncTF;
     }
 }
 
@@ -193,6 +202,16 @@ bool FrameEncoder::init(Encoder *top, int numRows, int numCols)
         unsigned long tmp;
         CLZ(tmp, (numRows * numCols - 1));
         m_sliceAddrBits = (uint16_t)(tmp + 1);
+    }
+
+    if (m_param->bEnableGopBasedTemporalFilter)
+    {
+        m_frameEncTF = new TemporalFilter();
+        if (m_frameEncTF)
+            m_frameEncTF->init(m_param);
+
+        for (int i = 0; i < (m_frameEncTF->s_range << 1); i++)
+            ok &= !!m_frameEncTF->createRefPicInfo(&m_mcstfRefList[i], m_param);
     }
 
     return ok;
@@ -579,6 +598,13 @@ void FrameEncoder::compressFrame()
     int qp = m_top->m_rateControl->rateControlStart(m_frame, &m_rce, m_top);
     m_rce.newQp = qp;
 
+    if (m_param->bEnableGopBasedTemporalFilter)
+    {
+        m_frameEncTF->m_QP = qp;
+        double overallStrength = 0.95;
+        m_frameEncTF->bilateralFilter(m_frame, m_mcstfRefList, overallStrength);
+    }
+
     if (m_nr)
     {
         if (qp > QP_MAX_SPEC && m_frame->m_param->rc.vbvBufferSize)
@@ -945,6 +971,23 @@ void FrameEncoder::compressFrame()
 
     if (m_param->bDynamicRefine && m_top->m_startPoint <= m_frame->m_encodeOrder) //Avoid collecting data that will not be used by future frames.
         collectDynDataFrame();
+
+    if (m_param->bEnableGopBasedTemporalFilter && m_top->isFilterThisframe(m_frame->m_mcstf->m_sliceTypeConfig, m_frame->m_lowres.sliceType))
+    {
+        //Reset the MCTF context in Frame Encoder and Frame
+        for (int i = 0; i < (m_frameEncTF->s_range << 1); i++)
+        {
+            memset(m_mcstfRefList[i].mvs0, 0, sizeof(MV) * ((m_param->sourceWidth / 16) * (m_param->sourceHeight / 16)));
+            memset(m_mcstfRefList[i].mvs1, 0, sizeof(MV) * ((m_param->sourceWidth / 16) * (m_param->sourceHeight / 16)));
+            memset(m_mcstfRefList[i].mvs2, 0, sizeof(MV) * ((m_param->sourceWidth / 16) * (m_param->sourceHeight / 16)));
+            memset(m_mcstfRefList[i].mvs,  0, sizeof(MV) * ((m_param->sourceWidth / 4) * (m_param->sourceHeight / 4)));
+            memset(m_mcstfRefList[i].noise, 0, sizeof(int) * ((m_param->sourceWidth / 4) * (m_param->sourceHeight / 4)));
+            memset(m_mcstfRefList[i].error, 0, sizeof(int) * ((m_param->sourceWidth / 4) * (m_param->sourceHeight / 4)));
+
+            m_frame->m_mcstf->m_numRef = 0;
+        }
+    }
+
 
     if (m_param->rc.bStatWrite)
     {
