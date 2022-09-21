@@ -70,9 +70,17 @@ void DPB::recycleUnreferenced()
     {
         Frame *curFrame = iterFrame;
         iterFrame = iterFrame->m_next;
-        if (!curFrame->m_encData->m_bHasReferences && !curFrame->m_countRefEncoders)
+        bool isMCSTFReferenced = false;
+
+        if (curFrame->m_param->bEnableGopBasedTemporalFilter)
+            isMCSTFReferenced = curFrame->m_refPicCnt[1];
+
+        if (!curFrame->m_encData->m_bHasReferences && !curFrame->m_countRefEncoders && !isMCSTFReferenced)
         {
             curFrame->m_bChromaExtended = false;
+
+            if (curFrame->m_param->bEnableGopBasedTemporalFilter)
+                *curFrame->m_isSubSampled = false;
 
             // Reset column counter
             X265_CHECK(curFrame->m_reconRowFlag != NULL, "curFrame->m_reconRowFlag check failure");
