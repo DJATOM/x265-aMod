@@ -40,6 +40,7 @@
 #include "ratecontrol.h"
 #include "reference.h"
 #include "nal.h"
+#include "temporalfilter.h"
 
 namespace X265_NS {
 // private x265 namespace
@@ -232,6 +233,10 @@ public:
     Entropy                  m_initSliceContext;
     FrameFilter              m_frameFilter;
     NALList                  m_nalList;
+
+    // initialization for mcstf
+    TemporalFilter*          m_frameEncTF;
+    MCTFReferencePicInfo     m_mcstfRefList[MAX_MCTF_TEMPORAL_WINDOW_LENGTH];
 
     class WeightAnalysis : public BondedTaskGroup
     {

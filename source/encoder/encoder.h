@@ -32,6 +32,7 @@
 #include "nal.h"
 #include "framedata.h"
 #include "svt.h"
+#include "temporalfilter.h"
 #ifdef ENABLE_HDR10_PLUS
     #include "dynamicHDR10/hdr10plus.h"
 #endif
@@ -297,6 +298,7 @@ public:
     ThreadSafeInteger* zoneWriteCount;
     /* Film grain model file */
     FILE* m_filmGrainIn;
+    OrigPicBuffer*          m_origPicBuffer;
 
     Encoder();
     ~Encoder()
@@ -392,6 +394,9 @@ public:
     void configureDolbyVisionParams(x265_param* p);
 
     void configureVideoSignalTypePreset(x265_param* p);
+
+    bool isFilterThisframe(uint8_t sliceTypeConfig, int curSliceType);
+    bool generateMctfRef(Frame* frameEnc, FrameEncoder* currEncoder);
 
 protected:
 
