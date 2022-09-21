@@ -2478,6 +2478,27 @@ void Lookahead::slicetypePath(Lowres **frames, int length, char(*best_paths)[X26
     memcpy(best_paths[length % (X265_BFRAME_MAX + 1)], paths[idx ^ 1], length);
 }
 
+// Find slicetype of the frame with poc # in lookahead buffer
+int Lookahead::FindSliceType(int poc)
+{
+    int out_slicetype = X265_TYPE_AUTO;
+    if (m_filled)
+    {
+        m_outputLock.acquire();
+        Frame* out = m_outputQueue.first();
+        while (out != NULL) {
+            if (poc == out->m_poc)
+            {
+                out_slicetype = out->m_lowres.sliceType;
+                break;
+            }
+            out = out->m_next;
+        }
+        m_outputLock.release();
+    }
+    return out_slicetype;
+}
+
 int64_t Lookahead::slicetypePathCost(Lowres **frames, char *path, int64_t threshold)
 {
     int64_t cost = 0;

@@ -174,6 +174,7 @@ public:
 
     void    getEstimatedPictureCost(Frame *pic);
     void    setLookaheadQueue();
+    int FindSliceType(int poc);
 
 protected:
 
