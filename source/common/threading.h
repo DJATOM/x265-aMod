@@ -281,7 +281,7 @@ public:
 
     bool take(const uint32_t time_out = INFINITE)
     {
-        int32_t rt = WaitForSingleObject(m_sem, time_out);
+        DWORD rt = WaitForSingleObject(m_sem, time_out);
         return rt != WAIT_TIMEOUT && rt != WAIT_FAILED;
     }
 
