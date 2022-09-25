@@ -1,9 +1,9 @@
 #!/bin/sh
 
 export build_dir=${PWD}
-export THREADS_PER_BUILD=24
+export THREADS_PER_BUILD=32
 export THREADS_PER_TASK=$((${THREADS_PER_BUILD}/2))
-export COMMON_OPTS="-Wno-deprecated -DENABLE_PIC=ON -DENABLE_HDR10_PLUS=ON -DENABLE_SHARED=OFF -DSTATIC_LINK_CRT=ON -DENABLE_VAPOURSYNTH=ON -DENABLE_AVISYNTH=ON -DCMAKE_TOOLCHAIN_FILE=${build_dir}/toolchain-x86_64-w64-mingw32.cmake"
+export COMMON_OPTS="-Wno-deprecated -DENABLE_PIC=ON -DENABLE_HDR10_PLUS=ON -DENABLE_SHARED=OFF -DSTATIC_LINK_CRT=ON -DCMAKE_TOOLCHAIN_FILE=${build_dir}/toolchain-x86_64-w64-mingw32.cmake"
 [ ! -d ${build_dir}/no-opt ] && mkdir ${build_dir}/no-opt
 cd ${build_dir}/no-opt
 [ ! -d ${build_dir}/no-opt/8bit ] && mkdir ${build_dir}/no-opt/8bit
