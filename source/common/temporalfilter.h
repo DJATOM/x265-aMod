@@ -161,7 +161,10 @@ public:
     void bilateralFilter(Frame* frame, MCTFReferencePicInfo* mctfRefList, double overallStrength);
 
     void motionEstimationLuma(MV *mvs, uint32_t mvStride, PicYuv *orig, PicYuv *buffer, int bs,
-        MV *previous = 0, uint32_t prevmvStride = 0, int factor = 1, bool doubleRes = false, int *minError = 0);
+        MV *previous = 0, uint32_t prevmvStride = 0, int factor = 1);
+
+    void TemporalFilter::motionEstimationLumaDoubleRes(MV *mvs, uint32_t mvStride, PicYuv *orig, PicYuv *buffer, int blockSize,
+        MV *previous, uint32_t prevMvStride, int factor, int* minError);
 
     int motionErrorLuma(PicYuv *orig,
         PicYuv *buffer,

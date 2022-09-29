@@ -746,10 +746,10 @@ void TemporalFilter::motionEstimationLuma(MV *mvs, uint32_t mvStride, PicYuv *or
 
 /*New Version: motionEstimationLuma*/
 void TemporalFilter::motionEstimationLuma(MV *mvs, uint32_t mvStride, PicYuv *orig, PicYuv *buffer, int blockSize,
-    MV *previous, uint32_t prevMvStride, int factor, bool doubleRes, int* minError)
+    MV *previous, uint32_t prevMvStride, int factor)
 {
 
-    int range = doubleRes ? 0 : 5;
+    int range = 5;
 
 
     const int stepSize = blockSize;
@@ -817,38 +817,160 @@ void TemporalFilter::motionEstimationLuma(MV *mvs, uint32_t mvStride, PicYuv *or
                 }
             }
 
-            if (doubleRes)
-            { // merge into one loop, probably with precision array (here [12, 3] or maybe [4, 1]) with setable number of iterations
-                prevBest = best;
-                int doubleRange = 3 * 4;
-                for (int y2 = prevBest.y - doubleRange; y2 <= prevBest.y + doubleRange; y2 += 4)
+            if (blockY > 0)
+            {
+                MV aboveMV = mvs[(blockX / stepSize, (blockY - stepSize) / stepSize)];
+                int error = motionErrorLuma(orig, buffer, blockX, blockY, aboveMV.x, aboveMV.y, blockSize, leastError);
+                if (error < leastError)
                 {
-                    for (int x2 = prevBest.x - doubleRange; x2 <= prevBest.x + doubleRange; x2 += 4)
+                    best.set(aboveMV.x, aboveMV.y);
+                    leastError = error;
+                }
+            }
+            if (blockX > 0)
+            {
+                MV leftMV = mvs[((blockX - stepSize) / stepSize, blockY / stepSize)];
+                int error = motionErrorLuma(orig, buffer, blockX, blockY, leftMV.x, leftMV.y, blockSize, leastError);
+                if (error < leastError)
+                {
+                    best.set(leftMV.x, leftMV.y);
+                    leastError = error;
+                }
+            }
+
+            // calculate average
+            double avg = 0.0;
+            for (int x1 = 0; x1 < blockSize; x1++)
+            {
+                for (int y1 = 0; y1 < blockSize; y1++)
+                {
+                    avg = avg + *(orig->m_picOrg[0] + (blockX + x1 + orig->m_stride * (blockY + y1)));
+                }
+            }
+            avg = avg / (blockSize * blockSize);
+
+            // calculate variance
+            double variance = 0;
+            for (int x1 = 0; x1 < blockSize; x1++)
+            {
+                for (int y1 = 0; y1 < blockSize; y1++)
+                {
+                    int pix = *(orig->m_picOrg[0] + (blockX + x1 + orig->m_stride * (blockY + y1)));
+                    variance = variance + (pix - avg) * (pix - avg);
+                }
+            }
+
+            leastError = (int)(20 * ((leastError + 5.0) / (variance + 5.0)) + (leastError / (blockSize * blockSize)) / 50);
+
+            int mvIdx = (blockY / stepSize) * mvStride + (blockX / stepSize);
+            mvs[mvIdx] = best;
+        }
+    }
+}
+
+
+void TemporalFilter::motionEstimationLumaDoubleRes(MV *mvs, uint32_t mvStride, PicYuv *orig, PicYuv *buffer, int blockSize,
+    MV *previous, uint32_t prevMvStride, int factor, int* minError)
+{
+
+    int range = 0;
+
+
+    const int stepSize = blockSize;
+
+    const int origWidth = orig->m_picWidth;
+    const int origHeight = orig->m_picHeight;
+
+
+    for (int blockY = 0; blockY + blockSize <= origHeight; blockY += stepSize)
+    {
+        for (int blockX = 0; blockX + blockSize <= origWidth; blockX += stepSize)
+        {
+            MV best(0, 0);
+            int leastError = INT_MAX;
+
+            if (previous == NULL)
+            {
+                range = 8;
+            }
+            else
+            {
+
+                for (int py = -1; py <= 1; py++)
+                {
+                    int testy = blockY / (2 * blockSize) + py;
+
+                    for (int px = -1; px <= 1; px++)
                     {
-                        int error = motionErrorLuma(orig, buffer, blockX, blockY, x2, y2, blockSize, leastError);
-                        if (error < leastError)
+
+                        int testx = blockX / (2 * blockSize) + px;
+                        if ((testx >= 0) && (testx < origWidth / (2 * blockSize)) && (testy >= 0) && (testy < origHeight / (2 * blockSize)))
                         {
-                            best.set(x2, y2);
-                            leastError = error;
+                            int mvIdx = testy * prevMvStride + testx;
+                            MV old = previous[mvIdx];
+                            int error = motionErrorLuma(orig, buffer, blockX, blockY, old.x * factor, old.y * factor, blockSize, leastError);
+                            if (error < leastError)
+                            {
+                                best.set(old.x * factor, old.y * factor);
+                                leastError = error;
+                            }
                         }
                     }
                 }
 
-                prevBest = best;
-                doubleRange = 3;
-                for (int y2 = prevBest.y - doubleRange; y2 <= prevBest.y + doubleRange; y2++)
+                int error = motionErrorLuma(orig, buffer, blockX, blockY, 0, 0, blockSize, leastError);
+                if (error < leastError)
                 {
-                    for (int x2 = prevBest.x - doubleRange; x2 <= prevBest.x + doubleRange; x2++)
+                    best.set(0, 0);
+                    leastError = error;
+                }
+
+            }
+
+            MV prevBest = best;
+            for (int y2 = prevBest.y / s_motionVectorFactor - range; y2 <= prevBest.y / s_motionVectorFactor + range; y2++)
+            {
+                for (int x2 = prevBest.x / s_motionVectorFactor - range; x2 <= prevBest.x / s_motionVectorFactor + range; x2++)
+                {
+                    int error = motionErrorLuma(orig, buffer, blockX, blockY, x2 * s_motionVectorFactor, y2 * s_motionVectorFactor, blockSize, leastError);
+                    if (error < leastError)
                     {
-                        int error = motionErrorLuma(orig, buffer, blockX, blockY, x2, y2, blockSize, leastError);
-                        if (error < leastError)
-                        {
-                            best.set(x2, y2);
-                            leastError = error;
-                        }
+                        best.set(x2 * s_motionVectorFactor, y2 * s_motionVectorFactor);
+                        leastError = error;
                     }
                 }
             }
+
+            prevBest = best;
+            int doubleRange = 3 * 4;
+            for (int y2 = prevBest.y - doubleRange; y2 <= prevBest.y + doubleRange; y2 += 4)
+            {
+                for (int x2 = prevBest.x - doubleRange; x2 <= prevBest.x + doubleRange; x2 += 4)
+                {
+                    int error = motionErrorLuma(orig, buffer, blockX, blockY, x2, y2, blockSize, leastError);
+                    if (error < leastError)
+                    {
+                        best.set(x2, y2);
+                        leastError = error;
+                    }
+                }
+            }
+
+            prevBest = best;
+            doubleRange = 3;
+            for (int y2 = prevBest.y - doubleRange; y2 <= prevBest.y + doubleRange; y2++)
+            {
+                for (int x2 = prevBest.x - doubleRange; x2 <= prevBest.x + doubleRange; x2++)
+                {
+                    int error = motionErrorLuma(orig, buffer, blockX, blockY, x2, y2, blockSize, leastError);
+                    if (error < leastError)
+                    {
+                        best.set(x2, y2);
+                        leastError = error;
+                    }
+                }
+            }
+
 
             if (blockY > 0)
             {
@@ -897,8 +1019,7 @@ void TemporalFilter::motionEstimationLuma(MV *mvs, uint32_t mvStride, PicYuv *or
 
             int mvIdx = (blockY / stepSize) * mvStride + (blockX / stepSize);
             mvs[mvIdx] = best;
-            if (doubleRes)
-                minError[mvIdx] = leastError;
+            minError[mvIdx] = leastError;
         }
     }
 }
