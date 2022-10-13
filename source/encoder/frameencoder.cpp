@@ -105,6 +105,8 @@ void FrameEncoder::destroy()
 
     if (m_param->bEnableGopBasedTemporalFilter)
     {
+        delete m_frameEncTF->m_metld;
+
         for (int i = 0; i < (m_frameEncTF->s_range << 1); i++)
             m_frameEncTF->destroyRefPicInfo(&m_mcstfRefList[i]);
 

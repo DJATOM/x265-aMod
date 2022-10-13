@@ -1,6 +1,8 @@
 /*****************************************************************************
 * Copyright (C) 2013-2021 MulticoreWare, Inc
 *
+ * Authors: Ashok Kumar Mishra <ashok@multicorewareinc.com>
+ *
 * This program is free software; you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation; either version 2 of the License, or
@@ -18,8 +20,9 @@
 * This program is also available under a commercial proprietary license.
 * For more information, contact us at license @ x265.com.
 *****************************************************************************/
-
+#include "common.h"
 #include "temporalfilter.h"
+#include "primitives.h"
 
 #include "frame.h"
 #include "slice.h"
@@ -160,6 +163,10 @@ void TemporalFilter::init(const x265_param* param)
     m_sourceHeight = param->sourceHeight;
     m_internalCsp = param->internalCsp;
     m_numComponents = (m_internalCsp != X265_CSP_I400) ? MAX_NUM_COMPONENT : 1;
+
+    m_metld = new MotionEstimatorTLD;
+
+    predPUYuv.create(FENC_STRIDE, X265_CSP_I400);
 }
 
 int TemporalFilter::createRefPicInfo(MCTFReferencePicInfo* refFrame, x265_param* param)
@@ -206,21 +213,33 @@ int TemporalFilter::motionErrorLuma(
     {
         dx /= s_motionVectorFactor;
         dy /= s_motionVectorFactor;
+
+        const pixel* bufferRowStart = buffOrigin + (y + dy) * buffStride + (x + dx);
+#if 0
+        const pixel* origRowStart = origOrigin + y *origStride + x;
+
         for (int y1 = 0; y1 < bs; y1++)
         {
-            const pixel* origRowStart = origOrigin + (y + y1)*origStride + x;
-            const pixel* bufferRowStart = buffOrigin + (y + y1 + dy)*buffStride + (x + dx);
-            for (int x1 = 0; x1 < bs; x1 += 2)
+            for (int x1 = 0; x1 < bs; x1++)
             {
                 int diff = origRowStart[x1] - bufferRowStart[x1];
                 error += diff * diff;
-                diff = origRowStart[x1 + 1] - bufferRowStart[x1 + 1];
-                error += diff * diff;
             }
-            if (error > besterror)
-            {
-                return error;
-            }
+
+            origRowStart += origStride;
+            bufferRowStart += buffStride;
+        }
+#else
+        int partEnum = partitionFromSizes(bs, bs);
+        /* copy PU block into cache */
+        primitives.pu[partEnum].copy_pp(predPUYuv.m_buf[0], FENC_STRIDE, bufferRowStart, buffStride);
+
+        error = primitives.cu[partEnum].sse_pp(m_metld->me.fencPUYuv.m_buf[0], FENC_STRIDE, predPUYuv.m_buf[0], FENC_STRIDE);
+
+#endif
+        if (error > besterror)
+        {
+            return error;
         }
     }
     else
@@ -761,6 +780,10 @@ void TemporalFilter::motionEstimationLuma(MV *mvs, uint32_t mvStride, PicYuv *or
     {
         for (int blockX = 0; blockX + blockSize <= origWidth; blockX += stepSize)
         {
+            const intptr_t pelOffset = blockY * orig->m_stride + blockX;
+            m_metld->me.setSourcePU(orig->m_picOrg[0], orig->m_stride, pelOffset, blockSize, blockSize, X265_HEX_SEARCH, 1);
+
+
             MV best(0, 0);
             int leastError = INT_MAX;
 
@@ -889,6 +912,10 @@ void TemporalFilter::motionEstimationLumaDoubleRes(MV *mvs, uint32_t mvStride, P
     {
         for (int blockX = 0; blockX + blockSize <= origWidth; blockX += stepSize)
         {
+
+            const intptr_t pelOffset = blockY * orig->m_stride + blockX;
+            m_metld->me.setSourcePU(orig->m_picOrg[0], orig->m_stride, pelOffset, blockSize, blockSize, X265_HEX_SEARCH, 1);
+
             MV best(0, 0);
             int leastError = INT_MAX;
 

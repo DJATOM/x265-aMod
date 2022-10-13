@@ -29,6 +29,7 @@
 #include <deque>
 #include "piclist.h"
 #include "yuv.h"
+#include "motion.h"
 
 using namespace X265_NS;
 
@@ -94,6 +95,19 @@ struct TemporalFilterRefPicInfo
     int        origOffset;
 };
 
+struct MotionEstimatorTLD
+{
+    MotionEstimate  me;
+
+    MotionEstimatorTLD()
+    {
+        me.init(X265_CSP_I400);
+        me.setQP(X265_LOOKAHEAD_QP);
+    }
+
+    ~MotionEstimatorTLD() {}
+};
+
 struct MCTFReferencePicInfo
 {
     PicYuv*    picBuffer;
@@ -103,16 +117,16 @@ struct MCTFReferencePicInfo
     MV*        mvs0;
     MV*        mvs1;
     MV*        mvs2;
-    uint32_t mvsStride;
-    uint32_t mvsStride0;
-    uint32_t mvsStride1;
-    uint32_t mvsStride2;
-    int*     error;
-    int*     noise;
+    uint32_t   mvsStride;
+    uint32_t   mvsStride0;
+    uint32_t   mvsStride1;
+    uint32_t   mvsStride2;
+    int*       error;
+    int*       noise;
 
     int16_t    origOffset;
     bool       isFilteredFrame;
-    PicYuv*       compensatedPic;
+    PicYuv*    compensatedPic;
 
     int*       isSubsampled;
 
@@ -153,6 +167,9 @@ public:
     int m_internalCsp;
     int m_numComponents;
     uint8_t m_sliceTypeConfig;
+
+    MotionEstimatorTLD* m_metld;
+    Yuv        predPUYuv;
 
     void subsampleLuma(PicYuv *input, PicYuv *output, int factor = 2);
 
