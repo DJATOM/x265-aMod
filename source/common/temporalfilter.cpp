@@ -624,7 +624,6 @@ void TemporalFilter::bilateralFilter(Frame* frame,
                 newVal /= temporalWeightSum;
                 pixel sampleVal = (pixel)round(newVal);
                 sampleVal = (sampleVal < 0 ? 0 : (sampleVal > maxSampleValue ? maxSampleValue : sampleVal));
-                //*dstPel = sampleVal;
                 *srcPel = sampleVal;
             }
         }
@@ -819,7 +818,8 @@ void TemporalFilter::motionEstimationLuma(MV *mvs, uint32_t mvStride, PicYuv *or
 
             if (blockY > 0)
             {
-                MV aboveMV = mvs[(blockX / stepSize, (blockY - stepSize) / stepSize)];
+                int idx = ((blockY - stepSize) / stepSize) * mvStride + (blockX / stepSize);
+                MV aboveMV = mvs[idx];
                 int error = motionErrorLuma(orig, buffer, blockX, blockY, aboveMV.x, aboveMV.y, blockSize, leastError);
                 if (error < leastError)
                 {
@@ -827,9 +827,12 @@ void TemporalFilter::motionEstimationLuma(MV *mvs, uint32_t mvStride, PicYuv *or
                     leastError = error;
                 }
             }
+
             if (blockX > 0)
             {
-                MV leftMV = mvs[((blockX - stepSize) / stepSize, blockY / stepSize)];
+                int idx = ((blockY / stepSize) * mvStride + (blockX - stepSize) / stepSize);
+                MV leftMV = mvs[idx];
+
                 int error = motionErrorLuma(orig, buffer, blockX, blockY, leftMV.x, leftMV.y, blockSize, leastError);
                 if (error < leastError)
                 {
@@ -974,7 +977,8 @@ void TemporalFilter::motionEstimationLumaDoubleRes(MV *mvs, uint32_t mvStride, P
 
             if (blockY > 0)
             {
-                MV aboveMV = mvs[(blockX / stepSize, (blockY - stepSize) / stepSize)];
+                int idx = ((blockY - stepSize) / stepSize) * mvStride + (blockX / stepSize);
+                MV aboveMV = mvs[idx];
                 int error = motionErrorLuma(orig, buffer, blockX, blockY, aboveMV.x, aboveMV.y, blockSize, leastError);
                 if (error < leastError)
                 {
@@ -982,9 +986,11 @@ void TemporalFilter::motionEstimationLumaDoubleRes(MV *mvs, uint32_t mvStride, P
                     leastError = error;
                 }
             }
+
             if (blockX > 0)
             {
-                MV leftMV = mvs[((blockX - stepSize) / stepSize, blockY / stepSize)];
+                int idx = ((blockY / stepSize) * mvStride + (blockX - stepSize) / stepSize);
+                MV leftMV = mvs[idx];
                 int error = motionErrorLuma(orig, buffer, blockX, blockY, leftMV.x, leftMV.y, blockSize, leastError);
                 if (error < leastError)
                 {
@@ -1051,7 +1057,6 @@ void TemporalFilter::subsampleLuma(PicYuv *input, PicYuv *output, int factor)
         }
     }
 
-    // output.extendPicBorder();
     extendPicBorder(output->m_picOrg[0], output->m_stride, output->m_picWidth, output->m_picHeight, output->m_lumaMarginX, output->m_lumaMarginY);
 }
 
