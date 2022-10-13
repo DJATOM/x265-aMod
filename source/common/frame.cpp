@@ -81,7 +81,7 @@ bool Frame::create(x265_param *param, float* quantOffsets)
     m_fencPic = new PicYuv;
     m_param = param;
 
-    if (m_param->bEnableGopBasedTemporalFilter)
+    if (m_param->bEnableTemporalFilter)
     {
         m_mcstf = new TemporalFilter;
         m_mcstf->init(param);
@@ -252,7 +252,7 @@ void Frame::destroy()
         m_fencPic = NULL;
     }
 
-    if (m_param->bEnableGopBasedTemporalFilter)
+    if (m_param->bEnableTemporalFilter)
     {
 
         if (m_fencPicSubsampled2)

@@ -1998,7 +1998,7 @@ typedef struct x265_param
     char* filmGrain;
 
     /*Motion compensated temporal filter*/
-    int      bEnableGopBasedTemporalFilter;
+    int      bEnableTemporalFilter;
     double   temporalFilterStrength;
 } x265_param;
 

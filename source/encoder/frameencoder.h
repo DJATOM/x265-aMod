@@ -236,7 +236,7 @@ public:
 
     // initialization for mcstf
     TemporalFilter*          m_frameEncTF;
-    MCTFReferencePicInfo     m_mcstfRefList[MAX_MCTF_TEMPORAL_WINDOW_LENGTH];
+    TemporalFilterRefPicInfo m_mcstfRefList[MAX_MCSTF_TEMPORAL_WINDOW_LENGTH];
 
     class WeightAnalysis : public BondedTaskGroup
     {

@@ -396,7 +396,7 @@ public:
     void configureVideoSignalTypePreset(x265_param* p);
 
     bool isFilterThisframe(uint8_t sliceTypeConfig, int curSliceType);
-    bool generateMctfRef(Frame* frameEnc, FrameEncoder* currEncoder);
+    bool generateMcstfRef(Frame* frameEnc, FrameEncoder* currEncoder);
 
 protected:
 

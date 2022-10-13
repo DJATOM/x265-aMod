@@ -346,7 +346,7 @@ typedef int16_t  coeff_t;      // transform coefficient
 #define MAX_NUM_DYN_REFINE          (NUM_CU_DEPTH * X265_REFINE_INTER_LEVELS)
 #define X265_BYTE 8
 
-#define MAX_MCTF_TEMPORAL_WINDOW_LENGTH 8
+#define MAX_MCSTF_TEMPORAL_WINDOW_LENGTH 8
 
 namespace X265_NS {
 

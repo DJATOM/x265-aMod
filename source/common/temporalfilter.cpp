@@ -67,8 +67,8 @@ void OrigPicBuffer::setOrigPicList(Frame* inFrame, int frameCnt)
 {
     Slice* slice = inFrame->m_encData->m_slice;
     uint8_t j = 0;
-    for (int iterPOC = (inFrame->m_poc - inFrame->m_mcstf->s_range);
-        iterPOC <= (inFrame->m_poc + inFrame->m_mcstf->s_range); iterPOC++)
+    for (int iterPOC = (inFrame->m_poc - inFrame->m_mcstf->m_range);
+        iterPOC <= (inFrame->m_poc + inFrame->m_mcstf->m_range); iterPOC++)
     {
         if (iterPOC != inFrame->m_poc)
         {
@@ -137,22 +137,19 @@ void OrigPicBuffer::addPictureToFreelist(Frame* inFrame)
     m_mcstfOrigPicFreeList.pushBack(*inFrame);
 }
 
-TemporalFilter::TemporalFilter() {
-    m_FrameSkip = 0;
+TemporalFilter::TemporalFilter()
+{
     m_sourceWidth = 0;
     m_sourceHeight = 0,
     m_QP = 0;
-    m_GOPSize = 0;
-    m_framesToBeEncoded = 0;
     m_sliceTypeConfig = 3;
     m_numRef = 0;
 
-    s_range = 2;
-    s_chromaFactor = 0.55;
-    s_sigmaMultiplier = 9.0;
-    s_sigmaZeroPoint = 10.0;
-    s_motionVectorFactor = 16;
-    s_padding = 128;
+    m_range = 2;
+    m_chromaFactor = 0.55;
+    m_sigmaMultiplier = 9.0;
+    m_sigmaZeroPoint = 10.0;
+    m_motionVectorFactor = 16;
 }
 
 void TemporalFilter::init(const x265_param* param)
@@ -169,7 +166,7 @@ void TemporalFilter::init(const x265_param* param)
     predPUYuv.create(FENC_STRIDE, X265_CSP_I400);
 }
 
-int TemporalFilter::createRefPicInfo(MCTFReferencePicInfo* refFrame, x265_param* param)
+int TemporalFilter::createRefPicInfo(TemporalFilterRefPicInfo* refFrame, x265_param* param)
 {
     CHECKED_MALLOC_ZERO(refFrame->mvs, MV, sizeof(MV)* ((m_sourceWidth ) / 4) * ((m_sourceHeight ) / 4));
     refFrame->mvsStride = m_sourceWidth / 4;
@@ -211,8 +208,8 @@ int TemporalFilter::motionErrorLuma(
     int error = 0;// dx * 10 + dy * 10;
     if (((dx | dy) & 0xF) == 0)
     {
-        dx /= s_motionVectorFactor;
-        dy /= s_motionVectorFactor;
+        dx /= m_motionVectorFactor;
+        dy /= m_motionVectorFactor;
 
         const pixel* bufferRowStart = buffOrigin + (y + dy) * buffStride + (x + dx);
 #if 0
@@ -311,7 +308,7 @@ void TemporalFilter::applyMotion(MV *mvs, uint32_t mvsStride, PicYuv *input, Pic
         const pixel *pSrcImage = input->m_picOrg[c];
         pixel *pDstImage = output->m_picOrg[c];
 
-        if (c == 0)
+        if (!c)
         {
             srcStride = (int)input->m_stride;
             dstStride = (int)output->m_stride;
@@ -397,7 +394,7 @@ void TemporalFilter::applyMotion(MV *mvs, uint32_t mvsStride, PicYuv *input, Pic
 * Old Version: bilateralFilter
 */
 void TemporalFilter::bilateralFilter(Frame* frame,
-    MCTFReferencePicInfo* m_mctfRefList,
+    TemporalFilterRefPicInfo* m_mcstfRefList,
     double overallStrength)
 {
 
@@ -405,21 +402,21 @@ void TemporalFilter::bilateralFilter(Frame* frame,
 
     for (int i = 0; i < numRefs; i++)
     {
-        MCTFReferencePicInfo *ref = &m_mctfRefList[i];
-        applyMotion(m_mctfRefList[i].mvs, m_mctfRefList[i].mvsStride, m_mctfRefList[i].picBuffer, ref->compensatedPic);
+        TemporalFilterRefPicInfo *ref = &m_mcstfRefList[i];
+        applyMotion(m_mcstfRefList[i].mvs, m_mcstfRefList[i].mvsStride, m_mcstfRefList[i].picBuffer, ref->compensatedPic);
     }
 
     int refStrengthRow = 2;
-    if (numRefs == s_range * 2)
+    if (numRefs == m_range * 2)
     {
         refStrengthRow = 0;
     }
-    else if (numRefs == s_range)
+    else if (numRefs == m_range)
     {
         refStrengthRow = 1;
     }
 
-    const double lumaSigmaSq = (m_QP - s_sigmaZeroPoint) * (m_QP - s_sigmaZeroPoint) * s_sigmaMultiplier;
+    const double lumaSigmaSq = (m_QP - m_sigmaZeroPoint) * (m_QP - m_sigmaZeroPoint) * m_sigmaMultiplier;
     const double chromaSigmaSq = 30 * 30;
 
     PicYuv* orgPic = frame->m_fencPic;
@@ -430,7 +427,7 @@ void TemporalFilter::bilateralFilter(Frame* frame,
         pixel *srcPelRow = NULL;
         intptr_t srcStride, correctedPicsStride = 0;
 
-        if (c == 0)
+        if (!c)
         {
             height = orgPic->m_picHeight;
             width = orgPic->m_picWidth;
@@ -449,12 +446,12 @@ void TemporalFilter::bilateralFilter(Frame* frame,
         }
 
         const double sigmaSq = (!c) ? lumaSigmaSq : chromaSigmaSq;
-        const double weightScaling = overallStrength * ((!c) ? 0.4 : s_chromaFactor);
+        const double weightScaling = overallStrength * ((!c) ? 0.4 : m_chromaFactor);
 
         const pixel maxSampleValue = (1 << m_bitDepth) - 1;
         const double bitDepthDiffWeighting = 1024.0 / (maxSampleValue + 1);
 
-        for (int y = 0; y < height; y++, srcPelRow += srcStride/*, dstPelRow += dstStride*/)
+        for (int y = 0; y < height; y++, srcPelRow += srcStride)
         {
             pixel *srcPel = srcPelRow;
 
@@ -466,9 +463,9 @@ void TemporalFilter::bilateralFilter(Frame* frame,
 
                 for (int i = 0; i < numRefs; i++)
                 {
-                    MCTFReferencePicInfo *refPicInfo = &m_mctfRefList[i];
+                    TemporalFilterRefPicInfo *refPicInfo = &m_mcstfRefList[i];
 
-                    if (c == 0)
+                    if (!c)
                         correctedPicsStride = refPicInfo->compensatedPic->m_stride;
                     else
                         correctedPicsStride = refPicInfo->compensatedPic->m_strideC;
@@ -488,7 +485,6 @@ void TemporalFilter::bilateralFilter(Frame* frame,
                 newVal /= temporalWeightSum;
                 pixel sampleVal = (pixel)round(newVal);
                 sampleVal = (sampleVal < 0 ? 0 : (sampleVal > maxSampleValue ? maxSampleValue : sampleVal));
-                //*dstPel = sampleVal;
                 *srcPel = sampleVal;
             }
         }
@@ -501,7 +497,7 @@ void TemporalFilter::bilateralFilter(Frame* frame,
 * New Version: bilateralFilter
 */
 void TemporalFilter::bilateralFilter(Frame* frame,
-    MCTFReferencePicInfo* m_mctfRefList,
+    TemporalFilterRefPicInfo* m_mcstfRefList,
     double overallStrength)
 {
 
@@ -509,21 +505,21 @@ void TemporalFilter::bilateralFilter(Frame* frame,
 
     for (int i = 0; i < numRefs; i++)
     {
-        MCTFReferencePicInfo *ref = &m_mctfRefList[i];
-        applyMotion(m_mctfRefList[i].mvs, m_mctfRefList[i].mvsStride, m_mctfRefList[i].picBuffer, ref->compensatedPic);
+        TemporalFilterRefPicInfo *ref = &m_mcstfRefList[i];
+        applyMotion(m_mcstfRefList[i].mvs, m_mcstfRefList[i].mvsStride, m_mcstfRefList[i].picBuffer, ref->compensatedPic);
     }
 
     int refStrengthRow = 2;
-    if (numRefs == s_range * 2)
+    if (numRefs == m_range * 2)
     {
         refStrengthRow = 0;
     }
-    else if (numRefs == s_range)
+    else if (numRefs == m_range)
     {
         refStrengthRow = 1;
     }
 
-    const double lumaSigmaSq = (m_QP - s_sigmaZeroPoint) * (m_QP - s_sigmaZeroPoint) * s_sigmaMultiplier;
+    const double lumaSigmaSq = (m_QP - m_sigmaZeroPoint) * (m_QP - m_sigmaZeroPoint) * m_sigmaMultiplier;
     const double chromaSigmaSq = 30 * 30;
 
     PicYuv* orgPic = frame->m_fencPic;
@@ -534,7 +530,7 @@ void TemporalFilter::bilateralFilter(Frame* frame,
         pixel *srcPelRow = NULL;
         intptr_t srcStride, correctedPicsStride = 0;
 
-        if (c == 0)
+        if (!c)
         {
             height = orgPic->m_picHeight;
             width = orgPic->m_picWidth;
@@ -553,7 +549,7 @@ void TemporalFilter::bilateralFilter(Frame* frame,
         }
 
         const double sigmaSq = (!c)  ? lumaSigmaSq : chromaSigmaSq;
-        const double weightScaling = overallStrength * ( (!c) ? 0.4 : s_chromaFactor);
+        const double weightScaling = overallStrength * ( (!c) ? 0.4 : m_chromaFactor);
 
         const pixel maxSampleValue = (1 << m_bitDepth) - 1;
         const double bitDepthDiffWeighting = 1024.0 / (maxSampleValue + 1);
@@ -574,7 +570,7 @@ void TemporalFilter::bilateralFilter(Frame* frame,
                 {
                     for (int i = 0; i < numRefs; i++)
                     {
-                        MCTFReferencePicInfo *refPicInfo = &m_mctfRefList[i];
+                        TemporalFilterRefPicInfo *refPicInfo = &m_mcstfRefList[i];
 
                         if (!c)
                             correctedPicsStride = refPicInfo->compensatedPic->m_stride;
@@ -611,13 +607,13 @@ void TemporalFilter::bilateralFilter(Frame* frame,
                 double minError = 9999999;
                 for (int i = 0; i < numRefs; i++)
                 {
-                    MCTFReferencePicInfo *refPicInfo = &m_mctfRefList[i];
+                    TemporalFilterRefPicInfo *refPicInfo = &m_mcstfRefList[i];
                     minError = X265_MIN(minError, (double)refPicInfo->error[(y / blkSize) * refPicInfo->mvsStride + (x / blkSize)]);
                 }
 
                 for (int i = 0; i < numRefs; i++)
                 {
-                    MCTFReferencePicInfo *refPicInfo = &m_mctfRefList[i];
+                    TemporalFilterRefPicInfo *refPicInfo = &m_mcstfRefList[i];
 
                     const int error = refPicInfo->error[(y / blkSize) * refPicInfo->mvsStride + (x / blkSize)];
                     const int noise = refPicInfo->noise[(y / blkSize) * refPicInfo->mvsStride + (x / blkSize)];
@@ -826,14 +822,14 @@ void TemporalFilter::motionEstimationLuma(MV *mvs, uint32_t mvStride, PicYuv *or
             }
 
             MV prevBest = best;
-            for (int y2 = prevBest.y / s_motionVectorFactor - range; y2 <= prevBest.y / s_motionVectorFactor + range; y2++)
+            for (int y2 = prevBest.y / m_motionVectorFactor - range; y2 <= prevBest.y / m_motionVectorFactor + range; y2++)
             {
-                for (int x2 = prevBest.x / s_motionVectorFactor - range; x2 <= prevBest.x / s_motionVectorFactor + range; x2++)
+                for (int x2 = prevBest.x / m_motionVectorFactor - range; x2 <= prevBest.x / m_motionVectorFactor + range; x2++)
                 {
-                    int error = motionErrorLuma(orig, buffer, blockX, blockY, x2 * s_motionVectorFactor, y2 * s_motionVectorFactor, blockSize, leastError);
+                    int error = motionErrorLuma(orig, buffer, blockX, blockY, x2 * m_motionVectorFactor, y2 * m_motionVectorFactor, blockSize, leastError);
                     if (error < leastError)
                     {
-                        best.set(x2 * s_motionVectorFactor, y2 * s_motionVectorFactor);
+                        best.set(x2 * m_motionVectorFactor, y2 * m_motionVectorFactor);
                         leastError = error;
                     }
                 }
@@ -958,14 +954,14 @@ void TemporalFilter::motionEstimationLumaDoubleRes(MV *mvs, uint32_t mvStride, P
             }
 
             MV prevBest = best;
-            for (int y2 = prevBest.y / s_motionVectorFactor - range; y2 <= prevBest.y / s_motionVectorFactor + range; y2++)
+            for (int y2 = prevBest.y / m_motionVectorFactor - range; y2 <= prevBest.y / m_motionVectorFactor + range; y2++)
             {
-                for (int x2 = prevBest.x / s_motionVectorFactor - range; x2 <= prevBest.x / s_motionVectorFactor + range; x2++)
+                for (int x2 = prevBest.x / m_motionVectorFactor - range; x2 <= prevBest.x / m_motionVectorFactor + range; x2++)
                 {
-                    int error = motionErrorLuma(orig, buffer, blockX, blockY, x2 * s_motionVectorFactor, y2 * s_motionVectorFactor, blockSize, leastError);
+                    int error = motionErrorLuma(orig, buffer, blockX, blockY, x2 * m_motionVectorFactor, y2 * m_motionVectorFactor, blockSize, leastError);
                     if (error < leastError)
                     {
-                        best.set(x2 * s_motionVectorFactor, y2 * s_motionVectorFactor);
+                        best.set(x2 * m_motionVectorFactor, y2 * m_motionVectorFactor);
                         leastError = error;
                     }
                 }
@@ -1087,7 +1083,7 @@ void TemporalFilter::subsampleLuma(PicYuv *input, PicYuv *output, int factor)
     extendPicBorder(output->m_picOrg[0], output->m_stride, output->m_picWidth, output->m_picHeight, output->m_lumaMarginX, output->m_lumaMarginY);
 }
 
-void TemporalFilter::destroyRefPicInfo(MCTFReferencePicInfo* curFrame)
+void TemporalFilter::destroyRefPicInfo(TemporalFilterRefPicInfo* curFrame)
 {
     if (curFrame)
     {

@@ -1,6 +1,8 @@
 /*****************************************************************************
 * Copyright (C) 2013-2021 MulticoreWare, Inc
 *
+ * Authors: Ashok Kumar Mishra <ashok@multicorewareinc.com>
+ *
 * This program is free software; you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation; either version 2 of the License, or
@@ -88,13 +90,6 @@ public:
     void addEncPictureToPicList(Frame*);
 };
 
-struct TemporalFilterRefPicInfo
-{
-    PicYuv*    picBuffer;
-    MV*        mvs;
-    int        origOffset;
-};
-
 struct MotionEstimatorTLD
 {
     MotionEstimate  me;
@@ -108,7 +103,7 @@ struct MotionEstimatorTLD
     ~MotionEstimatorTLD() {}
 };
 
-struct MCTFReferencePicInfo
+struct TemporalFilterRefPicInfo
 {
     PicYuv*    picBuffer;
     PicYuv*    picBufferSubSampled2;
@@ -145,25 +140,20 @@ public:
     // Private static member variables
     const x265_param *m_param;
     int32_t  m_bitDepth;
-    int s_range;
+    int m_range;
     uint8_t m_numRef;
-    double s_chromaFactor;
-    double s_sigmaMultiplier;
-    double s_sigmaZeroPoint;
-    int s_motionVectorFactor;
-    int s_padding;
+    double m_chromaFactor;
+    double m_sigmaMultiplier;
+    double m_sigmaZeroPoint;
+    int m_motionVectorFactor;
+    int m_padding;
 
     // Private member variables
-    int m_FrameSkip;
+
     int m_sourceWidth;
     int m_sourceHeight;
     int m_QP;
-    int m_GOPSize;
 
-    int m_aiPad[2];
-    int m_framesToBeEncoded;
-    bool m_bClipInputVideoToRec709Range;
-    bool m_gopBasedTemporalFilterFutureReference;
     int m_internalCsp;
     int m_numComponents;
     uint8_t m_sliceTypeConfig;
@@ -173,14 +163,14 @@ public:
 
     void subsampleLuma(PicYuv *input, PicYuv *output, int factor = 2);
 
-    int createRefPicInfo(MCTFReferencePicInfo* refFrame, x265_param* param);
+    int createRefPicInfo(TemporalFilterRefPicInfo* refFrame, x265_param* param);
 
-    void bilateralFilter(Frame* frame, MCTFReferencePicInfo* mctfRefList, double overallStrength);
+    void bilateralFilter(Frame* frame, TemporalFilterRefPicInfo* mctfRefList, double overallStrength);
 
     void motionEstimationLuma(MV *mvs, uint32_t mvStride, PicYuv *orig, PicYuv *buffer, int bs,
         MV *previous = 0, uint32_t prevmvStride = 0, int factor = 1);
 
-    void TemporalFilter::motionEstimationLumaDoubleRes(MV *mvs, uint32_t mvStride, PicYuv *orig, PicYuv *buffer, int blockSize,
+    void motionEstimationLumaDoubleRes(MV *mvs, uint32_t mvStride, PicYuv *orig, PicYuv *buffer, int blockSize,
         MV *previous, uint32_t prevMvStride, int factor, int* minError);
 
     int motionErrorLuma(PicYuv *orig,
@@ -192,7 +182,7 @@ public:
         int bs,
         int besterror = 8 * 8 * 1024 * 1024);
 
-    void destroyRefPicInfo(MCTFReferencePicInfo* curFrame);
+    void destroyRefPicInfo(TemporalFilterRefPicInfo* curFrame);
 
     void applyMotion(MV *mvs, uint32_t mvsStride, PicYuv *input, PicYuv *output);
 
