@@ -159,7 +159,8 @@ public:
     uint8_t m_sliceTypeConfig;
 
     MotionEstimatorTLD* m_metld;
-    Yuv        predPUYuv;
+    Yuv  predPUYuv;
+    int m_useSADinME;
 
     void subsampleLuma(PicYuv *input, PicYuv *output, int factor = 2);
 
@@ -173,7 +174,16 @@ public:
     void motionEstimationLumaDoubleRes(MV *mvs, uint32_t mvStride, PicYuv *orig, PicYuv *buffer, int blockSize,
         MV *previous, uint32_t prevMvStride, int factor, int* minError);
 
-    int motionErrorLuma(PicYuv *orig,
+    int motionErrorLumaSSD(PicYuv *orig,
+        PicYuv *buffer,
+        int x,
+        int y,
+        int dx,
+        int dy,
+        int bs,
+        int besterror = 8 * 8 * 1024 * 1024);
+
+    int motionErrorLumaSAD(PicYuv *orig,
         PicYuv *buffer,
         int x,
         int y,
