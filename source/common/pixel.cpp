@@ -627,6 +627,23 @@ void frame_init_lowres_core(const pixel* src0, pixel* dst0, pixel* dsth, pixel* 
     }
 }
 
+static
+void frame_subsample_luma(const pixel* src0, pixel* dst0, intptr_t src_stride, intptr_t dst_stride, int width, int height)
+{
+    for (int y = 0; y < height; y++, src0 += 2 * src_stride, dst0 += dst_stride)
+    {
+        const pixel *inRow = src0;
+        const pixel *inRowBelow = src0 + src_stride;
+        pixel *target = dst0;
+        for (int x = 0; x < width; x++)
+        {
+            target[x] = (((inRow[0] + inRowBelow[0] + 1) >> 1) + ((inRow[1] + inRowBelow[1] + 1) >> 1) + 1) >> 1;
+            inRow += 2;
+            inRowBelow += 2;
+        }
+    }
+}
+
 /* structural similarity metric */
 static void ssim_4x4x2_core(const pixel* pix1, intptr_t stride1, const pixel* pix2, intptr_t stride2, int sums[2][4])
 {
@@ -1355,5 +1372,7 @@ void setupPixelPrimitives_c(EncoderPrimitives &p)
     p.cu[BLOCK_16x16].normFact = normFact_c;
     p.cu[BLOCK_32x32].normFact = normFact_c;
     p.cu[BLOCK_64x64].normFact = normFact_c;
+    /* SubSample Luma*/
+    p.frameSubSampleLuma = frame_subsample_luma;
 }
 }

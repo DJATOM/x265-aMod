@@ -162,8 +162,8 @@ bool PicYuv::createScaledPicYUV(x265_param* param, uint8_t scaleFactor)
     uint32_t numCuInWidth = (m_picWidth + param->maxCUSize - 1) / param->maxCUSize;
     uint32_t numCuInHeight = (m_picHeight + param->maxCUSize - 1) / param->maxCUSize;
 
-    m_lumaMarginX = 32; // search margin for L0 and L1 ME in horizontal direction
-    m_lumaMarginY = 32; // search margin for L0 and L1 ME in vertical direction
+    m_lumaMarginX = 128; // search margin for L0 and L1 ME in horizontal direction
+    m_lumaMarginY = 128; // search margin for L0 and L1 ME in vertical direction
     m_stride = (numCuInWidth * param->maxCUSize) + (m_lumaMarginX << 1);
 
     int maxHeight = numCuInHeight * param->maxCUSize;

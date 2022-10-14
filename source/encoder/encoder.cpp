@@ -2703,8 +2703,10 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
 
                 if (!*frameEnc->m_isSubSampled)
                 {
-                    curEncoder->m_frameEncTF->subsampleLuma(frameEnc->m_fencPic, frameEnc->m_fencPicSubsampled2);
-                    curEncoder->m_frameEncTF->subsampleLuma(frameEnc->m_fencPicSubsampled2, frameEnc->m_fencPicSubsampled4);
+                    primitives.frameSubSampleLuma((const pixel *)frameEnc->m_fencPic->m_picOrg[0],frameEnc->m_fencPicSubsampled2->m_picOrg[0], frameEnc->m_fencPic->m_stride, frameEnc->m_fencPicSubsampled2->m_stride, frameEnc->m_fencPicSubsampled2->m_picWidth, frameEnc->m_fencPicSubsampled2->m_picHeight);
+                    extendPicBorder(frameEnc->m_fencPicSubsampled2->m_picOrg[0], frameEnc->m_fencPicSubsampled2->m_stride, frameEnc->m_fencPicSubsampled2->m_picWidth, frameEnc->m_fencPicSubsampled2->m_picHeight, frameEnc->m_fencPicSubsampled2->m_lumaMarginX, frameEnc->m_fencPicSubsampled2->m_lumaMarginY);
+                    primitives.frameSubSampleLuma((const pixel *)frameEnc->m_fencPicSubsampled2->m_picOrg[0],frameEnc->m_fencPicSubsampled4->m_picOrg[0], frameEnc->m_fencPicSubsampled2->m_stride, frameEnc->m_fencPicSubsampled4->m_stride, frameEnc->m_fencPicSubsampled4->m_picWidth, frameEnc->m_fencPicSubsampled4->m_picHeight);
+                    extendPicBorder(frameEnc->m_fencPicSubsampled4->m_picOrg[0], frameEnc->m_fencPicSubsampled4->m_stride, frameEnc->m_fencPicSubsampled4->m_picWidth, frameEnc->m_fencPicSubsampled4->m_picHeight, frameEnc->m_fencPicSubsampled4->m_lumaMarginX, frameEnc->m_fencPicSubsampled4->m_lumaMarginY);
                     *frameEnc->m_isSubSampled = true;
                 }
 
@@ -2713,8 +2715,10 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                     TemporalFilterRefPicInfo *ref = &curEncoder->m_mcstfRefList[i - 1];
                     if (!*ref->isSubsampled)
                     {
-                        curEncoder->m_frameEncTF->subsampleLuma(ref->picBuffer, ref->picBufferSubSampled2);
-                        curEncoder->m_frameEncTF->subsampleLuma(ref->picBufferSubSampled2, ref->picBufferSubSampled4);
+                        primitives.frameSubSampleLuma((const pixel *)ref->picBuffer->m_picOrg[0], ref->picBufferSubSampled2->m_picOrg[0], ref->picBuffer->m_stride, ref->picBufferSubSampled2->m_stride, ref->picBufferSubSampled2->m_picWidth, ref->picBufferSubSampled2->m_picHeight);
+                        extendPicBorder(frameEnc->m_fencPicSubsampled2->m_picOrg[0], ref->picBufferSubSampled2->m_stride, ref->picBufferSubSampled2->m_picWidth, ref->picBufferSubSampled2->m_picHeight, ref->picBufferSubSampled2->m_lumaMarginX, ref->picBufferSubSampled2->m_lumaMarginY);
+                        primitives.frameSubSampleLuma((const pixel *)ref->picBufferSubSampled2->m_picOrg[0],ref->picBufferSubSampled4->m_picOrg[0], ref->picBufferSubSampled2->m_stride, ref->picBufferSubSampled4->m_stride, ref->picBufferSubSampled4->m_picWidth, ref->picBufferSubSampled4->m_picHeight);
+                        extendPicBorder(ref->picBufferSubSampled4->m_picOrg[0], ref->picBufferSubSampled4->m_stride, ref->picBufferSubSampled4->m_picWidth, ref->picBufferSubSampled4->m_picHeight, ref->picBufferSubSampled4->m_lumaMarginX, ref->picBufferSubSampled4->m_lumaMarginY);
                         *ref->isSubsampled = true;
                     }
                 }

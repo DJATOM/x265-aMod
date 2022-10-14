@@ -162,8 +162,6 @@ public:
     Yuv  predPUYuv;
     int m_useSADinME;
 
-    void subsampleLuma(PicYuv *input, PicYuv *output, int factor = 2);
-
     int createRefPicInfo(TemporalFilterRefPicInfo* refFrame, x265_param* param);
 
     void bilateralFilter(Frame* frame, TemporalFilterRefPicInfo* mctfRefList, double overallStrength);

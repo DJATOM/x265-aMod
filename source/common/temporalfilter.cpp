@@ -1213,35 +1213,6 @@ void TemporalFilter::motionEstimationLumaDoubleRes(MV *mvs, uint32_t mvStride, P
 }
 #endif
 
-void TemporalFilter::subsampleLuma(PicYuv *input, PicYuv *output, int factor)
-{
-
-    int newWidth = output->m_picWidth;
-    int newHeight = output->m_picHeight;
-
-    pixel* srcRow = input->m_picOrg[0];
-    intptr_t srcStride = input->m_stride;
-
-    pixel *dstRow = output->m_picOrg[0];
-    intptr_t dstStride = output->m_stride;
-
-    for (int y = 0; y < newHeight; y++, srcRow += factor * srcStride, dstRow += dstStride)
-    {
-        pixel *inRow = srcRow;
-        pixel *inRowBelow = srcRow + srcStride;
-        pixel *target = dstRow;
-
-        for (int x = 0; x < newWidth; x++)
-        {
-            target[x] = (inRow[0] + inRowBelow[0] + inRow[1] + inRowBelow[1] + 2) >> 2;
-            inRow += 2;
-            inRowBelow += 2;
-        }
-    }
-
-    extendPicBorder(output->m_picOrg[0], output->m_stride, output->m_picWidth, output->m_picHeight, output->m_lumaMarginX, output->m_lumaMarginY);
-}
-
 void TemporalFilter::destroyRefPicInfo(TemporalFilterRefPicInfo* curFrame)
 {
     if (curFrame)
