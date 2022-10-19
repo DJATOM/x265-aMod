@@ -35,8 +35,6 @@
 
 using namespace X265_NS;
 
-#define BILTERAL_FILTER_NEW_VERSION 1
-
 const int s_interpolationFilter[16][8] =
 {
     {   0,   0,   0,  64,   0,   0,   0,   0 },   //0
@@ -57,7 +55,6 @@ const int s_interpolationFilter[16][8] =
     {   0,   0,  -2,   4,  64,  -3,   1,   0 }    //15-->-->
 };
 
-#if BILTERAL_FILTER_NEW_VERSION
 const double s_refStrengths[3][4] =
 { // abs(POC offset)
   //  1,    2     3     4
@@ -65,14 +62,6 @@ const double s_refStrengths[3][4] =
   {1.13, 0.97, 0.81, 0.57},  // m_range
   {0.30, 0.30, 0.30, 0.30}   // otherwise
 };
-#else
-const double s_refStrengths[2][2] =
-{ // abs(POC offset)
-  //  1,    2
-  {0.85, 0.60},  // w future refs
-  {1.20, 1.00},  // w/o future refs
-};
-#endif
 
 class OrigPicBuffer
 {

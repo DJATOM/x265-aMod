@@ -1328,6 +1328,11 @@ Temporal / motion search options
 	Search range for HME level 0, 1 and 2.
 	The Search Range for each HME level must be between 0 and 32768(excluding).
 	Default search range is 16,32,48 for level 0,1,2 respectively.
+	
+.. option:: --mcstf, --no-mcstf
+
+    Enable Motion Compensated Temporal filtering.
+	Default: disabled
 
 Spatial/intra options
 =====================

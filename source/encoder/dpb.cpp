@@ -73,7 +73,7 @@ void DPB::recycleUnreferenced()
         bool isMCSTFReferenced = false;
 
         if (curFrame->m_param->bEnableTemporalFilter)
-            isMCSTFReferenced = curFrame->m_refPicCnt[1];
+            isMCSTFReferenced =!!(curFrame->m_refPicCnt[1]);
 
         if (!curFrame->m_encData->m_bHasReferences && !curFrame->m_countRefEncoders && !isMCSTFReferenced)
         {
