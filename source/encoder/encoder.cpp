@@ -2242,17 +2242,27 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             frameEnc = m_lookahead->getDecidedPicture();
         if (frameEnc && !pass && (!m_param->chunkEnd || (m_encodedFrameNum < m_param->chunkEnd)))
         {
-            if ((m_param->bEnableSceneCutAwareQp & FORWARD) && m_param->rc.bStatRead)
+            if (m_param->bEnableSceneCutAwareQp & FORWARD)
             {
-                RateControlEntry * rcEntry;
-                rcEntry = &(m_rateControl->m_rce2Pass[frameEnc->m_poc]);
+                bool isSceneCut = frameEnc->m_lowres.bScenecut;
 
-                if (rcEntry->scenecut)
+                // If multi pass, overwrite with stats file scenecut info
+                if (m_param->rc.bStatRead)
                 {
+                    RateControlEntry * rcEntry;
+                    rcEntry = &(m_rateControl->m_rce2Pass[frameEnc->m_poc]);
+
+                    isSceneCut = rcEntry->scenecut;
+                }
+
+                if (isSceneCut)
+                {
+                    // No previous scenecut
                     if (m_rateControl->m_lastScenecut == -1)
                         m_rateControl->m_lastScenecut = frameEnc->m_poc;
                     else
                     {
+                        // Only set as scenecut if it's not within an existing scenecut forward window
                         int maxWindowSize = int((m_param->fwdScenecutWindow / 1000.0) * (m_param->fpsNum / m_param->fpsDenom) + 0.5);
                         if (frameEnc->m_poc > (m_rateControl->m_lastScenecut + maxWindowSize))
                             m_rateControl->m_lastScenecut = frameEnc->m_poc;

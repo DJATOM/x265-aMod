@@ -1358,9 +1358,9 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
                 {
                     if (window1 > 0)
                         p->fwdScenecutWindow = window1;
-                    if (refQpDelta1 > 0)
+                    if (refQpDelta1 >= 0)
                         p->fwdRefQpDelta = refQpDelta1;
-                    if (nonRefQpDelta1 > 0)
+                    if (nonRefQpDelta1 >= 0)
                         p->fwdNonRefQpDelta = nonRefQpDelta1;
                 }
                 else
@@ -1375,9 +1375,9 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
                 {
                     if (window1 > 0)
                         p->bwdScenecutWindow = window1;
-                    if (refQpDelta1 > 0)
+                    if (refQpDelta1 >= 0)
                         p->bwdRefQpDelta = refQpDelta1;
-                    if (nonRefQpDelta1 > 0)
+                    if (nonRefQpDelta1 >= 0)
                         p->bwdNonRefQpDelta = nonRefQpDelta1;
                 }
                 else
@@ -1394,15 +1394,15 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
                 {
                     if (window1 > 0)
                         p->fwdScenecutWindow = window1;
-                    if (refQpDelta1 > 0)
+                    if (refQpDelta1 >= 0)
                         p->fwdRefQpDelta = refQpDelta1;
-                    if (nonRefQpDelta1 > 0)
+                    if (nonRefQpDelta1 >= 0)
                         p->fwdNonRefQpDelta = nonRefQpDelta1;
                     if (window2 > 0)
                         p->bwdScenecutWindow = window2;
-                    if (refQpDelta2 > 0)
+                    if (refQpDelta2 >= 0)
                         p->bwdRefQpDelta = refQpDelta2;
-                    if (nonRefQpDelta2 > 0)
+                    if (nonRefQpDelta2 >= 0)
                         p->bwdNonRefQpDelta = nonRefQpDelta2;
                 }
                 else
@@ -1845,10 +1845,10 @@ int x265_check_params(x265_param* param)
         "Invalid SAO tune level. Value must be between 0 and 4 (inclusive)");
     if (param->bEnableSceneCutAwareQp)
     {
-        if (!param->rc.bStatRead)
+        if (param->bEnableSceneCutAwareQp != FORWARD && !param->rc.bStatRead)
         {
             param->bEnableSceneCutAwareQp = 0;
-            x265_log(param, X265_LOG_WARNING, "Disabling Scenecut Aware Frame Quantizer Selection since it works only in pass 2\n");
+            x265_log(param, X265_LOG_WARNING, "Disabling Scenecut Aware Frame Quantizer Selection since single pass only works with Forward masking\n");
         }
         else
         {
@@ -2329,8 +2329,8 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     s += sprintf(s, " qp-adaptation-range=%.2f", p->rc.qpAdaptationRange);
     s += sprintf(s, " scenecut-aware-qp=%d", p->bEnableSceneCutAwareQp);
     if (p->bEnableSceneCutAwareQp)
-        s += sprintf(s, " fwd-scenecut-window=%d fwd-ref-qp-delta=%f fwd-nonref-qp-delta=%f bwd-scenecut-window=%d bwd-ref-qp-delta=%f bwd-nonref-qp-delta=%f", p->fwdScenecutWindow, p->fwdRefQpDelta, p->fwdNonRefQpDelta, p->bwdScenecutWindow, p->bwdRefQpDelta, p->bwdNonRefQpDelta);
-    s += sprintf(s, "conformance-window-offsets right=%d bottom=%d", p->confWinRightOffset, p->confWinBottomOffset);
+        s += sprintf(s, " fwd-scenecut-window=%d fwd-ref-qp-delta=%.2f fwd-nonref-qp-delta=%.2f bwd-scenecut-window=%d bwd-ref-qp-delta=%.2f bwd-nonref-qp-delta=%.2f", p->fwdScenecutWindow, p->fwdRefQpDelta, p->fwdNonRefQpDelta, p->bwdScenecutWindow, p->bwdRefQpDelta, p->bwdNonRefQpDelta);
+    s += sprintf(s, " conformance-window-offsets right=%d bottom=%d", p->confWinRightOffset, p->confWinBottomOffset);
     s += sprintf(s, " decoder-max-rate=%d", p->decoderVbvMaxRate);
     BOOL(p->bliveVBV2pass, "vbv-live-multi-pass");
 #undef BOOL
