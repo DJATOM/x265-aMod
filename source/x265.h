@@ -1895,12 +1895,6 @@ typedef struct x265_param
     /* The offset by which QP is incremented for non-referenced inter-frames after a scenecut when bEnableSceneCutAwareQp is 1 or 3. */
     double    fwdNonRefQpDelta;
 
-    /* A genuine threshold used for histogram based scene cut detection.
-     * This threshold determines whether a frame is a scenecut or not
-     * when compared against the edge and chroma histogram sad values.
-     * Default 0.03. Range: Real number in the interval (0,1). */
-    double    edgeTransitionThreshold;
-
     /* Enables histogram based scenecut detection algorithm to detect scenecuts. Default disabled */
     int       bHistBasedSceneCut;
 
@@ -1989,10 +1983,6 @@ typedef struct x265_param
     /* Flag indicating whether the encoder should emit an End of Sequence
      * NAL at the end of every Coded Video Sequence. Default false */
     int      bEnableEndOfSequence;
-
-    /* Flag to turn on/off traditional scenecut detection in histogram based scenecut detection.
-     * When false, only spatial properties are used for scenecut detection. Default true */
-    int      bEnableTradScdInHscd;
 
     /* Film Grain Characteristic file */
     char* filmGrain;

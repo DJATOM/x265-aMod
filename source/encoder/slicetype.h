@@ -124,7 +124,6 @@ public:
 
     /* pre-lookahead */
     int           m_fullQueueSize;
-    int           m_histogram[X265_BFRAME_MAX + 1];
     int           m_lastKeyframe;
     int           m_8x8Width;
     int           m_8x8Height;
@@ -174,7 +173,7 @@ public:
 
     void    getEstimatedPictureCost(Frame *pic);
     void    setLookaheadQueue();
-    int FindSliceType(int poc);
+    int     findSliceType(int poc);
 
 protected:
 

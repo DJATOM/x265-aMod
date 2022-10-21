@@ -238,7 +238,7 @@ void Lowres::destroy()
     X265_FREE(edgeInclined);
     X265_FREE(qpAqMotionOffset);
     X265_FREE(blockVariance);
-    X265_FREE(lowresEdgePlane);
+
     if (maxAQDepth > 0)
     {
         for (uint32_t d = 0; d < 4; d++)
@@ -270,10 +270,6 @@ void Lowres::init(PicYuv *origPic, int poc)
     indB = 0;
     memset(costEst, -1, sizeof(costEst));
     memset(weightedCostDelta, 0, sizeof(weightedCostDelta));
-    interPCostPercDiff = 0.0;
-    intraCostPercDiff = 0.0;
-    m_bIsMaxThres = false;
-    m_bIsHardScenecut = false;
 
     if (qpAqOffset && invQscaleFactor)
         memset(costEstAq, -1, sizeof(costEstAq));

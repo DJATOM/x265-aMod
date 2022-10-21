@@ -174,7 +174,6 @@ namespace X265_NS {
         H1("   --scenecut-bias <0..100.0>    Bias for scenecut detection. Default %.2f\n", param->scenecutBias);
         H0("   --hist-scenecut               Enables histogram based scene-cut detection using histogram based algorithm.\n");
         H0("   --no-hist-scenecut            Disables histogram based scene-cut detection using histogram based algorithm.\n");
-        H1("   --hist-threshold <0.0..1.0>   Luma Edge histogram's Normalized SAD threshold for histogram based scenecut detection Default %.2f\n", param->edgeTransitionThreshold);
         H0("   --[no-]fades                  Enable detection and handling of fade-in regions. Default %s\n", OPT(param->bEnableFades));
         H1("   --scenecut-aware-qp <0..3>    Enable increasing QP for frames inside the scenecut window around scenecut. Default %s\n", OPT(param->bEnableSceneCutAwareQp));
         H1("                                 0 - Disabled\n");

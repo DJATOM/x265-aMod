@@ -257,19 +257,6 @@ public:
     int                m_bToneMap; // Enables tone-mapping
     int                m_enableNal;
 
-    /* For histogram based scene-cut detection */
-    pixel*             m_edgePic;
-    pixel*             m_inputPic[3];
-    int32_t            m_curYUVHist[3][HISTOGRAM_BINS];
-    int32_t            m_prevYUVHist[3][HISTOGRAM_BINS];
-    int32_t            m_curEdgeHist[2];
-    int32_t            m_prevEdgeHist[2];
-    uint32_t           m_planeSizes[3];
-    double             m_edgeHistThreshold;
-    double             m_chromaHistThreshold;
-    double             m_scaledEdgeThreshold;
-    double             m_scaledChromaThreshold;
-
 #ifdef ENABLE_HDR10_PLUS
     const hdr10plus_api     *m_hdr10plus_api;
     uint8_t                 **m_cim;
@@ -378,11 +365,6 @@ public:
     double ComputePSNR(x265_picture *firstPic, x265_picture *secPic, x265_param *param);
 
     void copyPicture(x265_picture *dest, const x265_picture *src);
-
-    bool computeHistograms(x265_picture *pic);
-    void computeHistogramSAD(double *maxUVNormalizedSAD, double *edgeNormalizedSAD, int curPoc);
-    double normalizeRange(int32_t value, int32_t minValue, int32_t maxValue, double rangeStart, double rangeEnd);
-    void findSceneCuts(x265_picture *pic, bool& bDup, double m_maxUVSADVal, double m_edgeSADVal, bool& isMaxThres, bool& isHardSC);
 
     void initRefIdx();
     void analyseRefIdx(int *numRefIdx);

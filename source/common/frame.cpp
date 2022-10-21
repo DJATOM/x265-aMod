@@ -181,8 +181,6 @@ fail:
 bool Frame::createSubSample()
 {
 
-    //m_param = param;
-
     m_fencPicSubsampled2 = new PicYuv;
     m_fencPicSubsampled4 = new PicYuv;
 

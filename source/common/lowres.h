@@ -217,13 +217,13 @@ struct Lowres : public ReferencePlanes
     double*   qpAqOffset;      // AQ QP offset values for each 16x16 CU
     double*   qpCuTreeOffset;  // cuTree QP offset values for each 16x16 CU
     double*   qpAqMotionOffset;
-    int*      invQscaleFactor; // qScale values for qp Aq Offsets
+    int*      invQscaleFactor;    // qScale values for qp Aq Offsets
     int*      invQscaleFactor8x8; // temporary buffer for qg-size 8
     uint32_t* blockVariance;
     uint64_t  wp_ssd[3];       // This is different than SSDY, this is sum(pixel^2) - sum(pixel)^2 for entire frame
     uint64_t  wp_sum[3];
     double    frameVariance;
-    int* edgeInclined;
+    int*      edgeInclined;
 
 
     /* cutree intermediate data */
@@ -237,11 +237,6 @@ struct Lowres : public ReferencePlanes
     uint16_t* propagateCost;
     double    weightedCostDelta[X265_BFRAME_MAX + 2];
     ReferencePlanes weightedRef[X265_BFRAME_MAX + 2];
-    /* For hist-based scenecut */
-    bool   m_bIsMaxThres;
-    double interPCostPercDiff;
-    double intraCostPercDiff;
-    bool   m_bIsHardScenecut;
 
     bool create(x265_param* param, PicYuv *origPic, uint32_t qgSize);
     void destroy();
