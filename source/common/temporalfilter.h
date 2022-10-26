@@ -21,19 +21,15 @@
 * For more information, contact us at license @ x265.com.
 *****************************************************************************/
 
-#ifndef X265_TEMPORAL_FILTER
-#define X265_TEMPORAL_FILTER
+#ifndef X265_TEMPORAL_FILTER_H
+#define X265_TEMPORAL_FILTER_H
 
 #include "x265.h"
 #include "picyuv.h"
 #include "mv.h"
-#include <vector>
-#include <deque>
 #include "piclist.h"
 #include "yuv.h"
 #include "motion.h"
-
-using namespace X265_NS;
 
 const int s_interpolationFilter[16][8] =
 {
@@ -63,126 +59,127 @@ const double s_refStrengths[3][4] =
   {0.30, 0.30, 0.30, 0.30}   // otherwise
 };
 
-class OrigPicBuffer
-{
-public:
-    PicList    m_mcstfPicList;
-    PicList    m_mcstfOrigPicFreeList;
-    PicList    m_mcstfOrigPicList;
-
-    ~OrigPicBuffer();
-    void addPicture(Frame*);
-    void addEncPicture(Frame*);
-    void setOrigPicList(Frame*, int);
-    void recycleOrigPicList();
-    void addPictureToFreelist(Frame*);
-    void addEncPictureToPicList(Frame*);
-};
-
-struct MotionEstimatorTLD
-{
-    MotionEstimate  me;
-
-    MotionEstimatorTLD()
+namespace X265_NS {
+    class OrigPicBuffer
     {
-        me.init(X265_CSP_I400);
-        me.setQP(X265_LOOKAHEAD_QP);
-    }
+    public:
+        PicList    m_mcstfPicList;
+        PicList    m_mcstfOrigPicFreeList;
+        PicList    m_mcstfOrigPicList;
 
-    ~MotionEstimatorTLD() {}
-};
+        ~OrigPicBuffer();
+        void addPicture(Frame*);
+        void addEncPicture(Frame*);
+        void setOrigPicList(Frame*, int);
+        void recycleOrigPicList();
+        void addPictureToFreelist(Frame*);
+        void addEncPictureToPicList(Frame*);
+    };
 
-struct TemporalFilterRefPicInfo
-{
-    PicYuv*    picBuffer;
-    PicYuv*    picBufferSubSampled2;
-    PicYuv*    picBufferSubSampled4;
-    MV*        mvs;
-    MV*        mvs0;
-    MV*        mvs1;
-    MV*        mvs2;
-    uint32_t   mvsStride;
-    uint32_t   mvsStride0;
-    uint32_t   mvsStride1;
-    uint32_t   mvsStride2;
-    int*       error;
-    int*       noise;
+    struct MotionEstimatorTLD
+    {
+        MotionEstimate  me;
 
-    int16_t    origOffset;
-    bool       isFilteredFrame;
-    PicYuv*    compensatedPic;
+        MotionEstimatorTLD()
+        {
+            me.init(X265_CSP_I400);
+            me.setQP(X265_LOOKAHEAD_QP);
+        }
 
-    int*       isSubsampled;
+        ~MotionEstimatorTLD() {}
+    };
 
-    int        slicetype;
-};
+    struct TemporalFilterRefPicInfo
+    {
+        PicYuv*    picBuffer;
+        PicYuv*    picBufferSubSampled2;
+        PicYuv*    picBufferSubSampled4;
+        MV*        mvs;
+        MV*        mvs0;
+        MV*        mvs1;
+        MV*        mvs2;
+        uint32_t   mvsStride;
+        uint32_t   mvsStride0;
+        uint32_t   mvsStride1;
+        uint32_t   mvsStride2;
+        int*       error;
+        int*       noise;
 
-class TemporalFilter
-{
-public:
-    TemporalFilter();
-    ~TemporalFilter() {}
+        int16_t    origOffset;
+        bool       isFilteredFrame;
+        PicYuv*    compensatedPic;
 
-    void init(const x265_param* param);
+        int*       isSubsampled;
 
-//private:
-    // Private static member variables
-    const x265_param *m_param;
-    int32_t  m_bitDepth;
-    int m_range;
-    uint8_t m_numRef;
-    double m_chromaFactor;
-    double m_sigmaMultiplier;
-    double m_sigmaZeroPoint;
-    int m_motionVectorFactor;
-    int m_padding;
+        int        slicetype;
+    };
 
-    // Private member variables
+    class TemporalFilter
+    {
+    public:
+        TemporalFilter();
+        ~TemporalFilter() {}
 
-    int m_sourceWidth;
-    int m_sourceHeight;
-    int m_QP;
+        void init(const x265_param* param);
 
-    int m_internalCsp;
-    int m_numComponents;
-    uint8_t m_sliceTypeConfig;
+        //private:
+            // Private static member variables
+        const x265_param *m_param;
+        int32_t  m_bitDepth;
+        int m_range;
+        uint8_t m_numRef;
+        double m_chromaFactor;
+        double m_sigmaMultiplier;
+        double m_sigmaZeroPoint;
+        int m_motionVectorFactor;
+        int m_padding;
 
-    MotionEstimatorTLD* m_metld;
-    Yuv  predPUYuv;
-    int m_useSADinME;
+        // Private member variables
 
-    int createRefPicInfo(TemporalFilterRefPicInfo* refFrame, x265_param* param);
+        int m_sourceWidth;
+        int m_sourceHeight;
+        int m_QP;
 
-    void bilateralFilter(Frame* frame, TemporalFilterRefPicInfo* mctfRefList, double overallStrength);
+        int m_internalCsp;
+        int m_numComponents;
+        uint8_t m_sliceTypeConfig;
 
-    void motionEstimationLuma(MV *mvs, uint32_t mvStride, PicYuv *orig, PicYuv *buffer, int bs,
-        MV *previous = 0, uint32_t prevmvStride = 0, int factor = 1);
+        MotionEstimatorTLD* m_metld;
+        Yuv  predPUYuv;
+        int m_useSADinME;
 
-    void motionEstimationLumaDoubleRes(MV *mvs, uint32_t mvStride, PicYuv *orig, PicYuv *buffer, int blockSize,
-        MV *previous, uint32_t prevMvStride, int factor, int* minError);
+        int createRefPicInfo(TemporalFilterRefPicInfo* refFrame, x265_param* param);
 
-    int motionErrorLumaSSD(PicYuv *orig,
-        PicYuv *buffer,
-        int x,
-        int y,
-        int dx,
-        int dy,
-        int bs,
-        int besterror = 8 * 8 * 1024 * 1024);
+        void bilateralFilter(Frame* frame, TemporalFilterRefPicInfo* mctfRefList, double overallStrength);
 
-    int motionErrorLumaSAD(PicYuv *orig,
-        PicYuv *buffer,
-        int x,
-        int y,
-        int dx,
-        int dy,
-        int bs,
-        int besterror = 8 * 8 * 1024 * 1024);
+        void motionEstimationLuma(MV *mvs, uint32_t mvStride, PicYuv *orig, PicYuv *buffer, int bs,
+            MV *previous = 0, uint32_t prevmvStride = 0, int factor = 1);
 
-    void destroyRefPicInfo(TemporalFilterRefPicInfo* curFrame);
+        void motionEstimationLumaDoubleRes(MV *mvs, uint32_t mvStride, PicYuv *orig, PicYuv *buffer, int blockSize,
+            MV *previous, uint32_t prevMvStride, int factor, int* minError);
 
-    void applyMotion(MV *mvs, uint32_t mvsStride, PicYuv *input, PicYuv *output);
+        int motionErrorLumaSSD(PicYuv *orig,
+            PicYuv *buffer,
+            int x,
+            int y,
+            int dx,
+            int dy,
+            int bs,
+            int besterror = 8 * 8 * 1024 * 1024);
 
-};
+        int motionErrorLumaSAD(PicYuv *orig,
+            PicYuv *buffer,
+            int x,
+            int y,
+            int dx,
+            int dy,
+            int bs,
+            int besterror = 8 * 8 * 1024 * 1024);
 
+        void destroyRefPicInfo(TemporalFilterRefPicInfo* curFrame);
+
+        void applyMotion(MV *mvs, uint32_t mvsStride, PicYuv *input, PicYuv *output);
+
+    };
+}
 #endif
