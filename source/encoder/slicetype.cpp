@@ -45,6 +45,14 @@ using namespace X265_NS;
 
 namespace {
 
+uint32_t acEnergyVarHist(uint64_t sum_ssd, int shift)
+{
+    uint32_t sum = (uint32_t)sum_ssd;
+    uint32_t ssd = (uint32_t)(sum_ssd >> 32);
+
+    return ssd - ((uint64_t)sum * sum >> shift);
+}
+
 /* Compute variance to derive AC energy of each block */
 inline uint32_t acEnergyVar(Frame *curFrame, uint64_t sum_ssd, int shift, int plane)
 {
@@ -1050,6 +1058,30 @@ Lookahead::Lookahead(x265_param *param, ThreadPool* pool)
     m_countPreLookahead = 0;
 #endif
 
+    m_accHistDiffRunningAvgCb = X265_MALLOC(uint32_t*, NUMBER_OF_SEGMENTS_IN_WIDTH * sizeof(uint32_t*));
+    m_accHistDiffRunningAvgCb[0] = X265_MALLOC(uint32_t, NUMBER_OF_SEGMENTS_IN_WIDTH * NUMBER_OF_SEGMENTS_IN_HEIGHT);
+    memset(m_accHistDiffRunningAvgCb[0], 0, sizeof(uint32_t) * NUMBER_OF_SEGMENTS_IN_WIDTH * NUMBER_OF_SEGMENTS_IN_HEIGHT);
+    for (uint32_t w = 1; w < NUMBER_OF_SEGMENTS_IN_WIDTH; w++) {
+        m_accHistDiffRunningAvgCb[w] = m_accHistDiffRunningAvgCb[0] + w * NUMBER_OF_SEGMENTS_IN_HEIGHT;
+    }
+
+    m_accHistDiffRunningAvgCr = X265_MALLOC(uint32_t*, NUMBER_OF_SEGMENTS_IN_WIDTH * sizeof(uint32_t*));
+    m_accHistDiffRunningAvgCr[0] = X265_MALLOC(uint32_t, NUMBER_OF_SEGMENTS_IN_WIDTH * NUMBER_OF_SEGMENTS_IN_HEIGHT);
+    memset(m_accHistDiffRunningAvgCr[0], 0, sizeof(uint32_t) * NUMBER_OF_SEGMENTS_IN_WIDTH * NUMBER_OF_SEGMENTS_IN_HEIGHT);
+    for (uint32_t w = 1; w < NUMBER_OF_SEGMENTS_IN_WIDTH; w++) {
+        m_accHistDiffRunningAvgCr[w] = m_accHistDiffRunningAvgCr[0] + w * NUMBER_OF_SEGMENTS_IN_HEIGHT;
+    }
+
+    m_accHistDiffRunningAvg = X265_MALLOC(uint32_t*, NUMBER_OF_SEGMENTS_IN_WIDTH * sizeof(uint32_t*));
+    m_accHistDiffRunningAvg[0] = X265_MALLOC(uint32_t, NUMBER_OF_SEGMENTS_IN_WIDTH * NUMBER_OF_SEGMENTS_IN_HEIGHT);
+    memset(m_accHistDiffRunningAvg[0], 0, sizeof(uint32_t) * NUMBER_OF_SEGMENTS_IN_WIDTH * NUMBER_OF_SEGMENTS_IN_HEIGHT);
+    for (uint32_t w = 1; w < NUMBER_OF_SEGMENTS_IN_WIDTH; w++) {
+        m_accHistDiffRunningAvg[w] = m_accHistDiffRunningAvg[0] + w * NUMBER_OF_SEGMENTS_IN_HEIGHT;
+    }
+
+    m_resetRunningAvg = true;
+
+    m_segmentCountThreshold = (uint32_t)(((float)((NUMBER_OF_SEGMENTS_IN_WIDTH * NUMBER_OF_SEGMENTS_IN_HEIGHT) * 50) / 100) + 0.5);
 }
 
 #if DETAILED_CU_STATS
@@ -1415,6 +1447,290 @@ double computeEdgeIntensity(pixel *inPlane, int width, int height, intptr_t stri
     return (count / (width * height)) * 100;
 }
 
+uint32_t LookaheadTLD::calcVariance(pixel* inpSrc, intptr_t stride, intptr_t blockOffset, uint32_t plane)
+{
+    pixel* src = inpSrc + blockOffset;
+
+    uint32_t var;
+    if (!plane)
+        var = acEnergyVarHist(primitives.cu[BLOCK_8x8].var(src, stride), 6);
+    else
+        var = acEnergyVarHist(primitives.cu[BLOCK_4x4].var(src, stride), 4);
+
+    x265_emms();
+    return var;
+}
+
+/*
+** Compute Block and Picture Variance, Block Mean for all blocks in the picture
+*/
+void LookaheadTLD::computePictureStatistics(Frame *curFrame)
+{
+    int maxCol = curFrame->m_fencPic->m_picWidth;
+    int maxRow = curFrame->m_fencPic->m_picHeight;
+    intptr_t inpStride = curFrame->m_fencPic->m_stride;
+
+    // Variance
+    uint64_t picTotVariance = 0;
+    uint32_t variance;
+
+    uint64_t blockXY = 0;
+    pixel* src = curFrame->m_fencPic->m_picOrg[0];
+
+    for (int blockY = 0; blockY < maxRow; blockY += 8)
+    {
+        uint64_t rowVariance = 0;
+        for (int blockX = 0; blockX < maxCol; blockX += 8)
+        {
+            intptr_t blockOffsetLuma = blockX + (blockY * inpStride);
+
+            variance = calcVariance(
+                src,
+                inpStride,
+                blockOffsetLuma, 0);
+
+            rowVariance += variance;
+            blockXY++;
+        }
+        picTotVariance += (uint16_t)(rowVariance / maxCol);
+    }
+
+    curFrame->m_lowres.picAvgVariance = (uint16_t)(picTotVariance / maxRow);
+
+    // Collect chroma variance
+    int hShift = curFrame->m_fencPic->m_hChromaShift;
+    int vShift = curFrame->m_fencPic->m_vChromaShift;
+
+    int maxColChroma = curFrame->m_fencPic->m_picWidth >> hShift;
+    int maxRowChroma = curFrame->m_fencPic->m_picHeight >> vShift;
+    intptr_t cStride = curFrame->m_fencPic->m_strideC;
+
+    pixel* srcCb = curFrame->m_fencPic->m_picOrg[1];
+
+    picTotVariance = 0;
+    for (int blockY = 0; blockY < maxRowChroma; blockY += 4)
+    {
+        uint64_t rowVariance = 0;
+        for (int blockX = 0; blockX < maxColChroma; blockX += 4)
+        {
+            intptr_t blockOffsetChroma = blockX + blockY * cStride;
+
+            variance = calcVariance(
+                srcCb,
+                cStride,
+                blockOffsetChroma, 1);
+
+            rowVariance += variance;
+            blockXY++;
+        }
+        picTotVariance += (uint16_t)(rowVariance / maxColChroma);
+    }
+
+    curFrame->m_lowres.picAvgVarianceCb = (uint16_t)(picTotVariance / maxRowChroma);
+
+
+    pixel* srcCr = curFrame->m_fencPic->m_picOrg[2];
+
+    picTotVariance = 0;
+    for (int blockY = 0; blockY < maxRowChroma; blockY += 4)
+    {
+        uint64_t rowVariance = 0;
+        for (int blockX = 0; blockX < maxColChroma; blockX += 4)
+        {
+            intptr_t blockOffsetChroma = blockX + blockY * cStride;
+
+            variance = calcVariance(
+                srcCr,
+                cStride,
+                blockOffsetChroma, 2);
+
+            rowVariance += variance;
+            blockXY++;
+        }
+        picTotVariance += (uint16_t)(rowVariance / maxColChroma);
+    }
+
+    curFrame->m_lowres.picAvgVarianceCr = (uint16_t)(picTotVariance / maxRowChroma);
+}
+
+/*
+* Compute histogram of n-bins for the input
+*/
+void LookaheadTLD::calculateHistogram(
+    pixel     *inputSrc,
+    uint32_t   inputWidth,
+    uint32_t   inputHeight,
+    intptr_t   stride,
+    uint8_t    dsFactor,
+    uint32_t  *histogram,
+    uint64_t  *sum)
+
+{
+    *sum = 0;
+
+    for (uint32_t verticalIdx = 0; verticalIdx < inputHeight; verticalIdx += dsFactor)
+    {
+        for (uint32_t horizontalIdx = 0; horizontalIdx < inputWidth; horizontalIdx += dsFactor)
+        {
+            ++(histogram[inputSrc[horizontalIdx]]);
+            *sum += inputSrc[horizontalIdx];
+        }
+        inputSrc += (stride << (dsFactor >> 1));
+    }
+
+    return;
+}
+
+/*
+* Compute histogram bins and chroma pixel intensity *
+*/
+void LookaheadTLD::computeIntensityHistogramBinsChroma(
+    Frame    *curFrame,
+    uint64_t *sumAverageIntensityCb,
+    uint64_t *sumAverageIntensityCr)
+{
+    uint64_t    sum;
+    uint8_t     dsFactor = 4;
+
+    uint32_t segmentWidth = curFrame->m_lowres.widthFullRes / NUMBER_OF_SEGMENTS_IN_WIDTH;
+    uint32_t segmentHeight = curFrame->m_lowres.heightFullRes / NUMBER_OF_SEGMENTS_IN_HEIGHT;
+
+    for (uint32_t segmentInFrameWidthIndex = 0; segmentInFrameWidthIndex < NUMBER_OF_SEGMENTS_IN_WIDTH; segmentInFrameWidthIndex++)
+    {
+        for (uint32_t segmentInFrameHeightIndex = 0; segmentInFrameHeightIndex < NUMBER_OF_SEGMENTS_IN_HEIGHT; segmentInFrameHeightIndex++)
+        {
+            // Initialize bins to 1
+            for (uint32_t cuIndex = 0; cuIndex < 256; cuIndex++) {
+                curFrame->m_lowres.picHistogram[segmentInFrameWidthIndex][segmentInFrameHeightIndex][1][cuIndex] = 1;
+                curFrame->m_lowres.picHistogram[segmentInFrameWidthIndex][segmentInFrameHeightIndex][2][cuIndex] = 1;
+            }
+
+            uint32_t segmentWidthOffset = (segmentInFrameWidthIndex == NUMBER_OF_SEGMENTS_IN_WIDTH - 1) ?
+                curFrame->m_lowres.widthFullRes - (NUMBER_OF_SEGMENTS_IN_WIDTH * segmentWidth) : 0;
+
+            uint32_t segmentHeightOffset = (segmentInFrameHeightIndex == NUMBER_OF_SEGMENTS_IN_HEIGHT - 1) ?
+                curFrame->m_lowres.heightFullRes - (NUMBER_OF_SEGMENTS_IN_HEIGHT * segmentHeight) : 0;
+
+
+            // U Histogram
+            calculateHistogram(
+                curFrame->m_fencPic->m_picOrg[1] + ((segmentInFrameWidthIndex * segmentWidth) >> 1) + (((segmentInFrameHeightIndex * segmentHeight) >> 1) * curFrame->m_fencPic->m_strideC),
+                (segmentWidth + segmentWidthOffset) >> 1,
+                (segmentHeight + segmentHeightOffset) >> 1,
+                curFrame->m_fencPic->m_strideC,
+                dsFactor,
+                curFrame->m_lowres.picHistogram[segmentInFrameWidthIndex][segmentInFrameHeightIndex][1],
+                &sum);
+
+            sum = (sum << dsFactor);
+            *sumAverageIntensityCb += sum;
+            curFrame->m_lowres.averageIntensityPerSegment[segmentInFrameWidthIndex][segmentInFrameHeightIndex][1] =
+                (uint8_t)((sum + (((segmentWidth + segmentWidthOffset) * (segmentHeight + segmentHeightOffset)) >> 3)) / (((segmentWidth + segmentWidthOffset) * (segmentHeight + segmentHeightOffset)) >> 2));
+
+            for (uint16_t histogramBin = 0; histogramBin < HISTOGRAM_NUMBER_OF_BINS; histogramBin++) {
+                curFrame->m_lowres.picHistogram[segmentInFrameWidthIndex][segmentInFrameHeightIndex][1][histogramBin] =
+                    curFrame->m_lowres.picHistogram[segmentInFrameWidthIndex][segmentInFrameHeightIndex][1][histogramBin] << dsFactor;
+            }
+
+            // V Histogram
+            calculateHistogram(
+                curFrame->m_fencPic->m_picOrg[2] + ((segmentInFrameWidthIndex * segmentWidth) >> 1) + (((segmentInFrameHeightIndex * segmentHeight) >> 1) * curFrame->m_fencPic->m_strideC),
+                (segmentWidth + segmentWidthOffset) >> 1,
+                (segmentHeight + segmentHeightOffset) >> 1,
+                curFrame->m_fencPic->m_strideC,
+                dsFactor,
+                curFrame->m_lowres.picHistogram[segmentInFrameWidthIndex][segmentInFrameHeightIndex][2],
+                &sum);
+
+            sum = (sum << dsFactor);
+            *sumAverageIntensityCr += sum;
+            curFrame->m_lowres.averageIntensityPerSegment[segmentInFrameWidthIndex][segmentInFrameHeightIndex][2] =
+                (uint8_t)((sum + (((segmentWidth + segmentWidthOffset) * (segmentHeight + segmentHeightOffset)) >> 3)) / (((segmentWidth + segmentHeightOffset) * (segmentHeight + segmentHeightOffset)) >> 2));
+
+            for (uint16_t histogramBin = 0; histogramBin < HISTOGRAM_NUMBER_OF_BINS; histogramBin++) {
+                curFrame->m_lowres.picHistogram[segmentInFrameWidthIndex][segmentInFrameHeightIndex][2][histogramBin] =
+                    curFrame->m_lowres.picHistogram[segmentInFrameWidthIndex][segmentInFrameHeightIndex][2][histogramBin] << dsFactor;
+            }
+        }
+    }
+    return;
+
+}
+
+/*
+* Compute histogram bins and luma pixel intensity *
+*/
+void LookaheadTLD::computeIntensityHistogramBinsLuma(
+    Frame    *curFrame,
+    uint64_t *sumAvgIntensityTotalSegmentsLuma)
+{
+    uint64_t sum;
+
+    uint32_t segmentWidth = curFrame->m_lowres.quarterSampleLowResWidth / NUMBER_OF_SEGMENTS_IN_WIDTH;
+    uint32_t segmentHeight = curFrame->m_lowres.quarterSampleLowResHeight / NUMBER_OF_SEGMENTS_IN_HEIGHT;
+
+    for (uint32_t segmentInFrameWidthIndex = 0; segmentInFrameWidthIndex < NUMBER_OF_SEGMENTS_IN_WIDTH; segmentInFrameWidthIndex++)
+    {
+        for (uint32_t segmentInFrameHeightIndex = 0; segmentInFrameHeightIndex < NUMBER_OF_SEGMENTS_IN_HEIGHT; segmentInFrameHeightIndex++)
+        {
+            // Initialize bins to 1
+            for (uint32_t cuIndex = 0; cuIndex < 256; cuIndex++) {
+                curFrame->m_lowres.picHistogram[segmentInFrameWidthIndex][segmentInFrameHeightIndex][0][cuIndex] = 1;
+            }
+
+            uint32_t segmentWidthOffset = (segmentInFrameWidthIndex == NUMBER_OF_SEGMENTS_IN_WIDTH - 1) ?
+                curFrame->m_lowres.quarterSampleLowResWidth - (NUMBER_OF_SEGMENTS_IN_WIDTH * segmentWidth) : 0;
+
+            uint32_t segmentHeightOffset = (segmentInFrameHeightIndex == NUMBER_OF_SEGMENTS_IN_HEIGHT - 1) ?
+                curFrame->m_lowres.quarterSampleLowResHeight - (NUMBER_OF_SEGMENTS_IN_HEIGHT * segmentHeight) : 0;
+
+            // Y Histogram
+            calculateHistogram(
+                curFrame->m_lowres.quarterSampleLowResBuffer + (curFrame->m_lowres.quarterSampleLowResOriginX + segmentInFrameWidthIndex * segmentWidth) + ((curFrame->m_lowres.quarterSampleLowResOriginY + segmentInFrameHeightIndex * segmentHeight) * curFrame->m_lowres.quarterSampleLowResStrideY),
+                segmentWidth + segmentWidthOffset,
+                segmentHeight + segmentHeightOffset,
+                curFrame->m_lowres.quarterSampleLowResStrideY,
+                1,
+                curFrame->m_lowres.picHistogram[segmentInFrameWidthIndex][segmentInFrameHeightIndex][0],
+                &sum);
+
+            curFrame->m_lowres.averageIntensityPerSegment[segmentInFrameWidthIndex][segmentInFrameHeightIndex][0] = (uint8_t)((sum + (((segmentWidth + segmentWidthOffset)*(segmentWidth + segmentHeightOffset)) >> 1)) / ((segmentWidth + segmentWidthOffset)*(segmentHeight + segmentHeightOffset)));
+            (*sumAvgIntensityTotalSegmentsLuma) += (sum << 4);
+            for (uint32_t histogramBin = 0; histogramBin < HISTOGRAM_NUMBER_OF_BINS; histogramBin++)
+            {
+                curFrame->m_lowres.picHistogram[segmentInFrameWidthIndex][segmentInFrameHeightIndex][0][histogramBin] =
+                    curFrame->m_lowres.picHistogram[segmentInFrameWidthIndex][segmentInFrameHeightIndex][0][histogramBin] << 4;
+            }
+        }
+    }
+}
+
+void LookaheadTLD::collectPictureStatistics(Frame *curFrame)
+{
+
+    uint64_t sumAverageIntensityCb = 0;
+    uint64_t sumAverageIntensityCr = 0;
+    uint64_t sumAverageIntensity = 0;
+
+    // Histogram bins for Luma
+    computeIntensityHistogramBinsLuma(
+        curFrame,
+        &sumAverageIntensity);
+
+    // Histogram bins for Chroma
+    computeIntensityHistogramBinsChroma(
+        curFrame,
+        &sumAverageIntensityCb,
+        &sumAverageIntensityCr);
+
+    curFrame->m_lowres.averageIntensity[0] = (uint8_t)((sumAverageIntensity + ((curFrame->m_lowres.widthFullRes * curFrame->m_lowres.heightFullRes) >> 1)) / (curFrame->m_lowres.widthFullRes * curFrame->m_lowres.heightFullRes));
+    curFrame->m_lowres.averageIntensity[1] = (uint8_t)((sumAverageIntensityCb + ((curFrame->m_lowres.widthFullRes * curFrame->m_lowres.heightFullRes) >> 3)) / ((curFrame->m_lowres.widthFullRes * curFrame->m_lowres.heightFullRes) >> 2));
+    curFrame->m_lowres.averageIntensity[2] = (uint8_t)((sumAverageIntensityCr + ((curFrame->m_lowres.widthFullRes * curFrame->m_lowres.heightFullRes) >> 3)) / ((curFrame->m_lowres.widthFullRes * curFrame->m_lowres.heightFullRes) >> 2));
+
+    computePictureStatistics(curFrame);
+
+    curFrame->m_lowres.bHistScenecutAnalyzed = false;
+}
 
 void PreLookaheadGroup::processTasks(int workerThreadID)
 {
@@ -1462,6 +1778,10 @@ void PreLookaheadGroup::processTasks(int workerThreadID)
 
         if (m_lookahead.m_bAdaptiveQuant)
             tld.calcAdaptiveQuantFrame(preFrame, m_lookahead.m_param);
+
+        if (m_lookahead.m_param->bHistBasedSceneCut)
+            tld.collectPictureStatistics(preFrame);
+
         tld.lowresIntraEstimate(preFrame->m_lowres, m_lookahead.m_param->rc.qgSize);
         preFrame->m_lowresInit = true;
 

@@ -44,6 +44,24 @@ class Lookahead;
 #define EDGE_INCLINATION 45
 #define TEMPORAL_SCENECUT_THRESHOLD 50
 
+#define X265_ABS(a)                        (((a) < 0) ? (-(a)) : (a))
+
+#define PICTURE_DIFF_VARIANCE_TH            390
+#define PICTURE_VARIANCE_TH                 1500
+#define LOW_VAR_SCENE_CHANGE_TH             2250
+#define HIGH_VAR_SCENE_CHANGE_TH            3500
+
+#define PICTURE_DIFF_VARIANCE_CHROMA_TH     10
+#define PICTURE_VARIANCE_CHROMA_TH          20
+#define LOW_VAR_SCENE_CHANGE_CHROMA_TH      2250/4
+#define HIGH_VAR_SCENE_CHANGE_CHROMA_TH     3500/4
+
+#define FLASH_TH                            1.5
+#define FADE_TH                             4
+#define INTENSITY_CHANGE_TH                 4
+
+#define NUM64x64INPIC(w,h)                  ((w*h)>> (MAX_LOG2_CU_SIZE<<1))
+
 #if HIGH_BIT_DEPTH
 #define EDGE_THRESHOLD 1023.0
 #else
@@ -92,6 +110,27 @@ struct LookaheadTLD
     }
 
     ~LookaheadTLD() { X265_FREE(wbuffer[0]); }
+
+    void collectPictureStatistics(Frame *curFrame);
+    void computeIntensityHistogramBinsLuma(Frame *curFrame, uint64_t *sumAvgIntensityTotalSegmentsLuma);
+
+    void computeIntensityHistogramBinsChroma(
+        Frame    *curFrame,
+        uint64_t *sumAverageIntensityCb,
+        uint64_t *sumAverageIntensityCr);
+
+    void calculateHistogram(
+        pixel    *inputSrc,
+        uint32_t  inputWidth,
+        uint32_t  inputHeight,
+        intptr_t  stride,
+        uint8_t   dsFactor,
+        uint32_t *histogram,
+        uint64_t *sum);
+
+    void computePictureStatistics(Frame *curFrame);
+
+    uint32_t calcVariance(pixel* src, intptr_t stride, intptr_t blockOffset, uint32_t plane);
 
     void calcAdaptiveQuantFrame(Frame *curFrame, x265_param* param);
     void lowresIntraEstimate(Lowres& fenc, uint32_t qgSize);
@@ -152,6 +191,14 @@ public:
     bool          m_isFadeIn;
     uint64_t      m_fadeCount;
     int           m_fadeStart;
+
+    uint32_t    **m_accHistDiffRunningAvgCb;
+    uint32_t    **m_accHistDiffRunningAvgCr;
+    uint32_t    **m_accHistDiffRunningAvg;
+
+    bool          m_resetRunningAvg;
+    uint32_t      m_segmentCountThreshold;
+
     Lookahead(x265_param *param, ThreadPool *pool);
 #if DETAILED_CU_STATS
     int64_t       m_slicetypeDecideElapsedTime;
@@ -184,6 +231,7 @@ protected:
     /* called by slicetypeAnalyse() to make slice decisions */
     bool    scenecut(Lowres **frames, int p0, int p1, bool bRealScenecut, int numFrames);
     bool    scenecutInternal(Lowres **frames, int p0, int p1, bool bRealScenecut);
+
     void    slicetypePath(Lowres **frames, int length, char(*best_paths)[X265_LOOKAHEAD_MAX + 1]);
     int64_t slicetypePathCost(Lowres **frames, char *path, int64_t threshold);
     int64_t vbvFrameCost(Lowres **frames, int p0, int p1, int b);

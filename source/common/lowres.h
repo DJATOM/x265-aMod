@@ -32,6 +32,10 @@
 namespace X265_NS {
 // private namespace
 
+#define HISTOGRAM_NUMBER_OF_BINS         256
+#define NUMBER_OF_SEGMENTS_IN_WIDTH      4
+#define NUMBER_OF_SEGMENTS_IN_HEIGHT     4
+
 struct ReferencePlanes
 {
     ReferencePlanes() { memset(this, 0, sizeof(ReferencePlanes)); }
@@ -233,13 +237,30 @@ struct Lowres : public ReferencePlanes
     uint32_t heightFullRes;
     uint32_t m_maxCUSize;
     uint32_t m_qgSize;
-    
+
     uint16_t* propagateCost;
     double    weightedCostDelta[X265_BFRAME_MAX + 2];
     ReferencePlanes weightedRef[X265_BFRAME_MAX + 2];
 
+    /* For hist-based scenecut */
+    int          quarterSampleLowResWidth;     // width of 1/4 lowres frame in pixels
+    int          quarterSampleLowResHeight;    // height of 1/4 lowres frame in pixels
+    int          quarterSampleLowResStrideY;
+    int          quarterSampleLowResOriginX;
+    int          quarterSampleLowResOriginY;
+    pixel       *quarterSampleLowResBuffer;
+    bool         bHistScenecutAnalyzed;
+
+    uint16_t     picAvgVariance;
+    uint16_t     picAvgVarianceCb;
+    uint16_t     picAvgVarianceCr;
+
+    uint32_t ****picHistogram;
+    uint64_t     averageIntensityPerSegment[NUMBER_OF_SEGMENTS_IN_WIDTH][NUMBER_OF_SEGMENTS_IN_HEIGHT][3];
+    uint8_t      averageIntensity[3];
+
     bool create(x265_param* param, PicYuv *origPic, uint32_t qgSize);
-    void destroy();
+    void destroy(x265_param* param);
     void init(PicYuv *origPic, int poc);
 };
 }
