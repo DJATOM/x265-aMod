@@ -2398,7 +2398,10 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
     int numAnalyzed = numFrames;
     bool isScenecut = false;
 
-    isScenecut = scenecut(frames, 0, 1, true, origNumFrames);
+    if (m_param->bHistBasedSceneCut)
+        isScenecut = histBasedScenecut(frames, 0, 1, origNumFrames);
+    else
+        isScenecut = scenecut(frames, 0, 1, true, origNumFrames);
 
     /* When scenecut threshold is set, use scenecut detection for I frame placements */
     if (m_param->scenecutThreshold && isScenecut)
@@ -2708,6 +2711,167 @@ bool Lookahead::scenecutInternal(Lowres **frames, int p0, int p1, bool bRealScen
                  frame->frameNum, icost, pcost, 1. - (double)pcost / icost, bias, gopSize, imb, pmb);
     }
     return res;
+}
+
+bool Lookahead::detectHistBasedSceneChange(Lowres **frames, int p0, int p1, int p2)
+{
+    bool isAbruptChange;
+    bool isSceneChange;
+
+    Lowres  *previousFrame = frames[p0];
+    Lowres  *currentFrame = frames[p1];
+    Lowres  *futureFrame = frames[p2];
+
+    currentFrame->bHistScenecutAnalyzed = true;
+
+    uint32_t **accHistDiffRunningAvgCb = m_accHistDiffRunningAvgCb;
+    uint32_t **accHistDiffRunningAvgCr = m_accHistDiffRunningAvgCr;
+    uint32_t **accHistDiffRunningAvg = m_accHistDiffRunningAvg;
+
+    uint8_t absIntDiffFuturePast = 0;
+    uint8_t absIntDiffFuturePresent = 0;
+    uint8_t absIntDiffPresentPast = 0;
+
+    uint32_t abruptChangeCount = 0;
+    uint32_t sceneChangeCount = 0;
+
+    uint32_t segmentWidth = frames[1]->widthFullRes / NUMBER_OF_SEGMENTS_IN_WIDTH;
+    uint32_t segmentHeight = frames[1]->heightFullRes / NUMBER_OF_SEGMENTS_IN_HEIGHT;
+
+    for (uint32_t segmentInFrameWidthIndex = 0; segmentInFrameWidthIndex < NUMBER_OF_SEGMENTS_IN_WIDTH; segmentInFrameWidthIndex++)
+    {
+        for (uint32_t segmentInFrameHeightIndex = 0; segmentInFrameHeightIndex < NUMBER_OF_SEGMENTS_IN_HEIGHT; segmentInFrameHeightIndex++)
+        {
+            isAbruptChange = false;
+            isSceneChange = false;
+
+            // accumulative absolute histogram differences between the past and current frame
+            uint32_t accHistDiff = 0;
+            uint32_t accHistDiffCb = 0;
+            uint32_t accHistDiffCr = 0;
+
+            uint32_t segmentWidthOffset = (segmentInFrameWidthIndex == NUMBER_OF_SEGMENTS_IN_WIDTH - 1) ?
+                frames[1]->widthFullRes - (NUMBER_OF_SEGMENTS_IN_WIDTH * segmentWidth) : 0;
+
+            uint32_t segmentHeightOffset = (segmentInFrameHeightIndex == NUMBER_OF_SEGMENTS_IN_HEIGHT - 1) ?
+                frames[1]->heightFullRes - (NUMBER_OF_SEGMENTS_IN_HEIGHT * segmentHeight) : 0;
+
+            segmentWidth += segmentWidthOffset;
+            segmentHeight += segmentHeightOffset;
+
+            uint32_t segmentThreshHold = (
+                ((X265_ABS((int64_t)currentFrame->picAvgVariance - (int64_t)previousFrame->picAvgVariance)) > PICTURE_DIFF_VARIANCE_TH) &&
+                (currentFrame->picAvgVariance > PICTURE_VARIANCE_TH || previousFrame->picAvgVariance > PICTURE_VARIANCE_TH)) ?
+                HIGH_VAR_SCENE_CHANGE_TH * NUM64x64INPIC(segmentWidth, segmentHeight) : LOW_VAR_SCENE_CHANGE_TH * NUM64x64INPIC(segmentWidth, segmentHeight);
+
+            uint32_t segmentThreshHoldCb = (
+                ((X265_ABS((int64_t)currentFrame->picAvgVarianceCb - (int64_t)previousFrame->picAvgVarianceCb)) > PICTURE_DIFF_VARIANCE_CHROMA_TH) &&
+                (currentFrame->picAvgVarianceCb > PICTURE_VARIANCE_CHROMA_TH || previousFrame->picAvgVarianceCb > PICTURE_VARIANCE_CHROMA_TH)) ?
+                HIGH_VAR_SCENE_CHANGE_CHROMA_TH * NUM64x64INPIC(segmentWidth, segmentHeight) : LOW_VAR_SCENE_CHANGE_CHROMA_TH * NUM64x64INPIC(segmentWidth, segmentHeight);
+
+            uint32_t segmentThreshHoldCr = (
+                ((X265_ABS((int64_t)currentFrame->picAvgVarianceCr - (int64_t)previousFrame->picAvgVarianceCr)) > PICTURE_DIFF_VARIANCE_CHROMA_TH) &&
+                (currentFrame->picAvgVarianceCr > PICTURE_VARIANCE_CHROMA_TH || previousFrame->picAvgVarianceCr > PICTURE_VARIANCE_CHROMA_TH)) ?
+                HIGH_VAR_SCENE_CHANGE_CHROMA_TH * NUM64x64INPIC(segmentWidth, segmentHeight) : LOW_VAR_SCENE_CHANGE_CHROMA_TH * NUM64x64INPIC(segmentWidth, segmentHeight);
+
+            for (uint32_t bin = 0; bin < HISTOGRAM_NUMBER_OF_BINS; ++bin) {
+                accHistDiff += X265_ABS((int32_t)currentFrame->picHistogram[segmentInFrameWidthIndex][segmentInFrameHeightIndex][0][bin] - (int32_t)previousFrame->picHistogram[segmentInFrameWidthIndex][segmentInFrameHeightIndex][0][bin]);
+                accHistDiffCb += X265_ABS((int32_t)currentFrame->picHistogram[segmentInFrameWidthIndex][segmentInFrameHeightIndex][1][bin] - (int32_t)previousFrame->picHistogram[segmentInFrameWidthIndex][segmentInFrameHeightIndex][1][bin]);
+                accHistDiffCr += X265_ABS((int32_t)currentFrame->picHistogram[segmentInFrameWidthIndex][segmentInFrameHeightIndex][2][bin] - (int32_t)previousFrame->picHistogram[segmentInFrameWidthIndex][segmentInFrameHeightIndex][2][bin]);
+            }
+
+            if (m_resetRunningAvg) {
+                accHistDiffRunningAvg[segmentInFrameWidthIndex][segmentInFrameHeightIndex] = accHistDiff;
+                accHistDiffRunningAvgCb[segmentInFrameWidthIndex][segmentInFrameHeightIndex] = accHistDiffCb;
+                accHistDiffRunningAvgCr[segmentInFrameWidthIndex][segmentInFrameHeightIndex] = accHistDiffCr;
+            }
+
+            // difference between accumulative absolute histogram differences and the running average at the current frame.
+            uint32_t accHistDiffError = X265_ABS((int32_t)accHistDiffRunningAvg[segmentInFrameWidthIndex][segmentInFrameHeightIndex] - (int32_t)accHistDiff);
+            uint32_t accHistDiffErrorCb = X265_ABS((int32_t)accHistDiffRunningAvgCb[segmentInFrameWidthIndex][segmentInFrameHeightIndex] - (int32_t)accHistDiffCb);
+            uint32_t accHistDiffErrorCr = X265_ABS((int32_t)accHistDiffRunningAvgCr[segmentInFrameWidthIndex][segmentInFrameHeightIndex] - (int32_t)accHistDiffCr);
+
+            if ((accHistDiffError > segmentThreshHold     && accHistDiff >= accHistDiffError) ||
+                (accHistDiffErrorCb > segmentThreshHoldCb && accHistDiffCb >= accHistDiffErrorCb) ||
+                (accHistDiffErrorCr > segmentThreshHoldCr && accHistDiffCr >= accHistDiffErrorCr)) {
+
+                isAbruptChange = true;
+            }
+
+            if (isAbruptChange)
+            {
+                absIntDiffFuturePast = (uint8_t)X265_ABS((int16_t)futureFrame->averageIntensityPerSegment[segmentInFrameWidthIndex][segmentInFrameHeightIndex][0] - (int16_t)previousFrame->averageIntensityPerSegment[segmentInFrameWidthIndex][segmentInFrameHeightIndex][0]);
+                absIntDiffFuturePresent = (uint8_t)X265_ABS((int16_t)futureFrame->averageIntensityPerSegment[segmentInFrameWidthIndex][segmentInFrameHeightIndex][0] - (int16_t)currentFrame->averageIntensityPerSegment[segmentInFrameWidthIndex][segmentInFrameHeightIndex][0]);
+                absIntDiffPresentPast = (uint8_t)X265_ABS((int16_t)currentFrame->averageIntensityPerSegment[segmentInFrameWidthIndex][segmentInFrameHeightIndex][0] - (int16_t)previousFrame->averageIntensityPerSegment[segmentInFrameWidthIndex][segmentInFrameHeightIndex][0]);
+
+                if (absIntDiffFuturePresent >= FLASH_TH * absIntDiffFuturePast && absIntDiffPresentPast >= FLASH_TH * absIntDiffFuturePast) {
+                    x265_log(m_param, X265_LOG_DEBUG, "Flash in frame# %i , %i, %i, %i\n", currentFrame->frameNum, absIntDiffFuturePast, absIntDiffFuturePresent, absIntDiffPresentPast);
+                }
+                else if (absIntDiffFuturePresent < FADE_TH && absIntDiffPresentPast < FADE_TH) {
+                    x265_log(m_param, X265_LOG_DEBUG, "Fade in frame# %i , %i, %i, %i\n", currentFrame->frameNum, absIntDiffFuturePast, absIntDiffFuturePresent, absIntDiffPresentPast);
+                }
+                else if (X265_ABS(absIntDiffFuturePresent - absIntDiffPresentPast) < INTENSITY_CHANGE_TH && absIntDiffFuturePresent + absIntDiffPresentPast >= absIntDiffFuturePast) {
+                    x265_log(m_param, X265_LOG_DEBUG, "Intensity Change in frame# %i , %i, %i, %i\n", currentFrame->frameNum, absIntDiffFuturePast, absIntDiffFuturePresent, absIntDiffPresentPast);
+                }
+                else {
+                    isSceneChange = true;
+                    x265_log(m_param, X265_LOG_DEBUG, "Scene change in frame# %i , %i, %i, %i\n", currentFrame->frameNum, absIntDiffFuturePast, absIntDiffFuturePresent, absIntDiffPresentPast);
+                }
+
+            }
+            else {
+                accHistDiffRunningAvg[segmentInFrameWidthIndex][segmentInFrameHeightIndex] = (3 * accHistDiffRunningAvg[segmentInFrameWidthIndex][segmentInFrameHeightIndex] + accHistDiff) / 4;
+            }
+
+            abruptChangeCount += isAbruptChange;
+            sceneChangeCount += isSceneChange;
+        }
+    }
+
+    if (abruptChangeCount >= m_segmentCountThreshold) {
+        m_resetRunningAvg = true;
+    }
+    else {
+        m_resetRunningAvg = false;
+    }
+
+    if ((sceneChangeCount >= m_segmentCountThreshold)) {
+        x265_log(m_param, X265_LOG_DEBUG, "Scene Change in Pic Number# %i\n", currentFrame->frameNum);
+
+        return true;
+    }
+    else {
+        return false;
+    }
+
+}
+
+bool Lookahead::histBasedScenecut(Lowres **frames, int p0, int p1, int numFrames)
+{
+    /* Only do analysis during a normal scenecut check. */
+    if (m_param->bframes)
+    {
+        int origmaxp1 = p0 + 1;
+        /* Look ahead to avoid coding short flashes as scenecuts. */
+        origmaxp1 += m_param->bframes;
+        int maxp1 = X265_MIN(origmaxp1, numFrames);
+
+        for (int cp1 = p0; cp1 < maxp1; cp1++)
+        {
+            if (frames[cp1 + 1]->bHistScenecutAnalyzed == true)
+                continue;
+
+            if (detectHistBasedSceneChange(frames, cp1, cp1 + 1, cp1 + 2))
+            {
+                /* If current frame is a Scenecut from p0 frame as well as Scenecut from
+                 * preceeding frame, mark it as a Scenecut */
+                frames[cp1+1]->bScenecut = true;
+            }
+        }
+
+    }
+
+    return frames[p1]->bScenecut;
 }
 
 void Lookahead::slicetypePath(Lowres **frames, int length, char(*best_paths)[X265_LOOKAHEAD_MAX + 1])

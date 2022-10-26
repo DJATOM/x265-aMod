@@ -232,6 +232,9 @@ protected:
     bool    scenecut(Lowres **frames, int p0, int p1, bool bRealScenecut, int numFrames);
     bool    scenecutInternal(Lowres **frames, int p0, int p1, bool bRealScenecut);
 
+    bool    histBasedScenecut(Lowres **frames, int p0, int p1, int numFrames);
+    bool    detectHistBasedSceneChange(Lowres **frames, int p0, int p1, int p2);
+
     void    slicetypePath(Lowres **frames, int length, char(*best_paths)[X265_LOOKAHEAD_MAX + 1]);
     int64_t slicetypePathCost(Lowres **frames, char *path, int64_t threshold);
     int64_t vbvFrameCost(Lowres **frames, int p0, int p1, int b);
