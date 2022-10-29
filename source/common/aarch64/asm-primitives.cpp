@@ -679,7 +679,9 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
         p.cu[BLOCK_4x4].psy_cost_pp = PFX(psyCost_4x4_neon);
 
         p.weight_pp = PFX(weight_pp_neon);
+#if !defined(__APPLE__)
         p.scanPosLast = PFX(scanPosLast_neon);
+#endif
         p.costCoeffNxN = PFX(costCoeffNxN_neon);
 #endif
 
