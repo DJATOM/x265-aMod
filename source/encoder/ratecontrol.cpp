@@ -1475,6 +1475,16 @@ int RateControl::rateControlStart(Frame* curFrame, RateControlEntry* rce, Encode
         if (!m_param->rc.bEncFocusedFramesOnly)
         {
             rce->qpPrev = x265_qScale2qp(rce->qScale);
+            if (m_param->bEnableSceneCutAwareQp)
+            {
+                double lqmin = m_lmin[m_sliceType];
+                double lqmax = m_lmax[m_sliceType];
+                if (m_param->bEnableSceneCutAwareQp & FORWARD)
+                    rce->newQScale = forwardMasking(curFrame, rce->newQScale);
+                if (m_param->bEnableSceneCutAwareQp & BACKWARD)
+                    rce->newQScale = backwardMasking(curFrame, rce->newQScale);
+                rce->newQScale = x265_clip3(lqmin, lqmax, rce->newQScale);
+            }
             rce->qScale = rce->newQScale;
             rce->qpaRc = curEncData.m_avgQpRc = curEncData.m_avgQpAq = x265_qScale2qp(rce->newQScale);
             m_qp = int(rce->qpaRc + 0.5);
