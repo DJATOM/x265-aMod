@@ -381,6 +381,7 @@ static const struct option long_options[] =
     { "abr-ladder", required_argument, NULL, 0 },
     { "min-vbv-fullness", required_argument, NULL, 0 },
     { "max-vbv-fullness", required_argument, NULL, 0 },
+    { "scenecut-qp-config", required_argument, NULL, 0 },
     { "film-grain", required_argument, NULL, 0 },
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },
@@ -397,6 +398,7 @@ static const struct option long_options[] =
         FILE*       qpfile;
         FILE*       zoneFile;
         FILE*    dolbyVisionRpu;    /* File containing Dolby Vision BL RPU metadata */
+        FILE*    scenecutAwareQpConfig; /* File containing scenecut aware frame quantization related CLI options */
         const char* reconPlayCmd;
         const x265_api* api;
         x265_param* param;
@@ -434,6 +436,7 @@ static const struct option long_options[] =
             qpfile = NULL;
             zoneFile = NULL;
             dolbyVisionRpu = NULL;
+            scenecutAwareQpConfig = NULL;
             reconPlayCmd = NULL;
             api = NULL;
             param = NULL;
@@ -464,6 +467,8 @@ static const struct option long_options[] =
         bool parseQPFile(x265_picture &pic_org);
         bool parseZoneFile();
         int rpuParser(x265_picture * pic);
+        bool parseScenecutAwareQpConfig();
+        bool parseScenecutAwareQpParam(int argc, char **argv, x265_param* globalParam);
     };
 #ifdef __cplusplus
 }

@@ -181,6 +181,7 @@ namespace X265_NS {
         H1("                                 2 - Backward masking\n");
         H1("                                 3 - Bidirectional masking\n");
         H1("   --masking-strength <string>   Comma separated values which specify the duration and offset for the QP increment for inter-frames when scenecut-aware-qp is enabled.\n");
+        H1("   --scenecut-qp-config <file>   File containing scenecut-aware-qp mode, window duration and offsets settings required for the masking. Works only with --pass 2\n");
         H0("   --radl <integer>              Number of RADL pictures allowed in front of IDR. Default %d\n", param->radl);
         H0("   --intra-refresh               Use Periodic Intra Refresh instead of IDR frames\n");
         H0("   --rc-lookahead <integer>      Number of frames for frame-type lookahead (determines encoder latency) Default %d\n", param->lookaheadDepth);
@@ -738,6 +739,12 @@ namespace X265_NS {
                         return true;
                     }
                 }
+                OPT("scenecut-qp-config")
+                {
+                    this->scenecutAwareQpConfig = x265_fopen(optarg, "rb");
+                    if (!this->scenecutAwareQpConfig)
+                        x265_log_file(param, X265_LOG_ERROR, "%s scenecut aware qp config file not found or error in opening config file\n", optarg);
+                }
                 OPT("zonefile")
                 {
                     this->zoneFile = x265_fopen(optarg, "rb");
@@ -1090,6 +1097,128 @@ namespace X265_NS {
         if (!pic->rpu.payloadSize)
             x265_log(NULL, X265_LOG_WARNING, "Dolby Vision RPU not found for POC %d\n", pic->pts);
         return 0;
+    }
+
+    bool CLIOptions::parseScenecutAwareQpConfig()
+    {
+        char line[256];
+        char* argLine;
+        rewind(scenecutAwareQpConfig);
+        while (fgets(line, sizeof(line), scenecutAwareQpConfig))
+        {
+            if (*line == '#' || (strcmp(line, "\r\n") == 0))
+                continue;
+            int index = (int)strcspn(line, "\r\n");
+            line[index] = '\0';
+            argLine = line;
+            while (isspace((unsigned char)*argLine)) argLine++;
+            char* start = strchr(argLine, '-');
+            int argCount = 0;
+            char **args = (char**)malloc(256 * sizeof(char *));
+            //Adding a dummy string to avoid file parsing error
+            args[argCount++] = (char *)"x265";
+            char* token = strtok(start, " ");
+            while (token)
+            {
+                args[argCount++] = token;
+                token = strtok(NULL, " ");
+            }
+            args[argCount] = NULL;
+            CLIOptions cliopt;
+            if (cliopt.parseScenecutAwareQpParam(argCount, args, param))
+            {
+                cliopt.destroy();
+                if (cliopt.api)
+                    cliopt.api->param_free(cliopt.param);
+                exit(1);
+            }
+            break;
+        }
+        return 1;
+    }
+    bool CLIOptions::parseScenecutAwareQpParam(int argc, char **argv, x265_param* globalParam)
+    {
+        bool bError = false;
+        int bShowHelp = false;
+        int outputBitDepth = 0;
+        const char *profile = NULL;
+        /* Presets are applied before all other options. */
+        for (optind = 0;;)
+        {
+            int c = getopt_long(argc, argv, short_options, long_options, NULL);
+            if (c == -1)
+                break;
+            else if (c == 'D')
+                outputBitDepth = atoi(optarg);
+            else if (c == 'P')
+                profile = optarg;
+            else if (c == '?')
+                bShowHelp = true;
+        }
+        if (!outputBitDepth && profile)
+        {
+            /*try to derive the output bit depth from the requested profile*/
+            if (strstr(profile, "10"))
+                outputBitDepth = 10;
+            else if (strstr(profile, "12"))
+                outputBitDepth = 12;
+            else
+                outputBitDepth = 8;
+        }
+        api = x265_api_get(outputBitDepth);
+        if (!api)
+        {
+            x265_log(NULL, X265_LOG_WARNING, "falling back to default bit-depth\n");
+            api = x265_api_get(0);
+        }
+        if (bShowHelp)
+        {
+            printVersion(globalParam, api);
+            showHelp(globalParam);
+        }
+        for (optind = 0;;)
+        {
+            int long_options_index = -1;
+            int c = getopt_long(argc, argv, short_options, long_options, &long_options_index);
+            if (c == -1)
+                break;
+            if (long_options_index < 0 && c > 0)
+            {
+                for (size_t i = 0; i < sizeof(long_options) / sizeof(long_options[0]); i++)
+                {
+                    if (long_options[i].val == c)
+                    {
+                        long_options_index = (int)i;
+                        break;
+                    }
+                }
+                if (long_options_index < 0)
+                {
+                    /* getopt_long might have already printed an error message */
+                    if (c != 63)
+                        x265_log(NULL, X265_LOG_WARNING, "internal error: short option '%c' has no long option\n", c);
+                    return true;
+                }
+            }
+            if (long_options_index < 0)
+            {
+                x265_log(NULL, X265_LOG_WARNING, "short option '%c' unrecognized\n", c);
+                return true;
+            }
+            bError |= !!api->scenecut_aware_qp_param_parse(globalParam, long_options[long_options_index].name, optarg);
+            if (bError)
+            {
+                const char *name = long_options_index > 0 ? long_options[long_options_index].name : argv[optind - 2];
+                x265_log(NULL, X265_LOG_ERROR, "invalid argument: %s = %s\n", name, optarg);
+                return true;
+            }
+        }
+        if (optind < argc)
+        {
+            x265_log(param, X265_LOG_WARNING, "extra unused command arguments given <%s>\n", argv[optind]);
+            return true;
+        }
+        return false;
     }
 
 #ifdef __cplusplus

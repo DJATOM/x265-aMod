@@ -3335,7 +3335,7 @@ double RateControl::forwardMasking(Frame* curFrame, double q)
 {
     double qp = x265_qScale2qp(q);
     uint32_t maxWindowSize = uint32_t((m_param->fwdScenecutWindow / 1000.0) * (m_param->fpsNum / m_param->fpsDenom) + 0.5);
-    uint32_t windowSize = maxWindowSize / 3;
+    uint32_t windowSize = maxWindowSize / 6;
     int lastScenecut = m_top->m_rateControl->m_lastScenecut;
     int lastIFrame = m_top->m_rateControl->m_lastScenecutAwareIFrame;
     double fwdRefQpDelta = double(m_param->fwdRefQpDelta);
@@ -3361,8 +3361,14 @@ double RateControl::forwardMasking(Frame* curFrame, double q)
                     qp += WINDOW1_DELTA * (fwdRefQpDelta - sliceTypeDelta);
                 else if (((curFrame->m_poc) > (lastScenecut + int(windowSize))) && ((curFrame->m_poc) <= (lastScenecut + 2 * int(windowSize))))
                     qp += WINDOW2_DELTA * (fwdRefQpDelta - sliceTypeDelta);
-                else if (curFrame->m_poc > lastScenecut + 2 * int(windowSize))
+                else if (((curFrame->m_poc) > (lastScenecut + 2 * int(windowSize))) && ((curFrame->m_poc) <= (lastScenecut + 3 * int(windowSize))))
                     qp += WINDOW3_DELTA * (fwdRefQpDelta - sliceTypeDelta);
+                else if (((curFrame->m_poc) > (lastScenecut + 3 * int(windowSize))) && ((curFrame->m_poc) <= (lastScenecut + 4 * int(windowSize))))
+                    qp += WINDOW4_DELTA * (fwdRefQpDelta - sliceTypeDelta);
+                else if (((curFrame->m_poc) > (lastScenecut + 4 * int(windowSize))) && ((curFrame->m_poc) <= (lastScenecut + 5 * int(windowSize))))
+                    qp += WINDOW5_DELTA * (fwdRefQpDelta - sliceTypeDelta);
+                else if (curFrame->m_poc > lastScenecut + 5 * int(windowSize))
+                    qp += WINDOW6_DELTA * (fwdRefQpDelta - sliceTypeDelta);
             }
         }
         else if (curFrame->m_lowres.sliceType == X265_TYPE_BREF)
@@ -3375,8 +3381,14 @@ double RateControl::forwardMasking(Frame* curFrame, double q)
                     qp += WINDOW1_DELTA * fwdRefQpDelta;
                 else if (((curFrame->m_poc) > (lastScenecut + int(windowSize))) && ((curFrame->m_poc) <= (lastScenecut + 2 * int(windowSize))))
                     qp += WINDOW2_DELTA * fwdRefQpDelta;
-                else if (curFrame->m_poc > lastScenecut + 2 * int(windowSize))
+                else if (((curFrame->m_poc) > (lastScenecut + 2 * int(windowSize))) && ((curFrame->m_poc) <= (lastScenecut + 3 * int(windowSize))))
                     qp += WINDOW3_DELTA * fwdRefQpDelta;
+                else if (((curFrame->m_poc) > (lastScenecut + 3 * int(windowSize))) && ((curFrame->m_poc) <= (lastScenecut + 4 * int(windowSize))))
+                    qp += WINDOW4_DELTA * fwdRefQpDelta;
+                else if (((curFrame->m_poc) > (lastScenecut + 4 * int(windowSize))) && ((curFrame->m_poc) <= (lastScenecut + 5 * int(windowSize))))
+                    qp += WINDOW5_DELTA * fwdRefQpDelta;
+                else if (curFrame->m_poc > lastScenecut + 5 * int(windowSize))
+                    qp += WINDOW6_DELTA * fwdRefQpDelta;
             }
         }
         else if (curFrame->m_lowres.sliceType == X265_TYPE_B)
@@ -3389,8 +3401,14 @@ double RateControl::forwardMasking(Frame* curFrame, double q)
                     qp += WINDOW1_DELTA * fwdNonRefQpDelta;
                 else if (((curFrame->m_poc) > (lastScenecut + int(windowSize))) && ((curFrame->m_poc) <= (lastScenecut + 2 * int(windowSize))))
                     qp += WINDOW2_DELTA * fwdNonRefQpDelta;
-                else if (curFrame->m_poc > lastScenecut + 2 * int(windowSize))
+                else if (((curFrame->m_poc) > (lastScenecut + 2 * int(windowSize))) && ((curFrame->m_poc) <= (lastScenecut + 3 * int(windowSize))))
                     qp += WINDOW3_DELTA * fwdNonRefQpDelta;
+                else if (((curFrame->m_poc) > (lastScenecut + 3 * int(windowSize))) && ((curFrame->m_poc) <= (lastScenecut + 4 * int(windowSize))))
+                    qp += WINDOW4_DELTA * fwdNonRefQpDelta;
+                else if (((curFrame->m_poc) > (lastScenecut + 4 * int(windowSize))) && ((curFrame->m_poc) <= (lastScenecut + 5 * int(windowSize))))
+                    qp += WINDOW5_DELTA * fwdNonRefQpDelta;
+                else if (curFrame->m_poc > lastScenecut + 5 * int(windowSize))
+                    qp += WINDOW6_DELTA * fwdNonRefQpDelta;
             }
         }
     }

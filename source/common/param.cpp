@@ -678,6 +678,109 @@ static int parseName(const char* arg, const char* const* names, bool& bError)
 #define atof(str) x265_atof(str, bError)
 #define atobool(str) (x265_atobool(str, bError))
 
+int x265_scenecut_aware_qp_param_parse(x265_param* p, const char* name, const char* value)
+{
+    bool bError = false;
+    char nameBuf[64];
+    if (!name)
+        return X265_PARAM_BAD_NAME;
+    // skip -- prefix if provided
+    if (name[0] == '-' && name[1] == '-')
+        name += 2;
+    // s/_/-/g
+    if (strlen(name) + 1 < sizeof(nameBuf) && strchr(name, '_'))
+    {
+        char *c;
+        strcpy(nameBuf, name);
+        while ((c = strchr(nameBuf, '_')) != 0)
+            *c = '-';
+        name = nameBuf;
+    }
+    if (!value)
+        value = "true";
+    else if (value[0] == '=')
+        value++;
+#define OPT(STR) else if (!strcmp(name, STR))
+    if (0);
+    OPT("scenecut-aware-qp") p->bEnableSceneCutAwareQp = x265_atoi(value, bError);
+    OPT("masking-strength")
+    {
+        int window1;
+        double refQpDelta1, nonRefQpDelta1;
+        if (p->bEnableSceneCutAwareQp == FORWARD)
+        {
+            if (3 == sscanf(value, "%d,%lf,%lf", &window1, &refQpDelta1, &nonRefQpDelta1))
+            {
+                if (window1 > 0)
+                    p->fwdScenecutWindow = window1;
+                if (refQpDelta1 > 0)
+                    p->fwdRefQpDelta = refQpDelta1;
+                if (nonRefQpDelta1 > 0)
+                    p->fwdNonRefQpDelta = nonRefQpDelta1;
+            }
+            else
+            {
+                x265_log(NULL, X265_LOG_ERROR, "Specify all the necessary offsets for masking-strength \n");
+                bError = true;
+            }
+        }
+        else if (p->bEnableSceneCutAwareQp == BACKWARD)
+        {
+            if (3 == sscanf(value, "%d,%lf,%lf", &window1, &refQpDelta1, &nonRefQpDelta1))
+            {
+                if (window1 > 0)
+                    p->bwdScenecutWindow = window1;
+                if (refQpDelta1 > 0)
+                    p->bwdRefQpDelta = refQpDelta1;
+                if (nonRefQpDelta1 > 0)
+                    p->bwdNonRefQpDelta = nonRefQpDelta1;
+            }
+            else
+            {
+                x265_log(NULL, X265_LOG_ERROR, "Specify all the necessary offsets for masking-strength \n");
+                bError = true;
+            }
+        }
+        else if (p->bEnableSceneCutAwareQp == BI_DIRECTIONAL)
+        {
+            int window2;
+            double refQpDelta2, nonRefQpDelta2;
+            if (6 == sscanf(value, "%d,%lf,%lf,%d,%lf,%lf", &window1, &refQpDelta1, &nonRefQpDelta1, &window2, &refQpDelta2, &nonRefQpDelta2))
+            {
+                if (window1 > 0)
+                    p->fwdScenecutWindow = window1;
+                if (refQpDelta1 > 0)
+                    p->fwdRefQpDelta = refQpDelta1;
+                if (nonRefQpDelta1 > 0)
+                    p->fwdNonRefQpDelta = nonRefQpDelta1;
+                if (window2 > 0)
+                    p->bwdScenecutWindow = window2;
+                if (refQpDelta2 > 0)
+                    p->bwdRefQpDelta = refQpDelta2;
+                if (nonRefQpDelta2 > 0)
+                    p->bwdNonRefQpDelta = nonRefQpDelta2;
+            }
+            else
+            {
+                x265_log(NULL, X265_LOG_ERROR, "Specify all the necessary offsets for masking-strength \n");
+                bError = true;
+            }
+        }
+    }
+    else
+        return X265_PARAM_BAD_NAME;
+#undef OPT
+    return bError ? X265_PARAM_BAD_VALUE : 0;
+}
+
+
+/* internal versions of string-to-int with additional error checking */
+#undef atoi
+#undef atof
+#define atoi(str) x265_atoi(str, bError)
+#define atof(str) x265_atof(str, bError)
+#define atobool(str) (x265_atobool(str, bError))
+
 int x265_zone_param_parse(x265_param* p, const char* name, const char* value)
 {
     bool bError = false;
@@ -1346,72 +1449,6 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
             p->selectiveSAO = atoi(value);
         }
         OPT("fades") p->bEnableFades = atobool(value);
-        OPT("scenecut-aware-qp") p->bEnableSceneCutAwareQp = atoi(value);
-        OPT("masking-strength")
-        {
-            int window1;
-            double refQpDelta1, nonRefQpDelta1;
-
-            if (p->bEnableSceneCutAwareQp == FORWARD)
-            {
-                if (3 == sscanf(value, "%d,%lf,%lf", &window1, &refQpDelta1, &nonRefQpDelta1))
-                {
-                    if (window1 > 0)
-                        p->fwdScenecutWindow = window1;
-                    if (refQpDelta1 > 0)
-                        p->fwdRefQpDelta = refQpDelta1;
-                    if (nonRefQpDelta1 > 0)
-                        p->fwdNonRefQpDelta = nonRefQpDelta1;
-                }
-                else
-                {
-                    x265_log(NULL, X265_LOG_ERROR, "Specify all the necessary offsets for masking-strength \n");
-                    bError = true;
-                }
-            }
-            else if (p->bEnableSceneCutAwareQp == BACKWARD)
-            {
-                if (3 == sscanf(value, "%d,%lf,%lf", &window1, &refQpDelta1, &nonRefQpDelta1))
-                {
-                    if (window1 > 0)
-                        p->bwdScenecutWindow = window1;
-                    if (refQpDelta1 > 0)
-                        p->bwdRefQpDelta = refQpDelta1;
-                    if (nonRefQpDelta1 > 0)
-                        p->bwdNonRefQpDelta = nonRefQpDelta1;
-                }
-                else
-                {
-                    x265_log(NULL, X265_LOG_ERROR, "Specify all the necessary offsets for masking-strength \n");
-                    bError = true;
-                }
-            }
-            else if (p->bEnableSceneCutAwareQp == BI_DIRECTIONAL)
-            {
-                int window2;
-                double refQpDelta2, nonRefQpDelta2;
-                if (6 == sscanf(value, "%d,%lf,%lf,%d,%lf,%lf", &window1, &refQpDelta1, &nonRefQpDelta1, &window2, &refQpDelta2, &nonRefQpDelta2))
-                {
-                    if (window1 > 0)
-                        p->fwdScenecutWindow = window1;
-                    if (refQpDelta1 > 0)
-                        p->fwdRefQpDelta = refQpDelta1;
-                    if (nonRefQpDelta1 > 0)
-                        p->fwdNonRefQpDelta = nonRefQpDelta1;
-                    if (window2 > 0)
-                        p->bwdScenecutWindow = window2;
-                    if (refQpDelta2 > 0)
-                        p->bwdRefQpDelta = refQpDelta2;
-                    if (nonRefQpDelta2 > 0)
-                        p->bwdNonRefQpDelta = nonRefQpDelta2;
-                }
-                else
-                {
-                    x265_log(NULL, X265_LOG_ERROR, "Specify all the necessary offsets for masking-strength \n");
-                    bError = true;
-                }
-            }
-        }
         OPT("field") p->bField = atobool( value );
         OPT("cll") p->bEmitCLL = atobool(value);
         OPT("frame-dup") p->bEnableFrameDuplication = atobool(value);
@@ -1859,17 +1896,17 @@ int x265_check_params(x265_param* param)
             "Invalid masking direction. Value must be between 0 and 3(inclusive)");
             CHECK(param->fwdScenecutWindow < 0 || param->fwdScenecutWindow > 1000,
             "Invalid forward scenecut Window duration. Value must be between 0 and 1000(inclusive)");
-            CHECK(param->fwdRefQpDelta < 0 || param->fwdRefQpDelta > 10,
-            "Invalid fwdRefQpDelta value. Value must be between 0 and 10 (inclusive)");
-            CHECK(param->fwdNonRefQpDelta < 0 || param->fwdNonRefQpDelta > 10,
-            "Invalid fwdNonRefQpDelta value. Value must be between 0 and 10 (inclusive)");
+            CHECK(param->fwdRefQpDelta < 0 || param->fwdRefQpDelta > 20,
+            "Invalid fwdRefQpDelta value. Value must be between 0 and 20 (inclusive)");
+            CHECK(param->fwdNonRefQpDelta < 0 || param->fwdNonRefQpDelta > 20,
+            "Invalid fwdNonRefQpDelta value. Value must be between 0 and 20 (inclusive)");
 
             CHECK(param->bwdScenecutWindow < 0 || param->bwdScenecutWindow > 1000,
                 "Invalid backward scenecut Window duration. Value must be between 0 and 1000(inclusive)");
-            CHECK(param->bwdRefQpDelta < -1 || param->bwdRefQpDelta > 10,
-                "Invalid bwdRefQpDelta value. Value must be between 0 and 10 (inclusive)");
-            CHECK(param->bwdNonRefQpDelta < -1 || param->bwdNonRefQpDelta > 10,
-                "Invalid bwdNonRefQpDelta value. Value must be between 0 and 10 (inclusive)");
+            CHECK(param->bwdRefQpDelta < -1 || param->bwdRefQpDelta > 20,
+                "Invalid bwdRefQpDelta value. Value must be between 0 and 20 (inclusive)");
+            CHECK(param->bwdNonRefQpDelta < -1 || param->bwdNonRefQpDelta > 20,
+                "Invalid bwdNonRefQpDelta value. Value must be between 0 and 20 (inclusive)");
         }
     }
     if (param->bEnableHME)

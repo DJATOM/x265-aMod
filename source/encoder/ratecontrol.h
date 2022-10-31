@@ -49,8 +49,11 @@ struct SPS;
 
 /*Scenecut Aware QP*/
 #define WINDOW1_DELTA           1.0 /* The offset for the frames coming in the window-1*/
-#define WINDOW2_DELTA           0.7 /* The offset for the frames coming in the window-2*/
-#define WINDOW3_DELTA           0.4 /* The offset for the frames coming in the window-3*/
+#define WINDOW2_DELTA           0.85 /* The offset for the frames coming in the window-2*/
+#define WINDOW3_DELTA           0.7 /* The offset for the frames coming in the window-3*/
+#define WINDOW4_DELTA           0.55 /* The offset for the frames coming in the window-4*/
+#define WINDOW5_DELTA           0.4 /* The offset for the frames coming in the window-5*/
+#define WINDOW6_DELTA           0.25 /* The offset for the frames coming in the window-6*/
 
 struct Predictor
 {

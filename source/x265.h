@@ -2024,6 +2024,8 @@ void x265_zone_free(x265_param *param);
 
 int x265_zone_param_parse(x265_param* p, const char* name, const char* value);
 
+int x265_scenecut_aware_qp_param_parse(x265_param* p, const char* name, const char* value);
+
 static const char * const x265_profile_names[] = {
     /* HEVC v1 */
     "main", "main10", "mainstillpicture", /* alias */ "msp",
@@ -2293,6 +2295,7 @@ typedef struct x265_api
     void          (*param_free)(x265_param*);
     void          (*param_default)(x265_param*);
     int           (*param_parse)(x265_param*, const char*, const char*);
+    int           (*scenecut_aware_qp_param_parse)(x265_param*, const char*, const char*);
     int           (*param_apply_profile)(x265_param*, const char*);
     int           (*param_default_preset)(x265_param*, const char*, const char *);
     x265_picture* (*picture_alloc)(void);

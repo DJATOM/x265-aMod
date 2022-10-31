@@ -296,6 +296,16 @@ int main(int argc, char **argv)
 
     int ret = 0;
 
+    if (cliopt[0].scenecutAwareQpConfig)
+    {
+        if (!cliopt[0].parseScenecutAwareQpConfig())
+        {
+            x265_log(NULL, X265_LOG_ERROR, "Unable to parse scenecut aware qp config file \n");
+            fclose(cliopt[0].scenecutAwareQpConfig);
+            cliopt[0].scenecutAwareQpConfig = NULL;
+        }
+    }
+
     AbrEncoder* abrEnc = new AbrEncoder(cliopt, numEncodes, ret);
     int threadsActive = abrEnc->m_numActiveEncodes.get();
     while (threadsActive)

@@ -1050,6 +1050,7 @@ static const x265_api libapi =
     &PARAM_NS::x265_param_free,
     &PARAM_NS::x265_param_default,
     &PARAM_NS::x265_param_parse,
+    &PARAM_NS::x265_scenecut_aware_qp_param_parse,
     &PARAM_NS::x265_param_apply_profile,
     &PARAM_NS::x265_param_default_preset,
     &x265_picture_alloc,
