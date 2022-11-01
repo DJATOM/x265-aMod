@@ -63,7 +63,7 @@ Frame::Frame()
     m_thetaPic = NULL;
     m_edgeBitPlane = NULL;
     m_edgeBitPic = NULL;
-    m_frameSegment = X265_AQ_NONE;
+    m_frameSegment = 0;
     m_isInsideWindow = 0;
 
     // mcstf
