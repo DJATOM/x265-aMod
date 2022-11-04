@@ -1974,12 +1974,17 @@ Quality, rate control and rate distortion options
 	
 	**CLI ONLY**
 
+.. option:: --scenecut-qp-config <filename>
+	Specify a text file which contains the scenecut aware QP options.
+	The options include :option:`--scenecut-aware-qp` and :option:`--masking-strength`
+	**CLI ONLY**
+
 .. option:: --scenecut-aware-qp <integer>
 
 	It reduces the bits spent on the inter-frames within the scenecut window
 	before and after a scenecut by increasing their QP in ratecontrol pass2 algorithm
-	without any deterioration in visual quality. If a scenecut falls within the window,
-	the QP of the inter-frames after this scenecut will not be modified.
+	without any deterioration in visual quality.
+	It is mentioned inside :option:`--scenecut-qp-config` file.
 	:option:`--scenecut-aware-qp` works only with --pass 2. Default 0.
 
 	+-------+---------------------------------------------------------------+
@@ -2002,47 +2007,72 @@ Quality, rate control and rate distortion options
 
 	Comma separated list of values which specifies the duration and offset
 	for the QP increment for inter-frames when :option:`--scenecut-aware-qp`
-	is enabled.
+	is enabled. It is mentioned inside :option:`--scenecut-qp-config` file.
 
 	When :option:`--scenecut-aware-qp` is::
 	* 1 (Forward masking):
-	--masking-strength <fwdWindow,fwdRefQPDelta,fwdNonRefQPDelta>
+	--masking-strength <fwdMaxWindow,fwdRefQPDelta,fwdNonRefQPDelta>
+	or 
+	--masking-strength <fwdWindow1,fwdRefQPDelta1,fwdNonRefQPDelta1,fwdWindow2,fwdRefQPDelta2,fwdNonRefQPDelta2,
+						fwdWindow3,fwdRefQPDelta3,fwdNonRefQPDelta3,fwdWindow4,fwdRefQPDelta4,fwdNonRefQPDelta4,
+						fwdWindow5,fwdRefQPDelta5,fwdNonRefQPDelta5,fwdWindow6,fwdRefQPDelta6,fwdNonRefQPDelta6>
 	* 2 (Backward masking):
-	--masking-strength <bwdWindow,bwdRefQPDelta,bwdNonRefQPDelta>
+	--masking-strength <bwdMaxWindow,bwdRefQPDelta,bwdNonRefQPDelta>
+	or 
+	--masking-strength <bwdWindow1,bwdRefQPDelta1,bwdNonRefQPDelta1,bwdWindow2,bwdRefQPDelta2,bwdNonRefQPDelta2,
+						bwdWindow3,bwdRefQPDelta3,bwdNonRefQPDelta3,bwdWindow4,bwdRefQPDelta4,bwdNonRefQPDelta4,
+						bwdWindow5,bwdRefQPDelta5,bwdNonRefQPDelta5,bwdWindow6,bwdRefQPDelta6,bwdNonRefQPDelta6>
 	* 3 (Bi-directional masking):
-	--masking-strength <fwdWindow,fwdRefQPDelta,fwdNonRefQPDelta,bwdWindow,bwdRefQPDelta,bwdNonRefQPDelta>
+	--masking-strength <fwdMaxWindow,fwdRefQPDelta,fwdNonRefQPDelta,bwdMaxWindow,bwdRefQPDelta,bwdNonRefQPDelta>
+	or 
+	--masking-strength <fwdWindow1,fwdRefQPDelta1,fwdNonRefQPDelta1,fwdWindow2,fwdRefQPDelta2,fwdNonRefQPDelta2,
+						fwdWindow3,fwdRefQPDelta3,fwdNonRefQPDelta3,fwdWindow4,fwdRefQPDelta4,fwdNonRefQPDelta4,
+						fwdWindow5,fwdRefQPDelta5,fwdNonRefQPDelta5,fwdWindow6,fwdRefQPDelta6,fwdNonRefQPDelta6,
+						bwdWindow1,bwdRefQPDelta1,bwdNonRefQPDelta1,bwdWindow2,bwdRefQPDelta2,bwdNonRefQPDelta2,
+						bwdWindow3,bwdRefQPDelta3,bwdNonRefQPDelta3,bwdWindow4,bwdRefQPDelta4,bwdNonRefQPDelta4,
+						bwdWindow5,bwdRefQPDelta5,bwdNonRefQPDelta5,bwdWindow6,bwdRefQPDelta6,bwdNonRefQPDelta6>
 
 	+-----------------+---------------------------------------------------------------+
 	| Parameter       | Description                                                   |
 	+=================+===============================================================+
-	| fwdWindow       | The duration(in milliseconds) for which there is a reduction  |
-	|                 | in the bits spent on the inter-frames after a scenecut by     |
-	|                 | increasing their QP. Default 500ms.                           |
-	|                 | **Range of values:** 0 to 1000                                |
+	| fwdMaxWindow    | The maximum duration(in milliseconds) for which there is a    |
+	|                 | reduction in the bits spent on the inter-frames after a       |
+	|                 | scenecut by increasing their QP. Default 500ms.               |
+	|                 | **Range of values:** 0 to 2000                                |
+	+-----------------+---------------------------------------------------------------+
+	| fwdWindow       | The duration of a sub-window(in milliseconds) for which there |
+	|                 | is a reduction in the bits spent on the inter-frames after a  |
+	|                 | scenecut by increasing their QP. Default 500ms.               |
+	|                 | **Range of values:** 0 to 2000                                |
 	+-----------------+---------------------------------------------------------------+
 	| fwdRefQPDelta   | The offset by which QP is incremented for inter-frames        |
 	|                 | after a scenecut. Default 5.                                  |
-	|                 | **Range of values:** 0 to 10                                  |
+	|                 | **Range of values:** 0 to 20                                  |
 	+-----------------+---------------------------------------------------------------+
 	| fwdNonRefQPDelta| The offset by which QP is incremented for non-referenced      |
 	|                 | inter-frames after a scenecut. The offset is computed from    |
 	|                 | fwdRefQPDelta when it is not explicitly specified.            |
-	|                 | **Range of values:** 0 to 10                                  |
+	|                 | **Range of values:** 0 to 20                                  |
 	+-----------------+---------------------------------------------------------------+
-	| bwdWindow       | The duration(in milliseconds) for which there is a reduction  |
-	|                 | in the bits spent on the inter-frames before a scenecut by    |
-	|                 | increasing their QP. Default 100ms.                           |
-	|                 | **Range of values:** 0 to 1000                                |
+	| bwdMaxWindow    | The maximum duration(in milliseconds) for which there is a    |
+	|                 | reduction in the bits spent on the inter-frames before a      |
+	|                 | scenecut by increasing their QP. Default 100ms.               |
+	|                 | **Range of values:** 0 to 2000                                |
+	+-----------------+---------------------------------------------------------------+
+	| bwdWindow       | The duration of a sub-window(in milliseconds) for which there |
+	|                 | is a reduction in the bits spent on the inter-frames before a |
+	|                 | scenecut by increasing their QP. Default 100ms.               |
+	|                 | **Range of values:** 0 to 2000                                |
 	+-----------------+---------------------------------------------------------------+
 	| bwdRefQPDelta   | The offset by which QP is incremented for inter-frames        |
 	|                 | before a scenecut. The offset is computed from                |
 	|                 | fwdRefQPDelta when it is not explicitly specified.            |
-	|                 | **Range of values:** 0 to 10                                  |
+	|                 | **Range of values:** 0 to 20                                  |
 	+-----------------+---------------------------------------------------------------+
 	| bwdNonRefQPDelta| The offset by which QP is incremented for non-referenced      |
 	|                 | inter-frames before a scenecut. The offset is computed from   |
 	|                 | bwdRefQPDelta when it is not explicitly specified.            |
-	|                 | **Range of values:** 0 to 10                                  |
+	|                 | **Range of values:** 0 to 20                                  |
 	+-----------------+---------------------------------------------------------------+
 
 	**CLI ONLY**

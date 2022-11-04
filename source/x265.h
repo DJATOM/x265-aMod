@@ -614,6 +614,7 @@ typedef enum
 #define SLICE_TYPE_DELTA        0.3 /* The offset decremented or incremented for P-frames or b-frames respectively*/
 #define BACKWARD_WINDOW         1 /* Scenecut window before a scenecut */
 #define FORWARD_WINDOW          2 /* Scenecut window after a scenecut */
+#define BWD_WINDOW_DELTA        0.4
 
 typedef struct x265_cli_csp
 {
@@ -1886,14 +1887,15 @@ typedef struct x265_param
 
     /* The duration(in milliseconds) for which there is a reduction in the bits spent on the inter-frames after a scenecut
      * by increasing their QP, when bEnableSceneCutAwareQp is 1 or 3. Default is 500ms.*/
-    int       fwdScenecutWindow;
+    int       fwdMaxScenecutWindow;
+    int       fwdScenecutWindow[6];
 
     /* The offset by which QP is incremented for inter-frames after a scenecut when bEnableSceneCutAwareQp is 1 or 3.
      * Default is +5. */
-    double    fwdRefQpDelta;
+    double    fwdRefQpDelta[6];
 
     /* The offset by which QP is incremented for non-referenced inter-frames after a scenecut when bEnableSceneCutAwareQp is 1 or 3. */
-    double    fwdNonRefQpDelta;
+    double    fwdNonRefQpDelta[6];
 
     /* Enables histogram based scenecut detection algorithm to detect scenecuts. Default disabled */
     int       bHistBasedSceneCut;
@@ -1961,13 +1963,14 @@ typedef struct x265_param
 
     /* The duration(in milliseconds) for which there is a reduction in the bits spent on the inter-frames before a scenecut
      * by increasing their QP, when bEnableSceneCutAwareQp is 2 or 3. Default is 100ms.*/
-    int       bwdScenecutWindow;
+    int       bwdMaxScenecutWindow;
+    int       bwdScenecutWindow[6];
 
     /* The offset by which QP is incremented for inter-frames before a scenecut when bEnableSceneCutAwareQp is 2 or 3. */
-    double    bwdRefQpDelta;
+    double    bwdRefQpDelta[6];
 
     /* The offset by which QP is incremented for non-referenced inter-frames before a scenecut when bEnableSceneCutAwareQp is 2 or 3. */
-    double    bwdNonRefQpDelta;
+    double    bwdNonRefQpDelta[6];
 
     /* Specify combinations of color primaries, transfer characteristics, color matrix,
     * range of luma and chroma signals, and chroma sample location. This has higher
