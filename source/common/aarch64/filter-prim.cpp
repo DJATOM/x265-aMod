@@ -142,48 +142,57 @@ void interp_horiz_ps_neon(const uint16_t *src, intptr_t srcStride, int16_t *dst,
         src -= (N / 2 - 1) * srcStride;
         blkheight += N - 1;
     }
-    int32x4_t vc0 = vmovl_s16(*(int16x4_t *)coeff);
-    int32x4_t vc1;
-
-    if (N == 8)
-    {
-        vc1 = vmovl_s16(*(int16x4_t *)(coeff + 4));
-    }
-
+    int16x8_t vc3 = vld1q_s16(coeff);
     const int32x4_t voffset = vdupq_n_s32(offset);
     const int32x4_t vhr = vdupq_n_s32(-shift);
 
     int row, col;
     for (row = 0; row < blkheight; row++)
     {
-        for (col = 0; col < width; col += 4)
+        for (col = 0; col < width; col += 8)
         {
-            int32x4_t vsum;
+            int32x4_t vsum, vsum2;
 
-            int32x4_t input[N];
-
+            int16x8_t input[N];
             for (int i = 0; i < N; i++)
             {
-                input[i] = vmovl_s16(*(int16x4_t *)&src[col + i]);
+                input[i] = vld1q_s16((int16_t *)&src[col + i]);
             }
-            vsum = voffset;
-            vsum = vmlaq_laneq_s32(vsum, (input[0]), vc0, 0);
-            vsum = vmlaq_laneq_s32(vsum, (input[1]), vc0, 1);
-            vsum = vmlaq_laneq_s32(vsum, (input[2]), vc0, 2);
-            vsum = vmlaq_laneq_s32(vsum, (input[3]), vc0, 3);
 
+            vsum = voffset;
+            vsum2 = voffset;
+
+            vsum = vmlal_lane_s16(vsum, vget_low_u16(input[0]), vget_low_s16(vc3), 0);
+            vsum2 = vmlal_high_lane_s16(vsum2, input[0], vget_low_s16(vc3), 0);
+
+            vsum = vmlal_lane_s16(vsum, vget_low_u16(input[1]), vget_low_s16(vc3), 1);
+            vsum2 = vmlal_high_lane_s16(vsum2, input[1], vget_low_s16(vc3), 1);
+
+            vsum = vmlal_lane_s16(vsum, vget_low_u16(input[2]), vget_low_s16(vc3), 2);
+            vsum2 = vmlal_high_lane_s16(vsum2, input[2], vget_low_s16(vc3), 2);
+
+            vsum = vmlal_lane_s16(vsum, vget_low_u16(input[3]), vget_low_s16(vc3), 3);
+            vsum2 = vmlal_high_lane_s16(vsum2, input[3], vget_low_s16(vc3), 3);
 
             if (N == 8)
             {
-                vsum = vmlaq_laneq_s32(vsum, (input[4]), vc1, 0);
-                vsum = vmlaq_laneq_s32(vsum, (input[5]), vc1, 1);
-                vsum = vmlaq_laneq_s32(vsum, (input[6]), vc1, 2);
-                vsum = vmlaq_laneq_s32(vsum, (input[7]), vc1, 3);
+                vsum = vmlal_lane_s16(vsum, vget_low_s16(input[4]), vget_high_s16(vc3), 0);
+                vsum2 = vmlal_high_lane_s16(vsum2, input[4], vget_high_s16(vc3), 0);
 
+                vsum = vmlal_lane_s16(vsum, vget_low_s16(input[5]), vget_high_s16(vc3), 1);
+                vsum2 = vmlal_high_lane_s16(vsum2, input[5], vget_high_s16(vc3), 1);
+
+                vsum = vmlal_lane_s16(vsum, vget_low_s16(input[6]), vget_high_s16(vc3), 2);
+                vsum2 = vmlal_high_lane_s16(vsum2, input[6], vget_high_s16(vc3), 2);
+
+                vsum = vmlal_lane_s16(vsum, vget_low_s16(input[7]), vget_high_s16(vc3), 3);
+                vsum2 = vmlal_high_lane_s16(vsum2, input[7], vget_high_s16(vc3), 3);
             }
 
             vsum = vshlq_s32(vsum, vhr);
+            vsum2 = vshlq_s32(vsum2, vhr);
             *(int16x4_t *)&dst[col] = vmovn_u32(vsum);
+            *(int16x4_t *)&dst[col+4] = vmovn_u32(vsum2);
         }
 
         src += srcStride;
@@ -618,10 +627,13 @@ void interp_vert_sp_neon(const int16_t *src, intptr_t srcStride, pixel *dst, int
             {
                 vsum1 = vmlal_lane_s16(vsum1, vget_low_s16(input[4]), high_vc, 0);
                 vsum2 = vmlal_high_lane_s16(vsum2, input[4], high_vc, 0);
+
                 vsum1 = vmlal_lane_s16(vsum1, vget_low_s16(input[5]), high_vc, 1);
                 vsum2 = vmlal_high_lane_s16(vsum2, input[5], high_vc, 1);
+
                 vsum1 = vmlal_lane_s16(vsum1, vget_low_s16(input[6]), high_vc, 2);
                 vsum2 = vmlal_high_lane_s16(vsum2, input[6], high_vc, 2);
+
                 vsum1 = vmlal_lane_s16(vsum1, vget_low_s16(input[7]), high_vc, 3);
                 vsum2 = vmlal_high_lane_s16(vsum2, input[7], high_vc, 3);
             }
@@ -883,6 +895,16 @@ void setupFilterPrimitives_neon(EncoderPrimitives &p)
     LUMA_FILTER(8, 16);
     LUMA_FILTER(8, 32);
     LUMA_FILTER(24, 32);
+
+    LUMA_FILTER(16, 32);
+    LUMA_FILTER(32, 16);
+    LUMA_FILTER(32, 24);
+    LUMA_FILTER(32, 32);
+    LUMA_FILTER(32, 64);
+    LUMA_FILTER(48, 64);
+    LUMA_FILTER(64, 32);
+    LUMA_FILTER(64, 48);
+    LUMA_FILTER(64, 64);
     
     CHROMA_FILTER_420(24, 32);
     
