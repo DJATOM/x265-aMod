@@ -2864,7 +2864,7 @@ bool Lookahead::histBasedScenecut(Lowres **frames, int p0, int p1, int numFrames
             if (frames[cp1 + 1]->bHistScenecutAnalyzed == true)
                 continue;
 
-            if (detectHistBasedSceneChange(frames, cp1, cp1 + 1, cp1 + 2))
+            if (frames[cp1 + 2] != NULL && detectHistBasedSceneChange(frames, cp1, cp1 + 1, cp1 + 2))
             {
                 /* If current frame is a Scenecut from p0 frame as well as Scenecut from
                  * preceeding frame, mark it as a Scenecut */
