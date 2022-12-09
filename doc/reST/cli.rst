@@ -1761,7 +1761,8 @@ Quality, rate control and rate distortion options
 
 .. option:: --sbrc --no-sbrc
 
-	To enable and disable segment based rate control.
+	To enable and disable segment based rate control.Segment duration depends on the
+	keyframe interval specified.If unspecified,default keyframe interval will be used.
 	Default: disabled.
 
 .. option:: --hevc-aq

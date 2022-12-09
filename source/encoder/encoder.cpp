@@ -4396,6 +4396,18 @@ void Encoder::configure(x265_param *p)
         if (m_param->searchRange != m_param->hmeRange[2])
             m_param->searchRange = m_param->hmeRange[2];
     }
+
+    if (p->bEnableSBRC && p->bOpenGOP)
+    {
+        x265_log(p, X265_LOG_WARNING, "Segment based RateControl requires closed gop structure. Enabling closed GOP.\n");
+        p->bOpenGOP = 0;
+    }
+
+    if (p->bEnableSBRC && (p->keyframeMax != p->keyframeMin))
+    {
+        x265_log(p, X265_LOG_WARNING, "Segment based RateControl requires fixed gop length. Force set min-keyint equal to keyint.\n");
+        p->keyframeMin = p->keyframeMax;
+    }
 }
 
 void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc, const x265_picture* picIn, int paramBytes)

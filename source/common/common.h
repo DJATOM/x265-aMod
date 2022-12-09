@@ -130,7 +130,6 @@ typedef uint64_t sum2_t;
 typedef uint64_t pixel4;
 typedef int64_t  ssum2_t;
 #define SHIFT_TO_BITPLANE 9
-#define HISTOGRAM_BINS 1024
 #else
 typedef uint8_t  pixel;
 typedef uint16_t sum_t;
@@ -138,7 +137,6 @@ typedef uint32_t sum2_t;
 typedef uint32_t pixel4;
 typedef int32_t  ssum2_t; // Signed sum
 #define SHIFT_TO_BITPLANE 7
-#define HISTOGRAM_BINS 256
 #endif // if HIGH_BIT_DEPTH
 
 #if X265_DEPTH < 10

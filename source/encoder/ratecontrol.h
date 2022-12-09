@@ -150,6 +150,7 @@ public:
     int    m_lastScenecutAwareIFrame;
     double m_rateTolerance;
     double m_frameDuration;     /* current frame duration in seconds */
+    double m_frameDurInGOP;     /* current frame duration when considered as a segment */
     double m_bitrate;
     double m_rateFactorConstant;
     double m_bufferSize;
@@ -255,6 +256,7 @@ public:
     RateControl(x265_param& p, Encoder *enc);
     bool init(const SPS& sps);
     void initHRD(SPS& sps);
+    void initVBV(const SPS& sps);
     void reconfigureRC();
 
     void setFinalFrameCount(int count);
@@ -315,6 +317,7 @@ protected:
     double tuneQScaleForGrain(double rcOverflow);
     void   splitdeltaPOC(char deltapoc[], RateControlEntry *rce);
     void   splitbUsed(char deltapoc[], RateControlEntry *rce);
+    void   checkAndResetCRF(RateControlEntry* rce);
 };
 }
 #endif // ifndef X265_RATECONTROL_H
