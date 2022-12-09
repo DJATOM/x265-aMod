@@ -1011,10 +1011,7 @@ template<int lx, int ly>
 void sad_x4_neon(const pixel *pix1, const pixel *pix2, const pixel *pix3, const pixel *pix4, const pixel *pix5,
                  intptr_t frefstride, int32_t *res)
 {
-    res[0] = 0;
-    res[1] = 0;
-    res[2] = 0;
-    res[3] = 0;
+    int32x4_t result = {0};
     for (int y = 0; y < ly; y++)
     {
         int x = 0;
@@ -1023,7 +1020,23 @@ void sad_x4_neon(const pixel *pix1, const pixel *pix2, const pixel *pix3, const 
         uint16x8_t vsum16_2 = vdupq_n_u16(0);
         uint16x8_t vsum16_3 = vdupq_n_u16(0);
 #if HIGH_BIT_DEPTH
-        for (; (x + 8) <= lx; x += 8)
+        for (; (x + 16) <= lx; x += 16)
+        {
+            uint16x8x2_t p1 = vld1q_u16_x2(&pix1[x]);
+            uint16x8x2_t p2 = vld1q_u16_x2(&pix2[x]);
+            uint16x8x2_t p3 = vld1q_u16_x2(&pix3[x]);
+            uint16x8x2_t p4 = vld1q_u16_x2(&pix4[x]);
+            uint16x8x2_t p5 = vld1q_u16_x2(&pix5[x]);
+            vsum16_0 = vabaq_s16(vsum16_0, p1.val[0], p2.val[0]);
+            vsum16_1 = vabaq_s16(vsum16_1, p1.val[0], p3.val[0]);
+            vsum16_2 = vabaq_s16(vsum16_2, p1.val[0], p4.val[0]);
+            vsum16_3 = vabaq_s16(vsum16_3, p1.val[0], p5.val[0]);
+            vsum16_0 = vabaq_s16(vsum16_0, p1.val[1], p2.val[1]);
+            vsum16_1 = vabaq_s16(vsum16_1, p1.val[1], p3.val[1]);
+            vsum16_2 = vabaq_s16(vsum16_2, p1.val[1], p4.val[1]);
+            vsum16_3 = vabaq_s16(vsum16_3, p1.val[1], p5.val[1]);
+        }
+        if (lx & 8)
         {
             uint16x8_t p1 = *(uint16x8_t *)&pix1[x];
             uint16x8_t p2 = *(uint16x8_t *)&pix2[x];
@@ -1034,27 +1047,32 @@ void sad_x4_neon(const pixel *pix1, const pixel *pix2, const pixel *pix3, const 
             vsum16_1 = vabaq_s16(vsum16_1, p1, p3);
             vsum16_2 = vabaq_s16(vsum16_2, p1, p4);
             vsum16_3 = vabaq_s16(vsum16_3, p1, p5);
-
+            x += 8;
         }
         if (lx & 4)
         {
-            uint16x4_t p1 = *(uint16x4_t *)&pix1[x];
-            uint16x4_t p2 = *(uint16x4_t *)&pix2[x];
-            uint16x4_t p3 = *(uint16x4_t *)&pix3[x];
-            uint16x4_t p4 = *(uint16x4_t *)&pix4[x];
-            uint16x4_t p5 = *(uint16x4_t *)&pix5[x];
-            res[0] += vaddlv_s16(vaba_s16(vdup_n_s16(0), p1, p2));
-            res[1] += vaddlv_s16(vaba_s16(vdup_n_s16(0), p1, p3));
-            res[2] += vaddlv_s16(vaba_s16(vdup_n_s16(0), p1, p4));
-            res[3] += vaddlv_s16(vaba_s16(vdup_n_s16(0), p1, p5));
+            /* This is equivalent to getting the absolute difference of pix1[x] with each of
+             * pix2 - pix5, then summing across the vector (4 values each) and adding the
+             * result to result. */
+            uint16x8_t p1 = vreinterpretq_s16_u64(
+                    vld1q_dup_u64((uint64_t *)&pix1[x]));
+            uint16x8_t p2_3 = vcombine_s16(*(uint16x4_t *)&pix2[x], *(uint16x4_t *)&pix3[x]);
+            uint16x8_t p4_5 = vcombine_s16(*(uint16x4_t *)&pix4[x], *(uint16x4_t *)&pix5[x]);
+
+            uint16x8_t a = vabdq_u16(p1, p2_3);
+            uint16x8_t b = vabdq_u16(p1, p4_5);
+
+            result = vpadalq_s16(result, vpaddq_s16(a, b));
             x += 4;
         }
         if (lx >= 4)
         {
-            res[0] += vaddlvq_s16(vsum16_0);
-            res[1] += vaddlvq_s16(vsum16_1);
-            res[2] += vaddlvq_s16(vsum16_2);
-            res[3] += vaddlvq_s16(vsum16_3);
+            /* This is equivalent to adding across each of the sum vectors and then adding
+             * to result. */
+            uint16x8_t a = vpaddq_s16(vsum16_0, vsum16_1);
+            uint16x8_t b = vpaddq_s16(vsum16_2, vsum16_3);
+            uint16x8_t c = vpaddq_s16(a, b);
+            result = vpadalq_s16(result, c);
         }
 
 #else
@@ -1090,38 +1108,37 @@ void sad_x4_neon(const pixel *pix1, const pixel *pix2, const pixel *pix3, const 
         }
         if (lx & 4)
         {
-            uint32x2_t p1 = vdup_n_u32(0);
-            p1[0] = *(uint32_t *)&pix1[x];
-            uint32x2_t p2 = vdup_n_u32(0);
-            p2[0] = *(uint32_t *)&pix2[x];
-            uint32x2_t p3 = vdup_n_u32(0);
-            p3[0] = *(uint32_t *)&pix3[x];
-            uint32x2_t p4 = vdup_n_u32(0);
-            p4[0] = *(uint32_t *)&pix4[x];
-            uint32x2_t p5 = vdup_n_u32(0);
-            p5[0] = *(uint32_t *)&pix5[x];
-            vsum16_0 = vabal_u8(vsum16_0, p1, p2);
-            vsum16_1 = vabal_u8(vsum16_1, p1, p3);
-            vsum16_2 = vabal_u8(vsum16_2, p1, p4);
-            vsum16_3 = vabal_u8(vsum16_3, p1, p5);
-            x += 4;
+            uint8x16_t p1 = vreinterpretq_u32_u8(
+                vld1q_dup_u32((uint32_t *)&pix1[x]));
+
+            uint32x4_t p_x4;
+            p_x4 = vld1q_lane_u32((uint32_t *)&pix2[x], p_x4, 0);
+            p_x4 = vld1q_lane_u32((uint32_t *)&pix3[x], p_x4, 1);
+            p_x4 = vld1q_lane_u32((uint32_t *)&pix4[x], p_x4, 2);
+            p_x4 = vld1q_lane_u32((uint32_t *)&pix5[x], p_x4, 3);
+
+            uint16x8_t sum = vabdl_u8(vget_low_u8(p1), vget_low_u8(p_x4));
+            uint16x8_t sum2 = vabdl_high_u8(p1, p_x4);
+
+            uint16x8_t a = vpaddq_u16(sum, sum2);
+            result = vpadalq_u16(result, a);
         }
         if (lx >= 4)
         {
-            res[0] += vaddvq_u16(vsum16_0);
-            res[1] += vaddvq_u16(vsum16_1);
-            res[2] += vaddvq_u16(vsum16_2);
-            res[3] += vaddvq_u16(vsum16_3);
+            result[0] += vaddvq_u16(vsum16_0);
+            result[1] += vaddvq_u16(vsum16_1);
+            result[2] += vaddvq_u16(vsum16_2);
+            result[3] += vaddvq_u16(vsum16_3);
         }
 
 #endif
         if (lx & 3) for (; x < lx; x++)
-            {
-                res[0] += abs(pix1[x] - pix2[x]);
-                res[1] += abs(pix1[x] - pix3[x]);
-                res[2] += abs(pix1[x] - pix4[x]);
-                res[3] += abs(pix1[x] - pix5[x]);
-            }
+        {
+            result[0] += abs(pix1[x] - pix2[x]);
+            result[1] += abs(pix1[x] - pix3[x]);
+            result[2] += abs(pix1[x] - pix4[x]);
+            result[3] += abs(pix1[x] - pix5[x]);
+        }
 
         pix1 += FENC_STRIDE;
         pix2 += frefstride;
@@ -1129,6 +1146,7 @@ void sad_x4_neon(const pixel *pix1, const pixel *pix2, const pixel *pix3, const 
         pix4 += frefstride;
         pix5 += frefstride;
     }
+    vst1q_s32(res, result);
 }
 
 
