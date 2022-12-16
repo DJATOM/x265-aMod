@@ -90,6 +90,7 @@ public:
 
     int                    m_poc;
     int                    m_encodeOrder;
+    int                    m_gopOffset;
     int64_t                m_pts;                // user provided presentation time stamp
     int64_t                m_reorderedPts;
     int64_t                m_dts;
@@ -161,6 +162,7 @@ public:
 
     /*Frame's temporal layer info*/
     uint8_t                m_tempLayer;
+    int8_t                 m_gopId;
     Frame();
 
     bool create(x265_param *param, float* quantOffsets);

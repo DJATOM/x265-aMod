@@ -2307,6 +2307,14 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                 analysis->numPartitions  = m_param->num4x4Partitions;
                 x265_alloc_analysis_data(m_param, analysis);
             }
+            if (m_param->bEnableTemporalSubLayers > 2)
+            {
+                //Re-assign temporalid if the current frame is at the end of encode or when I slice is encountered
+                if ((frameEnc->m_poc == (m_param->totalFrames - 1)) || (frameEnc->m_lowres.sliceType == X265_TYPE_I) || (frameEnc->m_lowres.sliceType == X265_TYPE_IDR))
+                {
+                    frameEnc->m_tempLayer = (int8_t)0;
+                }
+            }
             /* determine references, setup RPS, etc */
             m_dpb->prepareEncode(frameEnc);
 

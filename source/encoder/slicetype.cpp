@@ -1082,6 +1082,24 @@ Lookahead::Lookahead(x265_param *param, ThreadPool* pool)
     m_resetRunningAvg = true;
 
     m_segmentCountThreshold = (uint32_t)(((float)((NUMBER_OF_SEGMENTS_IN_WIDTH * NUMBER_OF_SEGMENTS_IN_HEIGHT) * 50) / 100) + 0.5);
+
+    if (m_param->bEnableTemporalSubLayers > 2)
+    {
+        switch (m_param->bEnableTemporalSubLayers)
+        {
+        case 3:
+            m_gopId = 0;
+            break;
+        case 4:
+            m_gopId = 1;
+            break;
+        case 5:
+            m_gopId = 2;
+            break;
+        default:
+            break;
+        }
+    }
 }
 
 #if DETAILED_CU_STATS
@@ -1793,6 +1811,53 @@ void PreLookaheadGroup::processTasks(int workerThreadID)
     m_lock.release();
 }
 
+
+void Lookahead::placeBref(Frame** frames, int start, int end, int num, int *brefs)
+{
+    int avg = (start + end) / 2;
+    if (m_param->bEnableTemporalSubLayers < 2)
+    {
+        (*frames[avg]).m_lowres.sliceType = X265_TYPE_BREF;
+        (*brefs)++;
+        return;
+    }
+    else
+    {
+        if (num <= 2)
+            return;
+        else
+        {
+            (*frames[avg]).m_lowres.sliceType = X265_TYPE_BREF;
+            (*brefs)++;
+            placeBref(frames, start, avg, avg - start, brefs);
+            placeBref(frames, avg + 1, end, end - avg, brefs);
+            return;
+        }
+    }
+}
+
+
+void Lookahead::compCostBref(Lowres **frames, int start, int end, int num)
+{
+    CostEstimateGroup estGroup(*this, frames);
+    int avg = (start + end) / 2;
+    if (num <= 2)
+    {
+        for (int i = start; i < end; i++)
+        {
+            estGroup.singleCost(start, end + 1, i + 1);
+        }
+        return;
+    }
+    else
+    {
+        estGroup.singleCost(start, end + 1, avg + 1);
+        compCostBref(frames, start, avg, avg - start);
+        compCostBref(frames, avg + 1, end, end - avg);
+        return;
+    }
+}
+
 /* called by API thread or worker thread with inputQueueLock acquired */
 void Lookahead::slicetypeDecide()
 {
@@ -2038,137 +2103,454 @@ void Lookahead::slicetypeDecide()
                 break;
         }
     }
-    if (bframes)
-        list[bframes - 1]->m_lowres.bLastMiniGopBFrame = true;
-    list[bframes]->m_lowres.leadingBframes = bframes;
-    m_lastNonB = &list[bframes]->m_lowres;
 
-    /* insert a bref into the sequence */
-    if (m_param->bBPyramid && bframes > 1 && !brefs)
+    if (m_param->bEnableTemporalSubLayers > 2)
     {
-        list[bframes / 2]->m_lowres.sliceType = X265_TYPE_BREF;
-        brefs++;
-    }
-    /* calculate the frame costs ahead of time for estimateFrameCost while we still have lowres */
-    if (m_param->rc.rateControlMode != X265_RC_CQP)
-    {
-        int p0, p1, b;
-        /* For zero latency tuning, calculate frame cost to be used later in RC */
-        if (!maxSearch)
+        //Split the partial mini GOP into sub mini GOPs when temporal sub layers are enabled
+        if (bframes < m_param->bframes)
         {
-            for (int i = 0; i <= bframes; i++)
-               frames[i + 1] = &list[i]->m_lowres;
-        }
+            int leftOver = bframes + 1;
+            int8_t gopId = m_gopId - 1;
+            int gopLen = x265_gop_ra_length[gopId];
+            int listReset = 0;
 
-        /* estimate new non-B cost */
-        p1 = b = bframes + 1;
-        p0 = (IS_X265_TYPE_I(frames[bframes + 1]->sliceType)) ? b : 0;
+            m_outputLock.acquire();
 
-        CostEstimateGroup estGroup(*this, frames);
-
-        estGroup.singleCost(p0, p1, b);
-
-        if (bframes)
-        {
-            p0 = 0; // last nonb
-            bool isp0available = frames[bframes + 1]->sliceType == X265_TYPE_IDR ? false : true;
-
-            for (b = 1; b <= bframes; b++)
+            while ((gopId >= 0) && (leftOver > 3))
             {
-                if (!isp0available)
-                    p0 = b;
-
-                if (frames[b]->sliceType == X265_TYPE_B)
-                    for (p1 = b; frames[p1]->sliceType == X265_TYPE_B; p1++)
-                        ; // find new nonb or bref
-                else
-                    p1 = bframes + 1;
-
-                estGroup.singleCost(p0, p1, b);
-
-                if (frames[b]->sliceType == X265_TYPE_BREF)
+                if (leftOver < gopLen)
                 {
-                    p0 = b;
-                    isp0available = true;
+                    gopId = gopId - 1;
+                    gopLen = x265_gop_ra_length[gopId];
+                    continue;
+                }
+                else
+                {
+                    int newbFrames = listReset + gopLen - 1;
+                    //Re-assign GOP
+                    list[newbFrames]->m_lowres.sliceType = IS_X265_TYPE_I(list[newbFrames]->m_lowres.sliceType) ? list[newbFrames]->m_lowres.sliceType : X265_TYPE_P;
+                    if (newbFrames)
+                        list[newbFrames - 1]->m_lowres.bLastMiniGopBFrame = true;
+                    list[newbFrames]->m_lowres.leadingBframes = newbFrames;
+                    m_lastNonB = &list[newbFrames]->m_lowres;
+
+                    /* insert a bref into the sequence */
+                    if (m_param->bBPyramid && newbFrames)
+                    {
+                        placeBref(list, listReset, newbFrames, newbFrames + 1, &brefs);
+                    }
+                    if (m_param->rc.rateControlMode != X265_RC_CQP)
+                    {
+                        int p0, p1, b;
+                        /* For zero latency tuning, calculate frame cost to be used later in RC */
+                        if (!maxSearch)
+                        {
+                            for (int i = listReset; i <= newbFrames; i++)
+                                frames[i + 1] = &list[listReset + i]->m_lowres;
+                        }
+
+                        /* estimate new non-B cost */
+                        p1 = b = newbFrames + 1;
+                        p0 = (IS_X265_TYPE_I(frames[newbFrames + 1]->sliceType)) ? b : listReset;
+
+                        CostEstimateGroup estGroup(*this, frames);
+
+                        estGroup.singleCost(p0, p1, b);
+
+                        if (newbFrames)
+                            compCostBref(frames, listReset, newbFrames, newbFrames + 1);
+                    }
+
+                    m_inputLock.acquire();
+                    /* dequeue all frames from inputQueue that are about to be enqueued
+                     * in the output queue. The order is important because Frame can
+                     * only be in one list at a time */
+                    int64_t pts[X265_BFRAME_MAX + 1];
+                    for (int i = 0; i < gopLen; i++)
+                    {
+                        Frame *curFrame;
+                        curFrame = m_inputQueue.popFront();
+                        pts[i] = curFrame->m_pts;
+                        maxSearch--;
+                    }
+                    m_inputLock.release();
+
+                    int idx = 0;
+                    /* add non-B to output queue */
+                    list[newbFrames]->m_reorderedPts = pts[idx++];
+                    list[newbFrames]->m_gopOffset = 0;
+                    list[newbFrames]->m_gopId = gopId;
+                    list[newbFrames]->m_tempLayer = x265_gop_ra[gopId][0].layer;
+                    m_outputQueue.pushBack(*list[newbFrames]);
+
+                    /* add B frames to output queue */
+                    int i = 1, j = 1;
+                    while (i < gopLen)
+                    {
+                        int offset = listReset + (x265_gop_ra[gopId][j].poc_offset - 1);
+                        if (!list[offset] || offset == newbFrames)
+                            continue;
+
+                        // Assign gop offset and temporal layer of frames
+                        list[offset]->m_gopOffset = j;
+                        list[bframes]->m_gopId = gopId;
+                        list[offset]->m_tempLayer = x265_gop_ra[gopId][j++].layer;
+
+                        list[offset]->m_reorderedPts = pts[idx++];
+                        m_outputQueue.pushBack(*list[offset]);
+                        i++;
+                    }
+
+                    listReset += gopLen;
+                    leftOver = leftOver - gopLen;
+                    gopId -= 1;
+                    gopLen = (gopId >= 0) ? x265_gop_ra_length[gopId] : 0;
+                }
+            }
+
+            if (leftOver > 0 && leftOver < 4)
+            {
+                int64_t pts[X265_BFRAME_MAX + 1];
+                int idx = 0;
+
+                int newbFrames = listReset + leftOver - 1;
+                list[newbFrames]->m_lowres.sliceType = IS_X265_TYPE_I(list[newbFrames]->m_lowres.sliceType) ? list[newbFrames]->m_lowres.sliceType : X265_TYPE_P;
+                if (newbFrames)
+                        list[newbFrames - 1]->m_lowres.bLastMiniGopBFrame = true;
+                list[newbFrames]->m_lowres.leadingBframes = newbFrames;
+                m_lastNonB = &list[newbFrames]->m_lowres;
+
+                /* insert a bref into the sequence */
+                if (m_param->bBPyramid && (newbFrames- listReset) > 1)
+                    placeBref(list, listReset, newbFrames, newbFrames + 1, &brefs);
+
+                if (m_param->rc.rateControlMode != X265_RC_CQP)
+                {
+                    int p0, p1, b;
+                    /* For zero latency tuning, calculate frame cost to be used later in RC */
+                    if (!maxSearch)
+                    {
+                        for (int i = listReset; i <= newbFrames; i++)
+                            frames[i + 1] = &list[listReset + i]->m_lowres;
+                    }
+
+                        /* estimate new non-B cost */
+                    p1 = b = newbFrames + 1;
+                    p0 = (IS_X265_TYPE_I(frames[newbFrames + 1]->sliceType)) ? b : listReset;
+
+                    CostEstimateGroup estGroup(*this, frames);
+
+                    estGroup.singleCost(p0, p1, b);
+
+                    if (newbFrames)
+                        compCostBref(frames, listReset, newbFrames, newbFrames + 1);
+                }
+
+                m_inputLock.acquire();
+                /* dequeue all frames from inputQueue that are about to be enqueued
+                 * in the output queue. The order is important because Frame can
+                 * only be in one list at a time */
+                for (int i = 0; i < leftOver; i++)
+                {
+                    Frame *curFrame;
+                    curFrame = m_inputQueue.popFront();
+                    pts[i] = curFrame->m_pts;
+                    maxSearch--;
+                }
+                m_inputLock.release();
+
+                m_lastNonB = &list[newbFrames]->m_lowres;
+                list[newbFrames]->m_reorderedPts = pts[idx++];
+                list[newbFrames]->m_gopOffset = 0;
+                list[newbFrames]->m_gopId = -1;
+                list[newbFrames]->m_tempLayer = 0;
+                m_outputQueue.pushBack(*list[newbFrames]);
+                if (brefs)
+                {
+                    for (int i = listReset; i < newbFrames; i++)
+                    {
+                        if (list[i]->m_lowres.sliceType == X265_TYPE_BREF)
+                        {
+                            list[i]->m_reorderedPts = pts[idx++];
+                            list[i]->m_gopOffset = 0;
+                            list[i]->m_gopId = -1;
+                            list[i]->m_tempLayer = 0;
+                            m_outputQueue.pushBack(*list[i]);
+                        }
+                    }
+                }
+
+                /* add B frames to output queue */
+                for (int i = listReset; i < newbFrames; i++)
+                {
+                    /* push all the B frames into output queue except B-ref, which already pushed into output queue */
+                    if (list[i]->m_lowres.sliceType != X265_TYPE_BREF)
+                    {
+                        list[i]->m_reorderedPts = pts[idx++];
+                        list[i]->m_gopOffset = 0;
+                        list[i]->m_gopId = -1;
+                        list[i]->m_tempLayer = 1;
+                        m_outputQueue.pushBack(*list[i]);
+                    }
                 }
             }
         }
-    }
+        else
+        // Fill the complete mini GOP when temporal sub layers are enabled
+        {
 
-    m_inputLock.acquire();
-    /* dequeue all frames from inputQueue that are about to be enqueued
-     * in the output queue. The order is important because Frame can
-     * only be in one list at a time */
-    int64_t pts[X265_BFRAME_MAX + 1];
-    for (int i = 0; i <= bframes; i++)
-    {
-        Frame *curFrame;
-        curFrame = m_inputQueue.popFront();
-        pts[i] = curFrame->m_pts;
-        maxSearch--;
-    }
-    m_inputLock.release();
+            list[bframes - 1]->m_lowres.bLastMiniGopBFrame = true;
+            list[bframes]->m_lowres.leadingBframes = bframes;
+            m_lastNonB = &list[bframes]->m_lowres;
 
-    m_outputLock.acquire();
-    /* add non-B to output queue */
-    int idx = 0;
-    list[bframes]->m_reorderedPts = pts[idx++];
-    m_outputQueue.pushBack(*list[bframes]);
-    /* Add B-ref frame next to P frame in output queue, the B-ref encode before non B-ref frame */
-    if (brefs)
+            /* insert a bref into the sequence */
+            if (m_param->bBPyramid && !brefs)
+            {
+                placeBref(list, 0, bframes, bframes + 1, &brefs);
+            }
+
+            /* calculate the frame costs ahead of time for estimateFrameCost while we still have lowres */
+            if (m_param->rc.rateControlMode != X265_RC_CQP)
+            {
+                int p0, p1, b;
+                /* For zero latency tuning, calculate frame cost to be used later in RC */
+                if (!maxSearch)
+                {
+                    for (int i = 0; i <= bframes; i++)
+                        frames[i + 1] = &list[i]->m_lowres;
+                }
+
+                /* estimate new non-B cost */
+                p1 = b = bframes + 1;
+                p0 = (IS_X265_TYPE_I(frames[bframes + 1]->sliceType)) ? b : 0;
+
+                CostEstimateGroup estGroup(*this, frames);
+                estGroup.singleCost(p0, p1, b);
+
+                compCostBref(frames, 0, bframes, bframes + 1);
+            }
+
+            m_inputLock.acquire();
+            /* dequeue all frames from inputQueue that are about to be enqueued
+            * in the output queue. The order is important because Frame can
+            * only be in one list at a time */
+            int64_t pts[X265_BFRAME_MAX + 1];
+            for (int i = 0; i <= bframes; i++)
+            {
+                Frame *curFrame;
+                curFrame = m_inputQueue.popFront();
+                pts[i] = curFrame->m_pts;
+                maxSearch--;
+            }
+            m_inputLock.release();
+
+            m_outputLock.acquire();
+
+            int idx = 0;
+            /* add non-B to output queue */
+            list[bframes]->m_reorderedPts = pts[idx++];
+            list[bframes]->m_gopOffset = 0;
+            list[bframes]->m_gopId = m_gopId;
+            list[bframes]->m_tempLayer = x265_gop_ra[m_gopId][0].layer;
+            m_outputQueue.pushBack(*list[bframes]);
+
+            int i = 1, j = 1;
+            while (i <= bframes)
+            {
+                int offset = x265_gop_ra[m_gopId][j].poc_offset - 1;
+                if (!list[offset] || offset == bframes)
+                    continue;
+
+                // Assign gop offset and temporal layer of frames
+                list[offset]->m_gopOffset = j;
+                list[offset]->m_gopId = m_gopId;
+                list[offset]->m_tempLayer = x265_gop_ra[m_gopId][j++].layer;
+
+                /* add B frames to output queue */
+                list[offset]->m_reorderedPts = pts[idx++];
+                m_outputQueue.pushBack(*list[offset]);
+                i++;
+            }
+        }
+
+        bool isKeyFrameAnalyse = (m_param->rc.cuTree || (m_param->rc.vbvBufferSize && m_param->lookaheadDepth));
+        if (isKeyFrameAnalyse && IS_X265_TYPE_I(m_lastNonB->sliceType))
+        {
+            m_inputLock.acquire();
+            Frame *curFrame = m_inputQueue.first();
+            frames[0] = m_lastNonB;
+            int j;
+            for (j = 0; j < maxSearch; j++)
+            {
+                frames[j + 1] = &curFrame->m_lowres;
+                curFrame = curFrame->m_next;
+            }
+            m_inputLock.release();
+
+            frames[j + 1] = NULL;
+            if (!m_param->rc.bStatRead)
+                slicetypeAnalyse(frames, true);
+            bool bIsVbv = m_param->rc.vbvBufferSize > 0 && m_param->rc.vbvMaxBitrate > 0;
+            if ((m_param->analysisLoad && m_param->scaleFactor && bIsVbv) || m_param->bliveVBV2pass)
+            {
+                int numFrames;
+                for (numFrames = 0; numFrames < maxSearch; numFrames++)
+                {
+                    Lowres *fenc = frames[numFrames + 1];
+                    if (!fenc)
+                        break;
+                }
+                vbvLookahead(frames, numFrames, true);
+            }
+        }
+
+
+        m_outputLock.release();
+    }
+    else
     {
+
+        if (bframes)
+            list[bframes - 1]->m_lowres.bLastMiniGopBFrame = true;
+        list[bframes]->m_lowres.leadingBframes = bframes;
+        m_lastNonB = &list[bframes]->m_lowres;
+
+        /* insert a bref into the sequence */
+        if (m_param->bBPyramid && bframes > 1 && !brefs)
+        {
+            placeBref(list, 0, bframes, bframes + 1, &brefs);
+        }
+        /* calculate the frame costs ahead of time for estimateFrameCost while we still have lowres */
+        if (m_param->rc.rateControlMode != X265_RC_CQP)
+        {
+            int p0, p1, b;
+            /* For zero latency tuning, calculate frame cost to be used later in RC */
+            if (!maxSearch)
+            {
+                for (int i = 0; i <= bframes; i++)
+                    frames[i + 1] = &list[i]->m_lowres;
+            }
+
+            /* estimate new non-B cost */
+            p1 = b = bframes + 1;
+            p0 = (IS_X265_TYPE_I(frames[bframes + 1]->sliceType)) ? b : 0;
+
+            CostEstimateGroup estGroup(*this, frames);
+            estGroup.singleCost(p0, p1, b);
+
+            if (m_param->bEnableTemporalSubLayers > 1 && bframes)
+            {
+                compCostBref(frames, 0, bframes, bframes + 1);
+            }
+            else
+            {
+                if (bframes)
+                {
+                    p0 = 0; // last nonb
+                    bool isp0available = frames[bframes + 1]->sliceType == X265_TYPE_IDR ? false : true;
+
+                    for (b = 1; b <= bframes; b++)
+                    {
+                        if (!isp0available)
+                            p0 = b;
+
+                        if (frames[b]->sliceType == X265_TYPE_B)
+                            for (p1 = b; frames[p1]->sliceType == X265_TYPE_B; p1++)
+                                ; // find new nonb or bref
+                        else
+                            p1 = bframes + 1;
+
+                        estGroup.singleCost(p0, p1, b);
+
+                        if (frames[b]->sliceType == X265_TYPE_BREF)
+                        {
+                            p0 = b;
+                            isp0available = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        m_inputLock.acquire();
+        /* dequeue all frames from inputQueue that are about to be enqueued
+         * in the output queue. The order is important because Frame can
+         * only be in one list at a time */
+        int64_t pts[X265_BFRAME_MAX + 1];
+        for (int i = 0; i <= bframes; i++)
+        {
+            Frame *curFrame;
+            curFrame = m_inputQueue.popFront();
+            pts[i] = curFrame->m_pts;
+            maxSearch--;
+        }
+        m_inputLock.release();
+
+        m_outputLock.acquire();
+
+        /* add non-B to output queue */
+        int idx = 0;
+        list[bframes]->m_reorderedPts = pts[idx++];
+        m_outputQueue.pushBack(*list[bframes]);
+
+        /* Add B-ref frame next to P frame in output queue, the B-ref encode before non B-ref frame */
+        if (brefs)
+        {
+            for (int i = 0; i < bframes; i++)
+            {
+                if (list[i]->m_lowres.sliceType == X265_TYPE_BREF)
+                {
+                    list[i]->m_reorderedPts = pts[idx++];
+                    m_outputQueue.pushBack(*list[i]);
+                }
+            }
+        }
+
+        /* add B frames to output queue */
         for (int i = 0; i < bframes; i++)
         {
-            if (list[i]->m_lowres.sliceType == X265_TYPE_BREF)
+            /* push all the B frames into output queue except B-ref, which already pushed into output queue */
+            if (list[i]->m_lowres.sliceType != X265_TYPE_BREF)
             {
                 list[i]->m_reorderedPts = pts[idx++];
                 m_outputQueue.pushBack(*list[i]);
             }
         }
-    }
 
-    /* add B frames to output queue */
-    for (int i = 0; i < bframes; i++)
-    {
-        /* push all the B frames into output queue except B-ref, which already pushed into output queue */
-        if (list[i]->m_lowres.sliceType != X265_TYPE_BREF)
-        {
-            list[i]->m_reorderedPts = pts[idx++];
-            m_outputQueue.pushBack(*list[i]);
-        }
-    }
 
-    bool isKeyFrameAnalyse = (m_param->rc.cuTree || (m_param->rc.vbvBufferSize && m_param->lookaheadDepth));
-    if (isKeyFrameAnalyse && IS_X265_TYPE_I(m_lastNonB->sliceType))
-    {
-        m_inputLock.acquire();
-        Frame *curFrame = m_inputQueue.first();
-        frames[0] = m_lastNonB;
-        int j;
-        for (j = 0; j < maxSearch; j++)
+        bool isKeyFrameAnalyse = (m_param->rc.cuTree || (m_param->rc.vbvBufferSize && m_param->lookaheadDepth));
+        if (isKeyFrameAnalyse && IS_X265_TYPE_I(m_lastNonB->sliceType))
         {
-            frames[j + 1] = &curFrame->m_lowres;
-            curFrame = curFrame->m_next;
-        }
-        m_inputLock.release();
-
-        frames[j + 1] = NULL;
-        if (!m_param->rc.bStatRead)
-            slicetypeAnalyse(frames, true);
-        bool bIsVbv = m_param->rc.vbvBufferSize > 0 && m_param->rc.vbvMaxBitrate > 0;
-        if ((m_param->analysisLoad && m_param->scaleFactor && bIsVbv) || m_param->bliveVBV2pass)
-        {
-            int numFrames;
-            for (numFrames = 0; numFrames < maxSearch; numFrames++)
+            m_inputLock.acquire();
+            Frame *curFrame = m_inputQueue.first();
+            frames[0] = m_lastNonB;
+            int j;
+            for (j = 0; j < maxSearch; j++)
             {
-                Lowres *fenc = frames[numFrames + 1];
-                if (!fenc)
-                    break;
+                frames[j + 1] = &curFrame->m_lowres;
+                curFrame = curFrame->m_next;
             }
-            vbvLookahead(frames, numFrames, true);
+            m_inputLock.release();
+
+            frames[j + 1] = NULL;
+            if (!m_param->rc.bStatRead)
+                slicetypeAnalyse(frames, true);
+            bool bIsVbv = m_param->rc.vbvBufferSize > 0 && m_param->rc.vbvMaxBitrate > 0;
+            if ((m_param->analysisLoad && m_param->scaleFactor && bIsVbv) || m_param->bliveVBV2pass)
+            {
+                int numFrames;
+                for (numFrames = 0; numFrames < maxSearch; numFrames++)
+                {
+                    Lowres *fenc = frames[numFrames + 1];
+                    if (!fenc)
+                        break;
+                }
+                vbvLookahead(frames, numFrames, true);
+            }
         }
+
+        m_outputLock.release();
     }
-    m_outputLock.release();
 }
 
 void Lookahead::vbvLookahead(Lowres **frames, int numFrames, int keyframe)

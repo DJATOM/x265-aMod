@@ -200,6 +200,8 @@ public:
     bool          m_resetRunningAvg;
     uint32_t      m_segmentCountThreshold;
 
+    int8_t                  m_gopId;
+
     Lookahead(x265_param *param, ThreadPool *pool);
 #if DETAILED_CU_STATS
     int64_t       m_slicetypeDecideElapsedTime;
@@ -251,6 +253,9 @@ protected:
 
     /* called by getEstimatedPictureCost() to finalize cuTree costs */
     int64_t frameCostRecalculate(Lowres **frames, int p0, int p1, int b);
+    /*Compute index for positioning B-Ref frames*/
+    void     placeBref(Frame** frames, int start, int end, int num, int *brefs);
+    void     compCostBref(Lowres **frame, int start, int end, int num);
 };
 
 class PreLookaheadGroup : public BondedTaskGroup
