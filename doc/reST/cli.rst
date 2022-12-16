@@ -1975,8 +1975,10 @@ Quality, rate control and rate distortion options
 	**CLI ONLY**
 
 .. option:: --scenecut-qp-config <filename>
+
 	Specify a text file which contains the scenecut aware QP options.
 	The options include :option:`--scenecut-aware-qp` and :option:`--masking-strength`
+
 	**CLI ONLY**
 
 .. option:: --scenecut-aware-qp <integer>
@@ -2009,7 +2011,8 @@ Quality, rate control and rate distortion options
 	for the QP increment for inter-frames when :option:`--scenecut-aware-qp`
 	is enabled. It is mentioned inside :option:`--scenecut-qp-config` file.
 
-	When :option:`--scenecut-aware-qp` is::
+	When :option:`--scenecut-aware-qp` is:
+
 	* 1 (Forward masking):
 	--masking-strength <fwdMaxWindow,fwdRefQPDelta,fwdNonRefQPDelta>
 	or 
@@ -2075,7 +2078,16 @@ Quality, rate control and rate distortion options
 	|                 | **Range of values:** 0 to 20                                  |
 	+-----------------+---------------------------------------------------------------+
 
-	**CLI ONLY**
+	We can specify the value for the Use :option:`--masking-strength` parameter in different formats.
+	1. If we don't specify --masking-strength and specify only --scenecut-aware-qp, then default offset and window size values are considered.
+	2. If we specify --masking-strength with the format 1 mentioned above, the values of window, refQpDelta and nonRefQpDelta given by the user are taken for window 1 and the offsets for the remaining windows are derived with 15% difference between windows.
+	3. If we specify the --masking-strength with the format 2 mentioned above, the values of window, refQpDelta and nonRefQpDelta given by the user for each window from 1 to 6 are directly used.[NOTE: We can use this format to specify zero offsets for any particular window]
+
+	Sample config file:: (Format 2 Forward masking explained here)
+
+	--scenecut-aware-qp 1 --masking-strength 1000,8,12
+	
+	The above sample config file is available in `the downloads page <https://bitbucket.org/multicoreware/x265_git/downloads/scenecut_qp_config.txt>`_
 
 .. option:: --vbv-live-multi-pass, --no-vbv-live-multi-pass
 
