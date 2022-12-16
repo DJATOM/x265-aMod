@@ -159,6 +159,8 @@ public:
 
     int                    m_isInsideWindow;
 
+    /*Frame's temporal layer info*/
+    uint8_t                m_tempLayer;
     Frame();
 
     bool create(x265_param *param, float* quantOffsets);

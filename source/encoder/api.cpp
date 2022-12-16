@@ -1297,6 +1297,8 @@ FILE* x265_csvlog_open(const x265_param* param)
             if (param->csvLogLevel)
             {
                 fprintf(csvfp, "Encode Order, Type, POC, QP, Bits, Scenecut, ");
+                if (param->bEnableTemporalSubLayers > 2)
+                    fprintf(csvfp, "Temporal Sub Layer ID, ");
                 if (param->csvLogLevel >= 2)
                     fprintf(csvfp, "I/P cost ratio, ");
                 if (param->rc.rateControlMode == X265_RC_CRF)
@@ -1410,6 +1412,8 @@ void x265_csvlog_frame(const x265_param* param, const x265_picture* pic)
     const x265_frame_stats* frameStats = &pic->frameData;
     fprintf(param->csvfpt, "%d, %c-SLICE, %4d, %2.2lf, %10d, %d,", frameStats->encoderOrder, frameStats->sliceType, frameStats->poc,
                                                                    frameStats->qp, (int)frameStats->bits, frameStats->bScenecut);
+    if (param->bEnableTemporalSubLayers > 2)
+        fprintf(param->csvfpt, "%d,", frameStats->tLayer);
     if (param->csvLogLevel >= 2)
         fprintf(param->csvfpt, "%.2f,", frameStats->ipCostRatio);
     if (param->rc.rateControlMode == X265_RC_CRF)

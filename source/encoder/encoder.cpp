@@ -1899,6 +1899,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                 pic_out->bitDepth = X265_DEPTH;
                 pic_out->userData = outFrame->m_userData;
                 pic_out->colorSpace = m_param->internalCsp;
+                pic_out->frameData.tLayer = outFrame->m_tempLayer;
                 frameData = &(pic_out->frameData);
 
                 pic_out->pts = outFrame->m_pts;
@@ -3880,10 +3881,34 @@ void Encoder::configure(x265_param *p)
         p->limitReferences = 0;
     }
 
-    if (p->bEnableTemporalSubLayers && !p->bframes)
+    if ((p->bEnableTemporalSubLayers > 2) && !p->bframes)
     {
         x265_log(p, X265_LOG_WARNING, "B frames not enabled, temporal sublayer disabled\n");
         p->bEnableTemporalSubLayers = 0;
+    }
+
+    if (!!p->bEnableTemporalSubLayers && p->bEnableTemporalSubLayers < 2)
+    {
+        p->bEnableTemporalSubLayers = 0;
+        x265_log(p, X265_LOG_WARNING, "No support for temporal sublayers less than 2; Disabling temporal layers\n");
+    }
+
+    if (p->bEnableTemporalSubLayers > 5)
+    {
+        p->bEnableTemporalSubLayers = 5;
+        x265_log(p, X265_LOG_WARNING, "No support for temporal sublayers more than 5; Reducing the temporal sublayers to 5\n");
+    }
+
+    // Assign number of B frames for temporal layers
+    if (p->bEnableTemporalSubLayers > 2)
+            p->bframes = x265_temporal_layer_bframes[p->bEnableTemporalSubLayers - 1];
+
+    if (p->bEnableTemporalSubLayers > 2)
+    {
+        if (!p->bFrameAdaptive)
+            x265_log(p, X265_LOG_WARNING, "Disabling adaptive B-frame placement to support temporal sub-layers\n");
+
+        p->bFrameAdaptive = 0;
     }
 
     m_bframeDelay = p->bframes ? (p->bBPyramid ? 2 : 1) : 0;

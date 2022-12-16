@@ -312,6 +312,7 @@ typedef struct x265_frame_stats
     double           vmafFrameScore;
     double           bufferFillFinal;
     double           unclippedBufferFillFinal;
+    uint8_t          tLayer;
 } x265_frame_stats;
 
 typedef struct x265_ctu_info_t
@@ -616,6 +617,10 @@ typedef enum
 #define FORWARD_WINDOW          2 /* Scenecut window after a scenecut */
 #define BWD_WINDOW_DELTA        0.4
 
+#define X265_MAX_GOP_CONFIG 3
+#define X265_MAX_GOP_LENGTH 16
+#define MAX_T_LAYERS 7
+
 typedef struct x265_cli_csp
 {
     int planes;
@@ -749,6 +754,264 @@ typedef struct x265_vmaf_commondata
 
 static const x265_vmaf_commondata vcd[] = { { NULL, (char *)"/usr/local/share/model/vmaf_v0.6.1.pkl", NULL, NULL, 0, 0, 0, 0, 0, 0, 0, NULL, 0, 1, 0 } };
 
+typedef struct x265_temporal_layer {
+    int poc_offset;      /* POC offset */
+    int8_t layer;        /* Current layer */
+    int8_t qp_offset;    /* QP offset */
+} x265_temporal_layer;
+
+static const int8_t x265_temporal_layer_bframes[MAX_T_LAYERS] = {-1, -1, 3, 7, 15, -1, -1};
+
+static const int8_t x265_gop_ra_length[X265_MAX_GOP_CONFIG] = { 4, 8, 16};
+static const x265_temporal_layer x265_gop_ra[X265_MAX_GOP_CONFIG][X265_MAX_GOP_LENGTH] = {
+    {
+        {
+            4,
+            0,
+            1,
+        },
+        {
+            2,
+            1,
+            5,
+        },
+        {
+            1,
+            2,
+            3,
+        },
+        {
+            3,
+            2,
+            5,
+        },
+        {
+            -1,
+            -1,
+            -1,
+        },
+        {
+            -1,
+            -1,
+            -1,
+        },
+        {
+            -1,
+            -1,
+            -1,
+        },
+        {
+            -1,
+            -1,
+            -1,
+        },
+        {
+            -1,
+            -1,
+            -1,
+        },
+        {
+            -1,
+            -1,
+            -1,
+        },
+        {
+            -1,
+            -1,
+            -1,
+        },
+        {
+            -1,
+            -1,
+            -1,
+        },
+        {
+            -1,
+            -1,
+            -1,
+        },
+        {
+            -1,
+            -1,
+            -1,
+        },
+        {
+            -1,
+            -1,
+            -1,
+        },
+        {
+            -1,
+            -1,
+            -1,
+        }
+    },
+
+    {
+        {
+            8,
+            0,
+            1,
+        },
+        {
+            4,
+            1,
+            5,
+        },
+        {
+            2,
+            2,
+            4,
+        },
+        {
+            1,
+            3,
+            5,
+        },
+        {
+            3,
+            3,
+            2,
+        },
+        {
+            6,
+            2,
+            5,
+        },
+        {
+            5,
+            3,
+            4,
+        },
+        {
+            7,
+            3,
+            5,
+        },
+        {
+            -1,
+            -1,
+            -1,
+        },
+        {
+            -1,
+            -1,
+            -1,
+        },
+        {
+            -1,
+            -1,
+            -1,
+        },
+        {
+            -1,
+            -1,
+            -1,
+        },
+        {
+            -1,
+            -1,
+            -1,
+        },
+        {
+            -1,
+            -1,
+            -1,
+        },
+        {
+            -1,
+            -1,
+            -1,
+        },
+        {
+            -1,
+            -1,
+            -1,
+        },
+    },
+    {
+        {
+            16,
+            0,
+            1,
+        },
+        {
+            8,
+            1,
+            6,
+        },
+        {
+            4,
+            2,
+            5,
+        },
+        {
+            2,
+            3,
+            6,
+        },
+        {
+            1,
+            4,
+            4,
+        },
+        {
+            3,
+            4,
+            6,
+        },
+        {
+            6,
+            3,
+            5,
+        },
+        {
+            5,
+            4,
+            6,
+        },
+        {
+            7,
+            4,
+            1,
+        },
+        {
+            12,
+            2,
+            6,
+        },
+        {
+            10,
+            3,
+            5,
+        },
+        {
+            9,
+            4,
+            6,
+        },
+        {
+            11,
+            4,
+            4,
+        },
+        {
+            14,
+            3,
+            6,
+        },
+        {
+            13,
+            4,
+            5,
+        },
+        {
+            15,
+            4,
+            6,
+        }
+    }
+};
 
 typedef enum
 {

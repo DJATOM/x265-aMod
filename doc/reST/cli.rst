@@ -2642,17 +2642,26 @@ Bitstream options
 	2. CRC
 	3. Checksum
 
-.. option:: --temporal-layers,--no-temporal-layers
+.. option:: --temporal-layers <integer>
 
-	Enable a temporal sub layer. All referenced I/P/B frames are in the
-	base layer and all unreferenced B frames are placed in a temporal
-	enhancement layer. A decoder may choose to drop the enhancement layer 
-	and only decode and display the base layer slices.
-	
-	If used with a fixed GOP (:option:`--b-adapt` 0) and :option:`--bframes`
-	3 then the two layers evenly split the frame rate, with a cadence of
-	PbBbP. You probably also want :option:`--no-scenecut` and a keyframe
-	interval that is a multiple of 4.
+	Enable specified number of temporal sub layers. For any frame in layer N,
+	all referenced frames are in the layer N or N-1.A decoder may choose to drop the enhancement layer
+	and only decode and display the base layer slices.Allowed number of temporal sub-layers
+	are 2 to 5.(2 and 5 inclusive)
+
+	When enabled,temporal layers 3 through 5 configures a fixed miniGOP with the number of bframes as shown below
+	unless miniGOP size is modified due to lookahead decisions.Temporal layer 2 is a special case that has
+	all reference frames in base layer and non-reference frames in enhancement layer without any constraint on the
+	number of bframes.Default disabled.
+	+----------------+--------+
+	| temporal layer | bframes|
+	+================+========+
+	| 3              | 3      |
+	+----------------+--------+
+	| 4              | 7      |
+    +----------------+--------+
+	| 5              | 15     |
+	+----------------+--------+
 
 .. option:: --log2-max-poc-lsb <integer>
 

@@ -1152,7 +1152,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
            p->scenecutThreshold = atoi(value);
        }
     }
-    OPT("temporal-layers") p->bEnableTemporalSubLayers = atobool(value);
+    OPT("temporal-layers") p->bEnableTemporalSubLayers = atoi(value);
     OPT("keyint") p->keyframeMax = atoi(value);
     OPT("min-keyint") p->keyframeMin = atoi(value);
     OPT("rc-lookahead") p->lookaheadDepth = atoi(value);
@@ -2270,7 +2270,7 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     BOOL(p->bEmitHRDSEI, "hrd");
     BOOL(p->bEmitInfoSEI, "info");
     s += sprintf(s, " hash=%d", p->decodedPictureHashSEI);
-    BOOL(p->bEnableTemporalSubLayers, "temporal-layers");
+    s += sprintf(s, " temporal-layers=%d", p->bEnableTemporalSubLayers);
     BOOL(p->bOpenGOP, "open-gop");
     s += sprintf(s, " min-keyint=%d", p->keyframeMin);
     s += sprintf(s, " keyint=%d", p->keyframeMax);

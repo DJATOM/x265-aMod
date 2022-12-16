@@ -74,6 +74,7 @@ Frame::Frame()
     m_nextMCSTF = NULL;
     m_prevMCSTF = NULL;
 
+    m_tempLayer = 0;
 }
 
 bool Frame::create(x265_param *param, float* quantOffsets)
