@@ -777,7 +777,7 @@ void FrameEncoder::compressFrame()
             // wait after removal of the access unit with the most recent
             // buffering period SEI message
             sei->m_auCpbRemovalDelay = X265_MIN(X265_MAX(1, m_rce.encodeOrder - prevBPSEI), (1 << hrd->cpbRemovalDelayLength));
-            sei->m_picDpbOutputDelay = slice->m_sps->numReorderPics + poc - m_rce.encodeOrder;
+            sei->m_picDpbOutputDelay = slice->m_sps->numReorderPics[m_frame->m_tempLayer] + poc - m_rce.encodeOrder;
         }
 
         sei->writeSEImessages(m_bs, *slice->m_sps, NAL_UNIT_PREFIX_SEI, m_nalList, m_param->bSingleSeiNal);
@@ -1098,7 +1098,7 @@ void FrameEncoder::compressFrame()
             
             m_bs.writeByteAlignment();
 
-            m_nalList.serialize(slice->m_nalUnitType, m_bs);
+            m_nalList.serialize(slice->m_nalUnitType, m_bs, (!!m_param->bEnableTemporalSubLayers ? m_frame->m_tempLayer + 1 : (1 + (slice->m_nalUnitType == NAL_UNIT_CODED_SLICE_TSA_N))));
         }
     }
     else
@@ -1119,7 +1119,7 @@ void FrameEncoder::compressFrame()
             m_entropyCoder.codeSliceHeaderWPPEntryPoints(m_substreamSizes, (slice->m_sps->numCuInHeight - 1), maxStreamSize);
         m_bs.writeByteAlignment();
 
-        m_nalList.serialize(slice->m_nalUnitType, m_bs);
+        m_nalList.serialize(slice->m_nalUnitType, m_bs, (!!m_param->bEnableTemporalSubLayers ? m_frame->m_tempLayer + 1 : (1 + (slice->m_nalUnitType == NAL_UNIT_CODED_SLICE_TSA_N))));
     }
 
     if (m_param->decodedPictureHashSEI)

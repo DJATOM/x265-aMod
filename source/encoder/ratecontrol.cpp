@@ -905,7 +905,7 @@ void RateControl::initHRD(SPS& sps)
 
     TimingInfo *time = &sps.vuiParameters.timingInfo;
     int maxCpbOutputDelay = (int)(X265_MIN(m_param->keyframeMax * MAX_DURATION * time->timeScale / time->numUnitsInTick, INT_MAX));
-    int maxDpbOutputDelay = (int)(sps.maxDecPicBuffering * MAX_DURATION * time->timeScale / time->numUnitsInTick);
+    int maxDpbOutputDelay = (int)(sps.maxDecPicBuffering[sps.maxTempSubLayers - 1] * MAX_DURATION * time->timeScale / time->numUnitsInTick);
     int maxDelay = (int)(90000.0 * cpbSizeUnscale / bitRateUnscale + 0.5);
 
     hrd->initialCpbRemovalDelayLength = 2 + x265_clip3(4, 22, 32 - calcLength(maxDelay));

@@ -179,7 +179,7 @@ void DPB::prepareEncode(Frame *newFrame)
     // Do decoding refresh marking if any
     decodingRefreshMarking(pocCurr, slice->m_nalUnitType);
 
-    computeRPS(pocCurr, slice->isIRAP(), &slice->m_rps, slice->m_sps->maxDecPicBuffering);
+    computeRPS(pocCurr, slice->isIRAP(), &slice->m_rps, slice->m_sps->maxDecPicBuffering[newFrame->m_tempLayer]);
 
     // Mark pictures in m_piclist as unreferenced if they are not included in RPS
     applyReferencePictureSet(&slice->m_rps, pocCurr);

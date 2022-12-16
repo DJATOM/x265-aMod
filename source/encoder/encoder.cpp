@@ -3349,10 +3349,14 @@ void Encoder::initSPS(SPS *sps)
     sps->bUseAMP = m_param->bEnableAMP;
     sps->maxAMPDepth = m_param->bEnableAMP ? m_param->maxCUDepth : 0;
 
-    sps->maxTempSubLayers = m_param->bEnableTemporalSubLayers ? 2 : 1;
-    sps->maxDecPicBuffering = m_vps.maxDecPicBuffering;
-    sps->numReorderPics = m_vps.numReorderPics;
-    sps->maxLatencyIncrease = m_vps.maxLatencyIncrease = m_param->bframes;
+    sps->maxTempSubLayers = m_vps.maxTempSubLayers;// Getting the value from the user
+
+    for(uint8_t i = 0; i < sps->maxTempSubLayers; i++)
+    {
+        sps->maxDecPicBuffering[i] = m_vps.maxDecPicBuffering[i];
+        sps->numReorderPics[i] = m_vps.numReorderPics[i];
+        sps->maxLatencyIncrease[i] = m_vps.maxLatencyIncrease[i] = m_param->bframes;
+    }
 
     sps->bUseStrongIntraSmoothing = m_param->bEnableStrongIntraSmoothing;
     sps->bTemporalMVPEnabled = m_param->bEnableTemporalMvp;
