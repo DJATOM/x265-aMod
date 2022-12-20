@@ -1637,6 +1637,8 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             inFrame->m_lowres.satdCost = (int64_t)-1;
             inFrame->m_lowresInit = false;
             inFrame->m_isInsideWindow = 0;
+            inFrame->m_tempLayer = 0;
+            inFrame->m_sameLayerRefPic = 0;
         }
 
         /* Copy input picture into a Frame and PicYuv, send to lookahead */

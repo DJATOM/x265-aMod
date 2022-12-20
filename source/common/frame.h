@@ -163,6 +163,8 @@ public:
     /*Frame's temporal layer info*/
     uint8_t                m_tempLayer;
     int8_t                 m_gopId;
+    bool                   m_sameLayerRefPic;
+
     Frame();
 
     bool create(x265_param *param, float* quantOffsets);
