@@ -336,7 +336,7 @@ int TemporalFilter::motionErrorLumaSSD(
         /* copy PU block into cache */
         primitives.pu[partEnum].copy_pp(predPUYuv.m_buf[0], FENC_STRIDE, bufferRowStart, buffStride);
 
-        error = primitives.cu[partEnum].sse_pp(m_metld->me.fencPUYuv.m_buf[0], FENC_STRIDE, predPUYuv.m_buf[0], FENC_STRIDE);
+        error = (int)primitives.cu[partEnum].sse_pp(m_metld->me.fencPUYuv.m_buf[0], FENC_STRIDE, predPUYuv.m_buf[0], FENC_STRIDE);
 
 #endif
         if (error > besterror)

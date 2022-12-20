@@ -3347,7 +3347,6 @@ double RateControl::forwardMasking(Frame* curFrame, double q)
     uint32_t maxWindowSize = uint32_t((m_param->fwdMaxScenecutWindow / 1000.0) * (m_param->fpsNum / m_param->fpsDenom) + 0.5);
     uint32_t windowSize[6], prevWindow = 0;
     int lastScenecut = m_top->m_rateControl->m_lastScenecut;
-    int lastIFrame = m_top->m_rateControl->m_lastScenecutAwareIFrame;
 
     double fwdRefQpDelta[6], fwdNonRefQpDelta[6], sliceTypeDelta[6];
     for (int i = 0; i < 6; i++)
@@ -3424,7 +3423,6 @@ double RateControl::forwardMasking(Frame* curFrame, double q)
 double RateControl::backwardMasking(Frame* curFrame, double q)
 {
     double qp = x265_qScale2qp(q);
-    uint32_t maxWindowSize = uint32_t((m_param->bwdMaxScenecutWindow / 1000.0) * (m_param->fpsNum / m_param->fpsDenom) + 0.5);
     uint32_t windowSize[6], prevWindow = 0;
     int lastScenecut = m_top->m_rateControl->m_lastScenecut;
 
