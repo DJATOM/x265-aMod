@@ -154,10 +154,6 @@ public:
     pixel*                 m_edgeBitPlane;
     pixel*                 m_edgeBitPic;
 
-    /* segment for each frame */
-    int                    m_frameSegment;
-
-
     int                    m_isInsideWindow;
 
     /*Frame's temporal layer info*/

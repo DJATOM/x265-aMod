@@ -1427,44 +1427,6 @@ void Lookahead::getEstimatedPictureCost(Frame *curFrame)
     }
 }
 
-double computeBrightnessIntensity(pixel *inPlane, int width, int height, intptr_t stride)
-{
-    pixel* rowStart = inPlane;
-    double count = 0;
-
-    for (int i = 0; i < height; i++)
-    {
-        for (int j = 0; j < width; j++)
-        {
-            if (rowStart[j] > BRIGHTNESS_THRESHOLD)
-                count++;
-        }
-        rowStart += stride;
-    }
-
-    /* Returns the brightness percentage of the input plane */
-    return (count / (width * height)) * 100;
-}
-
-double computeEdgeIntensity(pixel *inPlane, int width, int height, intptr_t stride)
-{
-    pixel* rowStart = inPlane;
-    double count = 0;
-
-    for (int i = 0; i < height; i++)
-    {
-        for (int j = 0; j < width; j++)
-        {
-            if (rowStart[j] > 0)
-                count++;
-        }
-        rowStart += stride;
-    }
-
-    /* Returns the edge percentage of the input plane */
-    return (count / (width * height)) * 100;
-}
-
 uint32_t LookaheadTLD::calcVariance(pixel* inpSrc, intptr_t stride, intptr_t blockOffset, uint32_t plane)
 {
     pixel* src = inpSrc + blockOffset;
@@ -1750,34 +1712,6 @@ void LookaheadTLD::collectPictureStatistics(Frame *curFrame)
     curFrame->m_lowres.bHistScenecutAnalyzed = false;
 }
 
-void LookaheadTLD::calcFrameSegment(Frame *preFrame)
-{
-    int heightL = preFrame->m_lowres.lines;
-    int widthL = preFrame->m_lowres.width;
-    pixel *lumaPlane = preFrame->m_lowres.fpelPlane[0];
-    intptr_t stride = preFrame->m_lowres.lumaStride;
-    double brightnessIntensity = 0, edgeIntensity = 0;
-
-    /* Edge plane computation */
-    memset(preFrame->m_lowres.lowresEdgePlane, 0, stride * (heightL + (preFrame->m_fencPic->m_lumaMarginY * 2)) * sizeof(pixel));
-    pixel* lowresEdgePic = preFrame->m_lowres.lowresEdgePlane + preFrame->m_fencPic->m_lumaMarginY * stride + preFrame->m_fencPic->m_lumaMarginX;
-    computeEdge(lowresEdgePic, lumaPlane, NULL, stride, heightL, widthL, false);
-
-    /*Frame edge percentage computation */
-    edgeIntensity = computeEdgeIntensity(lowresEdgePic, widthL, heightL, stride);
-
-    /* Frame Brightness percentage computation */
-    brightnessIntensity = computeBrightnessIntensity(lumaPlane, widthL, heightL, stride);
-
-    /* AQ mode switch */
-    if (edgeIntensity < FRAME_EDGE_THRESHOLD)
-        preFrame->m_frameSegment = brightnessIntensity > FRAME_BRIGHTNESS_THRESHOLD ? X265_AQ_AUTO_VARIANCE : X265_AQ_AUTO_VARIANCE_BIASED;
-    else
-        preFrame->m_frameSegment = brightnessIntensity > FRAME_BRIGHTNESS_THRESHOLD ? X265_AQ_EDGE : X265_AQ_VARIANCE;
-
-    preFrame->m_param->rc.aqMode = preFrame->m_frameSegment;
-}
-
 void PreLookaheadGroup::processTasks(int workerThreadID)
 {
     if (workerThreadID < 0)
@@ -1792,11 +1726,6 @@ void PreLookaheadGroup::processTasks(int workerThreadID)
         ProfileScopeEvent(prelookahead);
         m_lock.release();
         preFrame->m_lowres.init(preFrame->m_fencPic, preFrame->m_poc);
-
-        /* SBRC */
-        if (preFrame->m_param->rc.frameSegment)
-            tld.calcFrameSegment(preFrame);
-
         if (m_lookahead.m_bAdaptiveQuant)
             tld.calcAdaptiveQuantFrame(preFrame, m_lookahead.m_param);
 

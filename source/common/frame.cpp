@@ -63,7 +63,6 @@ Frame::Frame()
     m_thetaPic = NULL;
     m_edgeBitPlane = NULL;
     m_edgeBitPic = NULL;
-    m_frameSegment = 0;
     m_isInsideWindow = 0;
 
     // mcstf
@@ -133,7 +132,7 @@ bool Frame::create(x265_param *param, float* quantOffsets)
         CHECKED_MALLOC_ZERO(m_classifyCount, uint32_t, size);
     }
 
-    if (param->rc.aqMode == X265_AQ_EDGE || param->rc.frameSegment || (param->rc.zonefileCount && param->rc.aqMode != 0))
+    if (param->rc.aqMode == X265_AQ_EDGE || (param->rc.zonefileCount && param->rc.aqMode != 0))
     {
         uint32_t numCuInWidth = (param->sourceWidth + param->maxCUSize - 1) / param->maxCUSize;
         uint32_t numCuInHeight = (param->sourceHeight + param->maxCUSize - 1) / param->maxCUSize;

@@ -1761,9 +1761,6 @@ typedef struct x265_param
         /* internally enable if tune grain is set */
         int      bEnableConstVbv;
 
-        /* enable SBRC mode for each sequence */
-        int      frameSegment;
-
         /* if only the focused frames would be re-encode or not */
         int       bEncFocusedFramesOnly;
 
@@ -2256,6 +2253,9 @@ typedef struct x265_param
     /*Motion compensated temporal filter*/
     int      bEnableTemporalFilter;
     double   temporalFilterStrength;
+
+    /*SBRC*/
+    int      bEnableSBRC;
 } x265_param;
 
 /* x265_param_alloc:
