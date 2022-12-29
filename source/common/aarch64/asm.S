@@ -180,3 +180,139 @@ ELF     .size   \name, . - \name
     vtrn            \t1, \t2, \s1, \s2
     vtrn            \t3, \t4, \s3, \s4
 .endm
+
+.macro custom_printf string_number, number
+    sub             sp, sp, #(31 * 64)
+    str             x0, [sp, #(1 * 64)]
+    str             x1, [sp, #(2 * 64)]
+    str             x2, [sp, #(3 * 64)]
+    str             x3, [sp, #(4 * 64)]
+    str             x4, [sp, #(5 * 64)]
+    str             x5, [sp, #(6 * 64)]
+    str             x6, [sp, #(7 * 64)]
+    str             x7, [sp, #(8 * 64)]
+    str             x8, [sp, #(9 * 64)]
+    str             x9, [sp, #(10 * 64)]
+    str             x10, [sp, #(11 * 64)]
+    str             x11, [sp, #(12 * 64)]
+    str             x12, [sp, #(13 * 64)]
+    str             x13, [sp, #(14 * 64)]
+    str             x14, [sp, #(15 * 64)]
+    str             x15, [sp, #(16 * 64)]
+    str             x16, [sp, #(17 * 64)]
+    str             x17, [sp, #(18 * 64)]
+    str             x18, [sp, #(19 * 64)]
+    str             x19, [sp, #(20 * 64)]
+    str             x20, [sp, #(21 * 64)]
+    str             x21, [sp, #(22 * 64)]
+    str             x22, [sp, #(23 * 64)]
+    str             x23, [sp, #(24 * 64)]
+    str             x24, [sp, #(25 * 64)]
+    str             x25, [sp, #(26 * 64)]
+    str             x26, [sp, #(27 * 64)]
+    str             x27, [sp, #(28 * 64)]
+    str             x28, [sp, #(29 * 64)]
+    str             x29, [sp, #(30 * 64)]
+    str             x30, [sp, #(31 * 64)]
+
+    sub             sp, sp, #(2 * 32)
+    str             w0, [sp, #(1 * 32)]
+    str             w8, [sp, #(2 * 32)]
+
+    mov             x1, \number
+    ldr             x0, =\string_number
+    bl printf
+
+    ldr             w0, [sp, #(1 * 32)]
+    ldr             w8, [sp, #(2 * 32)]
+    add             sp, sp, #(2 * 32)
+    ldr             x0, [sp, #(1 * 64)]
+    ldr             x1, [sp, #(2 * 64)]
+    ldr             x2, [sp, #(3 * 64)]
+    ldr             x3, [sp, #(4 * 64)]
+    ldr             x4, [sp, #(5 * 64)]
+    ldr             x5, [sp, #(6 * 64)]
+    ldr             x6, [sp, #(7 * 64)]
+    ldr             x7, [sp, #(8 * 64)]
+    ldr             x8, [sp, #(9 * 64)]
+    ldr             x9, [sp, #(10 * 64)]
+    ldr             x10, [sp, #(11 * 64)]
+    ldr             x11, [sp, #(12 * 64)]
+    ldr             x12, [sp, #(13 * 64)]
+    ldr             x13, [sp, #(14 * 64)]
+    ldr             x14, [sp, #(15 * 64)]
+    ldr             x15, [sp, #(16 * 64)]
+    ldr             x16, [sp, #(17 * 64)]
+    ldr             x17, [sp, #(18 * 64)]
+    ldr             x18, [sp, #(19 * 64)]
+    ldr             x19, [sp, #(20 * 64)]
+    ldr             x20, [sp, #(21 * 64)]
+    ldr             x21, [sp, #(22 * 64)]
+    ldr             x22, [sp, #(23 * 64)]
+    ldr             x23, [sp, #(24 * 64)]
+    ldr             x24, [sp, #(25 * 64)]
+    ldr             x25, [sp, #(26 * 64)]
+    ldr             x26, [sp, #(27 * 64)]
+    ldr             x27, [sp, #(28 * 64)]
+    ldr             x28, [sp, #(29 * 64)]
+    ldr             x29, [sp, #(30 * 64)]
+    ldr             x30, [sp, #(31 * 64)]
+    add             sp, sp, #(    31 * 64)       // Free the space at the end of the block.
+.endm
+
+.macro string_print msg, len
+    sub             sp, sp, #(3 * 64)       // Allocate space for the whole block.
+    str             x0, [sp, #(1 * 64)]
+    str             x1, [sp, #(2 * 64)]
+    str             x2, [sp, #(3 * 64)]
+    sub             sp, sp, #(1 * 32)
+    str             w8, [sp, #(1 * 32)]
+
+    mov             x0, #1      /* fd := STDOUT_FILENO */
+    ldr             x1, =\msg    /* buf := msg */
+    ldr             x2, =\len    /* count := len */
+    mov             w8, #64     /* write is syscall #64 */
+    svc             #0          /* invoke syscall */
+
+    ldr             w8, [sp, #(1 * 32)]
+    add             sp, sp, #(1 * 32)       // Free the space at the end of the block
+    ldr             x0, [sp, #(1 * 64)]
+    ldr             x1, [sp, #(2 * 64)]
+    ldr             x2, [sp, #(3 * 64)]
+    ldr             w8, [sp, #(4 * 64)]
+    add             sp, sp, #(3 * 64)       // Free the space at the end of the block.
+.endm
+
+.macro my_exit
+    sub             sp, sp, #(31 * 64)
+    mov             x1, #1
+    ldr             x0, #4
+    bl printf
+.endm
+
+.macro unit_test a, b, c, d
+    ptrue           p0.b, vl4
+    string_print    msg_temp_sve, len_temp_sve
+    ld1b            {z0.b}, p0/z, [\c]
+    mov             x11, v0.d[0]
+    custom_printf   string_number, x11
+    mov             x11, v0.d[1]
+    custom_printf   string_number, x11
+    uxtb            z0.h, p0/M, z0.h
+    mov             x11, v0.d[0]
+    custom_printf   string_number, x11
+    mov             x11, v0.d[1]
+    custom_printf   string_number, x11
+    st1h            {z0.h}, p0, [\a]
+    add             \a, \a, \b, lsl #1
+    add             \c, \c, \d
+    my_exit
+.endm
+
+.data
+msg_temp_sve:
+    .ascii        "#### SVE ####\n"
+len_temp_sve = . - msg_temp_sve
+msg_temp_neon:
+    .ascii        "#### NEON ####\n"
+len_temp_neon = . - msg_temp_neon

@@ -275,6 +275,7 @@ void setupLoopFilterPrimitives_neon(EncoderPrimitives &p)
 
 }
 
+
 #else //HIGH_BIT_DEPTH
 
 

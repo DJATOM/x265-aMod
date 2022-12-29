@@ -152,6 +152,8 @@
 
 DECLS(neon);
 
+DECLS(sve2);
+
 void x265_pixel_planecopy_cp_neon(const uint8_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int height, int shift);
 
 uint64_t x265_pixel_var_8x8_neon(const pixel* pix, intptr_t stride);
