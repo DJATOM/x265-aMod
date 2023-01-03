@@ -2385,8 +2385,8 @@ function PFX(blockcopy_pp_48x64_sve2)
 .endr
     ret
 .vl_gt_16_blockcopy_pp_48_64:
-    cmp             x9, #32
-    bgt             .vl_gt_32_blockcopy_pp_48_64
+    // No need for extra checks as ptrues cannot
+    // be perfectly adjusted
     ptrue           p0.b, vl32
     ptrue           p1.b, vl16
     mov             x10, 16
@@ -2395,15 +2395,6 @@ function PFX(blockcopy_pp_48x64_sve2)
     st1b            {z0.b}, p0, [x0]
     ld1b            {z1.b}, p1/z, [x2, x10]
     st1b            {z1.b}, p1, [x0, x10]
-    add             x2, x2, x3
-    add             x0, x0, x1
-.endr
-    ret
-.vl_gt_32_blockcopy_pp_48_64:
-    ptrue           p0.b, mul4
-.rept 64
-    ld1b            {z0.b}, p0/z, [x2]
-    st1b            {z0.b}, p0, [x0]
     add             x2, x2, x3
     add             x0, x0, x1
 .endr
@@ -2697,7 +2688,7 @@ endfunc
 function PFX(count_nonzero_4_sve2)
     //string_print msg_count_nonzero_4, len_count_nonzero_4
     mov             x11, #8
-    ptrue           p5.h
+    ptrue           p5.h, vl8
     mov             z5.h, p5/z, #1
     mov             z17.h, #0
     ld1h            {z0.h}, p5/z, [x0]

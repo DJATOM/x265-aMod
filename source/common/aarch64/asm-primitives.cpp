@@ -471,16 +471,16 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
 
 #if !HIGH_BIT_DEPTH
         // pixel_avg_pp
-        ALL_LUMA_PU(pixelavg_pp[NONALIGNED], pixel_avg_pp, neon);
-        ALL_LUMA_PU(pixelavg_pp[ALIGNED], pixel_avg_pp, neon);
+        ALL_LUMA_PU(pixelavg_pp[NONALIGNED], pixel_avg_pp, sve2);
+        ALL_LUMA_PU(pixelavg_pp[ALIGNED], pixel_avg_pp, sve2);
 
         // addAvg
-        ALL_LUMA_PU(addAvg[NONALIGNED], addAvg, neon);
-        ALL_LUMA_PU(addAvg[ALIGNED], addAvg, neon);
-        ALL_CHROMA_420_PU(addAvg[NONALIGNED], addAvg, neon);
-        ALL_CHROMA_422_PU(addAvg[NONALIGNED], addAvg, neon);
-        ALL_CHROMA_420_PU(addAvg[ALIGNED], addAvg, neon);
-        ALL_CHROMA_422_PU(addAvg[ALIGNED], addAvg, neon);
+        ALL_LUMA_PU(addAvg[NONALIGNED], addAvg, sve2);
+        ALL_LUMA_PU(addAvg[ALIGNED], addAvg, sve2);
+        ALL_CHROMA_420_PU(addAvg[NONALIGNED], addAvg, sve2);
+        ALL_CHROMA_422_PU(addAvg[NONALIGNED], addAvg, sve2);
+        ALL_CHROMA_420_PU(addAvg[ALIGNED], addAvg, sve2);
+        ALL_CHROMA_422_PU(addAvg[ALIGNED], addAvg, sve2);
 
         // sad
         ALL_LUMA_PU(sad, pixel_sad, neon);
