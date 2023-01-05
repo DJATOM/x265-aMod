@@ -1383,18 +1383,14 @@ void pixelavg_pp_neon(pixel *dst, intptr_t dstride, const pixel *src0, intptr_t 
         for (; (x + 8) <= lx; x += 8)
         {
 #if HIGH_BIT_DEPTH
-            int16x8_t in0 = *(int16x8_t *)&src0[x];
-            int16x8_t in1 = *(int16x8_t *)&src1[x];
-            int16x8_t t = vaddq_s16(in0, in1);
-            t = vaddq_s16(t, vdupq_n_s16(1));
-            t = vshrq_n_s16(t, 1);
-            *(int16x8_t *)&dst[x] = t;
+            uint16x8_t in0 = *(uint16x8_t *)&src0[x];
+            uint16x8_t in1 = *(uint16x8_t *)&src1[x];
+            uint16x8_t t = vrhaddq_u16(in0, in1);
+            *(uint16x8_t *)&dst[x] = t;
 #else
             int16x8_t in0 = vmovl_u8(*(uint8x8_t *)&src0[x]);
             int16x8_t in1 = vmovl_u8(*(uint8x8_t *)&src1[x]);
-            int16x8_t t = vaddq_s16(in0, in1);
-            t = vaddq_s16(t, vdupq_n_s16(1));
-            t = vshrq_n_s16(t, 1);
+            int16x8_t t = vrhaddq_s16(in0, in1);
             *(uint8x8_t *)&dst[x] = vmovn_u16(t);
 #endif
         }
