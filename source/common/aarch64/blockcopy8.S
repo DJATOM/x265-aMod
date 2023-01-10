@@ -2958,13 +2958,12 @@ endfunc
 function PFX(cpy2Dto1D_shl_8x8_sve2)
     dup             z0.h, w3
     ptrue           p0.h, vl8
-    mov             x11, #8
 .rept 8
     ld1h            {z1.h}, p0/z, [x1]
     lsl             z1.h, p0/m, z1.h, z0.h
     st1h            {z1.h}, p0, [x0]
     add             x1, x1, x2, lsl #1
-    add             x0, x0, x11, lsl #1
+    add             x0, x0, #16
 .endr
     ret
 endfunc
@@ -3265,12 +3264,11 @@ endfunc
 function PFX(cpy1Dto2D_shl_8x8_sve2)
     dup             z0.h, w3
     ptrue           p0.h, vl8
-    mov             x11, #8
 .rept 8
     ld1h            {z1.h}, p0/z, [x1]
     lsl             z1.h, p0/m, z1.h, z0.h
     st1h            {z1.h}, p0, [x0]
-    add             x1, x1, x11, lsl #1
+    add             x1, x1, #16
     add             x0, x0, x2, lsl #1
 .endr
     ret
