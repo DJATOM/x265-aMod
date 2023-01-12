@@ -711,148 +711,7 @@ int x265_scenecut_aware_qp_param_parse(x265_param* p, const char* name, const ch
 #define OPT(STR) else if (!strcmp(name, STR))
     if (0);
     OPT("scenecut-aware-qp") p->bEnableSceneCutAwareQp = x265_atoi(value, bError);
-    OPT("masking-strength")
-    {
-        int window1[6];
-        double refQpDelta1[6], nonRefQpDelta1[6];
-        if (p->bEnableSceneCutAwareQp == FORWARD)
-        {
-            if (3 == sscanf(value, "%d,%lf,%lf", &window1[0], &refQpDelta1[0], &nonRefQpDelta1[0]))
-            {
-                if (window1[0] > 0)
-                    p->fwdMaxScenecutWindow = window1[0];
-                if (refQpDelta1[0] > 0)
-                    p->fwdRefQpDelta[0] = refQpDelta1[0];
-                if (nonRefQpDelta1[0] > 0)
-                    p->fwdNonRefQpDelta[0] = nonRefQpDelta1[0];
-
-                p->fwdScenecutWindow[0] = p->fwdMaxScenecutWindow / 6;
-                for (int i = 1; i < 6; i++)
-                {
-                    p->fwdScenecutWindow[i] = p->fwdMaxScenecutWindow / 6;
-                    p->fwdRefQpDelta[i] = p->fwdRefQpDelta[i - 1] - (0.15 * p->fwdRefQpDelta[i - 1]);
-                    p->fwdNonRefQpDelta[i] = p->fwdNonRefQpDelta[i - 1] - (0.15 * p->fwdNonRefQpDelta[i - 1]);
-                }
-            }
-            else if (18 == sscanf(value, "%d,%lf,%lf,%d,%lf,%lf,%d,%lf,%lf,%d,%lf,%lf,%d,%lf,%lf,%d,%lf,%lf"
-                , &window1[0], &refQpDelta1[0], &nonRefQpDelta1[0], &window1[1], &refQpDelta1[1], &nonRefQpDelta1[1]
-                , &window1[2], &refQpDelta1[2], &nonRefQpDelta1[2], &window1[3], &refQpDelta1[3], &nonRefQpDelta1[3]
-                , &window1[4], &refQpDelta1[4], &nonRefQpDelta1[4], &window1[5], &refQpDelta1[5], &nonRefQpDelta1[5]))
-            {
-                p->fwdMaxScenecutWindow = 0;
-                for (int i = 0; i < 6; i++)
-                {
-                    p->fwdScenecutWindow[i] = window1[i];
-                    p->fwdRefQpDelta[i] = refQpDelta1[i];
-                    p->fwdNonRefQpDelta[i] = nonRefQpDelta1[i];
-                    p->fwdMaxScenecutWindow += p->fwdScenecutWindow[i];
-                }
-            }
-            else
-            {
-                x265_log(NULL, X265_LOG_ERROR, "Specify all the necessary offsets for masking-strength \n");
-                bError = true;
-            }
-        }
-        else if (p->bEnableSceneCutAwareQp == BACKWARD)
-        {
-            if (3 == sscanf(value, "%d,%lf,%lf", &window1[0], &refQpDelta1[0], &nonRefQpDelta1[0]))
-            {
-                if (window1[0] > 0)
-                    p->bwdMaxScenecutWindow = window1[0];
-                if (refQpDelta1[0] > 0)
-                    p->bwdRefQpDelta[0] = refQpDelta1[0];
-                if (nonRefQpDelta1[0] > 0)
-                    p->bwdNonRefQpDelta[0] = nonRefQpDelta1[0];
-
-                p->bwdScenecutWindow[0] = p->bwdMaxScenecutWindow / 6;
-                for (int i = 1; i < 6; i++)
-                {
-                    p->bwdScenecutWindow[i] = p->bwdMaxScenecutWindow / 6;
-                    p->bwdRefQpDelta[i] = p->bwdRefQpDelta[i - 1] - (0.15 * p->bwdRefQpDelta[i - 1]);
-                    p->bwdNonRefQpDelta[i] = p->bwdNonRefQpDelta[i - 1] - (0.15 * p->bwdNonRefQpDelta[i - 1]);
-                }
-            }
-            else if (18 == sscanf(value, "%d,%lf,%lf,%d,%lf,%lf,%d,%lf,%lf,%d,%lf,%lf,%d,%lf,%lf,%d,%lf,%lf"
-                , &window1[0], &refQpDelta1[0], &nonRefQpDelta1[0], &window1[1], &refQpDelta1[1], &nonRefQpDelta1[1]
-                , &window1[2], &refQpDelta1[2], &nonRefQpDelta1[2], &window1[3], &refQpDelta1[3], &nonRefQpDelta1[3]
-                , &window1[4], &refQpDelta1[4], &nonRefQpDelta1[4], &window1[5], &refQpDelta1[5], &nonRefQpDelta1[5]))
-            {
-                p->bwdMaxScenecutWindow = 0;
-                for (int i = 0; i < 6; i++)
-                {
-                    p->bwdScenecutWindow[i] = window1[i];
-                    p->bwdRefQpDelta[i] = refQpDelta1[i];
-                    p->bwdNonRefQpDelta[i] = nonRefQpDelta1[i];
-                    p->bwdMaxScenecutWindow += p->bwdScenecutWindow[i];
-                }
-            }
-            else
-            {
-                x265_log(NULL, X265_LOG_ERROR, "Specify all the necessary offsets for masking-strength \n");
-                bError = true;
-            }
-        }
-        else if (p->bEnableSceneCutAwareQp == BI_DIRECTIONAL)
-        {
-            int window2[6];
-            double refQpDelta2[6], nonRefQpDelta2[6];
-            if (6 == sscanf(value, "%d,%lf,%lf,%d,%lf,%lf", &window1[0], &refQpDelta1[0], &nonRefQpDelta1[0], &window2[0], &refQpDelta2[0], &nonRefQpDelta2[0]))
-            {
-                if (window1[0] > 0)
-                    p->fwdMaxScenecutWindow = window1[0];
-                if (refQpDelta1[0] > 0)
-                    p->fwdRefQpDelta[0] = refQpDelta1[0];
-                if (nonRefQpDelta1[0] > 0)
-                    p->fwdNonRefQpDelta[0] = nonRefQpDelta1[0];
-                if (window2[0] > 0)
-                    p->bwdMaxScenecutWindow = window2[0];
-                if (refQpDelta2[0] > 0)
-                    p->bwdRefQpDelta[0] = refQpDelta2[0];
-                if (nonRefQpDelta2[0] > 0)
-                    p->bwdNonRefQpDelta[0] = nonRefQpDelta2[0];
-
-                p->fwdScenecutWindow[0] = p->fwdMaxScenecutWindow / 6;
-                p->bwdScenecutWindow[0] = p->bwdMaxScenecutWindow / 6;
-                for (int i = 1; i < 6; i++)
-                {
-                    p->fwdScenecutWindow[i] = p->fwdMaxScenecutWindow / 6;
-                    p->bwdScenecutWindow[i] = p->bwdMaxScenecutWindow / 6;
-                    p->fwdRefQpDelta[i] = p->fwdRefQpDelta[i - 1] - (0.15 * p->fwdRefQpDelta[i - 1]);
-                    p->fwdNonRefQpDelta[i] = p->fwdNonRefQpDelta[i - 1] - (0.15 * p->fwdNonRefQpDelta[i - 1]);
-                    p->bwdRefQpDelta[i] = p->bwdRefQpDelta[i - 1] - (0.15 * p->bwdRefQpDelta[i - 1]);
-                    p->bwdNonRefQpDelta[i] = p->bwdNonRefQpDelta[i - 1] - (0.15 * p->bwdNonRefQpDelta[i - 1]);
-                }
-            }
-            else if (36 == sscanf(value, "%d,%lf,%lf,%d,%lf,%lf,%d,%lf,%lf,%d,%lf,%lf,%d,%lf,%lf,%d,%lf,%lf,%d,%lf,%lf,%d,%lf,%lf,%d,%lf,%lf,%d,%lf,%lf,%d,%lf,%lf,%d,%lf,%lf"
-                , &window1[0], &refQpDelta1[0], &nonRefQpDelta1[0], &window1[1], &refQpDelta1[1], &nonRefQpDelta1[1]
-                , &window1[2], &refQpDelta1[2], &nonRefQpDelta1[2], &window1[3], &refQpDelta1[3], &nonRefQpDelta1[3]
-                , &window1[4], &refQpDelta1[4], &nonRefQpDelta1[4], &window1[5], &refQpDelta1[5], &nonRefQpDelta1[5]
-                , &window2[0], &refQpDelta2[0], &nonRefQpDelta2[0], &window2[1], &refQpDelta2[1], &nonRefQpDelta2[1]
-                , &window2[2], &refQpDelta2[2], &nonRefQpDelta2[2], &window2[3], &refQpDelta2[3], &nonRefQpDelta2[3]
-                , &window2[4], &refQpDelta2[4], &nonRefQpDelta2[4], &window2[5], &refQpDelta2[5], &nonRefQpDelta2[5]))
-            {
-                p->fwdMaxScenecutWindow = 0;
-                p->bwdMaxScenecutWindow = 0;
-                for (int i = 0; i < 6; i++)
-                {
-                    p->fwdScenecutWindow[i] = window1[i];
-                    p->fwdRefQpDelta[i] = refQpDelta1[i];
-                    p->fwdNonRefQpDelta[i] = nonRefQpDelta1[i];
-                    p->bwdScenecutWindow[i] = window2[i];
-                    p->bwdRefQpDelta[i] = refQpDelta2[i];
-                    p->bwdNonRefQpDelta[i] = nonRefQpDelta2[i];
-                    p->fwdMaxScenecutWindow += p->fwdScenecutWindow[i];
-                    p->bwdMaxScenecutWindow += p->bwdScenecutWindow[i];
-                }
-            }
-            else
-            {
-                x265_log(NULL, X265_LOG_ERROR, "Specify all the necessary offsets for masking-strength \n");
-                bError = true;
-            }
-        }
-    }
+    OPT("masking-strength") bError = parseMaskingStrength(p, value);
     else
         return X265_PARAM_BAD_NAME;
 #undef OPT
@@ -1534,6 +1393,8 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
             p->selectiveSAO = atoi(value);
         }
         OPT("fades") p->bEnableFades = atobool(value);
+        OPT("scenecut-aware-qp") p->bEnableSceneCutAwareQp = atoi(value);
+        OPT("masking-strength") bError |= parseMaskingStrength(p, value);
         OPT("field") p->bField = atobool( value );
         OPT("cll") p->bEmitCLL = atobool(value);
         OPT("frame-dup") p->bEnableFrameDuplication = atobool(value);
@@ -2546,6 +2407,151 @@ bool parseLambdaFile(x265_param* param)
 
     fclose(lfn);
     return false;
+}
+
+bool parseMaskingStrength(x265_param* p, const char* value)
+{
+    bool bError = false;
+    int window1[6];
+    double refQpDelta1[6], nonRefQpDelta1[6];
+    if (p->bEnableSceneCutAwareQp == FORWARD)
+    {
+        if (3 == sscanf(value, "%d,%lf,%lf", &window1[0], &refQpDelta1[0], &nonRefQpDelta1[0]))
+        {
+            if (window1[0] > 0)
+                p->fwdMaxScenecutWindow = window1[0];
+            if (refQpDelta1[0] > 0)
+                p->fwdRefQpDelta[0] = refQpDelta1[0];
+            if (nonRefQpDelta1[0] > 0)
+                p->fwdNonRefQpDelta[0] = nonRefQpDelta1[0];
+
+            p->fwdScenecutWindow[0] = p->fwdMaxScenecutWindow / 6;
+            for (int i = 1; i < 6; i++)
+            {
+                p->fwdScenecutWindow[i] = p->fwdMaxScenecutWindow / 6;
+                p->fwdRefQpDelta[i] = p->fwdRefQpDelta[i - 1] - (0.15 * p->fwdRefQpDelta[i - 1]);
+                p->fwdNonRefQpDelta[i] = p->fwdNonRefQpDelta[i - 1] - (0.15 * p->fwdNonRefQpDelta[i - 1]);
+            }
+        }
+        else if (18 == sscanf(value, "%d,%lf,%lf,%d,%lf,%lf,%d,%lf,%lf,%d,%lf,%lf,%d,%lf,%lf,%d,%lf,%lf"
+            , &window1[0], &refQpDelta1[0], &nonRefQpDelta1[0], &window1[1], &refQpDelta1[1], &nonRefQpDelta1[1]
+            , &window1[2], &refQpDelta1[2], &nonRefQpDelta1[2], &window1[3], &refQpDelta1[3], &nonRefQpDelta1[3]
+            , &window1[4], &refQpDelta1[4], &nonRefQpDelta1[4], &window1[5], &refQpDelta1[5], &nonRefQpDelta1[5]))
+        {
+            p->fwdMaxScenecutWindow = 0;
+            for (int i = 0; i < 6; i++)
+            {
+                p->fwdScenecutWindow[i] = window1[i];
+                p->fwdRefQpDelta[i] = refQpDelta1[i];
+                p->fwdNonRefQpDelta[i] = nonRefQpDelta1[i];
+                p->fwdMaxScenecutWindow += p->fwdScenecutWindow[i];
+            }
+        }
+        else
+        {
+            x265_log(NULL, X265_LOG_ERROR, "Specify all the necessary offsets for masking-strength \n");
+            bError = true;
+        }
+    }
+    else if (p->bEnableSceneCutAwareQp == BACKWARD)
+    {
+        if (3 == sscanf(value, "%d,%lf,%lf", &window1[0], &refQpDelta1[0], &nonRefQpDelta1[0]))
+        {
+            if (window1[0] > 0)
+                p->bwdMaxScenecutWindow = window1[0];
+            if (refQpDelta1[0] > 0)
+                p->bwdRefQpDelta[0] = refQpDelta1[0];
+            if (nonRefQpDelta1[0] > 0)
+                p->bwdNonRefQpDelta[0] = nonRefQpDelta1[0];
+
+            p->bwdScenecutWindow[0] = p->bwdMaxScenecutWindow / 6;
+            for (int i = 1; i < 6; i++)
+            {
+                p->bwdScenecutWindow[i] = p->bwdMaxScenecutWindow / 6;
+                p->bwdRefQpDelta[i] = p->bwdRefQpDelta[i - 1] - (0.15 * p->bwdRefQpDelta[i - 1]);
+                p->bwdNonRefQpDelta[i] = p->bwdNonRefQpDelta[i - 1] - (0.15 * p->bwdNonRefQpDelta[i - 1]);
+            }
+        }
+        else if (18 == sscanf(value, "%d,%lf,%lf,%d,%lf,%lf,%d,%lf,%lf,%d,%lf,%lf,%d,%lf,%lf,%d,%lf,%lf"
+            , &window1[0], &refQpDelta1[0], &nonRefQpDelta1[0], &window1[1], &refQpDelta1[1], &nonRefQpDelta1[1]
+            , &window1[2], &refQpDelta1[2], &nonRefQpDelta1[2], &window1[3], &refQpDelta1[3], &nonRefQpDelta1[3]
+            , &window1[4], &refQpDelta1[4], &nonRefQpDelta1[4], &window1[5], &refQpDelta1[5], &nonRefQpDelta1[5]))
+        {
+            p->bwdMaxScenecutWindow = 0;
+            for (int i = 0; i < 6; i++)
+            {
+                p->bwdScenecutWindow[i] = window1[i];
+                p->bwdRefQpDelta[i] = refQpDelta1[i];
+                p->bwdNonRefQpDelta[i] = nonRefQpDelta1[i];
+                p->bwdMaxScenecutWindow += p->bwdScenecutWindow[i];
+            }
+        }
+        else
+        {
+            x265_log(NULL, X265_LOG_ERROR, "Specify all the necessary offsets for masking-strength \n");
+            bError = true;
+        }
+    }
+    else if (p->bEnableSceneCutAwareQp == BI_DIRECTIONAL)
+    {
+        int window2[6];
+        double refQpDelta2[6], nonRefQpDelta2[6];
+        if (6 == sscanf(value, "%d,%lf,%lf,%d,%lf,%lf", &window1[0], &refQpDelta1[0], &nonRefQpDelta1[0], &window2[0], &refQpDelta2[0], &nonRefQpDelta2[0]))
+        {
+            if (window1[0] > 0)
+                p->fwdMaxScenecutWindow = window1[0];
+            if (refQpDelta1[0] > 0)
+                p->fwdRefQpDelta[0] = refQpDelta1[0];
+            if (nonRefQpDelta1[0] > 0)
+                p->fwdNonRefQpDelta[0] = nonRefQpDelta1[0];
+            if (window2[0] > 0)
+                p->bwdMaxScenecutWindow = window2[0];
+            if (refQpDelta2[0] > 0)
+                p->bwdRefQpDelta[0] = refQpDelta2[0];
+            if (nonRefQpDelta2[0] > 0)
+                p->bwdNonRefQpDelta[0] = nonRefQpDelta2[0];
+
+            p->fwdScenecutWindow[0] = p->fwdMaxScenecutWindow / 6;
+            p->bwdScenecutWindow[0] = p->bwdMaxScenecutWindow / 6;
+            for (int i = 1; i < 6; i++)
+            {
+                p->fwdScenecutWindow[i] = p->fwdMaxScenecutWindow / 6;
+                p->bwdScenecutWindow[i] = p->bwdMaxScenecutWindow / 6;
+                p->fwdRefQpDelta[i] = p->fwdRefQpDelta[i - 1] - (0.15 * p->fwdRefQpDelta[i - 1]);
+                p->fwdNonRefQpDelta[i] = p->fwdNonRefQpDelta[i - 1] - (0.15 * p->fwdNonRefQpDelta[i - 1]);
+                p->bwdRefQpDelta[i] = p->bwdRefQpDelta[i - 1] - (0.15 * p->bwdRefQpDelta[i - 1]);
+                p->bwdNonRefQpDelta[i] = p->bwdNonRefQpDelta[i - 1] - (0.15 * p->bwdNonRefQpDelta[i - 1]);
+            }
+        }
+        else if (36 == sscanf(value, "%d,%lf,%lf,%d,%lf,%lf,%d,%lf,%lf,%d,%lf,%lf,%d,%lf,%lf,%d,%lf,%lf,%d,%lf,%lf,%d,%lf,%lf,%d,%lf,%lf,%d,%lf,%lf,%d,%lf,%lf,%d,%lf,%lf"
+            , &window1[0], &refQpDelta1[0], &nonRefQpDelta1[0], &window1[1], &refQpDelta1[1], &nonRefQpDelta1[1]
+            , &window1[2], &refQpDelta1[2], &nonRefQpDelta1[2], &window1[3], &refQpDelta1[3], &nonRefQpDelta1[3]
+            , &window1[4], &refQpDelta1[4], &nonRefQpDelta1[4], &window1[5], &refQpDelta1[5], &nonRefQpDelta1[5]
+            , &window2[0], &refQpDelta2[0], &nonRefQpDelta2[0], &window2[1], &refQpDelta2[1], &nonRefQpDelta2[1]
+            , &window2[2], &refQpDelta2[2], &nonRefQpDelta2[2], &window2[3], &refQpDelta2[3], &nonRefQpDelta2[3]
+            , &window2[4], &refQpDelta2[4], &nonRefQpDelta2[4], &window2[5], &refQpDelta2[5], &nonRefQpDelta2[5]))
+        {
+            p->fwdMaxScenecutWindow = 0;
+            p->bwdMaxScenecutWindow = 0;
+            for (int i = 0; i < 6; i++)
+            {
+                p->fwdScenecutWindow[i] = window1[i];
+                p->fwdRefQpDelta[i] = refQpDelta1[i];
+                p->fwdNonRefQpDelta[i] = nonRefQpDelta1[i];
+                p->bwdScenecutWindow[i] = window2[i];
+                p->bwdRefQpDelta[i] = refQpDelta2[i];
+                p->bwdNonRefQpDelta[i] = nonRefQpDelta2[i];
+                p->fwdMaxScenecutWindow += p->fwdScenecutWindow[i];
+                p->bwdMaxScenecutWindow += p->bwdScenecutWindow[i];
+            }
+        }
+        else
+        {
+            x265_log(NULL, X265_LOG_ERROR, "Specify all the necessary offsets for masking-strength \n");
+            bError = true;
+        }
+    }
+    return bError;
 }
 
 void x265_copy_params(x265_param* dst, x265_param* src)

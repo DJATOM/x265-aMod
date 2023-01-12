@@ -1987,7 +1987,6 @@ Quality, rate control and rate distortion options
 	It reduces the bits spent on the inter-frames within the scenecut window
 	before and after a scenecut by increasing their QP in ratecontrol pass2 algorithm
 	without any deterioration in visual quality.
-	It is mentioned inside :option:`--scenecut-qp-config` file.
 	:option:`--scenecut-aware-qp` works only with --pass 2. Default 0.
 
 	+-------+---------------------------------------------------------------+
@@ -2010,7 +2009,7 @@ Quality, rate control and rate distortion options
 
 	Comma separated list of values which specifies the duration and offset
 	for the QP increment for inter-frames when :option:`--scenecut-aware-qp`
-	is enabled. It is mentioned inside :option:`--scenecut-qp-config` file.
+	is enabled.
 
 	When :option:`--scenecut-aware-qp` is:
 
