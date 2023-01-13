@@ -428,11 +428,12 @@ void RateControl::initVBV(const SPS& sps)
     m_bufferExcess = 0;
     m_minBufferFill = m_param->minVbvFullness / 100;
     m_maxBufferFill = 1 - (m_param->maxVbvFullness / 100);
+    m_initVbv = true;
 }
 
 bool RateControl::init(const SPS& sps)
 {
-    if (m_isVbv)
+    if (m_isVbv && (!m_initVbv || m_param->bEnableSBRC))
         initVBV(sps);
 
     if (!m_param->bResetZoneConfig && (m_relativeComplexity == NULL))
@@ -2430,7 +2431,8 @@ void RateControl::checkAndResetABR(RateControlEntry* rce, bool isFrameDone)
                 m_shortTermCplxCount = 1;
                 m_isAbrReset = true;
                 m_lastAbrResetPoc = rce->poc;
-                rce->blurredComplexity = m_shortTermCplxSum / m_shortTermCplxCount;
+                if(m_param->bEnableSBRC)
+                    rce->blurredComplexity = m_shortTermCplxSum / m_shortTermCplxCount;
             }
         }
         else if (m_isAbrReset && isFrameDone)

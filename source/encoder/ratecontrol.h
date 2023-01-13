@@ -150,7 +150,6 @@ public:
     int    m_lastScenecutAwareIFrame;
     double m_rateTolerance;
     double m_frameDuration;     /* current frame duration in seconds */
-    double m_frameDurInGOP;     /* current frame duration when considered as a segment */
     double m_bitrate;
     double m_rateFactorConstant;
     double m_bufferSize;
