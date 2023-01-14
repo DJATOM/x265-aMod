@@ -325,14 +325,14 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
         setupLoopFilterPrimitives_neon(p);
         setupIntraPrimitives_neon(p);
 
-        ALL_CHROMA_420_PU(p2s[NONALIGNED], filterPixelToShort, neon);
-        ALL_CHROMA_422_PU(p2s[ALIGNED], filterPixelToShort, neon);
-        ALL_CHROMA_444_PU(p2s[ALIGNED], filterPixelToShort, neon);
-        ALL_LUMA_PU(convert_p2s[ALIGNED], filterPixelToShort, neon);
-        ALL_CHROMA_420_PU(p2s[ALIGNED], filterPixelToShort, neon);
-        ALL_CHROMA_422_PU(p2s[NONALIGNED], filterPixelToShort, neon);
-        ALL_CHROMA_444_PU(p2s[NONALIGNED], filterPixelToShort, neon);
-        ALL_LUMA_PU(convert_p2s[NONALIGNED], filterPixelToShort, neon);
+        ALL_CHROMA_420_PU(p2s[NONALIGNED], filterPixelToShort, sve2);
+        ALL_CHROMA_422_PU(p2s[ALIGNED], filterPixelToShort, sve2);
+        ALL_CHROMA_444_PU(p2s[ALIGNED], filterPixelToShort, sve2);
+        ALL_LUMA_PU(convert_p2s[ALIGNED], filterPixelToShort, sve2);
+        ALL_CHROMA_420_PU(p2s[ALIGNED], filterPixelToShort, sve2);
+        ALL_CHROMA_422_PU(p2s[NONALIGNED], filterPixelToShort, sve2);
+        ALL_CHROMA_444_PU(p2s[NONALIGNED], filterPixelToShort, sve2);
+        ALL_LUMA_PU(convert_p2s[NONALIGNED], filterPixelToShort, sve2);
 
 #if !HIGH_BIT_DEPTH
         ALL_LUMA_PU(luma_vpp, interp_8tap_vert_pp, neon);

@@ -1658,7 +1658,7 @@ function PFX(blockcopy_ps_64x64_sve2)
 .vl_gt_16_blockcopy_ps_64_64:
     // As bytes and half words are being manipulated,
     // dealing with architectures that support > 32 bytes
-    // registers seems to be quite tricky. So, no extra checks
+    // vector sizes seems to be quite tricky. So, no extra checks
     // are performed to determine these architectures
     ptrue           p0.b, vl32
     mov             x11, #32
@@ -2299,15 +2299,17 @@ endfunc
 
 function PFX(blockcopy_pp_24x32_sve2)
     mov             w12, #32
-    mov             x11, 2
-    ptrue           p0.d, vl2
-    ptrue           p1.d, vl1
+    mov             x8, #3
 .L_blockcopy_pp_24x32:
     sub             w12, w12, #1
-    ld1d            {z0.d}, p0/z, [x2]
-    st1d            {z0.d}, p0, [x0]
-    ld1d            {z0.d}, p1/z, [x2, x11, lsl #3]
-    st1d            {z0.d}, p1, [x0, x11, lsl #3]
+    mov             x9, #0
+    whilelt         p0.d, x9, x8
+.L_blockcopy_pp_24x32_inner:
+    ld1d            {z0.d}, p0/z, [x2, x9, lsl #3]
+    st1d            {z0.d}, p0, [x0, x9, lsl #3]
+    incd            x9
+    whilelt         p0.d, x9, x8
+    b.first         .L_blockcopy_pp_24x32_inner
     add             x2, x2, x3
     add             x0, x0, x1
     cbnz            w12, .L_blockcopy_pp_24x32
@@ -2316,15 +2318,17 @@ endfunc
 
 function PFX(blockcopy_pp_24x64_sve2)
     mov             w12, #64
-    mov             x11, 2
-    ptrue           p0.d, vl2
-    ptrue           p1.d, vl1
+    mov             x8, #3
 .L_blockcopy_pp_24x64:
     sub             w12, w12, #1
-    ld1d            {z0.d}, p0/z, [x2]
-    st1d            {z0.d}, p0, [x0]
-    ld1d            {z0.d}, p1/z, [x2, x11, lsl #3]
-    st1d            {z0.d}, p1, [x0, x11, lsl #3]
+    mov             x9, #0
+    whilelt         p0.d, x9, x8
+.L_blockcopy_pp_24x64_inner:
+    ld1d            {z0.d}, p0/z, [x2, x9, lsl #3]
+    st1d            {z0.d}, p0, [x0, x9, lsl #3]
+    incd            x9
+    whilelt         p0.d, x9, x8
+    b.first         .L_blockcopy_pp_24x64_inner
     add             x2, x2, x3
     add             x0, x0, x1
     cbnz            w12, .L_blockcopy_pp_24x64
@@ -2418,19 +2422,21 @@ function PFX(blockcopy_pp_48x64_sve2)
 .endr
     ret
 .vl_gt_16_blockcopy_pp_48_64:
-    // No need for extra checks as ptrues cannot
-    // be perfectly adjusted
-    ptrue           p0.b, vl32
-    ptrue           p1.b, vl16
-    mov             x10, 16
-.rept 64
-    ld1b            {z0.b}, p0/z, [x2]
-    st1b            {z0.b}, p0, [x0]
-    ld1b            {z1.b}, p1/z, [x2, x10]
-    st1b            {z1.b}, p1, [x0, x10]
+    mov             w12, #64
+    mov             x8, 48
+.L_blockcopy_pp_48x64_out:
+    sub             w12, w12, #1
+    mov             x9, #0
+    whilelt         p0.b, x9, x8
+.L_blockcopy_pp_48x64_inner:
+    ld1b            {z0.b}, p0/z, [x2, x9]
+    st1b            {z0.b}, p0, [x0, x9]
+    incb            x9
+    whilelt         p0.b, x9, x8
+    b.first         .L_blockcopy_pp_48x64_inner
     add             x2, x2, x3
     add             x0, x0, x1
-.endr
+    cbnz            w12, .L_blockcopy_pp_48x64_out
     ret
 endfunc
 

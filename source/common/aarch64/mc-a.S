@@ -878,7 +878,6 @@ function PFX(pixel_avg_pp_64x\h\()_sve2)
     bgt             .vl_gt_16_pixel_avg_pp_64x\h
     ptrue           p0.b, vl16
     mov             w12, #\h / 4
-    mov             x11, #16
 .vl_eq_16_pixel_avg_pp_64x\h\():
     sub             w12, w12, #1
 .rept 4
