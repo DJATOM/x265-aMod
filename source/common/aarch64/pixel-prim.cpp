@@ -330,31 +330,13 @@ int pixel_satd_16x16_neon(const uint16_t *pix1, intptr_t stride_pix1, const uint
 {
     int32x4_t v30 = vdupq_n_u32(0), v31 = vdupq_n_u32(0);
     int16x8_t v0, v1, v2, v3;
-
-    _satd_16x4_neon(pix1, stride_pix1, pix2, stride_pix2, v0, v1, v2, v3);
-    v30 = vpadalq_u16(v30, v0);
-    v30 = vpadalq_u16(v30, v1);
-    v31 = vpadalq_u16(v31, v2);
-    v31 = vpadalq_u16(v31, v3);
-
-    _satd_16x4_neon(pix1 + 4 * stride_pix1, stride_pix1, pix2 + 4 * stride_pix2, stride_pix2, v0, v1, v2, v3);
-    v30 = vpadalq_u16(v30, v0);
-    v30 = vpadalq_u16(v30, v1);
-    v31 = vpadalq_u16(v31, v2);
-    v31 = vpadalq_u16(v31, v3);
-
-    _satd_16x4_neon(pix1 + 8 * stride_pix1, stride_pix1, pix2 + 8 * stride_pix2, stride_pix2, v0, v1, v2, v3);
-    v30 = vpadalq_u16(v30, v0);
-    v30 = vpadalq_u16(v30, v1);
-    v31 = vpadalq_u16(v31, v2);
-    v31 = vpadalq_u16(v31, v3);
-
-    _satd_16x4_neon(pix1 + 12 * stride_pix1, stride_pix1, pix2 + 12 * stride_pix2, stride_pix2, v0, v1, v2, v3);
-    v30 = vpadalq_u16(v30, v0);
-    v30 = vpadalq_u16(v30, v1);
-    v31 = vpadalq_u16(v31, v2);
-    v31 = vpadalq_u16(v31, v3);
-
+    for (int offset = 0; offset <= 12; offset += 4) {
+        _satd_16x4_neon(pix1 + offset * stride_pix1, stride_pix1, pix2 + offset * stride_pix2, stride_pix2, v0, v1, v2, v3);
+        v30 = vpadalq_u16(v30, v0);
+        v30 = vpadalq_u16(v30, v1);
+        v31 = vpadalq_u16(v31, v2);
+        v31 = vpadalq_u16(v31, v3);
+    }
     return vaddvq_s32(vaddq_s32(v30, v31));
 
 }
