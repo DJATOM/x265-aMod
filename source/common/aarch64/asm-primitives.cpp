@@ -488,38 +488,38 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
         ALL_LUMA_PU(sad_x4, sad_x4, sve2);
 
         // sse_pp
-        p.cu[BLOCK_4x4].sse_pp   = PFX(pixel_sse_pp_4x4_neon);
-        p.cu[BLOCK_8x8].sse_pp   = PFX(pixel_sse_pp_8x8_neon);
-        p.cu[BLOCK_16x16].sse_pp = PFX(pixel_sse_pp_16x16_neon);
-        p.cu[BLOCK_32x32].sse_pp = PFX(pixel_sse_pp_32x32_neon);
-        p.cu[BLOCK_64x64].sse_pp = PFX(pixel_sse_pp_64x64_neon);
+        p.cu[BLOCK_4x4].sse_pp   = PFX(pixel_sse_pp_4x4_sve2);
+        p.cu[BLOCK_8x8].sse_pp   = PFX(pixel_sse_pp_8x8_sve2);
+        p.cu[BLOCK_16x16].sse_pp = PFX(pixel_sse_pp_16x16_sve2);
+        p.cu[BLOCK_32x32].sse_pp = PFX(pixel_sse_pp_32x32_sve2);
+        p.cu[BLOCK_64x64].sse_pp = PFX(pixel_sse_pp_64x64_sve2);
 
-        p.chroma[X265_CSP_I420].cu[BLOCK_420_4x4].sse_pp   = PFX(pixel_sse_pp_4x4_neon);
-        p.chroma[X265_CSP_I420].cu[BLOCK_420_8x8].sse_pp   = PFX(pixel_sse_pp_8x8_neon);
-        p.chroma[X265_CSP_I420].cu[BLOCK_420_16x16].sse_pp = PFX(pixel_sse_pp_16x16_neon);
-        p.chroma[X265_CSP_I420].cu[BLOCK_420_32x32].sse_pp = PFX(pixel_sse_pp_32x32_neon);
-        p.chroma[X265_CSP_I422].cu[BLOCK_422_4x8].sse_pp   = PFX(pixel_sse_pp_4x8_neon);
-        p.chroma[X265_CSP_I422].cu[BLOCK_422_8x16].sse_pp  = PFX(pixel_sse_pp_8x16_neon);
-        p.chroma[X265_CSP_I422].cu[BLOCK_422_16x32].sse_pp = PFX(pixel_sse_pp_16x32_neon);
-        p.chroma[X265_CSP_I422].cu[BLOCK_422_32x64].sse_pp = PFX(pixel_sse_pp_32x64_neon);
+        p.chroma[X265_CSP_I420].cu[BLOCK_420_4x4].sse_pp   = PFX(pixel_sse_pp_4x4_sve2);
+        p.chroma[X265_CSP_I420].cu[BLOCK_420_8x8].sse_pp   = PFX(pixel_sse_pp_8x8_sve2);
+        p.chroma[X265_CSP_I420].cu[BLOCK_420_16x16].sse_pp = PFX(pixel_sse_pp_16x16_sve2);
+        p.chroma[X265_CSP_I420].cu[BLOCK_420_32x32].sse_pp = PFX(pixel_sse_pp_32x32_sve2);
+        p.chroma[X265_CSP_I422].cu[BLOCK_422_4x8].sse_pp   = PFX(pixel_sse_pp_4x8_sve2);
+        p.chroma[X265_CSP_I422].cu[BLOCK_422_8x16].sse_pp  = PFX(pixel_sse_pp_8x16_sve2);
+        p.chroma[X265_CSP_I422].cu[BLOCK_422_16x32].sse_pp = PFX(pixel_sse_pp_16x32_sve2);
+        p.chroma[X265_CSP_I422].cu[BLOCK_422_32x64].sse_pp = PFX(pixel_sse_pp_32x64_sve2);
 
         // sse_ss
-        p.cu[BLOCK_4x4].sse_ss   = PFX(pixel_sse_ss_4x4_neon);
-        p.cu[BLOCK_8x8].sse_ss   = PFX(pixel_sse_ss_8x8_neon);
-        p.cu[BLOCK_16x16].sse_ss = PFX(pixel_sse_ss_16x16_neon);
-        p.cu[BLOCK_32x32].sse_ss = PFX(pixel_sse_ss_32x32_neon);
-        p.cu[BLOCK_64x64].sse_ss = PFX(pixel_sse_ss_64x64_neon);
+        p.cu[BLOCK_4x4].sse_ss   = PFX(pixel_sse_ss_4x4_sve2);
+        p.cu[BLOCK_8x8].sse_ss   = PFX(pixel_sse_ss_8x8_sve2);
+        p.cu[BLOCK_16x16].sse_ss = PFX(pixel_sse_ss_16x16_sve2);
+        p.cu[BLOCK_32x32].sse_ss = PFX(pixel_sse_ss_32x32_sve2);
+        p.cu[BLOCK_64x64].sse_ss = PFX(pixel_sse_ss_64x64_sve2);
 
         // ssd_s
-        p.cu[BLOCK_4x4].ssd_s[NONALIGNED]   = PFX(pixel_ssd_s_4x4_neon);
-        p.cu[BLOCK_8x8].ssd_s[NONALIGNED]   = PFX(pixel_ssd_s_8x8_neon);
-        p.cu[BLOCK_16x16].ssd_s[NONALIGNED] = PFX(pixel_ssd_s_16x16_neon);
-        p.cu[BLOCK_32x32].ssd_s[NONALIGNED] = PFX(pixel_ssd_s_32x32_neon);
+        p.cu[BLOCK_4x4].ssd_s[NONALIGNED]   = PFX(pixel_ssd_s_4x4_sve2);
+        p.cu[BLOCK_8x8].ssd_s[NONALIGNED]   = PFX(pixel_ssd_s_8x8_sve2);
+        p.cu[BLOCK_16x16].ssd_s[NONALIGNED] = PFX(pixel_ssd_s_16x16_sve2);
+        p.cu[BLOCK_32x32].ssd_s[NONALIGNED] = PFX(pixel_ssd_s_32x32_sve2);
 
-        p.cu[BLOCK_4x4].ssd_s[ALIGNED]   = PFX(pixel_ssd_s_4x4_neon);
-        p.cu[BLOCK_8x8].ssd_s[ALIGNED]   = PFX(pixel_ssd_s_8x8_neon);
-        p.cu[BLOCK_16x16].ssd_s[ALIGNED] = PFX(pixel_ssd_s_16x16_neon);
-        p.cu[BLOCK_32x32].ssd_s[ALIGNED] = PFX(pixel_ssd_s_32x32_neon);
+        p.cu[BLOCK_4x4].ssd_s[ALIGNED]   = PFX(pixel_ssd_s_4x4_sve2);
+        p.cu[BLOCK_8x8].ssd_s[ALIGNED]   = PFX(pixel_ssd_s_8x8_sve2);
+        p.cu[BLOCK_16x16].ssd_s[ALIGNED] = PFX(pixel_ssd_s_16x16_sve2);
+        p.cu[BLOCK_32x32].ssd_s[ALIGNED] = PFX(pixel_ssd_s_32x32_sve2);
 
         // pixel_var
         p.cu[BLOCK_8x8].var   = PFX(pixel_var_8x8_neon);
