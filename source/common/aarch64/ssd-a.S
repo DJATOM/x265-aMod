@@ -490,8 +490,13 @@ endfunc
 
 function PFX(pixel_sse_pp_4x4_sve2)
     ptrue           p0.s, vl4
-    mov             z0.d, #0
-.rept 4
+    ld1b            {z0.s}, p0/z, [x0]
+    add             x0, x0, x1
+    ld1b            {z17.s}, p0/z, [x2]
+    add             x2, x2, x3
+    sub             z0.s, p0/m, z0.s, z17.s
+    mul             z0.s, p0/m, z0.s, z0.s
+.rept 3
     ld1b            {z16.s}, p0/z, [x0]
     add             x0, x0, x1
     ld1b            {z17.s}, p0/z, [x2]
@@ -506,8 +511,13 @@ endfunc
 
 function PFX(pixel_sse_pp_4x8_sve2)
     ptrue           p0.s, vl4
-    mov             z0.d, #0
-.rept 8
+    ld1b            {z0.s}, p0/z, [x0]
+    add             x0, x0, x1
+    ld1b            {z17.s}, p0/z, [x2]
+    add             x2, x2, x3
+    sub             z0.s, p0/m, z0.s, z17.s
+    mul             z0.s, p0/m, z0.s, z0.s
+.rept 7
     ld1b            {z16.s}, p0/z, [x0]
     add             x0, x0, x1
     ld1b            {z17.s}, p0/z, [x2]
@@ -827,9 +837,14 @@ endfunc
 
 function PFX(pixel_sse_ss_4x4_sve2)
     ptrue           p0.b, vl8
-    mov             z3.d, #0
-    mov             z4.d, #0
-.rept 4
+    ld1b            {z16.b}, p0/z, [x0]
+    add             x0, x0, x1, lsl #1
+    ld1b            {z17.b}, p0/z, [x2]
+    add             x2, x2, x3, lsl #1
+    sub             z1.h, z16.h, z17.h
+    smullb          z3.s, z1.h, z1.h
+    smullt          z4.s, z1.h, z1.h
+.rept 3
     ld1b            {z16.b}, p0/z, [x0]
     add             x0, x0, x1, lsl #1
     ld1b            {z17.b}, p0/z, [x2]

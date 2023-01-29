@@ -301,18 +301,15 @@
     rdvl            x9, #1
     cmp             x9, #16
     bgt             .vl_gt_16_pixel_sad_16x\h
-    mov             x11, #8
     mov             z16.d, #0
-    ptrue           p0.h, vl8
+    ptrue           p0.b, vl16
 .rept \h
-    ld1b            {z0.h}, p0/z, [x0]
-    ld1b            {z1.h}, p0/z, [x0, x11]
+    ld1b            {z0.b}, p0/z, [x0]
     add             x0, x0, x1
-    ld1b            {z2.h}, p0/z, [x2]
-    ld1b            {z3.h}, p0/z, [x2, x11]
+    ld1b            {z2.b}, p0/z, [x2]
     add             x2, x2, x3
-    uaba            z16.h, z0.h, z2.h
-    uaba            z16.h, z1.h, z3.h
+    uabalb          z16.h, z0.b, z2.b
+    uabalt          z16.h, z0.b, z2.b
 .endr
     uaddv           d5, p0, z16.h
     fmov            w0, s5
@@ -337,60 +334,33 @@
     cmp             x9, #16
     bgt             .vl_gt_16_pixel_sad_32x\h
     mov             z16.d, #0
-    ptrue           p0.h, vl8
+    ptrue           p0.b, vl16
+    mov             x11, #16
 .rept \h
-    mov             x11, #8
-    ld1b            {z0.h}, p0/z, [x0]
-    ld1b            {z1.h}, p0/z, [x0, x11]
-    add             x11, x11, #8
-    ld1b            {z2.h}, p0/z, [x0, x11]
-    add             x11, x11, #8
-    ld1b            {z3.h}, p0/z, [x0, x11]
+    ld1b            {z0.b}, p0/z, [x0]
+    ld1b            {z1.b}, p0/z, [x0, x11]
     add             x0, x0, x1
-    mov             x11, #8
-    ld1b            {z4.h}, p0/z, [x2]
-    ld1b            {z5.h}, p0/z, [x2, x11]
-    add             x11, x11, #8
-    ld1b            {z6.h}, p0/z, [x2, x11]
-    add             x11, x11, #8
-    ld1b            {z7.h}, p0/z, [x2, x11]
+    ld1b            {z4.b}, p0/z, [x2]
+    ld1b            {z5.b}, p0/z, [x2, x11]
     add             x2, x2, x3
-    uaba            z16.h, z0.h, z4.h
-    uaba            z16.h, z1.h, z5.h
-    uaba            z16.h, z2.h, z6.h
-    uaba            z16.h, z3.h, z7.h
+    uabalb          z16.h, z0.b, z4.b
+    uabalt          z16.h, z0.b, z4.b
+    uabalb          z16.h, z1.b, z5.b
+    uabalt          z16.h, z1.b, z5.b
 .endr
     uaddv           d5, p0, z16.h
     fmov            w0, s5
     ret
 .vl_gt_16_pixel_sad_32x\h\():
-    cmp             x9, #48
-    bgt             .vl_gt_48_pixel_sad_32x\h
-    mov             z16.d, #0
-    ptrue           p0.h, vl16
-    mov             x11, #16
+    ptrue           p0.b, vl32
+    mov             x11, #32
 .rept \h
-    ld1b            {z0.h}, p0/z, [x0]
-    ld1b            {z1.h}, p0/z, [x0, x11]
+    ld1b            {z0.b}, p0/z, [x0]
     add             x0, x0, x1
-    ld1b            {z2.h}, p0/z, [x2]
-    ld1b            {z3.h}, p0/z, [x2, x11]
+    ld1b            {z4.b}, p0/z, [x2]
     add             x2, x2, x3
-    uaba            z16.h, z0.h, z2.h
-    uaba            z16.h, z1.h, z3.h
-.endr
-    uaddv           d5, p0, z16.h
-    fmov            w0, s5
-    ret
-.vl_gt_48_pixel_sad_32x\h\():
-    mov             z16.d, #0
-    ptrue           p0.h, vl32
-.rept \h
-    ld1b            {z0.h}, p0/z, [x0]
-    add             x0, x0, x1
-    ld1b            {z1.h}, p0/z, [x2]
-    add             x2, x2, x3
-    uaba            z16.h, z0.h, z1.h
+    uabalb          z16.h, z0.b, z4.b
+    uabalt          z16.h, z0.b, z4.b
 .endr
     uaddv           d5, p0, z16.h
     fmov            w0, s5
@@ -410,48 +380,29 @@
     mov             z22.d, #0
     mov             z23.d, #0
     mov             z24.d, #0
-    ptrue           p0.h, vl8
+    mov             x11, #16
+    mov             x12, #32
+    mov             x13, #48
+    ptrue           p0.b, vl16
 .rept \h
-    mov             x11, #8
-    ld1b            {z0.h}, p0/z, [x0]
-    ld1b            {z1.h}, p0/z, [x0, x11]
-    add             x11, x11, #8
-    ld1b            {z2.h}, p0/z, [x0, x11]
-    add             x11, x11, #8
-    ld1b            {z3.h}, p0/z, [x0, x11]
-    add             x11, x11, #8
-    ld1b            {z4.h}, p0/z, [x0, x11]
-    add             x11, x11, #8
-    ld1b            {z5.h}, p0/z, [x0, x11]
-    add             x11, x11, #8
-    ld1b            {z6.h}, p0/z, [x0, x11]
-    add             x11, x11, #8
-    ld1b            {z7.h}, p0/z, [x0, x11]
+    ld1b            {z0.b}, p0/z, [x0]
+    ld1b            {z1.b}, p0/z, [x0, x11]
+    ld1b            {z2.b}, p0/z, [x0, x12]
+    ld1b            {z3.b}, p0/z, [x0, x13]
     add             x0, x0, x1
-    mov             x11, #8
-    ld1b            {z8.h}, p0/z, [x2]
-    ld1b            {z9.h}, p0/z, [x2, x11]
-    add             x11, x11, #8
-    ld1b            {z10.h}, p0/z, [x2, x11]
-    add             x11, x11, #8
-    ld1b            {z11.h}, p0/z, [x2, x11]
-    add             x11, x11, #8
-    ld1b            {z12.h}, p0/z, [x2, x11]
-    add             x11, x11, #8
-    ld1b            {z13.h}, p0/z, [x2, x11]
-    add             x11, x11, #8
-    ld1b            {z14.h}, p0/z, [x2, x11]
-    add             x11, x11, #8
-    ld1b            {z15.h}, p0/z, [x2, x11]
+    ld1b            {z4.b}, p0/z, [x2]
+    ld1b            {z5.b}, p0/z, [x2, x11]
+    ld1b            {z6.b}, p0/z, [x2, x12]
+    ld1b            {z7.b}, p0/z, [x2, x13]
     add             x2, x2, x3
-    uaba            z16.h, z0.h, z8.h
-    uaba            z17.h, z1.h, z9.h
-    uaba            z18.h, z2.h, z10.h
-    uaba            z19.h, z3.h, z11.h
-    uaba            z20.h, z4.h, z12.h
-    uaba            z21.h, z5.h, z13.h
-    uaba            z22.h, z6.h, z14.h
-    uaba            z23.h, z7.h, z15.h
+    uabalb          z16.h, z0.b, z4.b
+    uabalt          z17.h, z0.b, z4.b
+    uabalb          z18.h, z1.b, z5.b
+    uabalt          z19.h, z1.b, z5.b
+    uabalb          z20.h, z2.b, z6.b
+    uabalt          z21.h, z2.b, z6.b
+    uabalb          z22.h, z3.b, z7.b
+    uabalt          z23.h, z3.b, z7.b
 .endr
     add             z16.h, z16.h, z17.h
     add             z17.h, z18.h, z19.h
@@ -472,28 +423,19 @@
     mov             z18.d, #0
     mov             z19.d, #0
     mov             z24.d, #0
-    ptrue           p0.h, vl16
+    mov             x11, #16
+    ptrue           p0.b, vl16
 .rept \h
-    mov             x11, #16
-    ld1b            {z0.h}, p0/z, [x0]
-    ld1b            {z1.h}, p0/z, [x0, x11]
-    add             x11, x11, #16
-    ld1b            {z2.h}, p0/z, [x0, x11]
-    add             x11, x11, #16
-    ld1b            {z3.h}, p0/z, [x0, x11]
+    ld1b            {z0.b}, p0/z, [x0]
+    ld1b            {z1.b}, p0/z, [x0, x11]
     add             x0, x0, x1
-    mov             x11, #16
-    ld1b            {z8.h}, p0/z, [x2]
-    ld1b            {z9.h}, p0/z, [x2, x11]
-    add             x11, x11, #16
-    ld1b            {z10.h}, p0/z, [x2, x11]
-    add             x11, x11, #16
-    ld1b            {z11.h}, p0/z, [x2, x11]
+    ld1b            {z4.b}, p0/z, [x2]
+    ld1b            {z5.b}, p0/z, [x2, x11]
     add             x2, x2, x3
-    uaba            z16.h, z0.h, z8.h
-    uaba            z17.h, z1.h, z9.h
-    uaba            z18.h, z2.h, z10.h
-    uaba            z19.h, z3.h, z11.h
+    uabalb          z16.h, z0.b, z4.b
+    uabalt          z17.h, z0.b, z4.b
+    uabalb          z18.h, z1.b, z5.b
+    uabalt          z19.h, z1.b, z5.b
 .endr
     add             z16.h, z16.h, z17.h
     add             z17.h, z18.h, z19.h
@@ -503,39 +445,19 @@
     fmov            x0, d5
     ret
 .vl_gt_48_pixel_sad_64x\h\():
-    cmp             x9, #112
-    bgt             .vl_gt_112_pixel_sad_64x\h
     mov             z16.d, #0
     mov             z17.d, #0
     mov             z24.d, #0
-    ptrue           p0.h, vl32
-    mov             x11, #32
+    ptrue           p0.b, vl32
 .rept \h
-    ld1b            {z0.h}, p0/z, [x0]
-    ld1b            {z1.h}, p0/z, [x0, x11]
+    ld1b            {z0.b}, p0/z, [x0]
     add             x0, x0, x1
-    ld1b            {z8.h}, p0/z, [x2]
-    ld1b            {z9.h}, p0/z, [x2, x11]
+    ld1b            {z4.b}, p0/z, [x2]
     add             x2, x2, x3
-    uaba            z16.h, z0.h, z8.h
-    uaba            z17.h, z1.h, z9.h
+    uabalb          z16.h, z0.b, z4.b
+    uabalt          z17.h, z0.b, z4.b
 .endr
     add             z16.h, z16.h, z17.h
-    uadalp          z24.s, p0/m, z16.h
-    uaddv           d5, p0, z24.s
-    fmov            x0, d5
-    ret
-.vl_gt_112_pixel_sad_64x\h\():
-    mov             z16.d, #0
-    mov             z24.d, #0
-    ptrue           p0.h, vl64
-.rept \h
-    ld1b            {z0.h}, p0/z, [x0]
-    add             x0, x0, x1
-    ld1b            {z8.h}, p0/z, [x2]
-    add             x2, x2, x3
-    uaba            z16.h, z0.h, z8.h
-.endr
     uadalp          z24.s, p0/m, z16.h
     uaddv           d5, p0, z24.s
     fmov            x0, d5
@@ -569,23 +491,20 @@
     cmp             x9, #16
     bgt             .vl_gt_16_pixel_sad_24x\h
     mov             z16.d, #0
-    ptrue           p0.h, vl8
+    ptrue           p0.b, vl16
+    ptrue           p1.b, vl8
+    mov             x11, #16
 .rept \h
-    mov             x11, #8
-    ld1b            {z0.h}, p0/z, [x0]
-    ld1b            {z1.h}, p0/z, [x0, x11]
-    add             x11, x11, #8
-    ld1b            {z2.h}, p0/z, [x0, x11]
+    ld1b            {z0.b}, p0/z, [x0]
+    ld1b            {z1.b}, p1/z, [x0, x11]
     add             x0, x0, x1
-    mov             x11, #8
-    ld1b            {z8.h}, p0/z, [x2]
-    ld1b            {z9.h}, p0/z, [x2, x11]
-    add             x11, x11, #8
-    ld1b            {z10.h}, p0/z, [x2, x11]
+    ld1b            {z8.b}, p0/z, [x2]
+    ld1b            {z9.b}, p1/z, [x2, x11]
     add             x2, x2, x3
-    uaba            z16.h, z0.h, z8.h
-    uaba            z16.h, z1.h, z9.h
-    uaba            z16.h, z2.h, z10.h
+    uabalb          z16.h, z0.b, z8.b
+    uabalt          z16.h, z0.b, z8.b
+    uabalb          z16.h, z1.b, z9.b
+    uabalt          z16.h, z1.b, z9.b
 .endr
     uaddv           d5, p0, z16.h
     fmov            w0, s5
@@ -622,38 +541,24 @@
     mov             z19.d, #0
     mov             z20.d, #0
     mov             z21.d, #0
-    ptrue           p0.h, vl8
+    ptrue           p0.b, vl16
+    mov             x11, #16
+    mov             x12, #32
 .rept \h
-    mov             x11, #8
-    ld1b            {z0.h}, p0/z, [x0]
-    ld1b            {z1.h}, p0/z, [x0, x11]
-    add             x11, x11, #8
-    ld1b            {z2.h}, p0/z, [x0, x11]
-    add             x11, x11, #8
-    ld1b            {z3.h}, p0/z, [x0, x11]
-    add             x11, x11, #8
-    ld1b            {z4.h}, p0/z, [x0, x11]
-    add             x11, x11, #8
-    ld1b            {z5.h}, p0/z, [x0, x11]
+    ld1b            {z0.b}, p0/z, [x0]
+    ld1b            {z1.b}, p0/z, [x0, x11]
+    ld1b            {z2.b}, p0/z, [x0, x12]
     add             x0, x0, x1
-    mov             x11, #8
-    ld1b            {z8.h}, p0/z, [x2]
-    ld1b            {z9.h}, p0/z, [x2, x11]
-    add             x11, x11, #8
-    ld1b            {z10.h}, p0/z, [x2, x11]
-    add             x11, x11, #8
-    ld1b            {z11.h}, p0/z, [x2, x11]
-    add             x11, x11, #8
-    ld1b            {z12.h}, p0/z, [x2, x11]
-    add             x11, x11, #8
-    ld1b            {z13.h}, p0/z, [x2, x11]
+    ld1b            {z8.b}, p0/z, [x2]
+    ld1b            {z9.b}, p0/z, [x2, x11]
+    ld1b            {z10.b}, p0/z, [x2, x12]
     add             x2, x2, x3
-    uaba            z16.h, z0.h, z8.h
-    uaba            z17.h, z1.h, z9.h
-    uaba            z18.h, z2.h, z10.h
-    uaba            z19.h, z3.h, z11.h
-    uaba            z20.h, z4.h, z12.h
-    uaba            z21.h, z5.h, z13.h
+    uabalb          z16.h, z0.b, z8.b
+    uabalt          z17.h, z0.b, z8.b
+    uabalb          z18.h, z1.b, z9.b
+    uabalt          z19.h, z1.b, z9.b
+    uabalb          z20.h, z2.b, z10.b
+    uabalt          z21.h, z2.b, z10.b
 .endr
     add             z16.h, z16.h, z17.h
     add             z17.h, z18.h, z19.h
@@ -1190,79 +1095,33 @@ SAD_FUNC_LOOP_SVE2  48, 64
 .endm
 
 .macro SAD_X_SVE2_16 h x
-    rdvl            x10, #1
-    cmp             x10, #16
-    bgt             .vl_gt_16_pixel_sad_x16x\h\()_\x
     mov             z16.d, #0
     mov             z17.d, #0
     mov             z18.d, #0
     mov             z19.d, #0
-    ptrue           p0.h, vl8
-    mov             x11, #8
+    ptrue           p0.b, vl16
 .rept \h
-    ld1b            {z0.h}, p0/z, [x0]
-    ld1b            {z1.h}, p0/z, [x0, x11]
+    ld1b            {z0.b}, p0/z, [x0]
     add             x0, x0, x9
-    ld1b            {z2.h}, p0/z, [x1]
-    ld1b            {z3.h}, p0/z, [x1, x11]
+    ld1b            {z2.b}, p0/z, [x1]
     add             x1, x1, x5
-    ld1b            {z4.h}, p0/z, [x2]
-    ld1b            {z5.h}, p0/z, [x2, x11]
+    ld1b            {z4.b}, p0/z, [x2]
     add             x2, x2, x5
-    ld1b            {z6.h}, p0/z, [x3]
-    ld1b            {z7.h}, p0/z, [x3, x11]
+    ld1b            {z6.b}, p0/z, [x3]
     add             x3, x3, x5
 .if \x == 4
-    ld1b            {z8.h}, p0/z, [x4]
-    ld1b            {z9.h}, p0/z, [x4, x11]
+    ld1b            {z8.b}, p0/z, [x4]
     add             x4, x4, x5
 .endif
-    uaba            z16.h, z2.h, z0.h
-    uaba            z16.h, z3.h, z1.h
-    uaba            z17.h, z4.h, z0.h
-    uaba            z17.h, z5.h, z1.h
-    uaba            z18.h, z6.h, z0.h
-    uaba            z18.h, z7.h, z1.h
+    uabalb          z16.h, z2.b, z0.b
+    uabalt          z16.h, z2.b, z0.b
+    uabalb          z17.h, z4.b, z0.b
+    uabalt          z17.h, z4.b, z0.b
+    uabalb          z18.h, z6.b, z0.b
+    uabalt          z18.h, z6.b, z0.b
 .if \x == 4
-    uaba            z19.h, z8.h, z0.h
-    uaba            z19.h, z9.h, z1.h
-.endif
-.endr
-    uaddv           d0, p0, z16.h
-    uaddv           d1, p0, z17.h
-    uaddv           d2, p0, z18.h
-    stp             s0, s1, [x6]
-.if \x == 3
-    str             s2, [x6, #8]
-.elseif \x == 4
-    uaddv           d3, p0, z19.h
-    stp             s2, s3, [x6, #8]
-.endif
-    ret
-.vl_gt_16_pixel_sad_x16x\h\()_\x:
-    mov             z16.d, #0
-    mov             z17.d, #0
-    mov             z18.d, #0
-    mov             z19.d, #0
-    ptrue           p0.h, vl8
-.rept \h
-    ld1b            {z0.h}, p0/z, [x0]
-    add             x0, x0, x9
-    ld1b            {z2.h}, p0/z, [x1]
-    add             x1, x1, x5
-    ld1b            {z4.h}, p0/z, [x2]
-    add             x2, x2, x5
-    ld1b            {z6.h}, p0/z, [x3]
-    add             x3, x3, x5
-.if \x == 4
-    ld1b            {z8.h}, p0/z, [x4]
-    add             x4, x4, x5
-.endif
-    uaba            z16.h, z2.h, z0.h
-    uaba            z17.h, z4.h, z0.h
-    uaba            z18.h, z6.h, z0.h
-.if \x == 4
-    uaba            z19.h, z8.h, z0.h
+    uabalb          z19.h, z8.b, z0.b
+    uabalt          z19.h, z8.b, z0.b
 .endif
 .endr
     uaddv           d0, p0, z16.h
@@ -1278,19 +1137,17 @@ SAD_FUNC_LOOP_SVE2  48, 64
     ret
 .endm
 
-.macro SAD_X_SVE2_24_INNER base dreg z
-    mov             x11, #8
-    ld1b            {z4.h}, p0/z, [ \base ]
-    ld1b            {z5.h}, p0/z, [ \base , x11]
-    add             x11, x11, #8
-    ld1b            {z6.h}, p0/z, [ \base , x11]
+.macro SAD_X_SVE2_24_INNER base z
+    ld1b            {z4.b}, p0/z, [ \base ]
+    ld1b            {z5.b}, p1/z, [ \base , x11]
     add             \base, \base, x5
-    uaba            \z\().h, z4.h, z0.h
-    uaba            \z\().h, z5.h, z1.h
-    uaba            \z\().h, z6.h, z2.h
+    uabalb          \z\().h, z4.b, z0.b
+    uabalt          \z\().h, z4.b, z0.b
+    uabalb          \z\().h, z5.b, z1.b
+    uabalt          \z\().h, z5.b, z1.b
 .endm
 
-.macro SAD_X_SVE2_24_INNER_GT_16 base dreg z
+.macro SAD_X_SVE2_24_INNER_GT_16 base z
     ld1b            {z4.h}, p0/z, [ \base ]
     ld1b            {z5.h}, p1/z, [ \base , x11]
     add             \base, \base, x5
@@ -1306,19 +1163,18 @@ SAD_FUNC_LOOP_SVE2  48, 64
     mov             z21.d, #0
     mov             z22.d, #0
     mov             z23.d, #0
-    ptrue           p0.h, vl8
+    ptrue           p0.b, vl16
+    ptrue           p1.b, vl8
+    mov             x11, #16
 .rept \h
-    mov             x11, #8
-    ld1b            {z0.h}, p0/z, [x0]
-    ld1b            {z1.h}, p0/z, [x0, x11]
-    add             x11, x11, #8
-    ld1b            {z2.h}, p0/z, [x0, x11]
+    ld1b            {z0.b}, p0/z, [x0]
+    ld1b            {z1.b}, p1/z, [x0, x11]
     add             x0, x0, x9
-    SAD_X_SVE2_24_INNER x1, d0, z20
-    SAD_X_SVE2_24_INNER x2, d1, z21
-    SAD_X_SVE2_24_INNER x3, d2, z22
+    SAD_X_SVE2_24_INNER x1, z20
+    SAD_X_SVE2_24_INNER x2, z21
+    SAD_X_SVE2_24_INNER x3, z22
 .if \x == 4
-    SAD_X_SVE2_24_INNER x4, d3, z23
+    SAD_X_SVE2_24_INNER x4, z23
 .endif
 .endr
     uaddv           d0, p0, z20.h
@@ -1346,11 +1202,11 @@ SAD_FUNC_LOOP_SVE2  48, 64
     ld1b            {z0.h}, p0/z, [x0]
     ld1b            {z1.h}, p1/z, [x0, x11]
     add             x0, x0, x9
-    SAD_X_SVE2_24_INNER_GT_16 x1, d0, z20
-    SAD_X_SVE2_24_INNER_GT_16 x2, d1, z21
-    SAD_X_SVE2_24_INNER_GT_16 x3, d2, z22
+    SAD_X_SVE2_24_INNER_GT_16 x1, z20
+    SAD_X_SVE2_24_INNER_GT_16 x2, z21
+    SAD_X_SVE2_24_INNER_GT_16 x3, z22
 .if \x == 4
-    SAD_X_SVE2_24_INNER_GT_16 x4, d3, z23
+    SAD_X_SVE2_24_INNER_GT_16 x4, z23
 .endif
 .endr
     uaddv           d0, p0, z20.h
@@ -1366,33 +1222,21 @@ SAD_FUNC_LOOP_SVE2  48, 64
     ret
 .endm
 
-.macro SAD_X_SVE2_32_INNER base dreg z
-    mov             x11, #8
-    ld1b            {z4.h}, p0/z, [ \base ]
-    ld1b            {z5.h}, p0/z, [ \base , x11]
-    add             x11, x11, #8
-    ld1b            {z6.h}, p0/z, [ \base , x11]
-    add             x11, x11, #8
-    ld1b            {z7.h}, p0/z, [ \base , x11]
+.macro SAD_X_SVE2_32_INNER base z
+    ld1b            {z4.b}, p0/z, [ \base ]
+    ld1b            {z5.b}, p0/z, [ \base , x11]
     add             \base, \base, x5
-    uaba            \z\().h, z4.h, z0.h
-    uaba            \z\().h, z5.h, z1.h
-    uaba            \z\().h, z6.h, z2.h
-    uaba            \z\().h, z7.h, z3.h
+    uabalb          \z\().h, z4.b, z0.b
+    uabalt          \z\().h, z4.b, z0.b
+    uabalb          \z\().h, z5.b, z1.b
+    uabalt          \z\().h, z5.b, z1.b
 .endm
 
-.macro SAD_X_SVE2_32_INNER_GT_16 base dreg z
-    ld1b            {z4.h}, p0/z, [ \base ]
-    ld1b            {z5.h}, p0/z, [ \base , x11]
+.macro SAD_X_SVE2_32_INNER_GT_16 base z
+    ld1b            {z4.b}, p0/z, [ \base ]
     add             \base, \base, x5
-    uaba            \z\().h, z4.h, z0.h
-    uaba            \z\().h, z5.h, z1.h
-.endm
-
-.macro SAD_X_SVE2_32_INNER_GT_48 base dreg z
-    ld1b            {z4.h}, p0/z, [ \base ]
-    add             \base, \base, x5
-    uaba            \z\().h, z4.h, z0.h
+    uabalb          \z\().h, z4.b, z0.b
+    uabalt          \z\().h, z4.b, z0.b
 .endm
 
 .macro SAD_X_SVE2_32 h x
@@ -1403,21 +1247,17 @@ SAD_FUNC_LOOP_SVE2  48, 64
     mov             z21.d, #0
     mov             z22.d, #0
     mov             z23.d, #0
-    ptrue           p0.h, vl8
+    ptrue           p0.b, vl16
+    mov             x11, #16
 .rept \h
-    mov             x11, #8
-    ld1b            {z0.h}, p0/z, [x0]
-    ld1b            {z1.h}, p0/z, [x0, x11]
-    add             x11, x11, #8
-    ld1b            {z2.h}, p0/z, [x0, x11]
-    add             x11, x11, #8
-    ld1b            {z3.h}, p0/z, [x0, x11]
+    ld1b            {z0.b}, p0/z, [x0]
+    ld1b            {z1.b}, p0/z, [x0, x11]
     add             x0, x0, x9
-    SAD_X_SVE2_32_INNER x1, d0, z20
-    SAD_X_SVE2_32_INNER x2, d1, z21
-    SAD_X_SVE2_32_INNER x3, d2, z22
+    SAD_X_SVE2_32_INNER x1, z20
+    SAD_X_SVE2_32_INNER x2, z21
+    SAD_X_SVE2_32_INNER x3, z22
 .if \x == 4
-    SAD_X_SVE2_32_INNER x4, d3, z23
+    SAD_X_SVE2_32_INNER x4, z23
 .endif
 .endr
     uaddv           d0, p0, z20.h
@@ -1432,50 +1272,19 @@ SAD_FUNC_LOOP_SVE2  48, 64
 .endif
     ret
 .vl_gt_16_pixel_sad_x32x\h\()_\x:
-    cmp             x10, #48
-    bgt             .vl_gt_48_pixel_sad_x32x\h\()_\x
     mov             z20.d, #0
     mov             z21.d, #0
     mov             z22.d, #0
     mov             z23.d, #0
-    ptrue           p0.h, vl16
-    mov             x11, #8
+    ptrue           p0.b, vl32
 .rept \h
-    ld1b            {z0.h}, p0/z, [x0]
-    ld1b            {z1.h}, p0/z, [x0, x11]
+    ld1b            {z0.b}, p0/z, [x0]
     add             x0, x0, x9
-    SAD_X_SVE2_32_INNER_GT_16 x1, d0, z20
-    SAD_X_SVE2_32_INNER_GT_16 x2, d1, z21
-    SAD_X_SVE2_32_INNER_GT_16 x3, d2, z22
+    SAD_X_SVE2_32_INNER_GT_16 x1, z20
+    SAD_X_SVE2_32_INNER_GT_16 x2, z21
+    SAD_X_SVE2_32_INNER_GT_16 x3, z22
 .if \x == 4
-    SAD_X_SVE2_32_INNER_GT_16 x4, d3, z23
-.endif
-.endr
-    uaddv           d0, p0, z20.h
-    uaddv           d1, p0, z21.h
-    uaddv           d2, p0, z22.h
-    stp             s0, s1, [x6]
-.if \x == 3
-    str             s2, [x6, #8]
-.elseif \x == 4
-    uaddv           d3, p0, z23.h
-    stp             s2, s3, [x6, #8]
-.endif
-    ret
-.vl_gt_48_pixel_sad_x32x\h\()_\x:
-    mov             z20.d, #0
-    mov             z21.d, #0
-    mov             z22.d, #0
-    mov             z23.d, #0
-    ptrue           p0.h, vl32
-.rept \h
-    ld1b            {z0.h}, p0/z, [x0]
-    add             x0, x0, x9
-    SAD_X_SVE2_32_INNER_GT_48 x1, d0, z20
-    SAD_X_SVE2_32_INNER_GT_48 x2, d1, z21
-    SAD_X_SVE2_32_INNER_GT_48 x3, d2, z22
-.if \x == 4
-    SAD_X_SVE2_32_INNER_GT_48 x4, d3, z23
+    SAD_X_SVE2_32_INNER_GT_16 x4, z23
 .endif
 .endr
     uaddv           d0, p0, z20.h
@@ -1492,24 +1301,16 @@ SAD_FUNC_LOOP_SVE2  48, 64
 .endm
 
 .macro SAD_X_SVE2_48_INNER base z1 z2
-    mov             x11, #8
-    ld1b            {z6.h}, p0/z, [ \base ]
-    ld1b            {z7.h}, p0/z, [ \base , x11]
-    add             x11, x11, #8
-    ld1b            {z8.h}, p0/z, [ \base , x11]
-    add             x11, x11, #8
-    ld1b            {z9.h}, p0/z, [ \base , x11]
-    add             x11, x11, #8
-    ld1b            {z10.h}, p0/z, [ \base , x11]
-    add             x11, x11, #8
-    ld1b            {z11.h}, p0/z, [ \base , x11]
+    ld1b            {z6.b}, p0/z, [ \base ]
+    ld1b            {z7.b}, p0/z, [ \base , x11]
+    ld1b            {z8.b}, p0/z, [ \base , x12]
     add             \base, \base, x5
-    uaba            \z1\().h, z6.h, z0.h
-    uaba            \z1\().h, z8.h, z2.h
-    uaba            \z1\().h, z10.h, z4.h
-    uaba            \z2\().h, z7.h, z1.h
-    uaba            \z2\().h, z9.h, z3.h
-    uaba            \z2\().h, z11.h, z5.h
+    uabalb          \z1\().h, z6.b, z0.b
+    uabalt          \z1\().h, z6.b, z0.b
+    uabalb          \z1\().h, z7.b, z1.b
+    uabalt          \z2\().h, z7.b, z1.b
+    uabalb          \z2\().h, z8.b, z2.b
+    uabalt          \z2\().h, z8.b, z2.b
 .endm
 
 .macro SAD_X_SVE2_48 h x
@@ -1521,19 +1322,13 @@ SAD_FUNC_LOOP_SVE2  48, 64
     mov             z21.d, #0
     mov             z22.d, #0
     mov             z23.d, #0
-    ptrue           p0.h, vl8
+    ptrue           p0.b, vl16
+    mov             x11, #16
+    mov             x12, #32
 .rept \h
-    mov             x11, #8
-    ld1b            {z0.h}, p0/z, [x0]
-    ld1b            {z1.h}, p0/z, [x0, x11]
-    add             x11, x11, #8
-    ld1b            {z2.h}, p0/z, [x0, x11]
-    add             x11, x11, #8
-    ld1b            {z3.h}, p0/z, [x0, x11]
-    add             x11, x11, #8
-    ld1b            {z4.h}, p0/z, [x0, x11]
-    add             x11, x11, #8
-    ld1b            {z5.h}, p0/z, [x0, x11]
+    ld1b            {z0.b}, p0/z, [x0]
+    ld1b            {z1.b}, p0/z, [x0, x11]
+    ld1b            {z2.b}, p0/z, [x0, x12]
     add             x0, x0, x9
     SAD_X_SVE2_48_INNER x1, z16, z20
     SAD_X_SVE2_48_INNER x2, z17, z21
@@ -1545,30 +1340,19 @@ SAD_FUNC_LOOP_SVE2  48, 64
 .endm
 
 .macro SAD_X_SVE2_64_INNER base z1 z2
-    mov             x11, #8
-    ld1b            {z8.h}, p0/z, [ \base ]
-    ld1b            {z9.h}, p0/z, [ \base , x11]
-    add             x11, x11, #8
-    ld1b            {z10.h}, p0/z, [ \base , x11]
-    add             x11, x11, #8
-    ld1b            {z11.h}, p0/z, [ \base , x11]
-    add             x11, x11, #8
-    ld1b            {z12.h}, p0/z, [ \base , x11]
-    add             x11, x11, #8
-    ld1b            {z13.h}, p0/z, [ \base , x11]
-    add             x11, x11, #8
-    ld1b            {z14.h}, p0/z, [ \base , x11]
-    add             x11, x11, #8
-    ld1b            {z15.h}, p0/z, [ \base , x11]
+    ld1b            {z8.b}, p0/z, [ \base ]
+    ld1b            {z9.b}, p0/z, [ \base , x11]
+    ld1b            {z10.b}, p0/z, [ \base , x12]
+    ld1b            {z11.b}, p0/z, [ \base , x13]
     add             \base, \base, x5
-    uaba            \z1\().h, z8.h, z0.h
-    uaba            \z1\().h, z10.h, z2.h
-    uaba            \z1\().h, z12.h, z4.h
-    uaba            \z1\().h, z14.h, z6.h
-    uaba            \z2\().h, z9.h, z1.h
-    uaba            \z2\().h, z11.h, z3.h
-    uaba            \z2\().h, z13.h, z5.h
-    uaba            \z2\().h, z15.h, z7.h
+    uabalb          \z1\().h, z8.b, z0.b
+    uabalt          \z1\().h, z8.b, z0.b
+    uabalb          \z1\().h, z9.b, z1.b
+    uabalt          \z1\().h, z9.b, z1.b
+    uabalb          \z2\().h, z10.b, z2.b
+    uabalt          \z2\().h, z10.b, z2.b
+    uabalb          \z2\().h, z11.b, z3.b
+    uabalt          \z2\().h, z11.b, z3.b
 .endm
 
 .macro SAD_X_SVE2_64 h x
@@ -1580,23 +1364,15 @@ SAD_FUNC_LOOP_SVE2  48, 64
     mov             z21.d, #0
     mov             z22.d, #0
     mov             z23.d, #0
-    ptrue           p0.h, vl8
+    ptrue           p0.b, vl16
+    mov             x11, #16
+    mov             x12, #32
+    mov             x13, #48
 .rept \h
-    mov             x11, #8
-    ld1b            {z0.h}, p0/z, [x0]
-    ld1b            {z1.h}, p0/z, [x0, x11]
-    add             x11, x11, #8
-    ld1b            {z2.h}, p0/z, [x0, x11]
-    add             x11, x11, #8
-    ld1b            {z3.h}, p0/z, [x0, x11]
-    add             x11, x11, #8
-    ld1b            {z4.h}, p0/z, [x0, x11]
-    add             x11, x11, #8
-    ld1b            {z5.h}, p0/z, [x0, x11]
-    add             x11, x11, #8
-    ld1b            {z6.h}, p0/z, [x0, x11]
-    add             x11, x11, #8
-    ld1b            {z7.h}, p0/z, [x0, x11]
+    ld1b            {z0.b}, p0/z, [x0]
+    ld1b            {z1.b}, p0/z, [x0, x11]
+    ld1b            {z2.b}, p0/z, [x0, x12]
+    ld1b            {z3.b}, p0/z, [x0, x13]
     add             x0, x0, x9
     SAD_X_SVE2_64_INNER x1, z16, z20
     SAD_X_SVE2_64_INNER x2, z17, z21
