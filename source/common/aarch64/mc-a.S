@@ -1395,22 +1395,19 @@ function PFX(addAvg_32x\h\()_sve2)
     bgt             .vl_gt_16_addAvg_32x\h
     ptrue           p0.b, vl16
     ptrue           p1.h, vl8
+    mov             x14, #8
+    mov             x15, #16
+    mov             x16, #24
 .loop_eq_16_sve2_addavg_32x\h\():
     sub             w12, w12, #1
-    mov             x14, #16
     ld1b            {z0.b}, p0/z, [x0]
-    ld1b            {z1.b}, p0/z, [x0, x14]
-    add             x14, x14, #16
-    ld1b            {z2.b}, p0/z, [x0, x14]
-    add             x14, x14, #16
-    ld1b            {z3.b}, p0/z, [x0, x14]
-    mov             x14, #16
+    ld1b            {z1.b}, p0/z, [x0, #1, mul vl]
+    ld1b            {z2.b}, p0/z, [x0, #2, mul vl]
+    ld1b            {z3.b}, p0/z, [x0, #3, mul vl]
     ld1b            {z4.b}, p0/z, [x1]
-    ld1b            {z5.b}, p0/z, [x1, x14]
-    add             x14, x14, #16
-    ld1b            {z6.b}, p0/z, [x1, x14]
-    add             x14, x14, #16
-    ld1b            {z7.b}, p0/z, [x1, x14]
+    ld1b            {z5.b}, p0/z, [x1, #1, mul vl]
+    ld1b            {z6.b}, p0/z, [x1, #2, mul vl]
+    ld1b            {z7.b}, p0/z, [x1, #3, mul vl]
     add             x0, x0, x3, lsl #1
     add             x1, x1, x4, lsl #1
     add             z0.h, p1/m, z0.h, z4.h
@@ -1437,13 +1434,10 @@ function PFX(addAvg_32x\h\()_sve2)
     sqxtunb         z1.b, z1.h
     sqxtunb         z2.b, z2.h
     sqxtunb         z3.b, z3.h
-    mov             x14, #8
     st1b            {z0.h}, p1, [x2]
     st1b            {z1.h}, p1, [x2, x14]
-    add             x14, x14, #8
-    st1b            {z2.h}, p1, [x2, x14]
-    add             x14, x14, #8
-    st1b            {z3.h}, p1, [x2, x14]
+    st1b            {z2.h}, p1, [x2, x15]
+    st1b            {z3.h}, p1, [x2, x16]
     add             x2, x2, x5
     cbnz            w12, .loop_eq_16_sve2_addavg_32x\h
     ret
