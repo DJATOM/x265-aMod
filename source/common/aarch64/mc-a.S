@@ -34,17 +34,6 @@
 
 .align 4
 
-.data
-msg_pixel_avg_pp_4xh:
-    .ascii        "#### Executing function msg_pixel_avg_pp_4xh ####\n"
-len_pixel_avg_pp_4xh = . - msg_pixel_avg_pp_4xh
-msg_pixel_avg_pp_12x16:
-    .ascii        "#### Executing function msg_pixel_avg_pp_12x16 ####\n"
-len_pixel_avg_pp_12x16 = . - msg_pixel_avg_pp_12x16
-
-string_number:
-    .asciz "The content of register is: %x\n"
-
 .text
 
 /* ############## NEON ###################*/
@@ -592,10 +581,9 @@ function PFX(pixel_avg_pp_4x\h\()_sve2)
     ptrue           p6.s, vl1
     ptrue           p7.b, vl8
 .rept \h
-    //string_print msg_pixel_avg_pp_4xh, len_pixel_avg_pp_4xh
     ld1w            {z0.s}, p6/z, [x2]
-    add             x2, x2, x3
     ld1w            {z1.s}, p6/z, [x4]
+    add             x2, x2, x3
     add             x4, x4, x5
     urhadd          z0.b, p7/m, z0.b, z1.b
     st1w            {z0.s}, p6, [x0]
@@ -614,8 +602,8 @@ function PFX(pixel_avg_pp_8x\h\()_sve2)
     ptrue           p6.b, vl8
 .rept \h
     ld1b            {z0.b}, p6/z, [x2]
-    add             x2, x2, x3
     ld1b            {z1.b}, p6/z, [x4]
+    add             x2, x2, x3
     add             x4, x4, x5
     urhadd          z0.b, p6/m, z0.b, z1.b
     st1b            {z0.b}, p6, [x0]
@@ -631,26 +619,26 @@ pixel_avg_pp_8xN_sve2 16
 pixel_avg_pp_8xN_sve2 32
 
 function PFX(pixel_avg_pp_12x16_sve2)
-    //string_print msg_pixel_avg_pp_12x16, len_pixel_avg_pp_12x16
     sub             x1, x1, #4
     sub             x3, x3, #4
     sub             x5, x5, #4
     ptrue           p0.s, vl1
     ptrue           p1.b, vl8
+    mov             x11, #4
 .rept 16
     ld1w            {z0.s}, p0/z, [x2]
-    add             x2, x2, #4
-    ld1b            {z1.b}, p1/z, [x2]
-    add             x2, x2, x3
+    ld1b            {z1.b}, p1/z, [x2, x11]
     ld1w            {z2.s}, p0/z, [x4]
+    ld1b            {z3.b}, p1/z, [x4, x11]
+    add             x2, x2, #4
+    add             x2, x2, x3
     add             x4, x4, #4
-    ld1b            {z3.b}, p1/z, [x4]
     add             x4, x4, x5
     urhadd          z0.b, p1/m, z0.b, z2.b
     urhadd          z1.b, p1/m, z1.b, z3.b
     st1b            {z0.b}, p1, [x0]
+    st1b            {z1.b}, p1, [x0, x11]
     add             x0, x0, #4
-    st1b            {z1.b}, p1, [x0]
     add             x0, x0, x1
 .endr
     ret
@@ -661,8 +649,8 @@ function PFX(pixel_avg_pp_16x\h\()_sve2)
     ptrue           p7.b, vl16
 .rept \h
     ld1b            {z0.b}, p7/z, [x2]
-    add             x2, x2, x3
     ld1b            {z1.b}, p7/z, [x4]
+    add             x2, x2, x3
     add             x4, x4, x5
     urhadd          z0.b, p7/m, z0.b, z1.b
     st1b            {z0.b}, p7, [x0]
@@ -685,8 +673,8 @@ function PFX(pixel_avg_pp_16x64_sve2)
     sub             w12, w12, #1
 .rept 8
     ld1b            {z0.b}, p0/z, [x2]
-    add             x2, x2, x3
     ld1b            {z1.b}, p0/z, [x4]
+    add             x2, x2, x3
     add             x4, x4, x5
     urhadd          z0.b, p0/m, z0.b, z1.b
     st1b            {z0.b}, p0, [x0]
@@ -701,27 +689,49 @@ function PFX(pixel_avg_pp_24x32_sve2)
     sub             x3, x3, #16
     sub             x5, x5, #16
     mov             w12, #4
+    rdvl            x9, #1
+    cmp             x9, #16
+    bgt             .vl_gt_16_pixel_avg_pp_24x32
     ptrue           p0.b, vl16
     ptrue           p1.b, vl8
 .loop_pixel_avg_pp_24x32:
     sub             w12, w12, #1
 .rept 8
     ld1b            {z0.b}, p0/z, [x2]
-    add             x2, x2, #16
-    ld1b            {z1.b}, p1/z, [x2]
-    add             x2, x2, x3
+    ld1b            {z1.b}, p1/z, [x2, #1, mul vl]
     ld1b            {z2.b}, p0/z, [x4]
+    ld1b            {z3.b}, p1/z, [x4, #1, mul vl]
+    add             x2, x2, #16
+    add             x2, x2, x3
     add             x4, x4, #16
-    ld1b            {z3.b}, p1/z, [x4]
     add             x4, x4, x5
     urhadd          z0.b, p0/m, z0.b, z2.b
     urhadd          z1.b, p1/m, z1.b, z3.b
     st1b            {z0.b}, p0, [x0]
+    st1b            {z1.b}, p1, [x0, #1, mul vl]
     add             x0, x0, #16
-    st1b            {z1.b}, p1, [x0]
     add             x0, x0, x1
 .endr
     cbnz            w12, .loop_pixel_avg_pp_24x32
+    ret
+.vl_gt_16_pixel_avg_pp_24x32:
+    mov w0, #24
+    whilelt p0.b, wzr, w0
+.vl_gt_16_loop_pixel_avg_pp_24x32:
+    sub             w12, w12, #1
+.rept 8
+    ld1b            {z0.b}, p0/z, [x2]
+    ld1b            {z2.b}, p0/z, [x4]
+    add             x2, x2, #16
+    add             x2, x2, x3
+    add             x4, x4, #16
+    add             x4, x4, x5
+    urhadd          z0.b, p0/m, z0.b, z2.b
+    st1b            {z0.b}, p0, [x0]
+    add             x0, x0, #16
+    add             x0, x0, x1
+.endr
+    cbnz            w12, .vl_gt_16_loop_pixel_avg_pp_24x32
     ret
 endfunc
 
@@ -731,18 +741,17 @@ function PFX(pixel_avg_pp_32x\h\()_sve2)
     cmp             x9, #16
     bgt             .vl_gt_16_pixel_avg_pp_32_\h
     ptrue           p0.b, vl16
-    mov             x11, #16
 .rept \h
     ld1b            {z0.b}, p0/z, [x2]
-    ld1b            {z1.b}, p0/z, [x2, x11]
-    add             x2, x2, x3
+    ld1b            {z1.b}, p0/z, [x2, #1, mul vl]
     ld1b            {z2.b}, p0/z, [x4]
-    ld1b            {z3.b}, p0/z, [x4, x11]
+    ld1b            {z3.b}, p0/z, [x4, #1, mul vl]
+    add             x2, x2, x3
     add             x4, x4, x5
     urhadd          z0.b, p0/m, z0.b, z2.b
     urhadd          z1.b, p0/m, z1.b, z3.b
     st1b            {z0.b}, p0, [x0]
-    st1b            {z1.b}, p0, [x0, x11]
+    st1b            {z1.b}, p0, [x0, #1, mul vl]
     add             x0, x0, x1
 .endr
     ret
@@ -750,8 +759,8 @@ function PFX(pixel_avg_pp_32x\h\()_sve2)
     ptrue           p0.b, vl32
 .rept \h
     ld1b            {z0.b}, p0/z, [x2]
-    add             x2, x2, x3
     ld1b            {z2.b}, p0/z, [x4]
+    add             x2, x2, x3
     add             x4, x4, x5
     urhadd          z0.b, p0/m, z0.b, z2.b
     st1b            {z0.b}, p0, [x0]
@@ -772,20 +781,19 @@ function PFX(pixel_avg_pp_32x\h\()_sve2)
     bgt             .vl_gt_16_pixel_avg_pp_32xN1_\h
     ptrue           p0.b, vl16
     mov             w12, #\h / 8
-    mov             x11, #16
 .eq_16_loop_pixel_avg_pp_32xN1_\h\():
     sub             w12, w12, #1
 .rept 8
     ld1b            {z0.b}, p0/z, [x2]
-    ld1b            {z1.b}, p0/z, [x2, x11]
-    add             x2, x2, x3
+    ld1b            {z1.b}, p0/z, [x2, #1, mul vl]
     ld1b            {z2.b}, p0/z, [x4]
-    ld1b            {z3.b}, p0/z, [x4, x11]
+    ld1b            {z3.b}, p0/z, [x4, #1, mul vl]
+    add             x2, x2, x3
     add             x4, x4, x5
     urhadd          z0.b, p0/m, z0.b, z2.b
     urhadd          z1.b, p0/m, z1.b, z3.b
     st1b            {z0.b}, p0, [x0]
-    st1b            {z1.b}, p0, [x0, x11]
+    st1b            {z1.b}, p0, [x0, #1, mul vl]
     add             x0, x0, x1
 .endr
     cbnz            w12, .eq_16_loop_pixel_avg_pp_32xN1_\h
@@ -797,8 +805,8 @@ function PFX(pixel_avg_pp_32x\h\()_sve2)
     sub             w12, w12, #1
 .rept 8
     ld1b            {z0.b}, p0/z, [x2]
-    add             x2, x2, x3
     ld1b            {z2.b}, p0/z, [x4]
+    add             x2, x2, x3
     add             x4, x4, x5
     urhadd          z0.b, p0/m, z0.b, z2.b
     st1b            {z0.b}, p0, [x0]
@@ -821,53 +829,63 @@ function PFX(pixel_avg_pp_48x64_sve2)
 .vl_eq_16_pixel_avg_pp_48x64:
     sub             w12, w12, #1
 .rept 8
-    mov             x10, #16
     ld1b            {z0.b}, p0/z, [x2]
-    ld1b            {z1.b}, p0/z, [x2, x10]
-    add             x10, x10, #16
-    ld1b            {z2.b}, p0/z, [x2, x10]
-    add             x2, x2, x3
-    mov             x10, #16
+    ld1b            {z1.b}, p0/z, [x2, #1, mul vl]
+    ld1b            {z2.b}, p0/z, [x2, #2, mul vl]
     ld1b            {z3.b}, p0/z, [x4]
-    ld1b            {z4.b}, p0/z, [x4, x10]
-    add             x10, x10, #16
-    ld1b            {z5.b}, p0/z, [x4, x10]
+    ld1b            {z4.b}, p0/z, [x4, #1, mul vl]
+    ld1b            {z5.b}, p0/z, [x4, #2, mul vl]
+    add             x2, x2, x3
     add             x4, x4, x5
     urhadd          z0.b, p0/m, z0.b, z3.b
     urhadd          z1.b, p0/m, z1.b, z4.b
     urhadd          z2.b, p0/m, z2.b, z5.b
-    mov             x10, #16
     st1b            {z0.b}, p0, [x0]
-    st1b            {z1.b}, p0, [x0, x10]
-    add             x10, x10, #16
-    st1b            {z2.b}, p0, [x0, x10]
+    st1b            {z1.b}, p0, [x0, #1, mul vl]
+    st1b            {z2.b}, p0, [x0, #2, mul vl]
     add             x0, x0, x1
 .endr
     cbnz            w12, .vl_eq_16_pixel_avg_pp_48x64
     ret
 .vl_gt_16_pixel_avg_pp_48x64:
-    // No need for extra checks as ptrues cannot
-    // be perfectly adjusted
+    cmp             x9, #32
+    bgt             .vl_gt_32_pixel_avg_pp_48x64
     ptrue           p0.b, vl32
     ptrue           p1.b, vl16
     mov             w12, #8
-    mov             x11, #32
 .vl_eq_32_pixel_avg_pp_48x64:
     sub             w12, w12, #1
 .rept 8
     ld1b            {z0.b}, p0/z, [x2]
-    ld1b            {z1.b}, p1/z, [x2, x11]
-    add             x2, x2, x3
+    ld1b            {z1.b}, p1/z, [x2, #1, mul vl]
     ld1b            {z2.b}, p0/z, [x4]
-    ld1b            {z3.b}, p1/z, [x4, x11]
+    ld1b            {z3.b}, p1/z, [x4, #1, mul vl]
+    add             x2, x2, x3
     add             x4, x4, x5
     urhadd          z0.b, p0/m, z0.b, z2.b
     urhadd          z1.b, p1/m, z1.b, z3.b
     st1b            {z0.b}, p0, [x0]
-    st1b            {z1.b}, p1, [x0, x11]
+    st1b            {z1.b}, p1, [x0, #1, mul vl]
     add             x0, x0, x1
 .endr
     cbnz            w12, .vl_eq_32_pixel_avg_pp_48x64
+    ret
+.vl_gt_32_pixel_avg_pp_48x64:
+    mov             w0, #48
+    whilelt         p0.b, wzr, w0
+    mov             w12, #8
+.loop_gt_32_pixel_avg_pp_48x64:
+    sub             w12, w12, #1
+.rept 8
+    ld1b            {z0.b}, p0/z, [x2]
+    ld1b            {z2.b}, p0/z, [x4]
+    add             x2, x2, x3
+    add             x4, x4, x5
+    urhadd          z0.b, p0/m, z0.b, z2.b
+    st1b            {z0.b}, p0, [x0]
+    add             x0, x0, x1
+.endr
+    cbnz            w12, .loop_gt_32_pixel_avg_pp_48x64
     ret
 endfunc
 
@@ -881,33 +899,24 @@ function PFX(pixel_avg_pp_64x\h\()_sve2)
 .vl_eq_16_pixel_avg_pp_64x\h\():
     sub             w12, w12, #1
 .rept 4
-    mov             x10, #16
     ld1b            {z0.b}, p0/z, [x2]
-    ld1b            {z1.b}, p0/z, [x2, x10]
-    add             x10, x10, #16
-    ld1b            {z2.b}, p0/z, [x2, x10]
-    add             x10, x10, #16
-    ld1b            {z3.b}, p0/z, [x2, x10]
-    add             x2, x2, x3
-    mov             x10, #16
+    ld1b            {z1.b}, p0/z, [x2, #1, mul vl]
+    ld1b            {z2.b}, p0/z, [x2, #2, mul vl]
+    ld1b            {z3.b}, p0/z, [x2, #3, mul vl]
     ld1b            {z4.b}, p0/z, [x4]
-    ld1b            {z5.b}, p0/z, [x4, x10]
-    add             x10, x10, #16
-    ld1b            {z6.b}, p0/z, [x4, x10]
-    add             x10, x10, #16
-    ld1b            {z7.b}, p0/z, [x4, x10]
+    ld1b            {z5.b}, p0/z, [x4, #1, mul vl]
+    ld1b            {z6.b}, p0/z, [x4, #2, mul vl]
+    ld1b            {z7.b}, p0/z, [x4, #3, mul vl]
+    add             x2, x2, x3
     add             x4, x4, x5
     urhadd          z0.b, p0/m, z0.b, z4.b
     urhadd          z1.b, p0/m, z1.b, z5.b
     urhadd          z2.b, p0/m, z2.b, z6.b
     urhadd          z3.b, p0/m, z3.b, z7.b
-    mov             x10, #16
     st1b            {z0.b}, p0, [x0]
-    st1b            {z1.b}, p0, [x0, x10]
-    add             x10, x10, #16
-    st1b            {z2.b}, p0, [x0, x10]
-    add             x10, x10, #16
-    st1b            {z3.b}, p0, [x0, x10]
+    st1b            {z1.b}, p0, [x0, #1, mul vl]
+    st1b            {z2.b}, p0, [x0, #2, mul vl]
+    st1b            {z3.b}, p0, [x0, #3, mul vl]
     add             x0, x0, x1
 .endr
     cbnz            w12, .vl_eq_16_pixel_avg_pp_64x\h
@@ -917,20 +926,19 @@ function PFX(pixel_avg_pp_64x\h\()_sve2)
     bgt             .vl_gt_32_pixel_avg_pp_64x\h
     ptrue           p0.b, vl32
     mov             w12, #\h / 4
-    mov             x11, #32
 .vl_eq_32_pixel_avg_pp_64x\h\():
     sub             w12, w12, #1
 .rept 4
     ld1b            {z0.b}, p0/z, [x2]
-    ld1b            {z1.b}, p0/z, [x2, x11]
-    add             x2, x2, x3
+    ld1b            {z1.b}, p0/z, [x2, #1, mul vl]
     ld1b            {z2.b}, p0/z, [x4]
-    ld1b            {z3.b}, p0/z, [x4, x11]
+    ld1b            {z3.b}, p0/z, [x4, #1, mul vl]
+    add             x2, x2, x3
     add             x4, x4, x5
     urhadd          z0.b, p0/m, z0.b, z2.b
     urhadd          z1.b, p0/m, z1.b, z3.b
     st1b            {z0.b}, p0, [x0]
-    st1b            {z1.b}, p0, [x0, x11]
+    st1b            {z1.b}, p0, [x0, #1, mul vl]
     add             x0, x0, x1
 .endr
     cbnz            w12, .vl_eq_32_pixel_avg_pp_64x\h
@@ -947,9 +955,9 @@ function PFX(pixel_avg_pp_64x\h\()_sve2)
 .rept 4
     ld1b            {z0.b}, p0/z, [x2]
     ld1b            {z1.b}, p1/z, [x2, x11]
-    add             x2, x2, x3
     ld1b            {z2.b}, p0/z, [x4]
     ld1b            {z3.b}, p1/z, [x4, x11]
+    add             x2, x2, x3
     add             x4, x4, x5
     urhadd          z0.b, p0/m, z0.b, z2.b
     urhadd          z1.b, p1/m, z1.b, z3.b
@@ -966,8 +974,8 @@ function PFX(pixel_avg_pp_64x\h\()_sve2)
     sub             w12, w12, #1
 .rept 4
     ld1b            {z0.b}, p0/z, [x2]
-    add             x2, x2, x3
     ld1b            {z2.b}, p0/z, [x4]
+    add             x2, x2, x3
     add             x4, x4, x5
     urhadd          z0.b, p0/m, z0.b, z2.b
     st1b            {z0.b}, p0, [x0]
@@ -987,7 +995,6 @@ pixel_avg_pp_64xN_sve2 64
 
 .macro addAvg_2xN_sve2 h
 function PFX(addAvg_2x\h\()_sve2)
-    mov             z30.b, #0x40
     ptrue           p0.s, vl2
     ptrue           p1.h, vl4
     ptrue           p2.h, vl2
@@ -1002,19 +1009,13 @@ function PFX(addAvg_2x\h\()_sve2)
     add             x1, x1, x4, lsl #1
     add             z0.h, p1/m, z0.h, z1.h
     add             z2.h, p1/m, z2.h, z3.h
-    saddlb          z1.s, z0.h, z30.h
-    saddlt          z3.s, z0.h, z30.h
-    saddlb          z4.s, z2.h, z30.h
-    saddlt          z5.s, z2.h, z30.h
-    shrnb           z2.h, z1.s, #7
-    shrnt           z2.h, z3.s, #7
-    shrnb           z3.h, z4.s, #7
-    shrnt           z3.h, z5.s, #7
-    sqxtunb         z0.b, z2.h
-    sqxtunb         z1.b, z3.h
+    sqrshrnb        z0.b, z0.h, #7
+    add             z0.b, z0.b, #0x80
+    sqrshrnb        z2.b, z2.h, #7
+    add             z2.b, z2.b, #0x80
     st1b            {z0.h}, p2, [x2]
     add             x2, x2, x5
-    st1b            {z1.h}, p2, [x2]
+    st1b            {z2.h}, p2, [x2]
     add             x2, x2, x5
 .endr
     ret
@@ -1027,33 +1028,26 @@ addAvg_2xN_sve2 16
 
 .macro addAvg_4xN_sve2 h
 function PFX(addAvg_4x\h\()_sve2)
-    mov             z30.b, #0x40
     ptrue           p0.b, vl8
     ptrue           p1.h, vl4
 .rept \h / 2
     ld1b            {z0.b}, p0/z, [x0]
-    add             x0, x0, x3, lsl #1
     ld1b            {z1.b}, p0/z, [x1]
+    add             x0, x0, x3, lsl #1
     add             x1, x1, x4, lsl #1
     ld1b            {z2.b}, p0/z, [x0]
-    add             x0, x0, x3, lsl #1
     ld1b            {z3.b}, p0/z, [x1]
+    add             x0, x0, x3, lsl #1
     add             x1, x1, x4, lsl #1
     add             z0.h, p1/m, z0.h, z1.h
     add             z2.h, p1/m, z2.h, z3.h
-    saddlb          z1.s, z0.h, z30.h
-    saddlt          z3.s, z0.h, z30.h
-    saddlb          z4.s, z2.h, z30.h
-    saddlt          z5.s, z2.h, z30.h
-    shrnb           z2.h, z1.s, #7
-    shrnt           z2.h, z3.s, #7
-    shrnb           z3.h, z4.s, #7
-    shrnt           z3.h, z5.s, #7
-    sqxtunb         z0.b, z2.h
-    sqxtunb         z1.b, z3.h
+    sqrshrnb        z0.b, z0.h, #7
+    add             z0.b, z0.b, #0x80
+    sqrshrnb        z2.b, z2.h, #7
+    add             z2.b, z2.b, #0x80
     st1b            {z0.h}, p1, [x2]
     add             x2, x2, x5
-    st1b            {z1.h}, p1, [x2]
+    st1b            {z2.h}, p1, [x2]
     add             x2, x2, x5
 .endr
     ret
@@ -1068,35 +1062,28 @@ addAvg_4xN_sve2 32
 
 .macro addAvg_6xN_sve2 h
 function PFX(addAvg_6x\h\()_sve2)
-    mov             z30.b, #0x40
     mov             w12, #\h / 2
     ptrue           p0.b, vl16
     ptrue           p2.h, vl6
 .loop_sve2_addavg_6x\h\():
     sub             w12, w12, #1
     ld1b            {z0.b}, p0/z, [x0]
-    add             x0, x0, x3, lsl #1
     ld1b            {z1.b}, p0/z, [x1]
+    add             x0, x0, x3, lsl #1
     add             x1, x1, x4, lsl #1
     ld1b            {z2.b}, p0/z, [x0]
-    add             x0, x0, x3, lsl #1
     ld1b            {z3.b}, p0/z, [x1]
+    add             x0, x0, x3, lsl #1
     add             x1, x1, x4, lsl #1
     add             z0.h, p0/m, z0.h, z1.h
     add             z2.h, p0/m, z2.h, z3.h
-    saddlb          z1.s, z0.h, z30.h
-    saddlt          z3.s, z0.h, z30.h
-    saddlb          z4.s, z2.h, z30.h
-    saddlt          z5.s, z2.h, z30.h
-    shrnb           z2.h, z1.s, #7
-    shrnt           z2.h, z3.s, #7
-    shrnb           z3.h, z4.s, #7
-    shrnt           z3.h, z5.s, #7
-    sqxtunb         z0.b, z2.h
-    sqxtunb         z1.b, z3.h
+    sqrshrnb        z0.b, z0.h, #7
+    add             z0.b, z0.b, #0x80
+    sqrshrnb        z2.b, z2.h, #7
+    add             z2.b, z2.b, #0x80
     st1b            {z0.h}, p2, [x2]
     add             x2, x2, x5
-    st1b            {z1.h}, p2, [x2]
+    st1b            {z2.h}, p2, [x2]
     add             x2, x2, x5
     cbnz            w12, .loop_sve2_addavg_6x\h
     ret
@@ -1108,33 +1095,25 @@ addAvg_6xN_sve2 16
 
 .macro addAvg_8xN_sve2 h
 function PFX(addAvg_8x\h\()_sve2)
-    mov             z30.b, #0x40
     ptrue           p0.b, vl16
-    ptrue           p2.h, vl8
 .rept \h / 2
     ld1b            {z0.b}, p0/z, [x0]
-    add             x0, x0, x3, lsl #1
     ld1b            {z1.b}, p0/z, [x1]
+    add             x0, x0, x3, lsl #1
     add             x1, x1, x4, lsl #1
     ld1b            {z2.b}, p0/z, [x0]
-    add             x0, x0, x3, lsl #1
     ld1b            {z3.b}, p0/z, [x1]
+    add             x0, x0, x3, lsl #1
     add             x1, x1, x4, lsl #1
     add             z0.h, p0/m, z0.h, z1.h
     add             z2.h, p0/m, z2.h, z3.h
-    saddlb          z1.s, z0.h, z30.h
-    saddlt          z3.s, z0.h, z30.h
-    saddlb          z4.s, z2.h, z30.h
-    saddlt          z5.s, z2.h, z30.h
-    shrnb           z2.h, z1.s, #7
-    shrnt           z2.h, z3.s, #7
-    shrnb           z3.h, z4.s, #7
-    shrnt           z3.h, z5.s, #7
-    sqxtunb         z0.b, z2.h
-    sqxtunb         z1.b, z3.h
-    st1b            {z0.h}, p2, [x2]
+    sqrshrnb        z0.b, z0.h, #7
+    add             z0.b, z0.b, #0x80
+    sqrshrnb        z2.b, z2.h, #7
+    add             z2.b, z2.b, #0x80
+    st1b            {z0.h}, p0, [x2]
     add             x2, x2, x5
-    st1b            {z1.h}, p2, [x2]
+    st1b            {z2.h}, p0, [x2]
     add             x2, x2, x5
 .endr
     ret
@@ -1143,35 +1122,27 @@ endfunc
 
 .macro addAvg_8xN1_sve2 h
 function PFX(addAvg_8x\h\()_sve2)
-    mov             z30.b, #0x40
     mov             w12, #\h / 2
     ptrue           p0.b, vl16
-    ptrue           p2.h, vl8
 .loop_sve2_addavg_8x\h\():
     sub             w12, w12, #1
     ld1b            {z0.b}, p0/z, [x0]
-    add             x0, x0, x3, lsl #1
     ld1b            {z1.b}, p0/z, [x1]
+    add             x0, x0, x3, lsl #1
     add             x1, x1, x4, lsl #1
     ld1b            {z2.b}, p0/z, [x0]
-    add             x0, x0, x3, lsl #1
     ld1b            {z3.b}, p0/z, [x1]
+    add             x0, x0, x3, lsl #1
     add             x1, x1, x4, lsl #1
     add             z0.h, p0/m, z0.h, z1.h
     add             z2.h, p0/m, z2.h, z3.h
-    saddlb          z1.s, z0.h, z30.h
-    saddlt          z3.s, z0.h, z30.h
-    saddlb          z4.s, z2.h, z30.h
-    saddlt          z5.s, z2.h, z30.h
-    shrnb           z2.h, z1.s, #7
-    shrnt           z2.h, z3.s, #7
-    shrnb           z3.h, z4.s, #7
-    shrnt           z3.h, z5.s, #7
-    sqxtunb         z0.b, z2.h
-    sqxtunb         z1.b, z3.h
-    st1b            {z0.h}, p2, [x2]
+    sqrshrnb        z0.b, z0.h, #7
+    add             z0.b, z0.b, #0x80
+    sqrshrnb        z2.b, z2.h, #7
+    add             z2.b, z2.b, #0x80
+    st1b            {z0.h}, p0, [x2]
     add             x2, x2, x5
-    st1b            {z1.h}, p2, [x2]
+    st1b            {z2.h}, p0, [x2]
     add             x2, x2, x5
     cbnz            w12, .loop_sve2_addavg_8x\h
     ret
@@ -1189,40 +1160,48 @@ addAvg_8xN1_sve2 64
 
 .macro addAvg_12xN_sve2 h
 function PFX(addAvg_12x\h\()_sve2)
-    // No need for extra checks as ptrues cannot
-    // be perfectly adjusted
-    mov             z30.b, #0x40
     mov             w12, #\h
+    rdvl            x9, #1
+    cmp             x9, #16
+    bgt             .vl_gt_16_addAvg_12x\h
     ptrue           p0.b, vl16
     ptrue           p1.b, vl8
-    ptrue           p2.h, vl8
-    ptrue           p3.h, vl4
-    mov             x11, #16
-    mov             x10, #8
 .loop_sve2_addavg_12x\h\():
     sub             w12, w12, #1
     ld1b            {z0.b}, p0/z, [x0]
     ld1b            {z1.b}, p0/z, [x1]
-    ld1b            {z2.b}, p1/z, [x0, x11]
-    ld1b            {z3.b}, p1/z, [x1, x11]
+    ld1b            {z2.b}, p1/z, [x0, #1, mul vl]
+    ld1b            {z3.b}, p1/z, [x1, #1, mul vl]
     add             x0, x0, x3, lsl #1
     add             x1, x1, x4, lsl #1
-    add             z0.h, p2/m, z0.h, z1.h
-    add             z2.h, p3/m, z2.h, z3.h
-    saddlb          z1.s, z0.h, z30.h
-    saddlt          z3.s, z0.h, z30.h
-    saddlb          z4.s, z2.h, z30.h
-    saddlt          z5.s, z2.h, z30.h
-    shrnb           z2.h, z1.s, #7
-    shrnt           z2.h, z3.s, #7
-    shrnb           z3.h, z4.s, #7
-    shrnt           z3.h, z5.s, #7
-    sqxtunb         z0.b, z2.h
-    sqxtunb         z1.b, z3.h
-    st1b            {z0.h}, p2, [x2]
-    st1b            {z1.h}, p3, [x2, x10]
+    add             z0.h, p0/m, z0.h, z1.h
+    add             z2.h, p1/m, z2.h, z3.h
+    sqrshrnb        z0.b, z0.h, #7
+    add             z0.b, z0.b, #0x80
+    sqrshrnb        z2.b, z2.h, #7
+    add             z2.b, z2.b, #0x80
+    st1b            {z0.h}, p0, [x2]
+    st1b            {z2.h}, p1, [x2, #1, mul vl]
     add             x2, x2, x5
     cbnz            w12, .loop_sve2_addavg_12x\h
+    ret
+.vl_gt_16_addAvg_12x\h\():
+    mov             w0, #24
+    whilelt         p0.b, wzr, w0
+.loop_sve2_gt_16_addavg_12x\h\():
+    sub             w12, w12, #1
+    ld1b            {z0.b}, p0/z, [x0]
+    ld1b            {z1.b}, p0/z, [x1]
+    add             x0, x0, x3, lsl #1
+    add             x1, x1, x4, lsl #1
+    add             z0.h, p0/m, z0.h, z1.h
+    sqrshrnb        z0.b, z0.h, #7
+    add             z0.b, z0.b, #0x80
+    sqrshrnb        z2.b, z2.h, #7
+    add             z2.b, z2.b, #0x80
+    st1b            {z0.h}, p0, [x2]
+    add             x2, x2, x5
+    cbnz            w12, .loop_sve2_gt_16_addavg_12x\h
     ret
 endfunc
 .endm
@@ -1232,58 +1211,62 @@ addAvg_12xN_sve2 32
 
 .macro addAvg_16xN_sve2 h
 function PFX(addAvg_16x\h\()_sve2)
-    mov             z30.b, #0x40
     mov             w12, #\h
     rdvl            x9, #1
     cmp             x9, #16
     bgt             .vl_gt_16_addAvg_16x\h
     ptrue           p0.b, vl16
     ptrue           p1.h, vl8
-    mov             x11, #16
-    mov             x10, #8
 .loop_eq_16_sve2_addavg_16x\h\():
     sub             w12, w12, #1
     ld1b            {z0.b}, p0/z, [x0]
     ld1b            {z1.b}, p0/z, [x1]
-    ld1b            {z2.b}, p0/z, [x0, x11]
-    ld1b            {z3.b}, p0/z, [x1, x11]
+    ld1b            {z2.b}, p0/z, [x0, #1, mul vl]
+    ld1b            {z3.b}, p0/z, [x1, #1, mul vl]
     add             x0, x0, x3, lsl #1
     add             x1, x1, x4, lsl #1
     add             z0.h, p0/m, z0.h, z1.h
     add             z2.h, p1/m, z2.h, z3.h
-    saddlb          z1.s, z0.h, z30.h
-    saddlt          z3.s, z0.h, z30.h
-    saddlb          z4.s, z2.h, z30.h
-    saddlt          z5.s, z2.h, z30.h
-    shrnb           z2.h, z1.s, #7
-    shrnt           z2.h, z3.s, #7
-    shrnb           z3.h, z4.s, #7
-    shrnt           z3.h, z5.s, #7
-    sqxtunb         z0.b, z2.h
-    sqxtunb         z1.b, z3.h
+    sqrshrnb        z0.b, z0.h, #7
+    add             z0.b, z0.b, #0x80
+    sqrshrnb        z2.b, z2.h, #7
+    add             z2.b, z2.b, #0x80
     st1b            {z0.h}, p1, [x2]
-    st1b            {z1.h}, p1, [x2, x10]
+    st1b            {z2.h}, p1, [x2, #1, mul vl]
     add             x2, x2, x5
     cbnz            w12, .loop_eq_16_sve2_addavg_16x\h
     ret
 .vl_gt_16_addAvg_16x\h\():
+    cmp             x9, #32
+    bgt             .vl_gt_32_addAvg_16x\h
     ptrue           p0.b, vl32
-    ptrue           p1.h, vl16
 .loop_gt_16_sve2_addavg_16x\h\():
     sub             w12, w12, #1
     ld1b            {z0.b}, p0/z, [x0]
     ld1b            {z1.b}, p0/z, [x1]
     add             x0, x0, x3, lsl #1
     add             x1, x1, x4, lsl #1
-    add             z0.h, p1/m, z0.h, z1.h
-    saddlb          z1.s, z0.h, z30.h
-    saddlt          z3.s, z0.h, z30.h
-    shrnb           z2.h, z1.s, #7
-    shrnt           z2.h, z3.s, #7
-    sqxtunb         z0.b, z2.h
+    add             z0.h, p0/m, z0.h, z1.h
+    sqrshrnb        z0.b, z0.h, #7
+    add             z0.b, z0.b, #0x80
     st1b            {z0.h}, p1, [x2]
     add             x2, x2, x5
     cbnz            w12, .loop_gt_16_sve2_addavg_16x\h
+    ret
+.vl_gt_32_addAvg_16x\h\():
+    mov             w0, #48
+    whilelt         p0.b, wzr, w0
+.loop_gt_32_sve2_addavg_16x\h\():
+    sub             w12, w12, #1
+    ld1b            {z0.b}, p0/z, [x0]
+    add             x0, x0, x3, lsl #1
+    add             x1, x1, x4, lsl #1
+    add             z0.h, p0/m, z0.h, z1.h
+    sqrshrnb        z0.b, z0.h, #7
+    add             z0.b, z0.b, #0x80
+    st1b            {z0.h}, p0, [x2]
+    add             x2, x2, x5
+    cbnz            w12, .loop_gt_32_sve2_addavg_16x\h
     ret
 endfunc
 .endm
@@ -1298,87 +1281,75 @@ addAvg_16xN_sve2 64
 
 .macro addAvg_24xN_sve2 h
 function PFX(addAvg_24x\h\()_sve2)
-    mov             z30.b, #0x40
     mov             w12, #\h
     rdvl            x9, #1
     cmp             x9, #16
     bgt             .vl_gt_16_addAvg_24x\h
     ptrue           p0.b, vl16
-    ptrue           p1.h, vl8
-    mov             x11, #16
 .loop_eq_16_sve2_addavg_24x\h\():
     sub             w12, w12, #1
-    mov             x14, #16
     ld1b            {z0.b}, p0/z, [x0]
-    ld1b            {z1.b}, p0/z, [x0, x14]
-    add             x14, x14, x11
-    ld1b            {z2.b}, p0/z, [x0, x14]
-    mov             x14, #16
+    ld1b            {z1.b}, p0/z, [x0, #1, mul vl]
+    ld1b            {z2.b}, p0/z, [x0, #2, mul vl]
     ld1b            {z3.b}, p0/z, [x1]
-    ld1b            {z4.b}, p0/z, [x1, x14]
-    add             x14, x14, x11
-    ld1b            {z5.b}, p0/z, [x1, x14]
+    ld1b            {z4.b}, p0/z, [x1, #1, mul vl]
+    ld1b            {z5.b}, p0/z, [x1, #2, mul vl]
     add             x0, x0, x3, lsl #1
     add             x1, x1, x4, lsl #1
-    add             z0.h, p1/m, z0.h, z3.h
-    add             z1.h, p1/m, z1.h, z4.h
-    add             z2.h, p1/m, z2.h, z5.h
-    saddlb          z3.s, z0.h, z30.h
-    saddlt          z4.s, z0.h, z30.h
-    saddlb          z5.s, z1.h, z30.h
-    saddlt          z6.s, z1.h, z30.h
-    saddlb          z7.s, z2.h, z30.h
-    saddlt          z8.s, z2.h, z30.h
-    shrnb           z0.h, z3.s, #7
-    shrnt           z0.h, z4.s, #7
-    shrnb           z1.h, z5.s, #7
-    shrnt           z1.h, z6.s, #7
-    shrnb           z2.h, z7.s, #7
-    shrnt           z2.h, z8.s, #7
-    sqxtunb         z0.b, z0.h
-    sqxtunb         z1.b, z1.h
-    sqxtunb         z2.b, z2.h
-    mov             x14, #8
-    st1b            {z0.h}, p1, [x2]
-    st1b            {z1.h}, p1, [x2, x14]
-    add             x14, x14, #8
-    st1b            {z2.h}, p1, [x2, x14]
+    add             z0.h, p0/m, z0.h, z3.h
+    add             z1.h, p0/m, z1.h, z4.h
+    add             z2.h, p0/m, z2.h, z5.h
+    sqrshrnb        z0.b, z0.h, #7
+    add             z0.b, z0.b, #0x80
+    sqrshrnb        z1.b, z1.h, #7
+    add             z1.b, z1.b, #0x80
+    sqrshrnb        z2.b, z2.h, #7
+    add             z2.b, z2.b, #0x80
+    st1b            {z0.h}, p0, [x2]
+    st1b            {z1.h}, p0, [x2, #1, mul vl]
+    st1b            {z2.h}, p0, [x2, #2, mul vl]
     add             x2, x2, x5
     cbnz            w12, .loop_eq_16_sve2_addavg_24x\h
     ret
 .vl_gt_16_addAvg_24x\h\():
-    // No need for extra checks as ptrues cannot
-    // be perfectly adjusted
+    cmp             x9, #48
+    bgt             .vl_gt_48_addAvg_24x\h
     ptrue           p0.b, vl32
     ptrue           p1.b, vl16
-    ptrue           p2.h, vl32
-    ptrue           p3.h, vl16
-    mov             x11, #32
-    mov             x10, #16
 .loop_gt_16_sve2_addavg_24x\h\():
     sub             w12, w12, #1
     ld1b            {z0.b}, p0/z, [x0]
-    ld1b            {z1.b}, p1/z, [x0, x11]
+    ld1b            {z1.b}, p1/z, [x0, #1, mul vl]
     ld1b            {z2.b}, p0/z, [x1]
-    ld1b            {z3.b}, p1/z, [x1, x11]
+    ld1b            {z3.b}, p1/z, [x1, #1, mul vl]
     add             x0, x0, x3, lsl #1
     add             x1, x1, x4, lsl #1
-    add             z0.h, p2/m, z0.h, z2.h
-    add             z1.h, p3/m, z1.h, z3.h
-    saddlb          z3.s, z0.h, z30.h
-    saddlt          z4.s, z0.h, z30.h
-    saddlb          z5.s, z1.h, z30.h
-    saddlt          z6.s, z1.h, z30.h
-    shrnb           z0.h, z3.s, #7
-    shrnt           z0.h, z4.s, #7
-    shrnb           z1.h, z5.s, #7
-    shrnt           z1.h, z6.s, #7
-    sqxtunb         z0.b, z0.h
-    sqxtunb         z1.b, z1.h
-    st1b            {z0.h}, p2, [x2]
-    st1b            {z1.h}, p3, [x2, x10]
+    add             z0.h, p0/m, z0.h, z2.h
+    add             z1.h, p1/m, z1.h, z3.h
+    sqrshrnb        z0.b, z0.h, #7
+    add             z0.b, z0.b, #0x80
+    sqrshrnb        z1.b, z1.h, #7
+    add             z1.b, z1.b, #0x80
+    st1b            {z0.h}, p0, [x2]
+    st1b            {z1.h}, p1, [x2, x10]
     add             x2, x2, x5
     cbnz            w12, .loop_gt_16_sve2_addavg_24x\h
+    ret
+.vl_gt_48_addAvg_24x\h\():
+    mov             w0, #48
+    whilelt         p0.b, wzr, w0
+.loop_gt_48_sve2_addavg_24x\h\():
+    sub             w12, w12, #1
+    ld1b            {z0.b}, p0/z, [x0]
+    ld1b            {z2.b}, p0/z, [x1]
+    add             x0, x0, x3, lsl #1
+    add             x1, x1, x4, lsl #1
+    add             z0.h, p0/m, z0.h, z2.h
+    sqrshrnb        z0.b, z0.h, #7
+    add             z0.b, z0.b, #0x80
+    st1b            {z0.h}, p0, [x2]
+    add             x2, x2, x5
+    cbnz            w12, .loop_gt_48_sve2_addavg_24x\h
     ret
 endfunc
 .endm
@@ -1388,16 +1359,11 @@ addAvg_24xN_sve2 64
 
 .macro addAvg_32xN_sve2 h
 function PFX(addAvg_32x\h\()_sve2)
-    mov             z30.b, #0x40
     mov             w12, #\h
     rdvl            x9, #1
     cmp             x9, #16
     bgt             .vl_gt_16_addAvg_32x\h
     ptrue           p0.b, vl16
-    ptrue           p1.h, vl8
-    mov             x14, #8
-    mov             x15, #16
-    mov             x16, #24
 .loop_eq_16_sve2_addavg_32x\h\():
     sub             w12, w12, #1
     ld1b            {z0.b}, p0/z, [x0]
@@ -1410,87 +1376,60 @@ function PFX(addAvg_32x\h\()_sve2)
     ld1b            {z7.b}, p0/z, [x1, #3, mul vl]
     add             x0, x0, x3, lsl #1
     add             x1, x1, x4, lsl #1
-    add             z0.h, p1/m, z0.h, z4.h
-    add             z1.h, p1/m, z1.h, z5.h
-    add             z2.h, p1/m, z2.h, z6.h
-    add             z3.h, p1/m, z3.h, z7.h
-    saddlb          z4.s, z0.h, z30.h
-    saddlt          z5.s, z0.h, z30.h
-    saddlb          z6.s, z1.h, z30.h
-    saddlt          z7.s, z1.h, z30.h
-    saddlb          z8.s, z2.h, z30.h
-    saddlt          z9.s, z2.h, z30.h
-    saddlb          z10.s, z3.h, z30.h
-    saddlt          z11.s, z3.h, z30.h
-    shrnb           z0.h, z4.s, #7
-    shrnt           z0.h, z5.s, #7
-    shrnb           z1.h, z6.s, #7
-    shrnt           z1.h, z7.s, #7
-    shrnb           z2.h, z8.s, #7
-    shrnt           z2.h, z9.s, #7
-    shrnb           z3.h, z10.s, #7
-    shrnt           z3.h, z11.s, #7
-    sqxtunb         z0.b, z0.h
-    sqxtunb         z1.b, z1.h
-    sqxtunb         z2.b, z2.h
-    sqxtunb         z3.b, z3.h
-    st1b            {z0.h}, p1, [x2]
-    st1b            {z1.h}, p1, [x2, x14]
-    st1b            {z2.h}, p1, [x2, x15]
-    st1b            {z3.h}, p1, [x2, x16]
+    add             z0.h, p0/m, z0.h, z4.h
+    add             z1.h, p0/m, z1.h, z5.h
+    add             z2.h, p0/m, z2.h, z6.h
+    add             z3.h, p0/m, z3.h, z7.h
+    sqrshrnb        z0.b, z0.h, #7
+    add             z0.b, z0.b, #0x80
+    sqrshrnb        z1.b, z1.h, #7
+    add             z1.b, z1.b, #0x80
+    sqrshrnb        z2.b, z2.h, #7
+    add             z2.b, z2.b, #0x80
+    sqrshrnb        z3.b, z3.h, #7
+    add             z3.b, z3.b, #0x80
+    st1b            {z0.h}, p0, [x2]
+    st1b            {z1.h}, p0, [x2, #1, mul vl]
+    st1b            {z2.h}, p0, [x2, #2, mul vl]
+    st1b            {z3.h}, p0, [x2, #3, mul vl]
     add             x2, x2, x5
     cbnz            w12, .loop_eq_16_sve2_addavg_32x\h
     ret
 .vl_gt_16_addAvg_32x\h\():
-    // No need for extra checks for 48-bit 
-    // as ptrues cannot be perfectly adjusted
     cmp             x9, #48
     bgt             .vl_gt_48_addAvg_32x\h
     ptrue           p0.b, vl32
-    ptrue           p1.h, vl16
-    mov             x11, #32
-    mov             x10, #16
 .loop_gt_eq_32_sve2_addavg_32x\h\():
     sub             w12, w12, #1
     ld1b            {z0.b}, p0/z, [x0]
-    ld1b            {z1.b}, p0/z, [x0, x11]
+    ld1b            {z1.b}, p0/z, [x0, #1, mul vl]
     ld1b            {z2.b}, p0/z, [x1]
-    ld1b            {z3.b}, p0/z, [x1, x11]
+    ld1b            {z3.b}, p0/z, [x1, #1, mul vl]
     add             x0, x0, x3, lsl #1
     add             x1, x1, x4, lsl #1
-    add             z0.h, p1/m, z0.h, z2.h
-    add             z1.h, p1/m, z1.h, z3.h
-    saddlb          z4.s, z0.h, z30.h
-    saddlt          z5.s, z0.h, z30.h
-    saddlb          z6.s, z1.h, z30.h
-    saddlt          z7.s, z1.h, z30.h
-    shrnb           z0.h, z4.s, #7
-    shrnt           z0.h, z5.s, #7
-    shrnb           z1.h, z6.s, #7
-    shrnt           z1.h, z7.s, #7
-    sqxtunb         z0.b, z0.h
-    sqxtunb         z1.b, z1.h
-    st1b            {z0.h}, p1, [x2]
-    st1b            {z1.h}, p1, [x2, x10]
+    add             z0.h, p0/m, z0.h, z2.h
+    add             z1.h, p0/m, z1.h, z3.h
+    sqrshrnb        z0.b, z0.h, #7
+    add             z1.b, z1.b, #0x80
+    sqrshrnb        z1.b, z1.h, #7
+    add             z0.b, z0.b, #0x80
+    st1b            {z0.h}, p0, [x2]
+    st1b            {z1.h}, p0, [x2, #1, mul vl]
     add             x2, x2, x5
     cbnz            w12, .loop_gt_eq_32_sve2_addavg_32x\h
     ret
 .vl_gt_48_addAvg_32x\h\():
     ptrue           p0.b, vl64
-    ptrue           p1.h, vl32
 .loop_eq_64_sve2_addavg_32x\h\():
     sub             w12, w12, #1
     ld1b            {z0.b}, p0/z, [x0]
     ld1b            {z1.b}, p0/z, [x1]
     add             x0, x0, x3, lsl #1
     add             x1, x1, x4, lsl #1
-    add             z0.h, p1/m, z0.h, z1.h
-    saddlb          z1.s, z0.h, z30.h
-    saddlt          z2.s, z0.h, z30.h
-    shrnb           z0.h, z1.s, #7
-    shrnt           z0.h, z2.s, #7
-    sqxtunb         z0.b, z0.h
-    st1b            {z0.h}, p1, [x2]
+    add             z0.h, p0/m, z0.h, z1.h
+    sqrshrnb        z0.b, z0.h, #7
+    add             z0.b, z0.b, #0x80
+    st1b            {z0.h}, p0, [x2]
     add             x2, x2, x5
     cbnz            w12, .loop_eq_64_sve2_addavg_32x\h
     ret
@@ -1505,354 +1444,257 @@ addAvg_32xN_sve2 48
 addAvg_32xN_sve2 64
 
 function PFX(addAvg_48x64_sve2)
-    mov             z30.b, #0x40
     mov             w12, 64
     rdvl            x9, #1
     cmp             x9, #16
     bgt             .vl_gt_16_addAvg_48x64
     ptrue           p0.b, vl16
-    ptrue           p1.h, vl8
 .loop_eq_16_sve2_addavg_48x64:
     sub             w12, w12, #1
-    mov             x14, #16
     ld1b            {z0.b}, p0/z, [x0]
-    ld1b            {z1.b}, p0/z, [x0, x14]
-    add             x14, x14, #16
-    ld1b            {z2.b}, p0/z, [x0, x14]
-    add             x14, x14, #16
-    ld1b            {z3.b}, p0/z, [x0, x14]
-    add             x14, x14, #16
-    ld1b            {z20.b}, p0/z, [x0, x14]
-    add             x14, x14, #16
-    ld1b            {z21.b}, p0/z, [x0, x14]
-    mov             x14, #16
+    ld1b            {z1.b}, p0/z, [x0, #1, mul vl]
+    ld1b            {z2.b}, p0/z, [x0, #2, mul vl]
+    ld1b            {z3.b}, p0/z, [x0, #3, mul vl]
+    ld1b            {z20.b}, p0/z, [x0, #4, mul vl]
+    ld1b            {z21.b}, p0/z, [x0, #5, mul vl]
     ld1b            {z4.b}, p0/z, [x1]
-    ld1b            {z5.b}, p0/z, [x1, x14]
-    add             x14, x14, #16
-    ld1b            {z6.b}, p0/z, [x1, x14]
-    add             x14, x14, #16
-    ld1b            {z7.b}, p0/z, [x1, x14]
-    add             x14, x14, #16
-    ld1b            {z22.b}, p0/z, [x1, x14]
-    add             x14, x14, #16
-    ld1b            {z23.b}, p0/z, [x1, x14]
+    ld1b            {z5.b}, p0/z, [x1, #1, mul vl]
+    ld1b            {z6.b}, p0/z, [x1, #2, mul vl]
+    ld1b            {z7.b}, p0/z, [x1, #3, mul vl]
+    ld1b            {z22.b}, p0/z, [x1, #4, mul vl]
+    ld1b            {z23.b}, p0/z, [x1, #5, mul vl]
     add             x0, x0, x3, lsl #1
     add             x1, x1, x4, lsl #1
-    add             z0.h, p1/m, z0.h, z4.h
-    add             z1.h, p1/m, z1.h, z5.h
-    add             z2.h, p1/m, z2.h, z6.h
-    add             z3.h, p1/m, z3.h, z7.h
-    add             z20.h, p1/m, z20.h, z22.h
-    add             z21.h, p1/m, z21.h, z23.h
-    saddlb          z4.s, z0.h, z30.h
-    saddlt          z5.s, z0.h, z30.h
-    saddlb          z6.s, z1.h, z30.h
-    saddlt          z7.s, z1.h, z30.h
-    saddlb          z8.s, z2.h, z30.h
-    saddlt          z9.s, z2.h, z30.h
-    saddlb          z10.s, z3.h, z30.h
-    saddlt          z11.s, z3.h, z30.h
-    saddlb          z12.s, z20.h, z30.h
-    saddlt          z13.s, z20.h, z30.h
-    saddlb          z14.s, z21.h, z30.h
-    saddlt          z15.s, z21.h, z30.h
-    shrnb           z0.h, z4.s, #7
-    shrnt           z0.h, z5.s, #7
-    shrnb           z1.h, z6.s, #7
-    shrnt           z1.h, z7.s, #7
-    shrnb           z2.h, z8.s, #7
-    shrnt           z2.h, z9.s, #7
-    shrnb           z3.h, z10.s, #7
-    shrnt           z3.h, z11.s, #7
-    shrnb           z20.h, z12.s, #7
-    shrnt           z20.h, z13.s, #7
-    shrnb           z21.h, z14.s, #7
-    shrnt           z21.h, z15.s, #7
-    sqxtunb         z0.b, z0.h
-    sqxtunb         z1.b, z1.h
-    sqxtunb         z2.b, z2.h
-    sqxtunb         z3.b, z3.h
-    sqxtunb         z20.b, z20.h
-    sqxtunb         z21.b, z21.h
-    mov             x14, #8
-    st1b            {z0.h}, p1, [x2]
-    st1b            {z1.h}, p1, [x2, x14]
-    add             x14, x14, #8
-    st1b            {z2.h}, p1, [x2, x14]
-    add             x14, x14, #8
-    st1b            {z3.h}, p1, [x2, x14]
-    add             x14, x14, #8
-    st1b            {z20.h}, p1, [x2, x14]
-    add             x14, x14, #8
-    st1b            {z21.h}, p1, [x2, x14]
+    add             z0.h, p0/m, z0.h, z4.h
+    add             z1.h, p0/m, z1.h, z5.h
+    add             z2.h, p0/m, z2.h, z6.h
+    add             z3.h, p0/m, z3.h, z7.h
+    add             z20.h, p0/m, z20.h, z22.h
+    add             z21.h, p0/m, z21.h, z23.h
+    sqrshrnb        z0.b, z0.h, #7
+    add             z0.b, z0.b, #0x80
+    sqrshrnb        z1.b, z1.h, #7
+    add             z1.b, z1.b, #0x80
+    sqrshrnb        z2.b, z2.h, #7
+    add             z2.b, z2.b, #0x80
+    sqrshrnb        z3.b, z3.h, #7
+    add             z3.b, z3.b, #0x80
+    sqrshrnb        z20.b, z20.h, #7
+    add             z20.b, z20.b, #0x80
+    sqrshrnb        z21.b, z21.h, #7
+    add             z21.b, z21.b, #0x80
+    st1b            {z0.h}, p0, [x2]
+    st1b            {z1.h}, p0, [x2, #1, mul vl]
+    st1b            {z2.h}, p0, [x2, #2, mul vl]
+    st1b            {z3.h}, p0, [x2, #3, mul vl]
+    st1b            {z20.h}, p0, [x2, #4, mul vl]
+    st1b            {z21.h}, p0, [x2, #5, mul vl]
     add             x2, x2, x5
     cbnz            w12, .loop_eq_16_sve2_addavg_48x64
     ret
 .vl_gt_16_addAvg_48x64:
-    // No need for extra checks as ptrues cannot
-    // be perfectly adjusted
+    cmp             x9, #48
+    bgt             .vl_gt_48_addAvg_48x64
     ptrue           p0.b, vl32
-    ptrue           p1.h, vl16
 .loop_gt_eq_32_sve2_addavg_48x64:
     sub             w12, w12, #1
-    mov             x14, #16
     ld1b            {z0.b}, p0/z, [x0]
-    ld1b            {z1.b}, p0/z, [x0, x14]
-    add             x14, x14, #32
-    ld1b            {z2.b}, p0/z, [x0, x14]
-    mov             x14, #16
+    ld1b            {z1.b}, p0/z, [x0, #1, mul vl]
+    ld1b            {z2.b}, p0/z, [x0, #2, mul vl]
     ld1b            {z4.b}, p0/z, [x1]
-    ld1b            {z5.b}, p0/z, [x1, x14]
-    add             x14, x14, #32
-    ld1b            {z6.b}, p0/z, [x1, x14]
+    ld1b            {z5.b}, p0/z, [x1, #1, mul vl]
+    ld1b            {z6.b}, p0/z, [x1, #2, mul vl]
     add             x0, x0, x3, lsl #1
     add             x1, x1, x4, lsl #1
-    add             z0.h, p1/m, z0.h, z4.h
-    add             z1.h, p1/m, z1.h, z5.h
-    add             z2.h, p1/m, z2.h, z6.h
-    saddlb          z4.s, z0.h, z30.h
-    saddlt          z5.s, z0.h, z30.h
-    saddlb          z6.s, z1.h, z30.h
-    saddlt          z7.s, z1.h, z30.h
-    saddlb          z8.s, z2.h, z30.h
-    saddlt          z9.s, z2.h, z30.h
-    shrnb           z0.h, z4.s, #7
-    shrnt           z0.h, z5.s, #7
-    shrnb           z1.h, z6.s, #7
-    shrnt           z1.h, z7.s, #7
-    shrnb           z2.h, z8.s, #7
-    shrnt           z2.h, z9.s, #7
-    sqxtunb         z0.b, z0.h
-    sqxtunb         z1.b, z1.h
-    sqxtunb         z2.b, z2.h
-    mov             x14, #8
-    st1b            {z0.h}, p1, [x2]
-    st1b            {z1.h}, p1, [x2, x14]
-    add             x14, x14, #16
-    st1b            {z2.h}, p1, [x2, x14]
+    add             z0.h, p0/m, z0.h, z4.h
+    add             z1.h, p0/m, z1.h, z5.h
+    add             z2.h, p0/m, z2.h, z6.h
+    sqrshrnb        z0.b, z0.h, #7
+    add             z0.b, z0.b, #0x80
+    sqrshrnb        z1.b, z1.h, #7
+    add             z1.b, z1.b, #0x80
+    sqrshrnb        z2.b, z2.h, #7
+    add             z2.b, z2.b, #0x80
+    st1b            {z0.h}, p0, [x2]
+    st1b            {z1.h}, p0, [x2, #1, mul vl]
+    st1b            {z2.h}, p0, [x2, #2, mul vl]
     add             x2, x2, x5
     cbnz            w12, .loop_gt_eq_32_sve2_addavg_48x64
+    ret
+.vl_gt_48_addAvg_48x64:
+    cmp             x9, #112
+    bgt             .vl_gt_112_addAvg_48x64
+    ptrue           p0.b, vl64
+    ptrue           p1.b, vl32
+.loop_gt_48_sve2_addavg_48x64:
+    sub             w12, w12, #1
+    ld1b            {z0.b}, p0/z, [x0]
+    ld1b            {z1.b}, p1/z, [x0, #1, mul vl]
+    ld1b            {z4.b}, p0/z, [x1]
+    ld1b            {z5.b}, p1/z, [x1, #1, mul vl]
+    add             x0, x0, x3, lsl #1
+    add             x1, x1, x4, lsl #1
+    add             z0.h, p0/m, z0.h, z4.h
+    add             z1.h, p1/m, z1.h, z5.h
+    sqrshrnb        z0.b, z0.h, #7
+    add             z0.b, z0.b, #0x80
+    sqrshrnb        z1.b, z1.h, #7
+    add             z1.b, z1.b, #0x80
+    st1b            {z0.h}, p0, [x2]
+    st1b            {z1.h}, p1, [x2, #1, mul vl]
+    add             x2, x2, x5
+    cbnz            w12, .loop_gt_48_sve2_addavg_48x64
+    ret
+.vl_gt_112_addAvg_48x64:
+    mov             w0, #96
+    whilelt         p0.b, wzr, w0
+.loop_gt_112_sve2_addavg_48x64:
+    sub             w12, w12, #1
+    ld1b            {z0.b}, p0/z, [x0]
+    ld1b            {z4.b}, p0/z, [x1]
+    add             x0, x0, x3, lsl #1
+    add             x1, x1, x4, lsl #1
+    add             z0.h, p0/m, z0.h, z4.h
+    sqrshrnb        z0.b, z0.h, #7
+    add             z0.b, z0.b, #0x80
+    st1b            {z0.h}, p0, [x2]
+    add             x2, x2, x5
+    cbnz            w12, .loop_gt_112_sve2_addavg_48x64
     ret
 endfunc
 
 .macro addAvg_64xN_sve2 h
 function PFX(addAvg_64x\h\()_sve2)
-    mov             z30.b, #0x40
     mov             w12, #\h
     rdvl            x9, #1
     cmp             x9, #16
     bgt             .vl_gt_16_addAvg_64x\h
     ptrue           p0.b, vl16
-    ptrue           p1.h, vl8
 .loop_eq_16_sve2_addavg_64x\h\():
     sub             w12, w12, #1
-    mov             x14, #16
     ld1b            {z0.b}, p0/z, [x0]
-    ld1b            {z1.b}, p0/z, [x0, x14]
-    add             x14, x14, #16
-    ld1b            {z2.b}, p0/z, [x0, x14]
-    add             x14, x14, #16
-    ld1b            {z3.b}, p0/z, [x0, x14]
-    add             x14, x14, #16
-    ld1b            {z20.b}, p0/z, [x0, x14]
-    add             x14, x14, #16
-    ld1b            {z21.b}, p0/z, [x0, x14]
-    add             x14, x14, #16
-    ld1b            {z22.b}, p0/z, [x0, x14]
-    add             x14, x14, #16
-    ld1b            {z23.b}, p0/z, [x0, x14]
-    mov             x14, #16
+    ld1b            {z1.b}, p0/z, [x0, #1, mul vl]
+    ld1b            {z2.b}, p0/z, [x0, #2, mul vl]
+    ld1b            {z3.b}, p0/z, [x0, #3, mul vl]
+    ld1b            {z20.b}, p0/z, [x0, #4, mul vl]
+    ld1b            {z21.b}, p0/z, [x0, #5, mul vl]
+    ld1b            {z22.b}, p0/z, [x0, #6, mul vl]
+    ld1b            {z23.b}, p0/z, [x0, #7, mul vl]
     ld1b            {z4.b}, p0/z, [x1]
-    ld1b            {z5.b}, p0/z, [x1, x14]
-    add             x14, x14, #16
-    ld1b            {z6.b}, p0/z, [x1, x14]
-    add             x14, x14, #16
-    ld1b            {z7.b}, p0/z, [x1, x14]
-    add             x14, x14, #16
-    ld1b            {z24.b}, p0/z, [x1, x14]
-    add             x14, x14, #16
-    ld1b            {z25.b}, p0/z, [x1, x14]
-    add             x14, x14, #16
-    ld1b            {z26.b}, p0/z, [x1, x14]
-    add             x14, x14, #16
-    ld1b            {z27.b}, p0/z, [x1, x14]
+    ld1b            {z5.b}, p0/z, [x1, #1, mul vl]
+    ld1b            {z6.b}, p0/z, [x1, #2, mul vl]
+    ld1b            {z7.b}, p0/z, [x1, #3, mul vl]
+    ld1b            {z24.b}, p0/z, [x1, #4, mul vl]
+    ld1b            {z25.b}, p0/z, [x1, #5, mul vl]
+    ld1b            {z26.b}, p0/z, [x1, #6, mul vl]
+    ld1b            {z27.b}, p0/z, [x1, #7, mul vl]
     add             x0, x0, x3, lsl #1
     add             x1, x1, x4, lsl #1
-    add             z0.h, p1/m, z0.h, z4.h
-    add             z1.h, p1/m, z1.h, z5.h
-    add             z2.h, p1/m, z2.h, z6.h
-    add             z3.h, p1/m, z3.h, z7.h
-    add             z20.h, p1/m, z20.h, z24.h
-    add             z21.h, p1/m, z21.h, z25.h
-    add             z22.h, p1/m, z22.h, z26.h
-    add             z23.h, p1/m, z23.h, z27.h
-    saddlb          z4.s, z0.h, z30.h
-    saddlt          z5.s, z0.h, z30.h
-    saddlb          z6.s, z1.h, z30.h
-    saddlt          z7.s, z1.h, z30.h
-    saddlb          z8.s, z2.h, z30.h
-    saddlt          z9.s, z2.h, z30.h
-    saddlb          z10.s, z3.h, z30.h
-    saddlt          z11.s, z3.h, z30.h
-    saddlb          z12.s, z20.h, z30.h
-    saddlt          z13.s, z20.h, z30.h
-    saddlb          z14.s, z21.h, z30.h
-    saddlt          z15.s, z21.h, z30.h
-    saddlb          z16.s, z22.h, z30.h
-    saddlt          z17.s, z22.h, z30.h
-    saddlb          z18.s, z23.h, z30.h
-    saddlt          z19.s, z23.h, z30.h
-    shrnb           z0.h, z4.s, #7
-    shrnt           z0.h, z5.s, #7
-    shrnb           z1.h, z6.s, #7
-    shrnt           z1.h, z7.s, #7
-    shrnb           z2.h, z8.s, #7
-    shrnt           z2.h, z9.s, #7
-    shrnb           z3.h, z10.s, #7
-    shrnt           z3.h, z11.s, #7
-    shrnb           z20.h, z12.s, #7
-    shrnt           z20.h, z13.s, #7
-    shrnb           z21.h, z14.s, #7
-    shrnt           z21.h, z15.s, #7
-    shrnb           z22.h, z16.s, #7
-    shrnt           z22.h, z17.s, #7
-    shrnb           z23.h, z18.s, #7
-    shrnt           z23.h, z19.s, #7
-    sqxtunb         z0.b, z0.h
-    sqxtunb         z1.b, z1.h
-    sqxtunb         z2.b, z2.h
-    sqxtunb         z3.b, z3.h
-    sqxtunb         z20.b, z20.h
-    sqxtunb         z21.b, z21.h
-    sqxtunb         z22.b, z22.h
-    sqxtunb         z23.b, z23.h
-    mov             x14, #8
+    add             z0.h, p0/m, z0.h, z4.h
+    add             z1.h, p0/m, z1.h, z5.h
+    add             z2.h, p0/m, z2.h, z6.h
+    add             z3.h, p0/m, z3.h, z7.h
+    add             z20.h, p0/m, z20.h, z24.h
+    add             z21.h, p0/m, z21.h, z25.h
+    add             z22.h, p0/m, z22.h, z26.h
+    add             z23.h, p0/m, z23.h, z27.h
+    sqrshrnb        z0.b, z0.h, #7
+    add             z0.b, z0.b, #0x80
+    sqrshrnb        z1.b, z1.h, #7
+    add             z1.b, z1.b, #0x80
+    sqrshrnb        z2.b, z2.h, #7
+    add             z2.b, z2.b, #0x80
+    sqrshrnb        z3.b, z3.h, #7
+    add             z3.b, z3.b, #0x80
+    sqrshrnb        z20.b, z20.h, #7
+    add             z20.b, z20.b, #0x80
+    sqrshrnb        z21.b, z21.h, #7
+    add             z21.b, z21.b, #0x80
+    sqrshrnb        z22.b, z22.h, #7
+    add             z22.b, z22.b, #0x80
+    sqrshrnb        z23.b, z23.h, #7
+    add             z23.b, z23.b, #0x80
     st1b            {z0.h}, p1, [x2]
-    st1b            {z1.h}, p1, [x2, x14]
-    add             x14, x14, #8
-    st1b            {z2.h}, p1, [x2, x14]
-    add             x14, x14, #8
-    st1b            {z3.h}, p1, [x2, x14]
-    add             x14, x14, #8
-    st1b            {z20.h}, p1, [x2, x14]
-    add             x14, x14, #8
-    st1b            {z21.h}, p1, [x2, x14]
-    add             x14, x14, #8
-    st1b            {z22.h}, p1, [x2, x14]
-    add             x14, x14, #8
-    st1b            {z23.h}, p1, [x2, x14]
+    st1b            {z1.h}, p0, [x2, #1, mul vl]
+    st1b            {z2.h}, p0, [x2, #2, mul vl]
+    st1b            {z3.h}, p0, [x2, #3, mul vl]
+    st1b            {z20.h}, p0, [x2, #4, mul vl]
+    st1b            {z21.h}, p0, [x2, #5, mul vl]
+    st1b            {z22.h}, p0, [x2, #6, mul vl]
+    st1b            {z23.h}, p0, [x2, #7, mul vl]
     add             x2, x2, x5
     cbnz            w12, .loop_eq_16_sve2_addavg_64x\h
     ret
 .vl_gt_16_addAvg_64x\h\():
-    // No need for extra checks for 48-bit 
-    // as ptrues cannot be perfectly adjusted
     cmp             x9, #48
     bgt             .vl_gt_48_addAvg_64x\h
     ptrue           p0.b, vl32
-    ptrue           p1.h, vl16
 .loop_gt_eq_32_sve2_addavg_64x\h\():
     sub             w12, w12, #1
-    mov             x14, #16
     ld1b            {z0.b}, p0/z, [x0]
-    ld1b            {z1.b}, p0/z, [x0, x14]
-    add             x14, x14, #32
-    ld1b            {z2.b}, p0/z, [x0, x14]
-    add             x14, x14, #32
-    ld1b            {z3.b}, p0/z, [x0, x14]
-    mov             x14, #16
+    ld1b            {z1.b}, p0/z, [x0, #1, mul vl]
+    ld1b            {z2.b}, p0/z, [x0, #2, mul vl]
+    ld1b            {z3.b}, p0/z, [x0, #3, mul vl]
     ld1b            {z4.b}, p0/z, [x1]
-    ld1b            {z5.b}, p0/z, [x1, x14]
-    add             x14, x14, #32
-    ld1b            {z6.b}, p0/z, [x1, x14]
-    add             x14, x14, #32
-    ld1b            {z7.b}, p0/z, [x1, x14]
+    ld1b            {z5.b}, p0/z, [x1, #1, mul vl]
+    ld1b            {z6.b}, p0/z, [x1, #2, mul vl]
+    ld1b            {z7.b}, p0/z, [x1, #3, mul vl]
     add             x0, x0, x3, lsl #1
     add             x1, x1, x4, lsl #1
-    add             z0.h, p1/m, z0.h, z4.h
-    add             z1.h, p1/m, z1.h, z5.h
-    add             z2.h, p1/m, z2.h, z6.h
-    add             z3.h, p1/m, z3.h, z7.h
-    saddlb          z4.s, z0.h, z30.h
-    saddlt          z5.s, z0.h, z30.h
-    saddlb          z6.s, z1.h, z30.h
-    saddlt          z7.s, z1.h, z30.h
-    saddlb          z8.s, z2.h, z30.h
-    saddlt          z9.s, z2.h, z30.h
-    saddlb          z10.s, z3.h, z30.h
-    saddlt          z11.s, z3.h, z30.h
-    shrnb           z0.h, z4.s, #7
-    shrnt           z0.h, z5.s, #7
-    shrnb           z1.h, z6.s, #7
-    shrnt           z1.h, z7.s, #7
-    shrnb           z2.h, z8.s, #7
-    shrnt           z2.h, z9.s, #7
-    shrnb           z3.h, z10.s, #7
-    shrnt           z3.h, z11.s, #7
-    sqxtunb         z0.b, z0.h
-    sqxtunb         z1.b, z1.h
-    sqxtunb         z2.b, z2.h
-    sqxtunb         z3.b, z3.h
-    mov             x14, #8
-    st1b            {z0.h}, p1, [x2]
-    st1b            {z1.h}, p1, [x2, x14]
-    add             x14, x14, #16
-    st1b            {z2.h}, p1, [x2, x14]
-    add             x14, x14, #16
-    st1b            {z3.h}, p1, [x2, x14]
+    add             z0.h, p0/m, z0.h, z4.h
+    add             z1.h, p0/m, z1.h, z5.h
+    add             z2.h, p0/m, z2.h, z6.h
+    add             z3.h, p0/m, z3.h, z7.h
+    sqrshrnb        z0.b, z0.h, #7
+    add             z0.b, z0.b, #0x80
+    sqrshrnb        z1.b, z1.h, #7
+    add             z1.b, z1.b, #0x80
+    sqrshrnb        z2.b, z2.h, #7
+    add             z2.b, z2.b, #0x80
+    sqrshrnb        z3.b, z3.h, #7
+    add             z3.b, z3.b, #0x80
+    st1b            {z0.h}, p0, [x2]
+    st1b            {z1.h}, p0, [x2, #1, mul vl]
+    st1b            {z2.h}, p0, [x2, #2, mul vl]
+    st1b            {z3.h}, p0, [x2, #3, mul vl]
     add             x2, x2, x5
     cbnz            w12, .loop_gt_eq_32_sve2_addavg_64x\h
     ret
 .vl_gt_48_addAvg_64x\h\():
-    // No need for extra checks for 80 and 112-bit 
-    // as ptrues cannot be perfectly adjusted
     cmp             x9, #112
     bgt             .vl_gt_112_addAvg_64x\h
     ptrue           p0.b, vl64
-    ptrue           p1.h, vl32
-    mov             x11, #64
-    mov             x10, #32
 .loop_gt_eq_48_sve2_addavg_64x\h\():
     sub             w12, w12, #1
     ld1b            {z0.b}, p0/z, [x0]
-    ld1b            {z1.b}, p0/z, [x0, x11]
+    ld1b            {z1.b}, p0/z, [x0, #1, mul vl]
     ld1b            {z4.b}, p0/z, [x1]
-    ld1b            {z5.b}, p0/z, [x1, x11]
+    ld1b            {z5.b}, p0/z, [x1, #1, mul vl]
     add             x0, x0, x3, lsl #1
     add             x1, x1, x4, lsl #1
-    add             z0.h, p1/m, z0.h, z4.h
-    add             z1.h, p1/m, z1.h, z5.h
-    saddlb          z4.s, z0.h, z30.h
-    saddlt          z5.s, z0.h, z30.h
-    saddlb          z6.s, z1.h, z30.h
-    saddlt          z7.s, z1.h, z30.h
-    shrnb           z0.h, z4.s, #7
-    shrnt           z0.h, z5.s, #7
-    shrnb           z1.h, z6.s, #7
-    shrnt           z1.h, z7.s, #7
-    sqxtunb         z0.b, z0.h
-    sqxtunb         z1.b, z1.h
-    st1b            {z0.h}, p1, [x2]
-    st1b            {z1.h}, p1, [x2, x10]
+    add             z0.h, p0/m, z0.h, z4.h
+    add             z1.h, p0/m, z1.h, z5.h
+    sqrshrnb        z0.b, z0.h, #7
+    add             z0.b, z0.b, #0x80
+    sqrshrnb        z1.b, z1.h, #7
+    add             z1.b, z1.b, #0x80
+    st1b            {z0.h}, p0, [x2]
+    st1b            {z1.h}, p0, [x2, #1, mul vl]
     add             x2, x2, x5
     cbnz            w12, .loop_gt_eq_48_sve2_addavg_64x\h
     ret
 .vl_gt_112_addAvg_64x\h\():
     ptrue           p0.b, vl128
-    ptrue           p1.h, vl64
 .loop_gt_eq_128_sve2_addavg_64x\h\():
     sub             w12, w12, #1
     ld1b            {z0.b}, p0/z, [x0]
     ld1b            {z4.b}, p0/z, [x1]
     add             x0, x0, x3, lsl #1
     add             x1, x1, x4, lsl #1
-    add             z0.h, p1/m, z0.h, z4.h
-    saddlb          z4.s, z0.h, z30.h
-    saddlt          z5.s, z0.h, z30.h
-    shrnb           z0.h, z4.s, #7
-    shrnt           z0.h, z5.s, #7
-    sqxtunb         z0.b, z0.h
-    st1b            {z0.h}, p1, [x2]
+    add             z0.h, p0/m, z0.h, z4.h
+    sqrshrnb        z0.b, z0.h, #7
+    add             z0.b, z0.b, #0x80
+    st1b            {z0.h}, p0, [x2]
     add             x2, x2, x5
     cbnz            w12, .loop_gt_eq_128_sve2_addavg_64x\h
     ret

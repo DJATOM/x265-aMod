@@ -491,15 +491,15 @@ endfunc
 function PFX(pixel_sse_pp_4x4_sve2)
     ptrue           p0.s, vl4
     ld1b            {z0.s}, p0/z, [x0]
-    add             x0, x0, x1
     ld1b            {z17.s}, p0/z, [x2]
+    add             x0, x0, x1
     add             x2, x2, x3
     sub             z0.s, p0/m, z0.s, z17.s
     mul             z0.s, p0/m, z0.s, z0.s
 .rept 3
     ld1b            {z16.s}, p0/z, [x0]
-    add             x0, x0, x1
     ld1b            {z17.s}, p0/z, [x2]
+    add             x0, x0, x1
     add             x2, x2, x3
     sub             z16.s, p0/m, z16.s, z17.s
     mla             z0.s, p0/m, z16.s, z16.s
@@ -512,15 +512,15 @@ endfunc
 function PFX(pixel_sse_pp_4x8_sve2)
     ptrue           p0.s, vl4
     ld1b            {z0.s}, p0/z, [x0]
-    add             x0, x0, x1
     ld1b            {z17.s}, p0/z, [x2]
+    add             x0, x0, x1
     add             x2, x2, x3
     sub             z0.s, p0/m, z0.s, z17.s
     mul             z0.s, p0/m, z0.s, z0.s
 .rept 7
     ld1b            {z16.s}, p0/z, [x0]
-    add             x0, x0, x1
     ld1b            {z17.s}, p0/z, [x2]
+    add             x0, x0, x1
     add             x2, x2, x3
     sub             z16.s, p0/m, z16.s, z17.s
     mla             z0.s, p0/m, z16.s, z16.s
@@ -536,8 +536,8 @@ function PFX(pixel_sse_pp_8x8_sve2)
     mov             z4.d, #0
 .rept 8
     ld1b            {z16.b}, p0/z, [x0]
-    add             x0, x0, x1
     ld1b            {z17.b}, p0/z, [x2]
+    add             x0, x0, x1
     add             x2, x2, x3
     usublb          z1.h, z16.b, z17.b
     usublt          z2.h, z16.b, z17.b
@@ -560,8 +560,8 @@ function PFX(pixel_sse_pp_8x16_sve2)
     mov             z4.d, #0
 .rept 16
     ld1b            {z16.b}, p0/z, [x0]
-    add             x0, x0, x1
     ld1b            {z17.b}, p0/z, [x2]
+    add             x0, x0, x1
     add             x2, x2, x3
     usublb          z1.h, z16.b, z17.b
     usublt          z2.h, z16.b, z17.b
@@ -585,8 +585,8 @@ function PFX(pixel_sse_pp_16x\h\()_sve2)
     mov             z4.d, #0
 .rept \h
     ld1b            {z16.b}, p0/z, [x0]
-    add             x0, x0, x1
     ld1b            {z17.b}, p0/z, [x2]
+    add             x0, x0, x1
     add             x2, x2, x3
     usublb          z1.h, z16.b, z17.b
     usublt          z2.h, z16.b, z17.b
@@ -614,13 +614,12 @@ function PFX(pixel_sse_pp_32x32_sve2)
     ptrue           p0.b, vl16
     mov             z20.d, #0
     mov             z21.d, #0
-    mov             x11, #16
 .rept 32
     ld1b            {z16.b}, p0/z, [x0]
-    ld1b            {z17.b}, p0/z, [x0, x11]
-    add             x0, x0, x1
+    ld1b            {z17.b}, p0/z, [x0, #1, mul vl]
     ld1b            {z18.b}, p0/z, [x2]
-    ld1b            {z19.b}, p0/z, [x2, x11]
+    ld1b            {z19.b}, p0/z, [x2, #1, mul vl]
+    add             x0, x0, x1
     add             x2, x2, x3
     usublb          z1.h, z16.b, z18.b
     usublt          z2.h, z16.b, z18.b
@@ -647,8 +646,8 @@ function PFX(pixel_sse_pp_32x32_sve2)
     mov             z21.d, #0
 .rept 32
     ld1b            {z16.b}, p0/z, [x0]
-    add             x0, x0, x1
     ld1b            {z18.b}, p0/z, [x2]
+    add             x0, x0, x1
     add             x2, x2, x3
     usublb          z1.h, z16.b, z18.b
     usublt          z2.h, z16.b, z18.b
@@ -672,13 +671,12 @@ function PFX(pixel_sse_pp_32x64_sve2)
     ptrue           p0.b, vl16
     mov             z20.d, #0
     mov             z21.d, #0
-    mov             x11, #16
 .rept 64
     ld1b            {z16.b}, p0/z, [x0]
-    ld1b            {z17.b}, p0/z, [x0, x11]
-    add             x0, x0, x1
+    ld1b            {z17.b}, p0/z, [x0, #1, mul vl]
     ld1b            {z18.b}, p0/z, [x2]
-    ld1b            {z19.b}, p0/z, [x2, x11]
+    ld1b            {z19.b}, p0/z, [x2, #1, mul vl]
+    add             x0, x0, x1
     add             x2, x2, x3
     usublb          z1.h, z16.b, z18.b
     usublt          z2.h, z16.b, z18.b
@@ -705,8 +703,8 @@ function PFX(pixel_sse_pp_32x64_sve2)
     mov             z21.d, #0
 .rept 64
     ld1b            {z16.b}, p0/z, [x0]
-    add             x0, x0, x1
     ld1b            {z18.b}, p0/z, [x2]
+    add             x0, x0, x1
     add             x2, x2, x3
     usublb          z1.h, z16.b, z18.b
     usublt          z2.h, z16.b, z18.b
@@ -731,21 +729,15 @@ function PFX(pixel_sse_pp_64x64_sve2)
     mov             z24.d, #0
     mov             z25.d, #0
 .rept 64
-    mov             x11, #16
     ld1b            {z16.b}, p0/z, [x0]
-    ld1b            {z17.b}, p0/z, [x0, x11]
-    add             x11, x11, #16
-    ld1b            {z18.b}, p0/z, [x0, x11]
-    add             x11, x11, #16
-    ld1b            {z19.b}, p0/z, [x0, x11]
-    add             x0, x0, x1
-    mov             x11, #16
+    ld1b            {z17.b}, p0/z, [x0, #1, mul vl]
+    ld1b            {z18.b}, p0/z, [x0, #2, mul vl]
+    ld1b            {z19.b}, p0/z, [x0, #3, mul vl]
     ld1b            {z20.b}, p0/z, [x2]
-    ld1b            {z21.b}, p0/z, [x2, x11]
-    add             x11, x11, #16
-    ld1b            {z22.b}, p0/z, [x2, x11]
-    add             x11, x11, #16
-    ld1b            {z23.b}, p0/z, [x2, x11]
+    ld1b            {z21.b}, p0/z, [x2, #1, mul vl]
+    ld1b            {z22.b}, p0/z, [x2, #2, mul vl]
+    ld1b            {z23.b}, p0/z, [x2, #3, mul vl]
+    add             x0, x0, x1
     add             x2, x2, x3
     usublb          z1.h, z16.b, z20.b
     usublt          z2.h, z16.b, z20.b
@@ -782,15 +774,14 @@ function PFX(pixel_sse_pp_64x64_sve2)
     cmp             x9, #48
     bgt             .vl_gt_48_pixel_sse_pp_64x64
     ptrue           p0.b, vl32
-    mov             x11, #32
     mov             z24.d, #0
     mov             z25.d, #0
 .rept 64
     ld1b            {z16.b}, p0/z, [x0]
-    ld1b            {z17.b}, p0/z, [x0, x11]
-    add             x0, x0, x1
+    ld1b            {z17.b}, p0/z, [x0, #1, mul vl]
     ld1b            {z20.b}, p0/z, [x2]
-    ld1b            {z21.b}, p0/z, [x2, x11]
+    ld1b            {z21.b}, p0/z, [x2, #1, mul vl]
+    add             x0, x0, x1
     add             x2, x2, x3
     usublb          z1.h, z16.b, z20.b
     usublt          z2.h, z16.b, z20.b
@@ -817,8 +808,8 @@ function PFX(pixel_sse_pp_64x64_sve2)
     mov             z25.d, #0
 .rept 64
     ld1b            {z16.b}, p0/z, [x0]
-    add             x0, x0, x1
     ld1b            {z20.b}, p0/z, [x2]
+    add             x0, x0, x1
     add             x2, x2, x3
     usublb          z1.h, z16.b, z20.b
     usublt          z2.h, z16.b, z20.b
@@ -838,16 +829,16 @@ endfunc
 function PFX(pixel_sse_ss_4x4_sve2)
     ptrue           p0.b, vl8
     ld1b            {z16.b}, p0/z, [x0]
-    add             x0, x0, x1, lsl #1
     ld1b            {z17.b}, p0/z, [x2]
+    add             x0, x0, x1, lsl #1
     add             x2, x2, x3, lsl #1
     sub             z1.h, z16.h, z17.h
     smullb          z3.s, z1.h, z1.h
     smullt          z4.s, z1.h, z1.h
 .rept 3
     ld1b            {z16.b}, p0/z, [x0]
-    add             x0, x0, x1, lsl #1
     ld1b            {z17.b}, p0/z, [x2]
+    add             x0, x0, x1, lsl #1
     add             x2, x2, x3, lsl #1
     sub             z1.h, z16.h, z17.h
     smlalb          z3.s, z1.h, z1.h
@@ -867,8 +858,8 @@ function PFX(pixel_sse_ss_8x8_sve2)
     mov             z4.d, #0
 .rept 8
     ld1b            {z16.b}, p0/z, [x0]
-    add             x0, x0, x1, lsl #1
     ld1b            {z17.b}, p0/z, [x2]
+    add             x0, x0, x1, lsl #1
     add             x2, x2, x3, lsl #1
     sub             z1.h, z16.h, z17.h
     smlalb          z3.s, z1.h, z1.h
@@ -889,13 +880,12 @@ function PFX(pixel_sse_ss_16x16_sve2)
     ptrue           p0.b, vl16
     mov             z3.d, #0
     mov             z4.d, #0
-    mov             x11, #16
 .rept 16
     ld1b            {z16.b}, p0/z, [x0]
-    ld1b            {z17.b}, p0/z, [x0, x11]
-    add             x0, x0, x1, lsl #1
+    ld1b            {z17.b}, p0/z, [x0, #1, mul vl]
     ld1b            {z18.b}, p0/z, [x2]
-    ld1b            {z19.b}, p0/z, [x2, x11]
+    ld1b            {z19.b}, p0/z, [x2, #1, mul vl]
+    add             x0, x0, x1, lsl #1
     add             x2, x2, x3, lsl #1
     sub             z1.h, z16.h, z18.h
     sub             z2.h, z17.h, z19.h
@@ -916,8 +906,8 @@ function PFX(pixel_sse_ss_16x16_sve2)
     mov             z4.d, #0
 .rept 16
     ld1b            {z16.b}, p0/z, [x0]
-    add             x0, x0, x1, lsl #1
     ld1b            {z18.b}, p0/z, [x2]
+    add             x0, x0, x1, lsl #1
     add             x2, x2, x3, lsl #1
     sub             z1.h, z16.h, z18.h
     smlalb          z3.s, z1.h, z1.h
@@ -939,21 +929,15 @@ function PFX(pixel_sse_ss_32x32_sve2)
     mov             z5.d, #0
     mov             z6.d, #0
 .rept 32
-    mov             x11, #16
     ld1b            {z16.b}, p0/z, [x0]
-    ld1b            {z17.b}, p0/z, [x0, x11]
-    add             x11, x11, #16
-    ld1b            {z18.b}, p0/z, [x0, x11]
-    add             x11, x11, #16
-    ld1b            {z19.b}, p0/z, [x0, x11]
-    add             x0, x0, x1, lsl #1
-    mov             x11, #16
+    ld1b            {z17.b}, p0/z, [x0, #1, mul vl]
+    ld1b            {z18.b}, p0/z, [x0, #2, mul vl]
+    ld1b            {z19.b}, p0/z, [x0, #3, mul vl]
     ld1b            {z20.b}, p0/z, [x2]
-    ld1b            {z21.b}, p0/z, [x2, x11]
-    add             x11, x11, #16
-    ld1b            {z22.b}, p0/z, [x2, x11]
-    add             x11, x11, #16
-    ld1b            {z23.b}, p0/z, [x2, x11]
+    ld1b            {z21.b}, p0/z, [x2, #1, mul vl]
+    ld1b            {z22.b}, p0/z, [x2, #2, mul vl]
+    ld1b            {z23.b}, p0/z, [x2, #3, mul vl]
+    add             x0, x0, x1, lsl #1
     add             x2, x2, x3, lsl #1
     sub             z1.h, z16.h, z20.h
     sub             z2.h, z17.h, z21.h
@@ -980,13 +964,12 @@ function PFX(pixel_sse_ss_32x32_sve2)
     ptrue           p0.b, vl32
     mov             z5.d, #0
     mov             z6.d, #0
-    mov             x11, #32
 .rept 32
     ld1b            {z16.b}, p0/z, [x0]
-    ld1b            {z17.b}, p0/z, [x0, x11]
-    add             x0, x0, x1, lsl #1
+    ld1b            {z17.b}, p0/z, [x0, #1, mul vl]
     ld1b            {z20.b}, p0/z, [x2]
-    ld1b            {z21.b}, p0/z, [x2, x11]
+    ld1b            {z21.b}, p0/z, [x2, #1, mul vl]
+    add             x0, x0, x1, lsl #1
     add             x2, x2, x3, lsl #1
     sub             z1.h, z16.h, z20.h
     sub             z2.h, z17.h, z21.h
@@ -1007,8 +990,8 @@ function PFX(pixel_sse_ss_32x32_sve2)
     mov             z6.d, #0
 .rept 32
     ld1b            {z16.b}, p0/z, [x0]
-    add             x0, x0, x1, lsl #1
     ld1b            {z20.b}, p0/z, [x2]
+    add             x0, x0, x1, lsl #1
     add             x2, x2, x3, lsl #1
     sub             z1.h, z16.h, z20.h
     smlalb          z5.s, z1.h, z1.h
@@ -1030,20 +1013,14 @@ function PFX(pixel_sse_ss_64x64_sve2)
     mov             z5.d, #0
     mov             z6.d, #0
 .rept 64
-    mov             x11, #16
     ld1b            {z24.b}, p0/z, [x0]
-    ld1b            {z25.b}, p0/z, [x0, x11]
-    add             x11, x11, #16
-    ld1b            {z26.b}, p0/z, [x0, x11]
-    add             x11, x11, #16
-    ld1b            {z27.b}, p0/z, [x0, x11]
-    mov             x12, #16
+    ld1b            {z25.b}, p0/z, [x0, #1, mul vl]
+    ld1b            {z26.b}, p0/z, [x0, #2, mul vl]
+    ld1b            {z27.b}, p0/z, [x0, #3, mul vl]
     ld1b            {z28.b}, p0/z, [x2]
-    ld1b            {z29.b}, p0/z, [x2, x12]
-    add             x12, x12, #16
-    ld1b            {z30.b}, p0/z, [x2, x12]
-    add             x12, x12, #16
-    ld1b            {z31.b}, p0/z, [x2, x12]
+    ld1b            {z29.b}, p0/z, [x2, #1, mul vl]
+    ld1b            {z30.b}, p0/z, [x2, #2, mul vl]
+    ld1b            {z31.b}, p0/z, [x2, #3, mul vl]
     sub             z0.h, z24.h, z28.h
     sub             z1.h, z25.h, z29.h
     sub             z2.h, z26.h, z30.h
@@ -1056,22 +1033,14 @@ function PFX(pixel_sse_ss_64x64_sve2)
     smlalt          z6.s, z2.h, z2.h
     smlalb          z5.s, z3.h, z3.h
     smlalt          z6.s, z3.h, z3.h
-    add             x11, x11, #16
-    ld1b            {z24.b}, p0/z, [x0, x11]
-    add             x11, x11, #16
-    ld1b            {z25.b}, p0/z, [x0, x11]
-    add             x11, x11, #16
-    ld1b            {z26.b}, p0/z, [x0, x11]
-    add             x11, x11, #16
-    ld1b            {z27.b}, p0/z, [x0, x11]
-    add             x12, x12, #16
-    ld1b            {z28.b}, p0/z, [x2, x12]
-    add             x12, x12, #16
-    ld1b            {z29.b}, p0/z, [x2, x12]
-    add             x12, x12, #16
-    ld1b            {z30.b}, p0/z, [x2, x12]
-    add             x12, x12, #16
-    ld1b            {z31.b}, p0/z, [x2, x12]
+    ld1b            {z24.b}, p0/z, [x0, #4, mul vl]
+    ld1b            {z25.b}, p0/z, [x0, #5, mul vl]
+    ld1b            {z26.b}, p0/z, [x0, #6, mul vl]
+    ld1b            {z27.b}, p0/z, [x0, #7, mul vl]
+    ld1b            {z28.b}, p0/z, [x2, #4, mul vl]
+    ld1b            {z29.b}, p0/z, [x2, #5, mul vl]
+    ld1b            {z30.b}, p0/z, [x2, #6, mul vl]
+    ld1b            {z31.b}, p0/z, [x2, #7, mul vl]
     sub             z0.h, z24.h, z28.h
     sub             z1.h, z25.h, z29.h
     sub             z2.h, z26.h, z30.h
@@ -1099,27 +1068,21 @@ function PFX(pixel_sse_ss_64x64_sve2)
     ptrue           p0.b, vl32
     mov             z5.d, #0
     mov             z6.d, #0
-    mov             x11, #32
-    mov             x12, #32
 .rept 64
     ld1b            {z24.b}, p0/z, [x0]
-    ld1b            {z25.b}, p0/z, [x0, x11]
+    ld1b            {z25.b}, p0/z, [x0, #1, mul vl]
     ld1b            {z28.b}, p0/z, [x2]
-    ld1b            {z29.b}, p0/z, [x2, x12]
+    ld1b            {z29.b}, p0/z, [x2, #1, mul vl]
     sub             z0.h, z24.h, z28.h
     sub             z1.h, z25.h, z29.h
     smlalb          z5.s, z0.h, z0.h
     smlalt          z6.s, z0.h, z0.h
     smlalb          z5.s, z1.h, z1.h
     smlalt          z6.s, z1.h, z1.h
-    add             x11, x11, #32
-    ld1b            {z24.b}, p0/z, [x0, x11]
-    add             x11, x11, #32
-    ld1b            {z25.b}, p0/z, [x0, x11]
-    add             x12, x12, #32
-    ld1b            {z28.b}, p0/z, [x2, x12]
-    add             x12, x12, #32
-    ld1b            {z29.b}, p0/z, [x2, x12]
+    ld1b            {z24.b}, p0/z, [x0, #1, mul vl]
+    ld1b            {z25.b}, p0/z, [x0, #2, mul vl]
+    ld1b            {z28.b}, p0/z, [x2, #1, mul vl]
+    ld1b            {z29.b}, p0/z, [x2, #2, mul vl]
     sub             z0.h, z24.h, z28.h
     sub             z1.h, z25.h, z29.h
     smlalb          z5.s, z0.h, z0.h
@@ -1141,15 +1104,14 @@ function PFX(pixel_sse_ss_64x64_sve2)
     ptrue           p0.b, vl64
     mov             z5.d, #0
     mov             z6.d, #0
-    mov             x11, #64
 .rept 64
     ld1b            {z24.b}, p0/z, [x0]
     ld1b            {z28.b}, p0/z, [x2]
     sub             z0.h, z24.h, z28.h
     smlalb          z5.s, z0.h, z0.h
     smlalt          z6.s, z0.h, z0.h
-    ld1b            {z24.b}, p0/z, [x0, x11]
-    ld1b            {z28.b}, p0/z, [x2, x11]
+    ld1b            {z24.b}, p0/z, [x0, #1, mul vl]
+    ld1b            {z28.b}, p0/z, [x2, #1, mul vl]
     sub             z0.h, z24.h, z28.h
     smlalb          z5.s, z0.h, z0.h
     smlalt          z6.s, z0.h, z0.h
@@ -1226,10 +1188,9 @@ function PFX(pixel_ssd_s_16x16_sve2)
     ptrue           p0.b, vl16
     mov             z0.d, #0
     mov             z1.d, #0
-    mov             x11, #16
 .rept 16
     ld1b            {z16.b}, p0/z, [x0]
-    ld1b            {z17.b}, p0/z, [x0, x11]
+    ld1b            {z17.b}, p0/z, [x0, #1, mul vl]
     add             x0, x0, x1, lsl #1
     smlalb          z0.s, z16.h, z16.h
     smlalt          z1.s, z16.h, z16.h
@@ -1268,13 +1229,10 @@ function PFX(pixel_ssd_s_32x32_sve2)
     mov             z0.d, #0
     mov             z1.d, #0
 .rept 32
-    mov             x11, #16
     ld1b            {z16.b}, p0/z, [x0]
-    ld1b            {z17.b}, p0/z, [x0, x11]
-    add             x11, x11, #16
-    ld1b            {z18.b}, p0/z, [x0, x11]
-    add             x11, x11, #16
-    ld1b            {z19.b}, p0/z, [x0, x11]
+    ld1b            {z17.b}, p0/z, [x0, #1, mul vl]
+    ld1b            {z18.b}, p0/z, [x0, #2, mul vl]
+    ld1b            {z19.b}, p0/z, [x0, #3, mul vl]
     add             x0, x0, x1, lsl #1
     smlalb          z0.s, z16.h, z16.h
     smlalt          z1.s, z16.h, z16.h
@@ -1297,10 +1255,9 @@ function PFX(pixel_ssd_s_32x32_sve2)
     ptrue           p0.b, vl32
     mov             z0.d, #0
     mov             z1.d, #0
-    mov             x11, #32
 .rept 32
     ld1b            {z16.b}, p0/z, [x0]
-    ld1b            {z17.b}, p0/z, [x0, x11]
+    ld1b            {z17.b}, p0/z, [x0, #1, mul vl]
     add             x0, x0, x1, lsl #1
     smlalb          z0.s, z16.h, z16.h
     smlalt          z1.s, z16.h, z16.h
