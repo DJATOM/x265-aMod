@@ -1010,6 +1010,7 @@ namespace X265_NS {
         param->rc.zones = X265_MALLOC(x265_zone, param->rc.zonefileCount);
         for (int i = 0; i < param->rc.zonefileCount; i++)
         {
+            param->rc.zones[i].startFrame = -1;
             while (fgets(line, sizeof(line), zoneFile))
             {
                 if (*line == '#' || (strcmp(line, "\r\n") == 0))

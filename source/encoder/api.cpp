@@ -208,7 +208,6 @@ x265_encoder *x265_encoder_open(x265_param *p)
     memcpy(zoneParam, param, sizeof(x265_param));
     for (int i = 0; i < param->rc.zonefileCount; i++)
     {
-        param->rc.zones[i].startFrame = -1;
         encoder->configureZone(zoneParam, param->rc.zones[i].zoneParam);
     }
 
