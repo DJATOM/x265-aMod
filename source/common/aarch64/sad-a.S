@@ -268,7 +268,7 @@
 .endm
 
 .macro SAD_SVE2_4 h
-    mov             z16.d, #0
+    movi            v16.2d, #0
     ptrue           p0.h, vl4
 .rept \h
     ld1b            {z0.h}, p0/z, [x0]
@@ -277,13 +277,13 @@
     add             x2, x2, x3
     uaba            z16.h, z0.h, z1.h
 .endr
-    uaddv           d5, p0, z16.h
-    fmov            w0, s5
+    uaddlv          s0, v16.8h
+    fmov            w0, s0
     ret
 .endm
 
 .macro SAD_SVE2_8 h
-    mov             z16.d, #0
+    movi            v16.2d, #0
     ptrue           p0.h, vl8
 .rept \h
     ld1b            {z0.h}, p0/z, [x0]
@@ -292,8 +292,8 @@
     add             x2, x2, x3
     uaba            z16.h, z0.h, z1.h
 .endr
-    uaddv           d5, p0, z16.h
-    fmov            w0, s5
+    uaddlv          s0, v16.8h
+    fmov            w0, s0
     ret
 .endm
 
@@ -301,7 +301,7 @@
     rdvl            x9, #1
     cmp             x9, #16
     bgt             .vl_gt_16_pixel_sad_16x\h
-    mov             z16.d, #0
+    movi            v16.2d, #0
     ptrue           p0.b, vl16
 .rept \h
     ld1b            {z0.b}, p0/z, [x0]
@@ -311,8 +311,8 @@
     uabalb          z16.h, z0.b, z2.b
     uabalt          z16.h, z0.b, z2.b
 .endr
-    uaddv           d5, p0, z16.h
-    fmov            w0, s5
+    uaddlv          s0, v16.8h
+    fmov            w0, s0
     ret
 .vl_gt_16_pixel_sad_16x\h\():
     mov             z16.d, #0
@@ -324,8 +324,8 @@
     add             x2, x2, x3
     uaba            z16.h, z0.h, z2.h
 .endr
-    uaddv           d5, p0, z16.h
-    fmov            w0, s5
+    uaddv           d0, p0, z16.h
+    fmov            w0, s0
     ret
 .endm
 
@@ -333,7 +333,7 @@
     rdvl            x9, #1
     cmp             x9, #16
     bgt             .vl_gt_16_pixel_sad_32x\h
-    mov             z16.d, #0
+    movi            v16.2d, #0
     ptrue           p0.b, vl16
 .rept \h
     ld1b            {z0.b}, p0/z, [x0]
@@ -347,8 +347,8 @@
     uabalb          z16.h, z1.b, z5.b
     uabalt          z16.h, z1.b, z5.b
 .endr
-    uaddv           d5, p0, z16.h
-    fmov            w0, s5
+    uaddlv          s0, v16.8h
+    fmov            w0, s0
     ret
 .vl_gt_16_pixel_sad_32x\h\():
     ptrue           p0.b, vl32
@@ -360,8 +360,8 @@
     uabalb          z16.h, z0.b, z4.b
     uabalt          z16.h, z0.b, z4.b
 .endr
-    uaddv           d5, p0, z16.h
-    fmov            w0, s5
+    uaddv           d0, p0, z16.h
+    fmov            w0, s0
     ret
 .endm
 
@@ -369,15 +369,14 @@
     rdvl            x9, #1
     cmp             x9, #16
     bgt             .vl_gt_16_pixel_sad_64x\h
-    mov             z16.d, #0
-    mov             z17.d, #0
-    mov             z18.d, #0
-    mov             z19.d, #0
-    mov             z20.d, #0
-    mov             z21.d, #0
-    mov             z22.d, #0
-    mov             z23.d, #0
-    mov             z24.d, #0
+    movi            v16.2d, #0
+    movi            v17.2d, #0
+    movi            v18.2d, #0
+    movi            v19.2d, #0
+    movi            v20.2d, #0
+    movi            v21.2d, #0
+    movi            v22.2d, #0
+    movi            v23.2d, #0
     ptrue           p0.b, vl16
 .rept \h
     ld1b            {z0.b}, p0/z, [x0]
@@ -402,13 +401,14 @@
     add             z16.h, z16.h, z17.h
     add             z17.h, z18.h, z19.h
     add             z16.h, z16.h, z17.h
-    uadalp          z24.s, p0/m, z16.h
+    uaddlp          v16.4s, v16.8h
     add             z18.h, z20.h, z21.h
     add             z19.h, z22.h, z23.h
     add             z17.h, z18.h, z19.h
-    uadalp          z24.s, p0/m, z17.h
-    uaddv           d5, p0, z24.s
-    fmov            x0, d5
+    uaddlp          v17.4s, v17.8h
+    add             v16.4s, v16.4s, v17.4s
+    uaddlv          d0, v16.4s
+    fmov            x0, d0
     ret
 .vl_gt_16_pixel_sad_64x\h\():
     cmp             x9, #48
@@ -417,7 +417,6 @@
     mov             z17.d, #0
     mov             z18.d, #0
     mov             z19.d, #0
-    mov             z24.d, #0
     ptrue           p0.b, vl32
 .rept \h
     ld1b            {z0.b}, p0/z, [x0]
@@ -459,7 +458,7 @@
 .endm
 
 .macro SAD_SVE2_12 h
-    mov             z16.d, #0
+    movi            v16.2d, #0
     mov             w10, #12
     whilelt         p0.b, wzr, w10
 .rept \h
@@ -470,7 +469,7 @@
     uabalb          z16.h, z0.b, z8.b
     uabalt          z16.h, z0.b, z8.b
 .endr
-    uaddv           d5, p0, z16.h
+    uaddlv          s5, v16.8h
     fmov            w0, s5
     ret
 .endm
@@ -479,7 +478,7 @@
     rdvl            x9, #1
     cmp             x9, #16
     bgt             .vl_gt_16_pixel_sad_24x\h
-    mov             z16.d, #0
+    movi            v16.2d, #0
     ptrue           p0.b, vl16
     ptrue           p1.b, vl8
 .rept \h
@@ -494,7 +493,7 @@
     uabalb          z16.h, z1.b, z9.b
     uabalt          z16.h, z1.b, z9.b
 .endr
-    uaddv           d5, p0, z16.h
+    uaddlv          s5, v16.8h
     fmov            w0, s5
     ret
 .vl_gt_16_pixel_sad_24x\h\():
@@ -518,12 +517,12 @@
     rdvl            x9, #1
     cmp             x9, #16
     bgt             .vl_gt_16_pixel_sad_48x\h
-    mov             z16.d, #0
-    mov             z17.d, #0
-    mov             z18.d, #0
-    mov             z19.d, #0
-    mov             z20.d, #0
-    mov             z21.d, #0
+    movi            v16.2d, #0
+    movi            v17.2d, #0
+    movi            v18.2d, #0
+    movi            v19.2d, #0
+    movi            v20.2d, #0
+    movi            v21.2d, #0
     ptrue           p0.b, vl16
 .rept \h
     ld1b            {z0.b}, p0/z, [x0]
@@ -544,10 +543,10 @@
     add             z16.h, z16.h, z17.h
     add             z17.h, z18.h, z19.h
     add             z16.h, z16.h, z17.h
-    uaddv           d5, p0, z16.h
+    uaddlv          s5, v16.8h
     fmov            w0, s5
     add             z18.h, z20.h, z21.h
-    uaddv           d6, p0, z18.h
+    uaddlv          s6, v18.8h
     fmov            w1, s6
     add             w0, w0, w1
     ret
@@ -941,10 +940,10 @@ SAD_FUNC_LOOP_SVE2  48, 64
 .endm
 
 .macro SAD_X_SVE2_4 h x
-    mov             z16.d, #0
-    mov             z17.d, #0
-    mov             z18.d, #0
-    mov             z19.d, #0
+    movi            v16.2d, #0
+    movi            v17.2d, #0
+    movi            v18.2d, #0
+    movi            v19.2d, #0
     ptrue           p0.h, vl4
 .rept \h
     ld1b            {z0.h}, p0/z, [x0]
@@ -966,24 +965,24 @@ SAD_FUNC_LOOP_SVE2  48, 64
     uaba            z19.h, z0.h, z4.h
 .endif
 .endr
-    uaddv           d0, p0, z16.h
-    uaddv           d1, p0, z17.h
-    uaddv           d2, p0, z18.h
+    uaddlv          s0, v16.8h
+    uaddlv          s1, v17.8h
+    uaddlv          s2, v18.8h
     stp             s0, s1, [x6]
 .if \x == 3
     str             s2, [x6, #8]
 .elseif \x == 4
-    uaddv           d3, p0, z19.h
+    uaddlv          s3, v19.8h
     stp             s2, s3, [x6, #8]
 .endif
     ret
 .endm
 
 .macro SAD_X_SVE2_8 h x
-    mov             z16.d, #0
-    mov             z17.d, #0
-    mov             z18.d, #0
-    mov             z19.d, #0
+    movi            v16.2d, #0
+    movi            v17.2d, #0
+    movi            v18.2d, #0
+    movi            v19.2d, #0
     ptrue           p0.h, vl8
 .rept \h
     ld1b            {z0.h}, p0/z, [x0]
@@ -1005,24 +1004,24 @@ SAD_FUNC_LOOP_SVE2  48, 64
     uaba            z19.h, z0.h, z4.h
 .endif
 .endr
-    uaddv           d0, p0, z16.h
-    uaddv           d1, p0, z17.h
-    uaddv           d2, p0, z18.h
+    uaddlv          s0, v16.8h
+    uaddlv          s1, v17.8h
+    uaddlv          s2, v18.8h
     stp             s0, s1, [x6]
 .if \x == 3
     str             s2, [x6, #8]
 .elseif \x == 4
-    uaddv           d3, p0, z19.h
+    uaddlv          s3, v19.8h
     stp             s2, s3, [x6, #8]
 .endif
     ret
 .endm
 
 .macro SAD_X_SVE2_12 h x
-    mov             z16.d, #0
-    mov             z17.d, #0
-    mov             z18.d, #0
-    mov             z19.d, #0
+    movi            v16.2d, #0
+    movi            v17.2d, #0
+    movi            v18.2d, #0
+    movi            v19.2d, #0
     mov             w10, #12
     whilelt         p0.b, wzr, w10
 .rept \h
@@ -1049,24 +1048,24 @@ SAD_FUNC_LOOP_SVE2  48, 64
     uabalt          z19.h, z8.b, z0.b
 .endif
 .endr
-    uaddv           d0, p0, z16.h
-    uaddv           d1, p0, z17.h
-    uaddv           d2, p0, z18.h
+    uaddlv          s0, v16.8h
+    uaddlv          s1, v17.8h
+    uaddlv          s2, v18.8h
     stp             s0, s1, [x6]
 .if \x == 3
     str             s2, [x6, #8]
 .elseif \x == 4
-    uaddv           d3, p0, z19.h
+    uaddlv          s3, v19.8h
     stp             s2, s3, [x6, #8]
 .endif
     ret
 .endm
 
 .macro SAD_X_SVE2_16 h x
-    mov             z16.d, #0
-    mov             z17.d, #0
-    mov             z18.d, #0
-    mov             z19.d, #0
+    movi            v16.2d, #0
+    movi            v17.2d, #0
+    movi            v18.2d, #0
+    movi            v19.2d, #0
     ptrue           p0.b, vl16
 .rept \h
     ld1b            {z0.b}, p0/z, [x0]
@@ -1092,14 +1091,14 @@ SAD_FUNC_LOOP_SVE2  48, 64
     uabalt          z19.h, z8.b, z0.b
 .endif
 .endr
-    uaddv           d0, p0, z16.h
-    uaddv           d1, p0, z17.h
-    uaddv           d2, p0, z18.h
+    uaddlv          s0, v16.8h
+    uaddlv          s1, v17.8h
+    uaddlv          s2, v18.8h
     stp             s0, s1, [x6]
 .if \x == 3
     str             s2, [x6, #8]
 .elseif \x == 4
-    uaddv           d3, p0, z19.h
+    uaddlv          s3, v19.8h
     stp             s2, s3, [x6, #8]
 .endif
     ret
@@ -1126,10 +1125,10 @@ SAD_FUNC_LOOP_SVE2  48, 64
     rdvl            x10, #1
     cmp             x10, #16
     bgt             .vl_gt_16_pixel_sad_x24x\h\()_\x
-    mov             z20.d, #0
-    mov             z21.d, #0
-    mov             z22.d, #0
-    mov             z23.d, #0
+    movi            v20.2d, #0
+    movi            v21.2d, #0
+    movi            v22.2d, #0
+    movi            v23.2d, #0
     ptrue           p0.b, vl16
     ptrue           p1.b, vl8
 .rept \h
@@ -1143,14 +1142,14 @@ SAD_FUNC_LOOP_SVE2  48, 64
     SAD_X_SVE2_24_INNER x4, z23
 .endif
 .endr
-    uaddv           d0, p0, z20.h
-    uaddv           d1, p0, z21.h
-    uaddv           d2, p0, z22.h
+    uaddlv          s0, v20.8h
+    uaddlv          s1, v21.8h
+    uaddlv          s2, v22.8h
     stp             s0, s1, [x6]
 .if \x == 3
     str             s2, [x6, #8]
 .elseif \x == 4
-    uaddv           d3, p0, z23.h
+    uaddlv          s3, v23.8h
     stp             s2, s3, [x6, #8]
 .endif
     ret
@@ -1171,14 +1170,16 @@ SAD_FUNC_LOOP_SVE2  48, 64
     SAD_X_SVE2_24_INNER_GT_16 x4, z23
 .endif
 .endr
-    uaddv           d0, p0, z20.h
-    uaddv           d1, p0, z21.h
-    uaddv           d2, p0, z22.h
+    uaddlv          s0, v20.8h
+    uaddlv          s1, v21.8h
+    uaddlv          s2, v22.8h
     stp             s0, s1, [x6]
 .if \x == 3
     str             s2, [x6, #8]
 .elseif \x == 4
-    uaddv           d3, p0, z23.h
+    uaddv           d0, p0, z20.h
+    uaddv           d1, p0, z21.h
+    uaddv           d2, p0, z22.h
     stp             s2, s3, [x6, #8]
 .endif
     ret
@@ -1205,10 +1206,10 @@ SAD_FUNC_LOOP_SVE2  48, 64
     rdvl            x10, #1
     cmp             x10, #16
     bgt             .vl_gt_16_pixel_sad_x32x\h\()_\x
-    mov             z20.d, #0
-    mov             z21.d, #0
-    mov             z22.d, #0
-    mov             z23.d, #0
+    movi            v20.2d, #0
+    movi            v21.2d, #0
+    movi            v22.2d, #0
+    movi            v23.2d, #0
     ptrue           p0.b, vl16
 .rept \h
     ld1b            {z0.b}, p0/z, [x0]
@@ -1221,14 +1222,14 @@ SAD_FUNC_LOOP_SVE2  48, 64
     SAD_X_SVE2_32_INNER x4, z23
 .endif
 .endr
-    uaddv           d0, p0, z20.h
-    uaddv           d1, p0, z21.h
-    uaddv           d2, p0, z22.h
+    uaddlv          s0, v20.8h
+    uaddlv          s1, v21.8h
+    uaddlv          s2, v22.8h
     stp             s0, s1, [x6]
 .if \x == 3
     str             s2, [x6, #8]
 .elseif \x == 4
-    uaddv           d3, p0, z23.h
+    uaddlv          s3, v23.8h
     stp             s2, s3, [x6, #8]
 .endif
     ret
@@ -1275,14 +1276,14 @@ SAD_FUNC_LOOP_SVE2  48, 64
 .endm
 
 .macro SAD_X_SVE2_48 h x
-    mov             z16.d, #0
-    mov             z17.d, #0
-    mov             z18.d, #0
-    mov             z19.d, #0
-    mov             z20.d, #0
-    mov             z21.d, #0
-    mov             z22.d, #0
-    mov             z23.d, #0
+    movi            v16.2d, #0
+    movi            v17.2d, #0
+    movi            v18.2d, #0
+    movi            v19.2d, #0
+    movi            v20.2d, #0
+    movi            v21.2d, #0
+    movi            v22.2d, #0
+    movi            v23.2d, #0
     ptrue           p0.b, vl16
 .rept \h
     ld1b            {z0.b}, p0/z, [x0]
@@ -1315,14 +1316,14 @@ SAD_FUNC_LOOP_SVE2  48, 64
 .endm
 
 .macro SAD_X_SVE2_64 h x
-    mov             z16.d, #0
-    mov             z17.d, #0
-    mov             z18.d, #0
-    mov             z19.d, #0
-    mov             z20.d, #0
-    mov             z21.d, #0
-    mov             z22.d, #0
-    mov             z23.d, #0
+    movi            v16.2d, #0
+    movi            v17.2d, #0
+    movi            v18.2d, #0
+    movi            v19.2d, #0
+    movi            v20.2d, #0
+    movi            v21.2d, #0
+    movi            v22.2d, #0
+    movi            v23.2d, #0
     ptrue           p0.b, vl16
 .rept \h
     ld1b            {z0.b}, p0/z, [x0]

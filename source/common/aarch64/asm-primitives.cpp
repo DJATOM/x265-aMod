@@ -319,6 +319,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
 {
     if (cpuMask & X265_CPU_SVE2)
     {
+        // When these primitives will use SVE2 instructions set,
+        // change the following definitions to point to the SVE2 implementation
         setupPixelPrimitives_neon(p);
         setupFilterPrimitives_neon(p);
         setupDCTPrimitives_neon(p);
@@ -522,172 +524,172 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
         p.cu[BLOCK_32x32].ssd_s[ALIGNED] = PFX(pixel_ssd_s_32x32_sve2);
 
         // pixel_var
-        p.cu[BLOCK_8x8].var   = PFX(pixel_var_8x8_neon);
-        p.cu[BLOCK_16x16].var = PFX(pixel_var_16x16_neon);
-        p.cu[BLOCK_32x32].var = PFX(pixel_var_32x32_neon);
-        p.cu[BLOCK_64x64].var = PFX(pixel_var_64x64_neon);
+        p.cu[BLOCK_8x8].var   = PFX(pixel_var_8x8_sve2);
+        p.cu[BLOCK_16x16].var = PFX(pixel_var_16x16_sve2);
+        p.cu[BLOCK_32x32].var = PFX(pixel_var_32x32_sve2);
+        p.cu[BLOCK_64x64].var = PFX(pixel_var_64x64_sve2);
 
         // calc_Residual
-        p.cu[BLOCK_4x4].calcresidual[NONALIGNED]   = PFX(getResidual4_neon);
-        p.cu[BLOCK_8x8].calcresidual[NONALIGNED]   = PFX(getResidual8_neon);
-        p.cu[BLOCK_16x16].calcresidual[NONALIGNED] = PFX(getResidual16_neon);
-        p.cu[BLOCK_32x32].calcresidual[NONALIGNED] = PFX(getResidual32_neon);
+        p.cu[BLOCK_4x4].calcresidual[NONALIGNED]   = PFX(getResidual4_sve2);
+        p.cu[BLOCK_8x8].calcresidual[NONALIGNED]   = PFX(getResidual8_sve2);
+        p.cu[BLOCK_16x16].calcresidual[NONALIGNED] = PFX(getResidual16_sve2);
+        p.cu[BLOCK_32x32].calcresidual[NONALIGNED] = PFX(getResidual32_sve2);
 
-        p.cu[BLOCK_4x4].calcresidual[ALIGNED]   = PFX(getResidual4_neon);
-        p.cu[BLOCK_8x8].calcresidual[ALIGNED]   = PFX(getResidual8_neon);
-        p.cu[BLOCK_16x16].calcresidual[ALIGNED] = PFX(getResidual16_neon);
-        p.cu[BLOCK_32x32].calcresidual[ALIGNED] = PFX(getResidual32_neon);
+        p.cu[BLOCK_4x4].calcresidual[ALIGNED]   = PFX(getResidual4_sve2);
+        p.cu[BLOCK_8x8].calcresidual[ALIGNED]   = PFX(getResidual8_sve2);
+        p.cu[BLOCK_16x16].calcresidual[ALIGNED] = PFX(getResidual16_sve2);
+        p.cu[BLOCK_32x32].calcresidual[ALIGNED] = PFX(getResidual32_sve2);
 
         // pixel_sub_ps
-        p.cu[BLOCK_4x4].sub_ps   = PFX(pixel_sub_ps_4x4_neon);
-        p.cu[BLOCK_8x8].sub_ps   = PFX(pixel_sub_ps_8x8_neon);
-        p.cu[BLOCK_16x16].sub_ps = PFX(pixel_sub_ps_16x16_neon);
-        p.cu[BLOCK_32x32].sub_ps = PFX(pixel_sub_ps_32x32_neon);
-        p.cu[BLOCK_64x64].sub_ps = PFX(pixel_sub_ps_64x64_neon);
+        p.cu[BLOCK_4x4].sub_ps   = PFX(pixel_sub_ps_4x4_sve2);
+        p.cu[BLOCK_8x8].sub_ps   = PFX(pixel_sub_ps_8x8_sve2);
+        p.cu[BLOCK_16x16].sub_ps = PFX(pixel_sub_ps_16x16_sve2);
+        p.cu[BLOCK_32x32].sub_ps = PFX(pixel_sub_ps_32x32_sve2);
+        p.cu[BLOCK_64x64].sub_ps = PFX(pixel_sub_ps_64x64_sve2);
 
         // chroma sub_ps
-        p.chroma[X265_CSP_I420].cu[BLOCK_420_4x4].sub_ps   = PFX(pixel_sub_ps_4x4_neon);
-        p.chroma[X265_CSP_I420].cu[BLOCK_420_8x8].sub_ps   = PFX(pixel_sub_ps_8x8_neon);
-        p.chroma[X265_CSP_I420].cu[BLOCK_420_16x16].sub_ps = PFX(pixel_sub_ps_16x16_neon);
-        p.chroma[X265_CSP_I420].cu[BLOCK_420_32x32].sub_ps = PFX(pixel_sub_ps_32x32_neon);
-        p.chroma[X265_CSP_I422].cu[BLOCK_422_4x8].sub_ps   = PFX(pixel_sub_ps_4x8_neon);
-        p.chroma[X265_CSP_I422].cu[BLOCK_422_8x16].sub_ps  = PFX(pixel_sub_ps_8x16_neon);
-        p.chroma[X265_CSP_I422].cu[BLOCK_422_16x32].sub_ps = PFX(pixel_sub_ps_16x32_neon);
-        p.chroma[X265_CSP_I422].cu[BLOCK_422_32x64].sub_ps = PFX(pixel_sub_ps_32x64_neon);
+        p.chroma[X265_CSP_I420].cu[BLOCK_420_4x4].sub_ps   = PFX(pixel_sub_ps_4x4_sve2);
+        p.chroma[X265_CSP_I420].cu[BLOCK_420_8x8].sub_ps   = PFX(pixel_sub_ps_8x8_sve2);
+        p.chroma[X265_CSP_I420].cu[BLOCK_420_16x16].sub_ps = PFX(pixel_sub_ps_16x16_sve2);
+        p.chroma[X265_CSP_I420].cu[BLOCK_420_32x32].sub_ps = PFX(pixel_sub_ps_32x32_sve2);
+        p.chroma[X265_CSP_I422].cu[BLOCK_422_4x8].sub_ps   = PFX(pixel_sub_ps_4x8_sve2);
+        p.chroma[X265_CSP_I422].cu[BLOCK_422_8x16].sub_ps  = PFX(pixel_sub_ps_8x16_sve2);
+        p.chroma[X265_CSP_I422].cu[BLOCK_422_16x32].sub_ps = PFX(pixel_sub_ps_16x32_sve2);
+        p.chroma[X265_CSP_I422].cu[BLOCK_422_32x64].sub_ps = PFX(pixel_sub_ps_32x64_sve2);
 
         // pixel_add_ps
-        p.cu[BLOCK_4x4].add_ps[NONALIGNED]   = PFX(pixel_add_ps_4x4_neon);
-        p.cu[BLOCK_8x8].add_ps[NONALIGNED]   = PFX(pixel_add_ps_8x8_neon);
-        p.cu[BLOCK_16x16].add_ps[NONALIGNED] = PFX(pixel_add_ps_16x16_neon);
-        p.cu[BLOCK_32x32].add_ps[NONALIGNED] = PFX(pixel_add_ps_32x32_neon);
-        p.cu[BLOCK_64x64].add_ps[NONALIGNED] = PFX(pixel_add_ps_64x64_neon);
+        p.cu[BLOCK_4x4].add_ps[NONALIGNED]   = PFX(pixel_add_ps_4x4_sve2);
+        p.cu[BLOCK_8x8].add_ps[NONALIGNED]   = PFX(pixel_add_ps_8x8_sve2);
+        p.cu[BLOCK_16x16].add_ps[NONALIGNED] = PFX(pixel_add_ps_16x16_sve2);
+        p.cu[BLOCK_32x32].add_ps[NONALIGNED] = PFX(pixel_add_ps_32x32_sve2);
+        p.cu[BLOCK_64x64].add_ps[NONALIGNED] = PFX(pixel_add_ps_64x64_sve2);
 
-        p.cu[BLOCK_4x4].add_ps[ALIGNED]   = PFX(pixel_add_ps_4x4_neon);
-        p.cu[BLOCK_8x8].add_ps[ALIGNED]   = PFX(pixel_add_ps_8x8_neon);
-        p.cu[BLOCK_16x16].add_ps[ALIGNED] = PFX(pixel_add_ps_16x16_neon);
-        p.cu[BLOCK_32x32].add_ps[ALIGNED] = PFX(pixel_add_ps_32x32_neon);
-        p.cu[BLOCK_64x64].add_ps[ALIGNED] = PFX(pixel_add_ps_64x64_neon);
+        p.cu[BLOCK_4x4].add_ps[ALIGNED]   = PFX(pixel_add_ps_4x4_sve2);
+        p.cu[BLOCK_8x8].add_ps[ALIGNED]   = PFX(pixel_add_ps_8x8_sve2);
+        p.cu[BLOCK_16x16].add_ps[ALIGNED] = PFX(pixel_add_ps_16x16_sve2);
+        p.cu[BLOCK_32x32].add_ps[ALIGNED] = PFX(pixel_add_ps_32x32_sve2);
+        p.cu[BLOCK_64x64].add_ps[ALIGNED] = PFX(pixel_add_ps_64x64_sve2);
 
         // chroma add_ps
-        p.chroma[X265_CSP_I420].cu[BLOCK_420_4x4].add_ps[NONALIGNED]   = PFX(pixel_add_ps_4x4_neon);
-        p.chroma[X265_CSP_I420].cu[BLOCK_420_8x8].add_ps[NONALIGNED]   = PFX(pixel_add_ps_8x8_neon);
-        p.chroma[X265_CSP_I420].cu[BLOCK_420_16x16].add_ps[NONALIGNED] = PFX(pixel_add_ps_16x16_neon);
-        p.chroma[X265_CSP_I420].cu[BLOCK_420_32x32].add_ps[NONALIGNED] = PFX(pixel_add_ps_32x32_neon);
-        p.chroma[X265_CSP_I422].cu[BLOCK_422_4x8].add_ps[NONALIGNED]   = PFX(pixel_add_ps_4x8_neon);
-        p.chroma[X265_CSP_I422].cu[BLOCK_422_8x16].add_ps[NONALIGNED]  = PFX(pixel_add_ps_8x16_neon);
-        p.chroma[X265_CSP_I422].cu[BLOCK_422_16x32].add_ps[NONALIGNED] = PFX(pixel_add_ps_16x32_neon);
-        p.chroma[X265_CSP_I422].cu[BLOCK_422_32x64].add_ps[NONALIGNED] = PFX(pixel_add_ps_32x64_neon);
+        p.chroma[X265_CSP_I420].cu[BLOCK_420_4x4].add_ps[NONALIGNED]   = PFX(pixel_add_ps_4x4_sve2);
+        p.chroma[X265_CSP_I420].cu[BLOCK_420_8x8].add_ps[NONALIGNED]   = PFX(pixel_add_ps_8x8_sve2);
+        p.chroma[X265_CSP_I420].cu[BLOCK_420_16x16].add_ps[NONALIGNED] = PFX(pixel_add_ps_16x16_sve2);
+        p.chroma[X265_CSP_I420].cu[BLOCK_420_32x32].add_ps[NONALIGNED] = PFX(pixel_add_ps_32x32_sve2);
+        p.chroma[X265_CSP_I422].cu[BLOCK_422_4x8].add_ps[NONALIGNED]   = PFX(pixel_add_ps_4x8_sve2);
+        p.chroma[X265_CSP_I422].cu[BLOCK_422_8x16].add_ps[NONALIGNED]  = PFX(pixel_add_ps_8x16_sve2);
+        p.chroma[X265_CSP_I422].cu[BLOCK_422_16x32].add_ps[NONALIGNED] = PFX(pixel_add_ps_16x32_sve2);
+        p.chroma[X265_CSP_I422].cu[BLOCK_422_32x64].add_ps[NONALIGNED] = PFX(pixel_add_ps_32x64_sve2);
 
-        p.chroma[X265_CSP_I420].cu[BLOCK_420_4x4].add_ps[ALIGNED]   = PFX(pixel_add_ps_4x4_neon);
-        p.chroma[X265_CSP_I420].cu[BLOCK_420_8x8].add_ps[ALIGNED]   = PFX(pixel_add_ps_8x8_neon);
-        p.chroma[X265_CSP_I420].cu[BLOCK_420_16x16].add_ps[ALIGNED] = PFX(pixel_add_ps_16x16_neon);
-        p.chroma[X265_CSP_I420].cu[BLOCK_420_32x32].add_ps[ALIGNED] = PFX(pixel_add_ps_32x32_neon);
-        p.chroma[X265_CSP_I422].cu[BLOCK_422_4x8].add_ps[ALIGNED]   = PFX(pixel_add_ps_4x8_neon);
-        p.chroma[X265_CSP_I422].cu[BLOCK_422_8x16].add_ps[ALIGNED]  = PFX(pixel_add_ps_8x16_neon);
-        p.chroma[X265_CSP_I422].cu[BLOCK_422_16x32].add_ps[ALIGNED] = PFX(pixel_add_ps_16x32_neon);
-        p.chroma[X265_CSP_I422].cu[BLOCK_422_32x64].add_ps[ALIGNED] = PFX(pixel_add_ps_32x64_neon);
+        p.chroma[X265_CSP_I420].cu[BLOCK_420_4x4].add_ps[ALIGNED]   = PFX(pixel_add_ps_4x4_sve2);
+        p.chroma[X265_CSP_I420].cu[BLOCK_420_8x8].add_ps[ALIGNED]   = PFX(pixel_add_ps_8x8_sve2);
+        p.chroma[X265_CSP_I420].cu[BLOCK_420_16x16].add_ps[ALIGNED] = PFX(pixel_add_ps_16x16_sve2);
+        p.chroma[X265_CSP_I420].cu[BLOCK_420_32x32].add_ps[ALIGNED] = PFX(pixel_add_ps_32x32_sve2);
+        p.chroma[X265_CSP_I422].cu[BLOCK_422_4x8].add_ps[ALIGNED]   = PFX(pixel_add_ps_4x8_sve2);
+        p.chroma[X265_CSP_I422].cu[BLOCK_422_8x16].add_ps[ALIGNED]  = PFX(pixel_add_ps_8x16_sve2);
+        p.chroma[X265_CSP_I422].cu[BLOCK_422_16x32].add_ps[ALIGNED] = PFX(pixel_add_ps_16x32_sve2);
+        p.chroma[X265_CSP_I422].cu[BLOCK_422_32x64].add_ps[ALIGNED] = PFX(pixel_add_ps_32x64_sve2);
 
         //scale2D_64to32
-        p.scale2D_64to32  = PFX(scale2D_64to32_neon);
+        p.scale2D_64to32  = PFX(scale2D_64to32_sve2);
 
         // scale1D_128to64
-        p.scale1D_128to64[NONALIGNED] = PFX(scale1D_128to64_neon);
-        p.scale1D_128to64[ALIGNED] = PFX(scale1D_128to64_neon);
+        p.scale1D_128to64[NONALIGNED] = PFX(scale1D_128to64_sve2);
+        p.scale1D_128to64[ALIGNED] = PFX(scale1D_128to64_sve2);
 
         // planecopy
-        p.planecopy_cp = PFX(pixel_planecopy_cp_neon);
+        p.planecopy_cp = PFX(pixel_planecopy_cp_sve2);
 
         // satd
-        ALL_LUMA_PU(satd, pixel_satd, neon);
+        ALL_LUMA_PU(satd, pixel_satd, sve2);
 
-        p.chroma[X265_CSP_I420].pu[CHROMA_420_4x4].satd   = PFX(pixel_satd_4x4_neon);
-        p.chroma[X265_CSP_I420].pu[CHROMA_420_8x8].satd   = PFX(pixel_satd_8x8_neon);
-        p.chroma[X265_CSP_I420].pu[CHROMA_420_16x16].satd = PFX(pixel_satd_16x16_neon);
-        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x32].satd = PFX(pixel_satd_32x32_neon);
-        p.chroma[X265_CSP_I420].pu[CHROMA_420_8x4].satd   = PFX(pixel_satd_8x4_neon);
-        p.chroma[X265_CSP_I420].pu[CHROMA_420_4x8].satd   = PFX(pixel_satd_4x8_neon);
-        p.chroma[X265_CSP_I420].pu[CHROMA_420_16x8].satd  = PFX(pixel_satd_16x8_neon);
-        p.chroma[X265_CSP_I420].pu[CHROMA_420_8x16].satd  = PFX(pixel_satd_8x16_neon);
-        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x16].satd = PFX(pixel_satd_32x16_neon);
-        p.chroma[X265_CSP_I420].pu[CHROMA_420_16x32].satd = PFX(pixel_satd_16x32_neon);
-        p.chroma[X265_CSP_I420].pu[CHROMA_420_16x12].satd = PFX(pixel_satd_16x12_neon);
-        p.chroma[X265_CSP_I420].pu[CHROMA_420_12x16].satd = PFX(pixel_satd_12x16_neon);
-        p.chroma[X265_CSP_I420].pu[CHROMA_420_16x4].satd  = PFX(pixel_satd_16x4_neon);
-        p.chroma[X265_CSP_I420].pu[CHROMA_420_4x16].satd  = PFX(pixel_satd_4x16_neon);
-        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x24].satd = PFX(pixel_satd_32x24_neon);
-        p.chroma[X265_CSP_I420].pu[CHROMA_420_24x32].satd = PFX(pixel_satd_24x32_neon);
-        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x8].satd  = PFX(pixel_satd_32x8_neon);
-        p.chroma[X265_CSP_I420].pu[CHROMA_420_8x32].satd  = PFX(pixel_satd_8x32_neon);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_4x4].satd   = PFX(pixel_satd_4x4_sve2);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_8x8].satd   = PFX(pixel_satd_8x8_sve2);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_16x16].satd = PFX(pixel_satd_16x16_sve2);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x32].satd = PFX(pixel_satd_32x32_sve2);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_8x4].satd   = PFX(pixel_satd_8x4_sve2);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_4x8].satd   = PFX(pixel_satd_4x8_sve2);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_16x8].satd  = PFX(pixel_satd_16x8_sve2);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_8x16].satd  = PFX(pixel_satd_8x16_sve2);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x16].satd = PFX(pixel_satd_32x16_sve2);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_16x32].satd = PFX(pixel_satd_16x32_sve2);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_16x12].satd = PFX(pixel_satd_16x12_sve2);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_12x16].satd = PFX(pixel_satd_12x16_sve2);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_16x4].satd  = PFX(pixel_satd_16x4_sve2);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_4x16].satd  = PFX(pixel_satd_4x16_sve2);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x24].satd = PFX(pixel_satd_32x24_sve2);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_24x32].satd = PFX(pixel_satd_24x32_sve2);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x8].satd  = PFX(pixel_satd_32x8_sve2);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_8x32].satd  = PFX(pixel_satd_8x32_sve2);
 
-        p.chroma[X265_CSP_I422].pu[CHROMA_422_4x8].satd   = PFX(pixel_satd_4x8_neon);
-        p.chroma[X265_CSP_I422].pu[CHROMA_422_8x16].satd  = PFX(pixel_satd_8x16_neon);
-        p.chroma[X265_CSP_I422].pu[CHROMA_422_16x32].satd = PFX(pixel_satd_16x32_neon);
-        p.chroma[X265_CSP_I422].pu[CHROMA_422_32x64].satd = PFX(pixel_satd_32x64_neon);
-        p.chroma[X265_CSP_I422].pu[CHROMA_422_4x4].satd   = PFX(pixel_satd_4x4_neon);
-        p.chroma[X265_CSP_I422].pu[CHROMA_422_8x8].satd   = PFX(pixel_satd_8x8_neon);
-        p.chroma[X265_CSP_I422].pu[CHROMA_422_4x16].satd  = PFX(pixel_satd_4x16_neon);
-        p.chroma[X265_CSP_I422].pu[CHROMA_422_16x16].satd = PFX(pixel_satd_16x16_neon);
-        p.chroma[X265_CSP_I422].pu[CHROMA_422_8x32].satd  = PFX(pixel_satd_8x32_neon);
-        p.chroma[X265_CSP_I422].pu[CHROMA_422_32x32].satd = PFX(pixel_satd_32x32_neon);
-        p.chroma[X265_CSP_I422].pu[CHROMA_422_16x64].satd = PFX(pixel_satd_16x64_neon);
-        p.chroma[X265_CSP_I422].pu[CHROMA_422_8x12].satd  = PFX(pixel_satd_8x12_neon);
-        p.chroma[X265_CSP_I422].pu[CHROMA_422_8x4].satd   = PFX(pixel_satd_8x4_neon);
-        p.chroma[X265_CSP_I422].pu[CHROMA_422_16x24].satd = PFX(pixel_satd_16x24_neon);
-        p.chroma[X265_CSP_I422].pu[CHROMA_422_12x32].satd = PFX(pixel_satd_12x32_neon);
-        p.chroma[X265_CSP_I422].pu[CHROMA_422_16x8].satd  = PFX(pixel_satd_16x8_neon);
-        p.chroma[X265_CSP_I422].pu[CHROMA_422_4x32].satd  = PFX(pixel_satd_4x32_neon);
-        p.chroma[X265_CSP_I422].pu[CHROMA_422_32x48].satd = PFX(pixel_satd_32x48_neon);
-        p.chroma[X265_CSP_I422].pu[CHROMA_422_24x64].satd = PFX(pixel_satd_24x64_neon);
-        p.chroma[X265_CSP_I422].pu[CHROMA_422_32x16].satd = PFX(pixel_satd_32x16_neon);
-        p.chroma[X265_CSP_I422].pu[CHROMA_422_8x64].satd  = PFX(pixel_satd_8x64_neon);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_4x8].satd   = PFX(pixel_satd_4x8_sve2);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_8x16].satd  = PFX(pixel_satd_8x16_sve2);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_16x32].satd = PFX(pixel_satd_16x32_sve2);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_32x64].satd = PFX(pixel_satd_32x64_sve2);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_4x4].satd   = PFX(pixel_satd_4x4_sve2);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_8x8].satd   = PFX(pixel_satd_8x8_sve2);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_4x16].satd  = PFX(pixel_satd_4x16_sve2);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_16x16].satd = PFX(pixel_satd_16x16_sve2);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_8x32].satd  = PFX(pixel_satd_8x32_sve2);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_32x32].satd = PFX(pixel_satd_32x32_sve2);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_16x64].satd = PFX(pixel_satd_16x64_sve2);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_8x12].satd  = PFX(pixel_satd_8x12_sve2);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_8x4].satd   = PFX(pixel_satd_8x4_sve2);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_16x24].satd = PFX(pixel_satd_16x24_sve2);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_12x32].satd = PFX(pixel_satd_12x32_sve2);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_16x8].satd  = PFX(pixel_satd_16x8_sve2);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_4x32].satd  = PFX(pixel_satd_4x32_sve2);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_32x48].satd = PFX(pixel_satd_32x48_sve2);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_24x64].satd = PFX(pixel_satd_24x64_sve2);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_32x16].satd = PFX(pixel_satd_32x16_sve2);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_8x64].satd  = PFX(pixel_satd_8x64_sve2);
 
         // sa8d
-        p.cu[BLOCK_4x4].sa8d   = PFX(pixel_satd_4x4_neon);
-        p.cu[BLOCK_8x8].sa8d   = PFX(pixel_sa8d_8x8_neon);
-        p.cu[BLOCK_16x16].sa8d = PFX(pixel_sa8d_16x16_neon);
-        p.cu[BLOCK_32x32].sa8d = PFX(pixel_sa8d_32x32_neon);
-        p.cu[BLOCK_64x64].sa8d = PFX(pixel_sa8d_64x64_neon);
-        p.chroma[X265_CSP_I420].cu[BLOCK_8x8].sa8d = PFX(pixel_satd_4x4_neon);
-        p.chroma[X265_CSP_I420].cu[BLOCK_16x16].sa8d = PFX(pixel_sa8d_16x16_neon);
-        p.chroma[X265_CSP_I420].cu[BLOCK_32x32].sa8d = PFX(pixel_sa8d_32x32_neon);
-        p.chroma[X265_CSP_I420].cu[BLOCK_64x64].sa8d = PFX(pixel_sa8d_64x64_neon);
-        p.chroma[X265_CSP_I422].cu[BLOCK_422_8x16].sa8d = PFX(pixel_sa8d_8x16_neon);
-        p.chroma[X265_CSP_I422].cu[BLOCK_422_16x32].sa8d = PFX(pixel_sa8d_16x32_neon);
-        p.chroma[X265_CSP_I422].cu[BLOCK_422_32x64].sa8d = PFX(pixel_sa8d_32x64_neon);
+        p.cu[BLOCK_4x4].sa8d   = PFX(pixel_satd_4x4_sve2);
+        p.cu[BLOCK_8x8].sa8d   = PFX(pixel_sa8d_8x8_sve2);
+        p.cu[BLOCK_16x16].sa8d = PFX(pixel_sa8d_16x16_sve2);
+        p.cu[BLOCK_32x32].sa8d = PFX(pixel_sa8d_32x32_sve2);
+        p.cu[BLOCK_64x64].sa8d = PFX(pixel_sa8d_64x64_sve2);
+        p.chroma[X265_CSP_I420].cu[BLOCK_8x8].sa8d = PFX(pixel_satd_4x4_sve2);
+        p.chroma[X265_CSP_I420].cu[BLOCK_16x16].sa8d = PFX(pixel_sa8d_16x16_sve2);
+        p.chroma[X265_CSP_I420].cu[BLOCK_32x32].sa8d = PFX(pixel_sa8d_32x32_sve2);
+        p.chroma[X265_CSP_I420].cu[BLOCK_64x64].sa8d = PFX(pixel_sa8d_64x64_sve2);
+        p.chroma[X265_CSP_I422].cu[BLOCK_422_8x16].sa8d = PFX(pixel_sa8d_8x16_sve2);
+        p.chroma[X265_CSP_I422].cu[BLOCK_422_16x32].sa8d = PFX(pixel_sa8d_16x32_sve2);
+        p.chroma[X265_CSP_I422].cu[BLOCK_422_32x64].sa8d = PFX(pixel_sa8d_32x64_sve2);
 
         // dequant_scaling
-        p.dequant_scaling = PFX(dequant_scaling_neon);
-        p.dequant_normal  = PFX(dequant_normal_neon);
+        p.dequant_scaling = PFX(dequant_scaling_sve2);
+        p.dequant_normal  = PFX(dequant_normal_sve2);
 
         // ssim_4x4x2_core
-        p.ssim_4x4x2_core = PFX(ssim_4x4x2_core_neon);
+        p.ssim_4x4x2_core = PFX(ssim_4x4x2_core_sve2);
 
         // ssimDist
-        p.cu[BLOCK_4x4].ssimDist = PFX(ssimDist4_neon);
-        p.cu[BLOCK_8x8].ssimDist = PFX(ssimDist8_neon);
-        p.cu[BLOCK_16x16].ssimDist = PFX(ssimDist16_neon);
-        p.cu[BLOCK_32x32].ssimDist = PFX(ssimDist32_neon);
-        p.cu[BLOCK_64x64].ssimDist = PFX(ssimDist64_neon);
+        p.cu[BLOCK_4x4].ssimDist = PFX(ssimDist4_sve2);
+        p.cu[BLOCK_8x8].ssimDist = PFX(ssimDist8_sve2);
+        p.cu[BLOCK_16x16].ssimDist = PFX(ssimDist16_sve2);
+        p.cu[BLOCK_32x32].ssimDist = PFX(ssimDist32_sve2);
+        p.cu[BLOCK_64x64].ssimDist = PFX(ssimDist64_sve2);
 
         // normFact
-        p.cu[BLOCK_8x8].normFact = PFX(normFact8_neon);
-        p.cu[BLOCK_16x16].normFact = PFX(normFact16_neon);
-        p.cu[BLOCK_32x32].normFact = PFX(normFact32_neon);
-        p.cu[BLOCK_64x64].normFact = PFX(normFact64_neon);
+        p.cu[BLOCK_8x8].normFact = PFX(normFact8_sve2);
+        p.cu[BLOCK_16x16].normFact = PFX(normFact16_sve2);
+        p.cu[BLOCK_32x32].normFact = PFX(normFact32_sve2);
+        p.cu[BLOCK_64x64].normFact = PFX(normFact64_sve2);
 
         // psy_cost_pp
-        p.cu[BLOCK_4x4].psy_cost_pp = PFX(psyCost_4x4_neon);
+        p.cu[BLOCK_4x4].psy_cost_pp = PFX(psyCost_4x4_sve2);
 
-        p.weight_pp = PFX(weight_pp_neon);
+        p.weight_pp = PFX(weight_pp_sve2);
 #if !defined(__APPLE__)
-        p.scanPosLast = PFX(scanPosLast_neon);
+        p.scanPosLast = PFX(scanPosLast_sve2);
 #endif
-        p.costCoeffNxN = PFX(costCoeffNxN_neon);
+        p.costCoeffNxN = PFX(costCoeffNxN_sve2);
 #endif
 
         // quant
-        p.quant = PFX(quant_neon);
-        p.nquant = PFX(nquant_neon);
+        p.quant = PFX(quant_sve2);
+        p.nquant = PFX(nquant_sve2);
     }
     else if (cpuMask & X265_CPU_NEON)
     {

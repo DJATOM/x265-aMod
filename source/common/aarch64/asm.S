@@ -171,6 +171,18 @@ ELF     .size   \name, . - \name
     ABS2            \v6, \v7
 .endm
 
+.macro ABS2_SVE2 a b c
+    abs             \a, \c\()/m, \a
+    abs             \b, \c\()/m, \b
+.endm
+
+.macro ABS8_SVE2 z0, z1, z2, z3, z4, z5, z6, z7, p0
+    ABS2_SVE2       \z0, \z1, p0
+    ABS2_SVE2       \z2, \z3, p0
+    ABS2_SVE2       \z4, \z5, p0
+    ABS2_SVE2       \z6, \z7, p0
+.endm
+
 .macro vtrn t1, t2, s1, s2
     trn1            \t1, \s1, \s2
     trn2            \t2, \s1, \s2
