@@ -599,15 +599,11 @@ pixel_avg_pp_4xN_sve2 16
 
 .macro pixel_avg_pp_8xN_sve2 h
 function PFX(pixel_avg_pp_8x\h\()_sve2)
-    ptrue           p6.b, vl8
 .rept \h
-    ld1b            {z0.b}, p6/z, [x2]
-    ld1b            {z1.b}, p6/z, [x4]
-    add             x2, x2, x3
-    add             x4, x4, x5
-    urhadd          z0.b, p6/m, z0.b, z1.b
-    st1b            {z0.b}, p6, [x0]
-    add             x0, x0, x1
+    ld1             {v0.8b}, [x2], x3
+    ld1             {v1.8b}, [x4], x5
+    urhadd          v2.8b, v0.8b, v1.8b
+    st1             {v2.8b}, [x0], x1
 .endr
     ret
 endfunc
@@ -646,15 +642,11 @@ endfunc
 
 .macro pixel_avg_pp_16xN_sve2 h
 function PFX(pixel_avg_pp_16x\h\()_sve2)
-    ptrue           p7.b, vl16
 .rept \h
-    ld1b            {z0.b}, p7/z, [x2]
-    ld1b            {z1.b}, p7/z, [x4]
-    add             x2, x2, x3
-    add             x4, x4, x5
-    urhadd          z0.b, p7/m, z0.b, z1.b
-    st1b            {z0.b}, p7, [x0]
-    add             x0, x0, x1
+    ld1             {v0.16b}, [x2], x3
+    ld1             {v1.16b}, [x4], x5
+    urhadd          v2.16b, v0.16b, v1.16b
+    st1             {v2.16b}, [x0], x1
 .endr
     ret
 endfunc
@@ -668,19 +660,15 @@ pixel_avg_pp_16xN_sve2 32
 
 function PFX(pixel_avg_pp_16x64_sve2)
     mov             w12, #8
-    ptrue           p0.b, vl16
-.loop_pixel_avg_pp_16x64:
+.lpavg_16x64_sve2:
     sub             w12, w12, #1
 .rept 8
-    ld1b            {z0.b}, p0/z, [x2]
-    ld1b            {z1.b}, p0/z, [x4]
-    add             x2, x2, x3
-    add             x4, x4, x5
-    urhadd          z0.b, p0/m, z0.b, z1.b
-    st1b            {z0.b}, p0, [x0]
-    add             x0, x0, x1
+    ld1             {v0.16b}, [x2], x3
+    ld1             {v1.16b}, [x4], x5
+    urhadd          v2.16b, v0.16b, v1.16b
+    st1             {v2.16b}, [x0], x1
 .endr
-    cbnz            w12, .loop_pixel_avg_pp_16x64
+    cbnz            w12, .lpavg_16x64_sve2
     ret
 endfunc
 
@@ -692,27 +680,19 @@ function PFX(pixel_avg_pp_24x32_sve2)
     rdvl            x9, #1
     cmp             x9, #16
     bgt             .vl_gt_16_pixel_avg_pp_24x32
-    ptrue           p0.b, vl16
-    ptrue           p1.b, vl8
-.loop_pixel_avg_pp_24x32:
+.lpavg_24x32_sve2:
     sub             w12, w12, #1
 .rept 8
-    ld1b            {z0.b}, p0/z, [x2]
-    ld1b            {z1.b}, p1/z, [x2, #1, mul vl]
-    ld1b            {z2.b}, p0/z, [x4]
-    ld1b            {z3.b}, p1/z, [x4, #1, mul vl]
-    add             x2, x2, #16
-    add             x2, x2, x3
-    add             x4, x4, #16
-    add             x4, x4, x5
-    urhadd          z0.b, p0/m, z0.b, z2.b
-    urhadd          z1.b, p1/m, z1.b, z3.b
-    st1b            {z0.b}, p0, [x0]
-    st1b            {z1.b}, p1, [x0, #1, mul vl]
-    add             x0, x0, #16
-    add             x0, x0, x1
+    ld1             {v0.16b}, [x2], #16
+    ld1             {v1.8b}, [x2], x3
+    ld1             {v2.16b}, [x4], #16
+    ld1             {v3.8b}, [x4], x5
+    urhadd          v0.16b, v0.16b, v2.16b
+    urhadd          v1.8b, v1.8b, v3.8b
+    st1             {v0.16b}, [x0], #16
+    st1             {v1.8b}, [x0], x1
 .endr
-    cbnz            w12, .loop_pixel_avg_pp_24x32
+    cbnz            w12, .lpavg_24x32_sve2
     ret
 .vl_gt_16_pixel_avg_pp_24x32:
     mov w0, #24
@@ -740,19 +720,12 @@ function PFX(pixel_avg_pp_32x\h\()_sve2)
     rdvl            x9, #1
     cmp             x9, #16
     bgt             .vl_gt_16_pixel_avg_pp_32_\h
-    ptrue           p0.b, vl16
 .rept \h
-    ld1b            {z0.b}, p0/z, [x2]
-    ld1b            {z1.b}, p0/z, [x2, #1, mul vl]
-    ld1b            {z2.b}, p0/z, [x4]
-    ld1b            {z3.b}, p0/z, [x4, #1, mul vl]
-    add             x2, x2, x3
-    add             x4, x4, x5
-    urhadd          z0.b, p0/m, z0.b, z2.b
-    urhadd          z1.b, p0/m, z1.b, z3.b
-    st1b            {z0.b}, p0, [x0]
-    st1b            {z1.b}, p0, [x0, #1, mul vl]
-    add             x0, x0, x1
+    ld1             {v0.16b-v1.16b}, [x2], x3
+    ld1             {v2.16b-v3.16b}, [x4], x5
+    urhadd          v0.16b, v0.16b, v2.16b
+    urhadd          v1.16b, v1.16b, v3.16b
+    st1             {v0.16b-v1.16b}, [x0], x1
 .endr
     ret
 .vl_gt_16_pixel_avg_pp_32_\h:
@@ -779,24 +752,17 @@ function PFX(pixel_avg_pp_32x\h\()_sve2)
     rdvl            x9, #1
     cmp             x9, #16
     bgt             .vl_gt_16_pixel_avg_pp_32xN1_\h
-    ptrue           p0.b, vl16
     mov             w12, #\h / 8
-.eq_16_loop_pixel_avg_pp_32xN1_\h\():
+.lpavg_sve2_32x\h\():
     sub             w12, w12, #1
 .rept 8
-    ld1b            {z0.b}, p0/z, [x2]
-    ld1b            {z1.b}, p0/z, [x2, #1, mul vl]
-    ld1b            {z2.b}, p0/z, [x4]
-    ld1b            {z3.b}, p0/z, [x4, #1, mul vl]
-    add             x2, x2, x3
-    add             x4, x4, x5
-    urhadd          z0.b, p0/m, z0.b, z2.b
-    urhadd          z1.b, p0/m, z1.b, z3.b
-    st1b            {z0.b}, p0, [x0]
-    st1b            {z1.b}, p0, [x0, #1, mul vl]
-    add             x0, x0, x1
+    ld1             {v0.16b-v1.16b}, [x2], x3
+    ld1             {v2.16b-v3.16b}, [x4], x5
+    urhadd          v0.16b, v0.16b, v2.16b
+    urhadd          v1.16b, v1.16b, v3.16b
+    st1             {v0.16b-v1.16b}, [x0], x1
 .endr
-    cbnz            w12, .eq_16_loop_pixel_avg_pp_32xN1_\h
+    cbnz            w12, .lpavg_sve2_32x\h
     ret
 .vl_gt_16_pixel_avg_pp_32xN1_\h:
     ptrue           p0.b, vl32
@@ -826,26 +792,17 @@ function PFX(pixel_avg_pp_48x64_sve2)
     bgt             .vl_gt_16_pixel_avg_pp_48x64
     ptrue           p0.b, vl16
     mov             w12, #8
-.vl_eq_16_pixel_avg_pp_48x64:
+.lpavg_48x64_sve2:
     sub             w12, w12, #1
 .rept 8
-    ld1b            {z0.b}, p0/z, [x2]
-    ld1b            {z1.b}, p0/z, [x2, #1, mul vl]
-    ld1b            {z2.b}, p0/z, [x2, #2, mul vl]
-    ld1b            {z3.b}, p0/z, [x4]
-    ld1b            {z4.b}, p0/z, [x4, #1, mul vl]
-    ld1b            {z5.b}, p0/z, [x4, #2, mul vl]
-    add             x2, x2, x3
-    add             x4, x4, x5
-    urhadd          z0.b, p0/m, z0.b, z3.b
-    urhadd          z1.b, p0/m, z1.b, z4.b
-    urhadd          z2.b, p0/m, z2.b, z5.b
-    st1b            {z0.b}, p0, [x0]
-    st1b            {z1.b}, p0, [x0, #1, mul vl]
-    st1b            {z2.b}, p0, [x0, #2, mul vl]
-    add             x0, x0, x1
+    ld1             {v0.16b-v2.16b}, [x2], x3
+    ld1             {v3.16b-v5.16b}, [x4], x5
+    urhadd          v0.16b, v0.16b, v3.16b
+    urhadd          v1.16b, v1.16b, v4.16b
+    urhadd          v2.16b, v2.16b, v5.16b
+    st1             {v0.16b-v2.16b}, [x0], x1
 .endr
-    cbnz            w12, .vl_eq_16_pixel_avg_pp_48x64
+    cbnz            w12, .lpavg_48x64_sve2
     ret
 .vl_gt_16_pixel_avg_pp_48x64:
     cmp             x9, #32
@@ -894,32 +851,19 @@ function PFX(pixel_avg_pp_64x\h\()_sve2)
     rdvl            x9, #1
     cmp             x9, #16
     bgt             .vl_gt_16_pixel_avg_pp_64x\h
-    ptrue           p0.b, vl16
     mov             w12, #\h / 4
-.vl_eq_16_pixel_avg_pp_64x\h\():
+.lpavg_sve2_64x\h\():
     sub             w12, w12, #1
 .rept 4
-    ld1b            {z0.b}, p0/z, [x2]
-    ld1b            {z1.b}, p0/z, [x2, #1, mul vl]
-    ld1b            {z2.b}, p0/z, [x2, #2, mul vl]
-    ld1b            {z3.b}, p0/z, [x2, #3, mul vl]
-    ld1b            {z4.b}, p0/z, [x4]
-    ld1b            {z5.b}, p0/z, [x4, #1, mul vl]
-    ld1b            {z6.b}, p0/z, [x4, #2, mul vl]
-    ld1b            {z7.b}, p0/z, [x4, #3, mul vl]
-    add             x2, x2, x3
-    add             x4, x4, x5
-    urhadd          z0.b, p0/m, z0.b, z4.b
-    urhadd          z1.b, p0/m, z1.b, z5.b
-    urhadd          z2.b, p0/m, z2.b, z6.b
-    urhadd          z3.b, p0/m, z3.b, z7.b
-    st1b            {z0.b}, p0, [x0]
-    st1b            {z1.b}, p0, [x0, #1, mul vl]
-    st1b            {z2.b}, p0, [x0, #2, mul vl]
-    st1b            {z3.b}, p0, [x0, #3, mul vl]
-    add             x0, x0, x1
+    ld1             {v0.16b-v3.16b}, [x2], x3
+    ld1             {v4.16b-v7.16b}, [x4], x5
+    urhadd          v0.16b, v0.16b, v4.16b
+    urhadd          v1.16b, v1.16b, v5.16b
+    urhadd          v2.16b, v2.16b, v6.16b
+    urhadd          v3.16b, v3.16b, v7.16b
+    st1             {v0.16b-v3.16b}, [x0], x1
 .endr
-    cbnz            w12, .vl_eq_16_pixel_avg_pp_64x\h
+    cbnz            w12, .lpavg_sve2_64x\h
     ret
 .vl_gt_16_pixel_avg_pp_64x\h\():
     cmp             x9, #32
