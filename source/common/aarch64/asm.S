@@ -130,11 +130,9 @@ ELF     .size   \name, . - \name
         adrp            \rd, \val+(\offset)
         add             \rd, \rd, :lo12:\val+(\offset)
   .endif
-#elif defined(PIC)
+#else
         adrp            \rd, \val+(\offset)
         add             \rd, \rd, :lo12:\val+(\offset)
-#else
-        ldr             \rd, =\val+\offset
 #endif
 .endm
 
