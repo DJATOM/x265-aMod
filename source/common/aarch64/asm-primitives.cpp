@@ -226,61 +226,95 @@ extern "C" {
     p.chroma[X265_CSP_I444].pu[LUMA_16x64].prim = fncdef PFX(fname ## _16x64_ ## cpu)
 #define ALL_CHROMA_444_PU(prim, fname, cpu) ALL_CHROMA_444_PU_TYPED(prim, , fname, cpu)
 
-#define CHROMA_420_VERT_FILTERS(cpu)                             \
+#define CHROMA_420_VERT_FILTERS_1(cpu)                             \
+    ALL_CHROMA_420_4x4_PU(filter_vsp, interp_4tap_vert_sp, cpu); \
+
+#define CHROMA_420_VERT_FILTERS_2(cpu)                             \
     ALL_CHROMA_420_4x4_PU(filter_vpp, interp_4tap_vert_pp, cpu); \
     ALL_CHROMA_420_4x4_PU(filter_vps, interp_4tap_vert_ps, cpu); \
-    ALL_CHROMA_420_4x4_PU(filter_vsp, interp_4tap_vert_sp, cpu); \
     ALL_CHROMA_420_4x4_PU(filter_vss, interp_4tap_vert_ss, cpu);
 
-#define SETUP_CHROMA_422_VERT_FUNC_DEF(W, H, cpu) \
+#define SETUP_CHROMA_422_VERT_FUNC_DEF_1(W, H, cpu) \
+    p.chroma[X265_CSP_I422].pu[CHROMA_422_ ## W ## x ## H].filter_vsp = PFX(interp_4tap_vert_sp_ ## W ## x ## H ## _ ## cpu); \
+
+#define SETUP_CHROMA_422_VERT_FUNC_DEF_2(W, H, cpu) \
     p.chroma[X265_CSP_I422].pu[CHROMA_422_ ## W ## x ## H].filter_vpp = PFX(interp_4tap_vert_pp_ ## W ## x ## H ## _ ## cpu); \
     p.chroma[X265_CSP_I422].pu[CHROMA_422_ ## W ## x ## H].filter_vps = PFX(interp_4tap_vert_ps_ ## W ## x ## H ## _ ## cpu); \
-    p.chroma[X265_CSP_I422].pu[CHROMA_422_ ## W ## x ## H].filter_vsp = PFX(interp_4tap_vert_sp_ ## W ## x ## H ## _ ## cpu); \
     p.chroma[X265_CSP_I422].pu[CHROMA_422_ ## W ## x ## H].filter_vss = PFX(interp_4tap_vert_ss_ ## W ## x ## H ## _ ## cpu);
 
-#define CHROMA_422_VERT_FILTERS(cpu) \
-    SETUP_CHROMA_422_VERT_FUNC_DEF(4, 8, cpu); \
-    SETUP_CHROMA_422_VERT_FUNC_DEF(8, 16, cpu); \
-    SETUP_CHROMA_422_VERT_FUNC_DEF(8, 8, cpu); \
-    SETUP_CHROMA_422_VERT_FUNC_DEF(4, 16, cpu); \
-    SETUP_CHROMA_422_VERT_FUNC_DEF(8, 12, cpu); \
-    SETUP_CHROMA_422_VERT_FUNC_DEF(8, 4, cpu); \
-    SETUP_CHROMA_422_VERT_FUNC_DEF(16, 32, cpu); \
-    SETUP_CHROMA_422_VERT_FUNC_DEF(16, 16, cpu); \
-    SETUP_CHROMA_422_VERT_FUNC_DEF(8, 32, cpu); \
-    SETUP_CHROMA_422_VERT_FUNC_DEF(16, 24, cpu); \
-    SETUP_CHROMA_422_VERT_FUNC_DEF(12, 32, cpu); \
-    SETUP_CHROMA_422_VERT_FUNC_DEF(16, 8, cpu); \
-    SETUP_CHROMA_422_VERT_FUNC_DEF(4, 32, cpu); \
-    SETUP_CHROMA_422_VERT_FUNC_DEF(32, 64, cpu); \
-    SETUP_CHROMA_422_VERT_FUNC_DEF(32, 32, cpu); \
-    SETUP_CHROMA_422_VERT_FUNC_DEF(16, 64, cpu); \
-    SETUP_CHROMA_422_VERT_FUNC_DEF(32, 48, cpu); \
-    SETUP_CHROMA_422_VERT_FUNC_DEF(24, 64, cpu); \
-    SETUP_CHROMA_422_VERT_FUNC_DEF(32, 16, cpu); \
-    SETUP_CHROMA_422_VERT_FUNC_DEF(8, 64, cpu);
+#define CHROMA_422_VERT_FILTERS_1(cpu) \
+    SETUP_CHROMA_422_VERT_FUNC_DEF_1(4, 8, cpu); \
+    SETUP_CHROMA_422_VERT_FUNC_DEF_1(8, 16, cpu); \
+    SETUP_CHROMA_422_VERT_FUNC_DEF_1(8, 8, cpu); \
+    SETUP_CHROMA_422_VERT_FUNC_DEF_1(4, 16, cpu); \
+    SETUP_CHROMA_422_VERT_FUNC_DEF_1(8, 12, cpu); \
+    SETUP_CHROMA_422_VERT_FUNC_DEF_1(8, 4, cpu); \
+    SETUP_CHROMA_422_VERT_FUNC_DEF_1(16, 32, cpu); \
+    SETUP_CHROMA_422_VERT_FUNC_DEF_1(16, 16, cpu); \
+    SETUP_CHROMA_422_VERT_FUNC_DEF_1(8, 32, cpu); \
+    SETUP_CHROMA_422_VERT_FUNC_DEF_1(16, 24, cpu); \
+    SETUP_CHROMA_422_VERT_FUNC_DEF_1(12, 32, cpu); \
+    SETUP_CHROMA_422_VERT_FUNC_DEF_1(16, 8, cpu); \
+    SETUP_CHROMA_422_VERT_FUNC_DEF_1(4, 32, cpu); \
+    SETUP_CHROMA_422_VERT_FUNC_DEF_1(32, 64, cpu); \
+    SETUP_CHROMA_422_VERT_FUNC_DEF_1(32, 32, cpu); \
+    SETUP_CHROMA_422_VERT_FUNC_DEF_1(16, 64, cpu); \
+    SETUP_CHROMA_422_VERT_FUNC_DEF_1(32, 48, cpu); \
+    SETUP_CHROMA_422_VERT_FUNC_DEF_1(24, 64, cpu); \
+    SETUP_CHROMA_422_VERT_FUNC_DEF_1(32, 16, cpu); \
+    SETUP_CHROMA_422_VERT_FUNC_DEF_1(8, 64, cpu);
 
-#define CHROMA_444_VERT_FILTERS(cpu) \
+#define CHROMA_422_VERT_FILTERS_2(cpu) \
+    SETUP_CHROMA_422_VERT_FUNC_DEF_2(4, 8, cpu); \
+    SETUP_CHROMA_422_VERT_FUNC_DEF_2(8, 16, cpu); \
+    SETUP_CHROMA_422_VERT_FUNC_DEF_2(8, 8, cpu); \
+    SETUP_CHROMA_422_VERT_FUNC_DEF_2(4, 16, cpu); \
+    SETUP_CHROMA_422_VERT_FUNC_DEF_2(8, 12, cpu); \
+    SETUP_CHROMA_422_VERT_FUNC_DEF_2(8, 4, cpu); \
+    SETUP_CHROMA_422_VERT_FUNC_DEF_2(16, 32, cpu); \
+    SETUP_CHROMA_422_VERT_FUNC_DEF_2(16, 16, cpu); \
+    SETUP_CHROMA_422_VERT_FUNC_DEF_2(8, 32, cpu); \
+    SETUP_CHROMA_422_VERT_FUNC_DEF_2(16, 24, cpu); \
+    SETUP_CHROMA_422_VERT_FUNC_DEF_2(12, 32, cpu); \
+    SETUP_CHROMA_422_VERT_FUNC_DEF_2(16, 8, cpu); \
+    SETUP_CHROMA_422_VERT_FUNC_DEF_2(4, 32, cpu); \
+    SETUP_CHROMA_422_VERT_FUNC_DEF_2(32, 64, cpu); \
+    SETUP_CHROMA_422_VERT_FUNC_DEF_2(32, 32, cpu); \
+    SETUP_CHROMA_422_VERT_FUNC_DEF_2(16, 64, cpu); \
+    SETUP_CHROMA_422_VERT_FUNC_DEF_2(32, 48, cpu); \
+    SETUP_CHROMA_422_VERT_FUNC_DEF_2(24, 64, cpu); \
+    SETUP_CHROMA_422_VERT_FUNC_DEF_2(32, 16, cpu); \
+    SETUP_CHROMA_422_VERT_FUNC_DEF_2(8, 64, cpu);
+
+#define CHROMA_444_VERT_FILTERS_1(cpu) \
+    ALL_CHROMA_444_PU(filter_vsp, interp_4tap_vert_sp, cpu); \
+
+#define CHROMA_444_VERT_FILTERS_2(cpu) \
     ALL_CHROMA_444_PU(filter_vpp, interp_4tap_vert_pp, cpu); \
     ALL_CHROMA_444_PU(filter_vps, interp_4tap_vert_ps, cpu); \
-    ALL_CHROMA_444_PU(filter_vsp, interp_4tap_vert_sp, cpu); \
     ALL_CHROMA_444_PU(filter_vss, interp_4tap_vert_ss, cpu);
 
-#define CHROMA_420_FILTERS(cpu)                               \
+#define CHROMA_420_FILTERS_1(cpu)                               \
     ALL_CHROMA_420_PU(filter_hpp, interp_4tap_horiz_pp, cpu); \
     ALL_CHROMA_420_PU(filter_hps, interp_4tap_horiz_ps, cpu); \
+
+#define CHROMA_420_FILTERS_2(cpu)                               \
     ALL_CHROMA_420_PU(filter_vpp, interp_4tap_vert_pp, cpu);  \
     ALL_CHROMA_420_PU(filter_vps, interp_4tap_vert_ps, cpu);
 
-#define CHROMA_422_FILTERS(cpu) \
+#define CHROMA_422_FILTERS_1(cpu) \
     ALL_CHROMA_422_PU(filter_hpp, interp_4tap_horiz_pp, cpu); \
     ALL_CHROMA_422_PU(filter_hps, interp_4tap_horiz_ps, cpu); \
+
+#define CHROMA_422_FILTERS_2(cpu) \
     ALL_CHROMA_422_PU(filter_vpp, interp_4tap_vert_pp, cpu);  \
     ALL_CHROMA_422_PU(filter_vps, interp_4tap_vert_ps, cpu);
 
-#define CHROMA_444_FILTERS(cpu) \
+#define CHROMA_444_FILTERS_1(cpu) \
     ALL_CHROMA_444_PU(filter_hpp, interp_4tap_horiz_pp, cpu); \
     ALL_CHROMA_444_PU(filter_hps, interp_4tap_horiz_ps, cpu); \
+
+#define CHROMA_444_FILTERS_2(cpu) \
     ALL_CHROMA_444_PU(filter_vpp, interp_4tap_vert_pp, cpu);  \
     ALL_CHROMA_444_PU(filter_vps, interp_4tap_vert_ps, cpu);
 
@@ -339,17 +373,23 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
 #if !HIGH_BIT_DEPTH
         ALL_LUMA_PU(luma_vpp, interp_8tap_vert_pp, neon);
         ALL_LUMA_PU(luma_vsp, interp_8tap_vert_sp, neon);
-        ALL_LUMA_PU(luma_vps, interp_8tap_vert_ps, neon);
+        ALL_LUMA_PU(luma_vps, interp_8tap_vert_ps, sve2);
         ALL_LUMA_PU(luma_hpp, interp_horiz_pp, neon);
         ALL_LUMA_PU(luma_hps, interp_horiz_ps, neon);
-        ALL_LUMA_PU(luma_vss, interp_8tap_vert_ss, neon);
+        ALL_LUMA_PU(luma_vss, interp_8tap_vert_ss, sve2);
         ALL_LUMA_PU_T(luma_hvpp, interp_8tap_hv_pp_cpu);
-        CHROMA_420_VERT_FILTERS(neon);
-        CHROMA_422_VERT_FILTERS(neon);
-        CHROMA_444_VERT_FILTERS(neon);
-        CHROMA_420_FILTERS(neon);
-        CHROMA_422_FILTERS(neon);
-        CHROMA_444_FILTERS(neon);
+        CHROMA_420_VERT_FILTERS_1(neon);
+        CHROMA_420_VERT_FILTERS_2(sve2);
+        CHROMA_422_VERT_FILTERS_1(neon);
+        CHROMA_422_VERT_FILTERS_2(sve2);
+        CHROMA_444_VERT_FILTERS_1(neon);
+        CHROMA_444_VERT_FILTERS_2(sve2);
+        CHROMA_420_FILTERS_1(neon);
+        CHROMA_420_FILTERS_2(sve2);
+        CHROMA_422_FILTERS_1(neon);
+        CHROMA_422_FILTERS_2(sve2);
+        CHROMA_444_FILTERS_1(neon);
+        CHROMA_444_FILTERS_2(sve2);
 
         // Blockcopy_pp
         ALL_LUMA_PU(copy_pp, blockcopy_pp, sve2);
@@ -716,12 +756,18 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
         ALL_LUMA_PU(luma_hps, interp_horiz_ps, neon);
         ALL_LUMA_PU(luma_vss, interp_8tap_vert_ss, neon);
         ALL_LUMA_PU_T(luma_hvpp, interp_8tap_hv_pp_cpu);
-        CHROMA_420_VERT_FILTERS(neon);
-        CHROMA_422_VERT_FILTERS(neon);
-        CHROMA_444_VERT_FILTERS(neon);
-        CHROMA_420_FILTERS(neon);
-        CHROMA_422_FILTERS(neon);
-        CHROMA_444_FILTERS(neon);
+        CHROMA_420_VERT_FILTERS_1(neon);
+        CHROMA_420_VERT_FILTERS_2(neon);
+        CHROMA_422_VERT_FILTERS_1(neon);
+        CHROMA_422_VERT_FILTERS_2(neon);
+        CHROMA_444_VERT_FILTERS_1(neon);
+        CHROMA_444_VERT_FILTERS_2(neon);
+        CHROMA_420_FILTERS_1(neon);
+        CHROMA_420_FILTERS_2(neon);
+        CHROMA_422_FILTERS_1(neon);
+        CHROMA_422_FILTERS_2(neon);
+        CHROMA_444_FILTERS_1(neon);
+        CHROMA_444_FILTERS_2(neon);
 
         // Blockcopy_pp
         ALL_LUMA_PU(copy_pp, blockcopy_pp, neon);

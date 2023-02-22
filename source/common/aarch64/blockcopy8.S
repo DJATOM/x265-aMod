@@ -3373,7 +3373,6 @@ function PFX(cpy1Dto2D_shr_32x32_sve2)
     asr             z6.h, p0/m, z6.h, z0.h
     asr             z7.h, p0/m, z7.h, z0.h
     asr             z8.h, p0/m, z8.h, z0.h
-    mov             x11, #2
     st1d            {z5.d}, p0, [x0]
     st1d            {z6.d}, p0, [x0, #1, mul vl]
     st1d            {z7.d}, p0, [x0, #2, mul vl]

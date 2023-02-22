@@ -891,22 +891,21 @@ function PFX(pixel_avg_pp_64x\h\()_sve2)
     cmp             x9, #48
     bgt             .vl_gt_48_pixel_avg_pp_64x\h
     ptrue           p0.b, mul4
-    ptrue           p0.b, vl16
+    ptrue           p1.b, vl16
     mov             w12, #\h / 4
-    mov             x11, #48
 .vl_eq_48_pixel_avg_pp_64x\h\():
     sub             w12, w12, #1
 .rept 4
     ld1b            {z0.b}, p0/z, [x2]
-    ld1b            {z1.b}, p1/z, [x2, x11]
+    ld1b            {z1.b}, p1/z, [x2, #1, mul vl]
     ld1b            {z2.b}, p0/z, [x4]
-    ld1b            {z3.b}, p1/z, [x4, x11]
+    ld1b            {z3.b}, p1/z, [x4, #1, mul vl]
     add             x2, x2, x3
     add             x4, x4, x5
     urhadd          z0.b, p0/m, z0.b, z2.b
     urhadd          z1.b, p1/m, z1.b, z3.b
     st1b            {z0.b}, p0, [x0]
-    st1b            {z1.b}, p1, [x0, x11]
+    st1b            {z1.b}, p1, [x0, #1, mul vl]
     add             x0, x0, x1
 .endr
     cbnz            w12, .vl_eq_48_pixel_avg_pp_64x\h
@@ -1275,7 +1274,7 @@ function PFX(addAvg_24x\h\()_sve2)
     sqrshrnb        z1.b, z1.h, #7
     add             z1.b, z1.b, #0x80
     st1b            {z0.h}, p0, [x2]
-    st1b            {z1.h}, p1, [x2, x10]
+    st1b            {z1.h}, p1, [x2, #1, mul vl]
     add             x2, x2, x5
     cbnz            w12, .loop_gt_16_sve2_addavg_24x\h
     ret
