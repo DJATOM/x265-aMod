@@ -1432,6 +1432,32 @@ function PFX(blockcopy_sp_32x32_sve2)
 endfunc
 
 function PFX(blockcopy_sp_64x64_sve2)
+    rdvl            x9, #1
+    cmp             x9, #16
+    bgt             .vl_gt_16_blockcopy_sp_64_64
+    ptrue           p0.h, vl8
+.rept 64
+    ld1h            {z0.h}, p0/z, [x2]
+    ld1h            {z1.h}, p0/z, [x2, #1, mul vl]
+    ld1h            {z2.h}, p0/z, [x2, #2, mul vl]
+    ld1h            {z3.h}, p0/z, [x2, #3, mul vl]
+    ld1h            {z4.h}, p0/z, [x2, #4, mul vl]
+    ld1h            {z5.h}, p0/z, [x2, #5, mul vl]
+    ld1h            {z6.h}, p0/z, [x2, #6, mul vl]
+    ld1h            {z7.h}, p0/z, [x2, #7, mul vl]
+    st1b            {z0.h}, p0, [x0]
+    st1b            {z1.h}, p0, [x0, #1, mul vl]
+    st1b            {z2.h}, p0, [x0, #2, mul vl]
+    st1b            {z3.h}, p0, [x0, #3, mul vl]
+    st1b            {z4.h}, p0, [x0, #4, mul vl]
+    st1b            {z5.h}, p0, [x0, #5, mul vl]
+    st1b            {z6.h}, p0, [x0, #6, mul vl]
+    st1b            {z7.h}, p0, [x0, #7, mul vl]
+    add             x2, x2, x3, lsl #1
+    add             x0, x0, x1
+.endr
+    ret
+.vl_gt_16_blockcopy_sp_64_64:
     mov             x8, #64
     mov             w12, #64
 .L_init_blockcopy_sp_64x64:
@@ -1720,6 +1746,25 @@ function PFX(blockcopy_ss_32x32_sve2)
 endfunc
 
 function PFX(blockcopy_ss_64x64_sve2)
+    rdvl            x9, #1
+    cmp             x9, #16
+    bgt             .vl_gt_16_blockcopy_ss_64_64
+    lsl             x1, x1, #1
+    sub             x1, x1, #64
+    lsl             x3, x3, #1
+    sub             x3, x3, #64
+    mov             w12, #8
+.loop_css64_sve2:
+    sub             w12, w12, #1
+.rept 8
+    ld1             {v0.8h-v3.8h}, [x2], #64
+    ld1             {v4.8h-v7.8h}, [x2], x3
+    st1             {v0.8h-v3.8h}, [x0], #64
+    st1             {v4.8h-v7.8h}, [x0], x1
+.endr
+    cbnz            w12, .loop_css64_sve2
+    ret
+.vl_gt_16_blockcopy_ss_64_64:
     mov             x8, #64
     mov             w12, #64
 .L_init_blockcopy_ss_64x64:
@@ -1791,6 +1836,21 @@ function PFX(blockcopy_ss_16x32_sve2)
 endfunc
 
 function PFX(blockcopy_ss_32x64_sve2)
+    rdvl            x9, #1
+    cmp             x9, #16
+    bgt             .vl_gt_16_blockcopy_ss_32_64
+    lsl             x1, x1, #1
+    lsl             x3, x3, #1
+    mov             w12, #8
+.loop_css32x64_sve2:
+    sub             w12, w12, #1
+.rept 8
+    ld1             {v0.8h-v3.8h}, [x2], x3
+    st1             {v0.8h-v3.8h}, [x0], x1
+.endr
+    cbnz            w12, .loop_css32x64_sve2
+    ret
+.vl_gt_16_blockcopy_ss_32_64:
     mov             x8, #32
     mov             w12, #64
 .L_init_blockcopy_ss_32x64:
@@ -1956,6 +2016,24 @@ function PFX(blockcopy_sp_16x32_sve2)
 endfunc
 
 function PFX(blockcopy_sp_32x64_sve2)
+    rdvl            x9, #1
+    cmp             x9, #16
+    bgt             .vl_gt_16_blockcopy_sp_32_64
+    ptrue           p0.h, vl8
+.rept 64
+    ld1h            {z0.h}, p0/z, [x2]
+    ld1h            {z1.h}, p0/z, [x2, #1, mul vl]
+    ld1h            {z2.h}, p0/z, [x2, #2, mul vl]
+    ld1h            {z3.h}, p0/z, [x2, #3, mul vl]
+    st1b            {z0.h}, p0, [x0]
+    st1b            {z1.h}, p0, [x0, #1, mul vl]
+    st1b            {z2.h}, p0, [x0, #2, mul vl]
+    st1b            {z3.h}, p0, [x0, #3, mul vl]
+    add             x2, x2, x3, lsl #1
+    add             x0, x0, x1
+.endr
+    ret
+.vl_gt_16_blockcopy_sp_32_64:
     mov             x8, #32
     mov             w12, #64
 .L_init_blockcopy_sp_32x64:
@@ -2240,6 +2318,19 @@ function PFX(blockcopy_pp_12x32_sve2)
 endfunc
 
 function PFX(blockcopy_pp_24x32_sve2)
+    rdvl            x9, #1
+    cmp             x9, #16
+    bgt             .vl_gt_16_blockcopy_pp_24x32
+    mov             w12, #4
+.loop_24x32_sve2:
+    sub             w12, w12, #1
+.rept 8
+    ld1             {v0.8b-v2.8b}, [x2], x3
+    st1             {v0.8b-v2.8b}, [x0], x1
+.endr
+    cbnz            w12, .loop_24x32_sve2
+    ret
+.vl_gt_16_blockcopy_pp_24x32:
     mov             w12, #32
     mov             x8, #3
 .L_blockcopy_pp_24x32:
@@ -2259,6 +2350,19 @@ function PFX(blockcopy_pp_24x32_sve2)
 endfunc
 
 function PFX(blockcopy_pp_24x64_sve2)
+    rdvl            x9, #1
+    cmp             x9, #16
+    bgt             .vl_gt_16_blockcopy_pp_24x64
+    mov             w12, #4
+.loop_24x64_sve2:
+    sub             w12, w12, #1
+.rept 16
+    ld1             {v0.8b-v2.8b}, [x2], x3
+    st1             {v0.8b-v2.8b}, [x0], x1
+.endr
+    cbnz            w12, .loop_24x64_sve2
+    ret
+.vl_gt_16_blockcopy_pp_24x64:
     mov             w12, #64
     mov             x8, #3
 .L_blockcopy_pp_24x64:
@@ -2525,6 +2629,21 @@ function PFX(blockfill_s_32x32_sve2)
 endfunc
 
 function PFX(blockfill_s_64x64_sve2)
+    rdvl            x9, #1
+    cmp             x9, #16
+    bgt             .vl_gt_16_blockfill_s_64_64
+    dup             v0.8h, w2
+    mov             v1.16b, v0.16b
+    mov             v2.16b, v0.16b
+    mov             v3.16b, v0.16b
+    lsl             x1, x1, #1
+    sub             x1, x1, #64
+.rept 64
+    st1             {v0.8h-v3.8h}, [x0], #64
+    st1             {v0.8h-v3.8h}, [x0], x1
+.endr
+    ret
+.vl_gt_16_blockfill_s_64_64:
     mov             x8, #64
     mov             w12, #64
     dup             z0.h, w2
@@ -2959,6 +3078,31 @@ function PFX(cpy2Dto1D_shl_32x32_sve2)
 endfunc
 
 function PFX(cpy2Dto1D_shl_64x64_sve2)
+    rdvl            x9, #1
+    cmp             x9, #16
+    bgt             .vl_gt_16_cpy2Dto1D_shl_64x64
+    cpy2Dto1D_shl_start
+    mov             w12, #32
+    sub             x2, x2, #64
+.loop_cpy2Dto1D_shl_64_sve2:
+    sub             w12, w12, #1
+.rept 2
+    ld1             {v2.16b-v5.16b}, [x1], #64
+    ld1             {v16.16b-v19.16b}, [x1], x2
+    sshl            v2.8h, v2.8h, v0.8h
+    sshl            v3.8h, v3.8h, v0.8h
+    sshl            v4.8h, v4.8h, v0.8h
+    sshl            v5.8h, v5.8h, v0.8h
+    sshl            v16.8h, v16.8h, v0.8h
+    sshl            v17.8h, v17.8h, v0.8h
+    sshl            v18.8h, v18.8h, v0.8h
+    sshl            v19.8h, v19.8h, v0.8h
+    st1             {v2.16b-v5.16b}, [x0], #64
+    st1             {v16.16b-v19.16b}, [x0], #64
+.endr
+    cbnz            w12, .loop_cpy2Dto1D_shl_64_sve2
+    ret
+.vl_gt_16_cpy2Dto1D_shl_64x64:
     dup             z0.h, w3
     mov             x8, #64
     mov             w12, #64
@@ -3126,18 +3270,14 @@ endfunc
 // void cpy1Dto2D_shl(int16_t* dst, const int16_t* src, intptr_t dstStride, int shift)
 
 function PFX(cpy1Dto2D_shl_4x4_sve2)
-    dup             z0.h, w3
-    ptrue           p0.h, vl8
-    lsl             x2, x2, #1
-    index           z1.d, #0, #8
-    index           z2.d, #0, x2
-.rept 2
-    ld1d            {z3.d}, p0/z, [x1, z1.d]
-    lsl             z3.h, p0/m, z3.h, z0.h
-    st1d            {z3.d}, p0, [x0, z2.d]
-    add             x1, x1, #16
-    add             x0, x0, x2, lsl #1
-.endr
+    cpy1Dto2D_shl_start
+    ld1             {v2.16b-v3.16b}, [x1]
+    sshl            v2.8h, v2.8h, v0.8h
+    sshl            v3.8h, v3.8h, v0.8h
+    st1             {v2.d}[0], [x0], x2
+    st1             {v2.d}[1], [x0], x2
+    st1             {v3.d}[0], [x0], x2
+    st1             {v3.d}[1], [x0], x2
     ret
 endfunc
 
@@ -3273,23 +3413,16 @@ endfunc
 // void cpy1Dto2D_shr(int16_t* dst, const int16_t* src, intptr_t dstStride, int shift)
 
 function PFX(cpy1Dto2D_shr_4x4_sve2)
-    dup             z0.h, w3
-    sub             w4, w3, #1
-    dup             z1.h, w4
-    ptrue           p0.h, vl8
-    mov             z2.h, #1
-    lsl             z2.h, p0/m, z2.h, z1.h
-    lsl             x2, x2, #1
-    index           z3.d, #0, #8
-    index           z4.d, #0, x2
-.rept 2
-    ld1d            {z5.d}, p0/z, [x1, z3.d]
-    add             x1, x1, #16
-    add             z5.h, p0/m, z5.h, z2.h
-    asr             z5.h, p0/m, z5.h, z0.h
-    st1d            {z5.d}, p0, [x0, z4.d]
-    add             x0, x0, x2, lsl #1
-.endr
+    cpy1Dto2D_shr_start
+    ld1             {v2.16b-v3.16b}, [x1]
+    sub             v2.8h, v2.8h, v1.8h
+    sub             v3.8h, v3.8h, v1.8h
+    sshl            v2.8h, v2.8h, v0.8h
+    sshl            v3.8h, v3.8h, v0.8h
+    st1             {v2.d}[0], [x0], x2
+    st1             {v2.d}[1], [x0], x2
+    st1             {v3.d}[0], [x0], x2
+    st1             {v3.d}[1], [x0], x2
     ret
 endfunc
 
