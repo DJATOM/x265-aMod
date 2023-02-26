@@ -473,7 +473,7 @@ endfunc
 // filterPixelToShort(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride)
 .macro p2s_2xN_sve2 h
 function PFX(filterPixelToShort_2x\h\()_sve2)
-     p2s_start_sve2
+    p2s_start_sve2
 .rept \h / 2
     p2s_2x2
 .endr
@@ -485,36 +485,6 @@ p2s_2xN_sve2 4
 p2s_2xN_sve2 8
 p2s_2xN_sve2 16
 
-// The SVE2 version of the following code deteriorates
-// the performance. So, its NEON version is used instead.
-.macro p2s_6x2_sve2
-#if HIGH_BIT_DEPTH
-    ld1             {v0.d}[0], [x0], #8
-    ld1             {v1.s}[0], [x0], x1
-    ld1             {v0.d}[1], [x0], #8
-    ld1             {v1.s}[1], [x0], x1
-    shl             v3.8h, v0.8h, #P2S_SHIFT
-    shl             v4.8h, v1.8h, #P2S_SHIFT
-#else
-    ldr             s0, [x0]
-    ldrh            w10, [x0, #4]
-    add             x0, x0, x1
-    ld1             {v0.s}[1], [x0]
-    ldrh            w11, [x0, #4]
-    add             x0, x0, x1
-    orr             w10, w10, w11, lsl #16
-    dup             v1.4s, w10
-    ushll           v3.8h, v0.8b, #P2S_SHIFT
-    ushll           v4.8h, v1.8b, #P2S_SHIFT
-#endif
-    add             v3.8h, v3.8h, v31.8h
-    add             v4.8h, v4.8h, v31.8h
-    st1             {v3.d}[0], [x2], #8
-    st1             {v4.s}[0], [x2], x3
-    st1             {v3.d}[1], [x2], #8
-    st1             {v4.s}[1], [x2], x3
-.endm
-
 .macro p2s_6xN_sve2 h
 function PFX(filterPixelToShort_6x\h\()_sve2)
     p2s_start_sve2
@@ -523,7 +493,7 @@ function PFX(filterPixelToShort_6x\h\()_sve2)
     sub             x1, x1, #8
 #endif
 .rept \h / 2
-    p2s_6x2_sve2
+    p2s_6x2_neon
 .endr
     ret
 endfunc
@@ -847,7 +817,6 @@ function PFX(filterPixelToShort_24x\h\()_sve2)
     add             x2, x2, x3
 .endr
     ret
-
 #endif
 endfunc
 .endm
@@ -857,8 +826,8 @@ p2s_24xN_sve2 64
 
 .macro p2s_32xN_sve2 h
 function PFX(filterPixelToShort_32x\h\()_sve2)
-    p2s_start_sve2
 #if HIGH_BIT_DEPTH
+    p2s_start_sve2
     rdvl            x9, #1
     cmp             x9, #16
     bgt             .vl_gt_16_filterPixelToShort_high_32x\h
@@ -904,6 +873,27 @@ function PFX(filterPixelToShort_32x\h\()_sve2)
     cbnz            w12, .vl_gt_16_filterPixelToShort_high_32_outx\h
     ret
 #else
+    rdvl            x9, #1
+    cmp             x9, #16
+    bgt             .vl_gt_16_filterPixelToShort_low_32x\h
+    p2s_start
+    mov             x9, #\h
+.loop_filter_sve2_P2S_32x\h:
+    sub             x9, x9, #1
+    ld1             {v0.16b-v1.16b}, [x0], x1
+    ushll           v22.8h, v0.8b,  #P2S_SHIFT
+    ushll2          v23.8h, v0.16b, #P2S_SHIFT
+    ushll           v24.8h, v1.8b,  #P2S_SHIFT
+    ushll2          v25.8h, v1.16b, #P2S_SHIFT
+    add             v22.8h, v22.8h, v31.8h
+    add             v23.8h, v23.8h, v31.8h
+    add             v24.8h, v24.8h, v31.8h
+    add             v25.8h, v25.8h, v31.8h
+    st1             {v22.16b-v25.16b}, [x2], x3
+    cbnz            x9, .loop_filter_sve2_P2S_32x\h
+    ret
+.vl_gt_16_filterPixelToShort_low_32x\h\():
+    p2s_start_sve2
     mov             w12, #\h
     mov             x8, #16
 .vl_gt_16_filterPixelToShort_32_outx\h\():
@@ -943,8 +933,8 @@ p2s_32xN_sve2 64
 
 .macro p2s_64xN_sve2 h
 function PFX(filterPixelToShort_64x\h\()_sve2)
-    p2s_start_sve2
 #if HIGH_BIT_DEPTH
+    p2s_start_sve2
     rdvl            x9, #1
     cmp             x9, #16
     bgt             .vl_gt_16_filterPixelToShort_high_64x\h
@@ -1006,6 +996,37 @@ function PFX(filterPixelToShort_64x\h\()_sve2)
     cbnz            w12, .vl_gt_16_filterPixelToShort_high_64_outx\h
     ret
 #else
+    rdvl            x9, #1
+    cmp             x9, #16
+    bgt             .vl_gt_16_filterPixelToShort_high_32x\h
+    p2s_start
+    sub             x3, x3, #64
+    mov             x9, #\h
+.loop_filter_sve2_P2S_64x\h:
+    sub             x9, x9, #1
+    ld1             {v0.16b-v3.16b}, [x0], x1
+    ushll           v16.8h, v0.8b,  #P2S_SHIFT
+    ushll2          v17.8h, v0.16b, #P2S_SHIFT
+    ushll           v18.8h, v1.8b,  #P2S_SHIFT
+    ushll2          v19.8h, v1.16b, #P2S_SHIFT
+    ushll           v20.8h, v2.8b,  #P2S_SHIFT
+    ushll2          v21.8h, v2.16b, #P2S_SHIFT
+    ushll           v22.8h, v3.8b,  #P2S_SHIFT
+    ushll2          v23.8h, v3.16b, #P2S_SHIFT
+    add             v16.8h, v16.8h, v31.8h
+    add             v17.8h, v17.8h, v31.8h
+    add             v18.8h, v18.8h, v31.8h
+    add             v19.8h, v19.8h, v31.8h
+    add             v20.8h, v20.8h, v31.8h
+    add             v21.8h, v21.8h, v31.8h
+    add             v22.8h, v22.8h, v31.8h
+    add             v23.8h, v23.8h, v31.8h
+    st1             {v16.16b-v19.16b}, [x2], #64
+    st1             {v20.16b-v23.16b}, [x2], x3
+    cbnz            x9, .loop_filter_sve2_P2S_64x\h
+    ret
+.vl_gt_16_filterPixelToShort_high_32x\h\():
+    p2s_start_sve2
     mov             w12, #\h
     mov             x8, #32
 .vl_gt_16_filterPixelToShort_64_outx\h\():
@@ -1042,8 +1063,8 @@ p2s_64xN_sve2 48
 p2s_64xN_sve2 64
 
 function PFX(filterPixelToShort_48x64_sve2)
-    p2s_start_sve2
 #if HIGH_BIT_DEPTH
+    p2s_start_sve2
     rdvl            x9, #1
     cmp             x9, #16
     bgt             .vl_gt_16_filterPixelToShort_high_48x64
@@ -1097,6 +1118,33 @@ function PFX(filterPixelToShort_48x64_sve2)
     cbnz            w12, .vl_gt_16_filterPixelToShort_high_48_64_out
     ret
 #else
+    rdvl            x9, #1
+    cmp             x9, #16
+    bgt             .vl_gt_16_filterPixelToShort_low_48x64
+    p2s_start
+    sub             x3, x3, #64
+    mov             x9, #64
+.loop_filterP2S_sve2_48x64:
+    sub            x9, x9, #1
+    ld1             {v0.16b-v2.16b}, [x0], x1
+    ushll           v16.8h, v0.8b,  #P2S_SHIFT
+    ushll2          v17.8h, v0.16b, #P2S_SHIFT
+    ushll           v18.8h, v1.8b,  #P2S_SHIFT
+    ushll2          v19.8h, v1.16b, #P2S_SHIFT
+    ushll           v20.8h, v2.8b,  #P2S_SHIFT
+    ushll2          v21.8h, v2.16b, #P2S_SHIFT
+    add             v16.8h, v16.8h, v31.8h
+    add             v17.8h, v17.8h, v31.8h
+    add             v18.8h, v18.8h, v31.8h
+    add             v19.8h, v19.8h, v31.8h
+    add             v20.8h, v20.8h, v31.8h
+    add             v21.8h, v21.8h, v31.8h
+    st1             {v16.16b-v19.16b}, [x2], #64
+    st1             {v20.16b-v21.16b}, [x2], x3
+    cbnz            x9, .loop_filterP2S_sve2_48x64
+    ret
+.vl_gt_16_filterPixelToShort_low_48x64:
+    p2s_start_sve2
     mov             w12, #64
     mov             x8, #24
 .vl_gt_16_filterPixelToShort_48_64_out:
