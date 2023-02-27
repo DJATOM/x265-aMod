@@ -267,54 +267,7 @@
     ret
 .endm
 
-.macro SAD_SVE2_4 h
-    movi            v16.2d, #0
-    ptrue           p0.h, vl4
-.rept \h
-    ld1b            {z0.h}, p0/z, [x0]
-    ld1b            {z1.h}, p0/z, [x2]
-    add             x0, x0, x1
-    add             x2, x2, x3
-    uaba            z16.h, z0.h, z1.h
-.endr
-    uaddlv          s0, v16.8h
-    fmov            w0, s0
-    ret
-.endm
-
-.macro SAD_SVE2_8 h
-    movi            v16.2d, #0
-    ptrue           p0.h, vl8
-.rept \h
-    ld1b            {z0.h}, p0/z, [x0]
-    ld1b            {z1.h}, p0/z, [x2]
-    add             x0, x0, x1
-    add             x2, x2, x3
-    uaba            z16.h, z0.h, z1.h
-.endr
-    uaddlv          s0, v16.8h
-    fmov            w0, s0
-    ret
-.endm
-
 .macro SAD_SVE2_16 h
-    rdvl            x9, #1
-    cmp             x9, #16
-    bgt             .vl_gt_16_pixel_sad_16x\h
-    movi            v16.2d, #0
-    ptrue           p0.b, vl16
-.rept \h
-    ld1b            {z0.b}, p0/z, [x0]
-    ld1b            {z2.b}, p0/z, [x2]
-    add             x0, x0, x1
-    add             x2, x2, x3
-    uabalb          z16.h, z0.b, z2.b
-    uabalt          z16.h, z0.b, z2.b
-.endr
-    uaddlv          s0, v16.8h
-    fmov            w0, s0
-    ret
-.vl_gt_16_pixel_sad_16x\h\():
     mov             z16.d, #0
     ptrue           p0.h, vl16
 .rept \h
@@ -330,27 +283,6 @@
 .endm
 
 .macro SAD_SVE2_32 h
-    rdvl            x9, #1
-    cmp             x9, #16
-    bgt             .vl_gt_16_pixel_sad_32x\h
-    movi            v16.2d, #0
-    ptrue           p0.b, vl16
-.rept \h
-    ld1b            {z0.b}, p0/z, [x0]
-    ld1b            {z1.b}, p0/z, [x0, #1, mul vl]
-    ld1b            {z4.b}, p0/z, [x2]
-    ld1b            {z5.b}, p0/z, [x2, #1, mul vl]
-    add             x0, x0, x1
-    add             x2, x2, x3
-    uabalb          z16.h, z0.b, z4.b
-    uabalt          z16.h, z0.b, z4.b
-    uabalb          z16.h, z1.b, z5.b
-    uabalt          z16.h, z1.b, z5.b
-.endr
-    uaddlv          s0, v16.8h
-    fmov            w0, s0
-    ret
-.vl_gt_16_pixel_sad_32x\h\():
     ptrue           p0.b, vl32
 .rept \h
     ld1b            {z0.b}, p0/z, [x0]
@@ -366,51 +298,6 @@
 .endm
 
 .macro SAD_SVE2_64 h
-    rdvl            x9, #1
-    cmp             x9, #16
-    bgt             .vl_gt_16_pixel_sad_64x\h
-    movi            v16.2d, #0
-    movi            v17.2d, #0
-    movi            v18.2d, #0
-    movi            v19.2d, #0
-    movi            v20.2d, #0
-    movi            v21.2d, #0
-    movi            v22.2d, #0
-    movi            v23.2d, #0
-    ptrue           p0.b, vl16
-.rept \h
-    ld1b            {z0.b}, p0/z, [x0]
-    ld1b            {z1.b}, p0/z, [x0, #1, mul vl]
-    ld1b            {z2.b}, p0/z, [x0, #2, mul vl]
-    ld1b            {z3.b}, p0/z, [x0, #3, mul vl]
-    ld1b            {z4.b}, p0/z, [x2]
-    ld1b            {z5.b}, p0/z, [x2, #1, mul vl]
-    ld1b            {z6.b}, p0/z, [x2, #2, mul vl]
-    ld1b            {z7.b}, p0/z, [x2, #3, mul vl]
-    add             x0, x0, x1
-    add             x2, x2, x3
-    uabalb          z16.h, z0.b, z4.b
-    uabalt          z17.h, z0.b, z4.b
-    uabalb          z18.h, z1.b, z5.b
-    uabalt          z19.h, z1.b, z5.b
-    uabalb          z20.h, z2.b, z6.b
-    uabalt          z21.h, z2.b, z6.b
-    uabalb          z22.h, z3.b, z7.b
-    uabalt          z23.h, z3.b, z7.b
-.endr
-    add             z16.h, z16.h, z17.h
-    add             z17.h, z18.h, z19.h
-    add             z16.h, z16.h, z17.h
-    uaddlp          v16.4s, v16.8h
-    add             z18.h, z20.h, z21.h
-    add             z19.h, z22.h, z23.h
-    add             z17.h, z18.h, z19.h
-    uaddlp          v17.4s, v17.8h
-    add             v16.4s, v16.4s, v17.4s
-    uaddlv          d0, v16.4s
-    fmov            x0, d0
-    ret
-.vl_gt_16_pixel_sad_64x\h\():
     cmp             x9, #48
     bgt             .vl_gt_48_pixel_sad_64x\h
     mov             z16.d, #0
@@ -457,46 +344,7 @@
     ret
 .endm
 
-.macro SAD_SVE2_12 h
-    movi            v16.2d, #0
-    mov             w10, #12
-    whilelt         p0.b, wzr, w10
-.rept \h
-    ld1b            {z0.b}, p0/z, [x0]
-    ld1b            {z8.b}, p0/z, [x2]
-    add             x0, x0, x1
-    add             x2, x2, x3
-    uabalb          z16.h, z0.b, z8.b
-    uabalt          z16.h, z0.b, z8.b
-.endr
-    uaddlv          s5, v16.8h
-    fmov            w0, s5
-    ret
-.endm
-
 .macro SAD_SVE2_24 h
-    rdvl            x9, #1
-    cmp             x9, #16
-    bgt             .vl_gt_16_pixel_sad_24x\h
-    movi            v16.2d, #0
-    ptrue           p0.b, vl16
-    ptrue           p1.b, vl8
-.rept \h
-    ld1b            {z0.b}, p0/z, [x0]
-    ld1b            {z1.b}, p1/z, [x0, #1, mul vl]
-    ld1b            {z8.b}, p0/z, [x2]
-    ld1b            {z9.b}, p1/z, [x2, #1, mul vl]
-    add             x0, x0, x1
-    add             x2, x2, x3
-    uabalb          z16.h, z0.b, z8.b
-    uabalt          z16.h, z0.b, z8.b
-    uabalb          z16.h, z1.b, z9.b
-    uabalt          z16.h, z1.b, z9.b
-.endr
-    uaddlv          s5, v16.8h
-    fmov            w0, s5
-    ret
-.vl_gt_16_pixel_sad_24x\h\():
     mov             z16.d, #0
     mov             w10, #24
     whilelt         p0.b, wzr, w10
@@ -514,43 +362,6 @@
 .endm
 
 .macro SAD_SVE2_48 h
-    rdvl            x9, #1
-    cmp             x9, #16
-    bgt             .vl_gt_16_pixel_sad_48x\h
-    movi            v16.2d, #0
-    movi            v17.2d, #0
-    movi            v18.2d, #0
-    movi            v19.2d, #0
-    movi            v20.2d, #0
-    movi            v21.2d, #0
-    ptrue           p0.b, vl16
-.rept \h
-    ld1b            {z0.b}, p0/z, [x0]
-    ld1b            {z1.b}, p0/z, [x0, #1, mul vl]
-    ld1b            {z2.b}, p0/z, [x0, #2, mul vl]
-    ld1b            {z8.b}, p0/z, [x2]
-    ld1b            {z9.b}, p0/z, [x2, #1, mul vl]
-    ld1b            {z10.b}, p0/z, [x2, #2, mul vl]
-    add             x0, x0, x1
-    add             x2, x2, x3
-    uabalb          z16.h, z0.b, z8.b
-    uabalt          z17.h, z0.b, z8.b
-    uabalb          z18.h, z1.b, z9.b
-    uabalt          z19.h, z1.b, z9.b
-    uabalb          z20.h, z2.b, z10.b
-    uabalt          z21.h, z2.b, z10.b
-.endr
-    add             z16.h, z16.h, z17.h
-    add             z17.h, z18.h, z19.h
-    add             z16.h, z16.h, z17.h
-    uaddlv          s5, v16.8h
-    fmov            w0, s5
-    add             z18.h, z20.h, z21.h
-    uaddlv          s6, v18.8h
-    fmov            w1, s6
-    add             w0, w0, w1
-    ret
-.vl_gt_16_pixel_sad_48x\h\():
     cmp             x9, #48
     bgt             .vl_gt_48_pixel_sad_48x\h
     mov             z16.d, #0
@@ -657,14 +468,67 @@ SAD_FUNC_LOOP_NEON  48, 64
 // Fully unrolled.
 .macro SAD_FUNC_SVE2 w, h
 function PFX(pixel_sad_\w\()x\h\()_sve2)
+    rdvl            x9, #1
+    cmp             x9, #16
+    bgt             .vl_gt_16_pixel_sad_\w\()x\h
+    SAD_START_\w uabdl
+    SAD_\w \h
+.if \w > 4
+    add             v16.8h, v16.8h, v17.8h
+.endif
+    uaddlv          s0, v16.8h
+    fmov            w0, s0
+    ret
+.vl_gt_16_pixel_sad_\w\()x\h\():
+.if \w == 4 || \w == 8 || \w == 12
+    SAD_START_\w uabdl
+    SAD_\w \h
+.if \w > 4
+    add             v16.8h, v16.8h, v17.8h
+.endif
+    uaddlv          s0, v16.8h
+    fmov            w0, s0
+    ret
+.else
     SAD_SVE2_\w \h
+.endif
 endfunc
 .endm
 
 // Loop unrolled 4.
 .macro SAD_FUNC_LOOP_SVE2 w, h
 function PFX(pixel_sad_\w\()x\h\()_sve2)
+    rdvl            x9, #1
+    cmp             x9, #16
+    bgt             .vl_gt_16_pixel_sad_loop_\w\()x\h
+    SAD_START_\w
+
+    mov             w9, #\h/8
+.loop_sve2_\w\()x\h:
+    sub             w9, w9, #1
+.rept 4
+    SAD_\w
+.endr
+    cbnz            w9, .loop_sve2_\w\()x\h
+
+    SAD_END_\w
+
+.vl_gt_16_pixel_sad_loop_\w\()x\h\():
+.if \w == 4 || \w == 8 || \w == 12
+    SAD_START_\w
+
+    mov             w9, #\h/8
+.loop_sve2_loop_\w\()x\h:
+    sub             w9, w9, #1
+.rept 4
+    SAD_\w
+.endr
+    cbnz            w9, .loop_sve2_loop_\w\()x\h
+
+    SAD_END_\w
+.else
     SAD_SVE2_\w \h
+.endif
 endfunc
 .endm
 
@@ -939,181 +803,6 @@ SAD_FUNC_LOOP_SVE2  48, 64
     ret
 .endm
 
-.macro SAD_X_SVE2_4 h x
-    movi            v16.2d, #0
-    movi            v17.2d, #0
-    movi            v18.2d, #0
-    movi            v19.2d, #0
-    ptrue           p0.h, vl4
-.rept \h
-    ld1b            {z0.h}, p0/z, [x0]
-    ld1b            {z1.h}, p0/z, [x1]
-    ld1b            {z2.h}, p0/z, [x2]
-    ld1b            {z3.h}, p0/z, [x3]
-    add             x0, x0, x9
-    add             x1, x1, x5
-    add             x2, x2, x5
-    add             x3, x3, x5
-.if \x == 4
-    ld1b            {z4.h}, p0/z, [x4]
-    add             x4, x4, x5
-.endif
-    uaba            z16.h, z0.h, z1.h
-    uaba            z17.h, z0.h, z2.h
-    uaba            z18.h, z0.h, z3.h
-.if \x == 4
-    uaba            z19.h, z0.h, z4.h
-.endif
-.endr
-    uaddlv          s0, v16.8h
-    uaddlv          s1, v17.8h
-    uaddlv          s2, v18.8h
-    stp             s0, s1, [x6]
-.if \x == 3
-    str             s2, [x6, #8]
-.elseif \x == 4
-    uaddlv          s3, v19.8h
-    stp             s2, s3, [x6, #8]
-.endif
-    ret
-.endm
-
-.macro SAD_X_SVE2_8 h x
-    movi            v16.2d, #0
-    movi            v17.2d, #0
-    movi            v18.2d, #0
-    movi            v19.2d, #0
-    ptrue           p0.h, vl8
-.rept \h
-    ld1b            {z0.h}, p0/z, [x0]
-    ld1b            {z1.h}, p0/z, [x1]
-    ld1b            {z2.h}, p0/z, [x2]
-    ld1b            {z3.h}, p0/z, [x3]
-    add             x0, x0, x9
-    add             x1, x1, x5
-    add             x2, x2, x5
-    add             x3, x3, x5
-.if \x == 4
-    ld1b            {z4.h}, p0/z, [x4]
-    add             x4, x4, x5
-.endif
-    uaba            z16.h, z0.h, z1.h
-    uaba            z17.h, z0.h, z2.h
-    uaba            z18.h, z0.h, z3.h
-.if \x == 4
-    uaba            z19.h, z0.h, z4.h
-.endif
-.endr
-    uaddlv          s0, v16.8h
-    uaddlv          s1, v17.8h
-    uaddlv          s2, v18.8h
-    stp             s0, s1, [x6]
-.if \x == 3
-    str             s2, [x6, #8]
-.elseif \x == 4
-    uaddlv          s3, v19.8h
-    stp             s2, s3, [x6, #8]
-.endif
-    ret
-.endm
-
-.macro SAD_X_SVE2_12 h x
-    movi            v16.2d, #0
-    movi            v17.2d, #0
-    movi            v18.2d, #0
-    movi            v19.2d, #0
-    mov             w10, #12
-    whilelt         p0.b, wzr, w10
-.rept \h
-    ld1b            {z0.b}, p0/z, [x0]
-    add             x0, x0, x9
-    ld1b            {z2.b}, p0/z, [x1]
-    add             x1, x1, x5
-    ld1b            {z4.b}, p0/z, [x2]
-    add             x2, x2, x5
-    ld1b            {z6.b}, p0/z, [x3]
-    add             x3, x3, x5
-.if \x == 4
-    ld1b            {z8.b}, p0/z, [x4]
-    add             x4, x4, x5
-.endif
-    uabalb          z16.h, z2.b, z0.b
-    uabalt          z16.h, z2.b, z0.b
-    uabalb          z17.h, z4.b, z0.b
-    uabalt          z17.h, z4.b, z0.b
-    uabalb          z18.h, z6.b, z0.b
-    uabalt          z18.h, z6.b, z0.b
-.if \x == 4
-    uabalb          z19.h, z8.b, z0.b
-    uabalt          z19.h, z8.b, z0.b
-.endif
-.endr
-    uaddlv          s0, v16.8h
-    uaddlv          s1, v17.8h
-    uaddlv          s2, v18.8h
-    stp             s0, s1, [x6]
-.if \x == 3
-    str             s2, [x6, #8]
-.elseif \x == 4
-    uaddlv          s3, v19.8h
-    stp             s2, s3, [x6, #8]
-.endif
-    ret
-.endm
-
-.macro SAD_X_SVE2_16 h x
-    movi            v16.2d, #0
-    movi            v17.2d, #0
-    movi            v18.2d, #0
-    movi            v19.2d, #0
-    ptrue           p0.b, vl16
-.rept \h
-    ld1b            {z0.b}, p0/z, [x0]
-    ld1b            {z2.b}, p0/z, [x1]
-    ld1b            {z4.b}, p0/z, [x2]
-    ld1b            {z6.b}, p0/z, [x3]
-    add             x0, x0, x9
-    add             x1, x1, x5
-    add             x2, x2, x5
-    add             x3, x3, x5
-.if \x == 4
-    ld1b            {z8.b}, p0/z, [x4]
-    add             x4, x4, x5
-.endif
-    uabalb          z16.h, z2.b, z0.b
-    uabalt          z16.h, z2.b, z0.b
-    uabalb          z17.h, z4.b, z0.b
-    uabalt          z17.h, z4.b, z0.b
-    uabalb          z18.h, z6.b, z0.b
-    uabalt          z18.h, z6.b, z0.b
-.if \x == 4
-    uabalb          z19.h, z8.b, z0.b
-    uabalt          z19.h, z8.b, z0.b
-.endif
-.endr
-    uaddlv          s0, v16.8h
-    uaddlv          s1, v17.8h
-    uaddlv          s2, v18.8h
-    stp             s0, s1, [x6]
-.if \x == 3
-    str             s2, [x6, #8]
-.elseif \x == 4
-    uaddlv          s3, v19.8h
-    stp             s2, s3, [x6, #8]
-.endif
-    ret
-.endm
-
-.macro SAD_X_SVE2_24_INNER base z
-    ld1b            {z4.b}, p0/z, [ \base ]
-    ld1b            {z5.b}, p1/z, [ \base , #1, mul vl]
-    add             \base, \base, x5
-    uabalb          \z\().h, z4.b, z0.b
-    uabalt          \z\().h, z4.b, z0.b
-    uabalb          \z\().h, z5.b, z1.b
-    uabalt          \z\().h, z5.b, z1.b
-.endm
-
 .macro SAD_X_SVE2_24_INNER_GT_16 base z
     ld1b            {z4.b}, p0/z, [ \base ]
     add             \base, \base, x5
@@ -1122,38 +811,6 @@ SAD_FUNC_LOOP_SVE2  48, 64
 .endm
 
 .macro SAD_X_SVE2_24 h x
-    rdvl            x10, #1
-    cmp             x10, #16
-    bgt             .vl_gt_16_pixel_sad_x24x\h\()_\x
-    movi            v20.2d, #0
-    movi            v21.2d, #0
-    movi            v22.2d, #0
-    movi            v23.2d, #0
-    ptrue           p0.b, vl16
-    ptrue           p1.b, vl8
-.rept \h
-    ld1b            {z0.b}, p0/z, [x0]
-    ld1b            {z1.b}, p1/z, [x0, #1, mul vl]
-    add             x0, x0, x9
-    SAD_X_SVE2_24_INNER x1, z20
-    SAD_X_SVE2_24_INNER x2, z21
-    SAD_X_SVE2_24_INNER x3, z22
-.if \x == 4
-    SAD_X_SVE2_24_INNER x4, z23
-.endif
-.endr
-    uaddlv          s0, v20.8h
-    uaddlv          s1, v21.8h
-    uaddlv          s2, v22.8h
-    stp             s0, s1, [x6]
-.if \x == 3
-    str             s2, [x6, #8]
-.elseif \x == 4
-    uaddlv          s3, v23.8h
-    stp             s2, s3, [x6, #8]
-.endif
-    ret
-.vl_gt_16_pixel_sad_x24x\h\()_\x:
     mov             z20.d, #0
     mov             z21.d, #0
     mov             z22.d, #0
@@ -1185,16 +842,6 @@ SAD_FUNC_LOOP_SVE2  48, 64
     ret
 .endm
 
-.macro SAD_X_SVE2_32_INNER base z
-    ld1b            {z4.b}, p0/z, [ \base ]
-    ld1b            {z5.b}, p0/z, [ \base , #1, mul vl]
-    add             \base, \base, x5
-    uabalb          \z\().h, z4.b, z0.b
-    uabalt          \z\().h, z4.b, z0.b
-    uabalb          \z\().h, z5.b, z1.b
-    uabalt          \z\().h, z5.b, z1.b
-.endm
-
 .macro SAD_X_SVE2_32_INNER_GT_16 base z
     ld1b            {z4.b}, p0/z, [ \base ]
     add             \base, \base, x5
@@ -1203,37 +850,6 @@ SAD_FUNC_LOOP_SVE2  48, 64
 .endm
 
 .macro SAD_X_SVE2_32 h x
-    rdvl            x10, #1
-    cmp             x10, #16
-    bgt             .vl_gt_16_pixel_sad_x32x\h\()_\x
-    movi            v20.2d, #0
-    movi            v21.2d, #0
-    movi            v22.2d, #0
-    movi            v23.2d, #0
-    ptrue           p0.b, vl16
-.rept \h
-    ld1b            {z0.b}, p0/z, [x0]
-    ld1b            {z1.b}, p0/z, [x0, #1, mul vl]
-    add             x0, x0, x9
-    SAD_X_SVE2_32_INNER x1, z20
-    SAD_X_SVE2_32_INNER x2, z21
-    SAD_X_SVE2_32_INNER x3, z22
-.if \x == 4
-    SAD_X_SVE2_32_INNER x4, z23
-.endif
-.endr
-    uaddlv          s0, v20.8h
-    uaddlv          s1, v21.8h
-    uaddlv          s2, v22.8h
-    stp             s0, s1, [x6]
-.if \x == 3
-    str             s2, [x6, #8]
-.elseif \x == 4
-    uaddlv          s3, v23.8h
-    stp             s2, s3, [x6, #8]
-.endif
-    ret
-.vl_gt_16_pixel_sad_x32x\h\()_\x:
     mov             z20.d, #0
     mov             z21.d, #0
     mov             z22.d, #0
@@ -1260,84 +876,6 @@ SAD_FUNC_LOOP_SVE2  48, 64
     stp             s2, s3, [x6, #8]
 .endif
     ret
-.endm
-
-.macro SAD_X_SVE2_48_INNER base z1 z2
-    ld1b            {z6.b}, p0/z, [ \base ]
-    ld1b            {z7.b}, p0/z, [ \base , #1, mul vl]
-    ld1b            {z8.b}, p0/z, [ \base , #2, mul vl]
-    add             \base, \base, x5
-    uabalb          \z1\().h, z6.b, z0.b
-    uabalt          \z1\().h, z6.b, z0.b
-    uabalb          \z1\().h, z7.b, z1.b
-    uabalt          \z2\().h, z7.b, z1.b
-    uabalb          \z2\().h, z8.b, z2.b
-    uabalt          \z2\().h, z8.b, z2.b
-.endm
-
-.macro SAD_X_SVE2_48 h x
-    movi            v16.2d, #0
-    movi            v17.2d, #0
-    movi            v18.2d, #0
-    movi            v19.2d, #0
-    movi            v20.2d, #0
-    movi            v21.2d, #0
-    movi            v22.2d, #0
-    movi            v23.2d, #0
-    ptrue           p0.b, vl16
-.rept \h
-    ld1b            {z0.b}, p0/z, [x0]
-    ld1b            {z1.b}, p0/z, [x0, #1, mul vl]
-    ld1b            {z2.b}, p0/z, [x0, #2, mul vl]
-    add             x0, x0, x9
-    SAD_X_SVE2_48_INNER x1, z16, z20
-    SAD_X_SVE2_48_INNER x2, z17, z21
-    SAD_X_SVE2_48_INNER x3, z18, z22
-.if \x == 4
-    SAD_X_SVE2_48_INNER x4, z19, z23
-.endif
-.endr
-.endm
-
-.macro SAD_X_SVE2_64_INNER base z1 z2
-    ld1b            {z8.b}, p0/z, [ \base ]
-    ld1b            {z9.b}, p0/z, [ \base , #1, mul vl]
-    ld1b            {z10.b}, p0/z, [ \base , #2, mul vl]
-    ld1b            {z11.b}, p0/z, [ \base , #3, mul vl]
-    add             \base, \base, x5
-    uabalb          \z1\().h, z8.b, z0.b
-    uabalt          \z1\().h, z8.b, z0.b
-    uabalb          \z1\().h, z9.b, z1.b
-    uabalt          \z1\().h, z9.b, z1.b
-    uabalb          \z2\().h, z10.b, z2.b
-    uabalt          \z2\().h, z10.b, z2.b
-    uabalb          \z2\().h, z11.b, z3.b
-    uabalt          \z2\().h, z11.b, z3.b
-.endm
-
-.macro SAD_X_SVE2_64 h x
-    movi            v16.2d, #0
-    movi            v17.2d, #0
-    movi            v18.2d, #0
-    movi            v19.2d, #0
-    movi            v20.2d, #0
-    movi            v21.2d, #0
-    movi            v22.2d, #0
-    movi            v23.2d, #0
-    ptrue           p0.b, vl16
-.rept \h
-    ld1b            {z0.b}, p0/z, [x0]
-    ld1b            {z1.b}, p0/z, [x0, #1, mul vl]
-    ld1b            {z2.b}, p0/z, [x0, #2, mul vl]
-    ld1b            {z3.b}, p0/z, [x0, #3, mul vl]
-    add             x0, x0, x9
-    SAD_X_SVE2_64_INNER x1, z16, z20
-    SAD_X_SVE2_64_INNER x2, z17, z21
-    SAD_X_SVE2_64_INNER x3, z18, z22
-.if \x == 4
-    SAD_X_SVE2_64_INNER x4, z19, z23
-.endif
-.endr
 .endm
 
 // static void x264_pixel_sad_x3_##size(pixel *fenc, pixel *pix0, pixel *pix1, pixel *pix2, intptr_t i_stride, int scores[3])
@@ -1460,8 +998,30 @@ function PFX(sad_x\x\()_\w\()x\h\()_sve2)
     mov             x6, x5
     mov             x5, x4
 .endif
+    rdvl            x11, #1
+    cmp             x11, #16
+    bgt             .vl_gt_16_sad_x\x\()_\w\()x\h
+.if \w == 12
+    movrel          x12, sad12_mask
+    ld1             {v31.16b}, [x12]
+.endif
 
+    SAD_X_START_\w \h, \x, uabdl
+    SAD_X_\w \h, \x
+    SAD_X_END_\w \x
+.vl_gt_16_sad_x\x\()_\w\()x\h\():
+.if \w == 24 || \w == 32
     SAD_X_SVE2_\w \h, \x
+.else
+.if \w == 12
+    movrel          x12, sad12_mask
+    ld1             {v31.16b}, [x12]
+.endif
+
+    SAD_X_START_\w \h, \x, uabdl
+    SAD_X_\w \h, \x
+    SAD_X_END_\w \x
+.endif
 endfunc
 .endm
 
@@ -1474,23 +1034,63 @@ function PFX(sad_x\x\()_\w\()x\h\()_sve2)
     mov             x6, x5
     mov             x5, x4
 .endif
-
-.if \w == 48
-    SAD_X_SVE2_\w \h, \x
-    // No need to migrate the following function to
-    // SVE2
+    rdvl            x11, #1
+    cmp             x11, #16
+    bgt             .vl_gt_16_sad_x_loop_\x\()_\w\()x\h
+    SAD_X_START_\w \x
+    mov             w12, #\h/4
+.loop_sad_sve2_x\x\()_\w\()x\h:
+    sub             w12, w12, #1
+ .rept 4
+  .if \w == 24
+    ld1             {v6.16b}, [x0], #16
+    ld1             {v7.8b}, [x0], x9
+  .elseif \w == 32
+    ld1             {v6.16b-v7.16b}, [x0], x9
+  .elseif \w == 48
+    ld1             {v4.16b-v6.16b}, [x0], x9
+  .elseif \w == 64
+    ld1             {v4.16b-v7.16b}, [x0], x9
+  .endif
+    SAD_X_\w x1, v16, v20
+    SAD_X_\w x2, v17, v21
+    SAD_X_\w x3, v18, v22
+  .if \x == 4
+    SAD_X_\w x4, v19, v23
+  .endif
+ .endr
+    cbnz            w12, .loop_sad_sve2_x\x\()_\w\()x\h
     SAD_X_END_\w \x
-.endif
-
-.if \w == 64
-    SAD_X_SVE2_\w \h, \x
-    // No need to migrate the following function to
-    // SVE2
-    SAD_X_END_\w \x
-.endif
-
+.vl_gt_16_sad_x_loop_\x\()_\w\()x\h\():
+.if \w == 24 || \w == 32
     SAD_X_SVE2_\w \h, \x
     ret
+.else
+    SAD_X_START_\w \x
+    mov             w12, #\h/4
+.loop_sad_sve2_gt_16_x\x\()_\w\()x\h:
+    sub             w12, w12, #1
+ .rept 4
+  .if \w == 24
+    ld1             {v6.16b}, [x0], #16
+    ld1             {v7.8b}, [x0], x9
+  .elseif \w == 32
+    ld1             {v6.16b-v7.16b}, [x0], x9
+  .elseif \w == 48
+    ld1             {v4.16b-v6.16b}, [x0], x9
+  .elseif \w == 64
+    ld1             {v4.16b-v7.16b}, [x0], x9
+  .endif
+    SAD_X_\w x1, v16, v20
+    SAD_X_\w x2, v17, v21
+    SAD_X_\w x3, v18, v22
+  .if \x == 4
+    SAD_X_\w x4, v19, v23
+  .endif
+ .endr
+    cbnz            w12, .loop_sad_sve2_gt_16_x\x\()_\w\()x\h
+    SAD_X_END_\w \x
+.endif
 endfunc
 .endm
 
