@@ -2518,24 +2518,14 @@ function PFX(pixel_var_16x16_sve2)
     rdvl            x9, #1
     cmp             x9, #16
     bgt             .vl_gt_16_pixel_var_16x16
-    ptrue           p0.b, vl16
-    movi            v0.2d, #0
-    movi            v1.2d, #0
-.rept 16
-    ld1b            {z4.b}, p0/z, [x0]
-    add             x0, x0, x1
-    uaddwb          z0.h, z0.h, z4.b
-    uaddwt          z0.h, z0.h, z4.b
-    umullb          z30.h, z4.b, z4.b
-    umullt          z31.h, z4.b, z4.b
-    uadalp          z1.s, p0/m, z30.h
-    uadalp          z1.s, p0/m, z31.h
-.endr
-    uaddlv          s0, v0.8h
-    uaddlv          d1, v1.4s
-    fmov            w0, s0
-    fmov            x1, d1
-    orr             x0, x0, x1, lsl #32
+    pixel_var_start
+    mov             w12, #16
+.loop_var_16_sve2:
+    sub             w12, w12, #1
+    ld1             {v4.16b}, [x0], x1
+    pixel_var_1 v4
+    cbnz            w12, .loop_var_16_sve2
+    pixel_var_end
     ret
 .vl_gt_16_pixel_var_16x16:
     ptrue           p0.h, vl16
@@ -2559,31 +2549,15 @@ function PFX(pixel_var_32x32_sve2)
     rdvl            x9, #1
     cmp             x9, #16
     bgt             .vl_gt_16_pixel_var_32x32
-    ptrue           p0.b, vl16
-    movi            v0.2d, #0
-    movi            v1.2d, #0
-.rept 32
-    ld1b            {z4.b}, p0/z, [x0]
-    ld1b            {z5.b}, p0/z, [x0, #1, mul vl]
-    add             x0, x0, x1
-    uaddwb          z0.h, z0.h, z4.b
-    uaddwt          z0.h, z0.h, z4.b
-    uaddwb          z0.h, z0.h, z5.b
-    uaddwt          z0.h, z0.h, z5.b
-    umullb          z28.h, z4.b, z4.b
-    umullt          z29.h, z4.b, z4.b
-    umullb          z30.h, z5.b, z5.b
-    umullt          z31.h, z5.b, z5.b
-    uadalp          z1.s, p0/m, z28.h
-    uadalp          z1.s, p0/m, z29.h
-    uadalp          z1.s, p0/m, z30.h
-    uadalp          z1.s, p0/m, z31.h
-.endr
-    uaddlv          s0, v0.8h
-    uaddlv          d1, v1.4s
-    fmov            w0, s0
-    fmov            x1, d1
-    orr             x0, x0, x1, lsl #32
+    pixel_var_start
+    mov             w12, #32
+.loop_var_32_sve2:
+    sub             w12, w12, #1
+    ld1             {v4.16b-v5.16b}, [x0], x1
+    pixel_var_1 v4
+    pixel_var_1 v5
+    cbnz            w12, .loop_var_32_sve2
+    pixel_var_end
     ret
 .vl_gt_16_pixel_var_32x32:
     cmp             x9, #48
@@ -2630,50 +2604,17 @@ function PFX(pixel_var_64x64_sve2)
     rdvl            x9, #1
     cmp             x9, #16
     bgt             .vl_gt_16_pixel_var_64x64
-    ptrue           p0.b, vl16
-    movi            v0.2d, #0
-    movi            v1.2d, #0
-    movi            v2.2d, #0
-    movi            v3.2d, #0
-.rept 64
-    ld1b            {z4.b}, p0/z, [x0]
-    ld1b            {z5.b}, p0/z, [x0, #1, mul vl]
-    ld1b            {z6.b}, p0/z, [x0, #2, mul vl]
-    ld1b            {z7.b}, p0/z, [x0, #3, mul vl]
-    add             x0, x0, x1
-    uaddwb          z0.h, z0.h, z4.b
-    uaddwt          z0.h, z0.h, z4.b
-    uaddwb          z0.h, z0.h, z5.b
-    uaddwt          z0.h, z0.h, z5.b
-    uaddwb          z1.h, z1.h, z6.b
-    uaddwt          z1.h, z1.h, z6.b
-    uaddwb          z1.h, z1.h, z7.b
-    uaddwt          z1.h, z1.h, z7.b
-    umullb          z24.h, z4.b, z4.b
-    umullt          z25.h, z4.b, z4.b
-    umullb          z26.h, z5.b, z5.b
-    umullt          z27.h, z5.b, z5.b
-    umullb          z28.h, z6.b, z6.b
-    umullt          z29.h, z6.b, z6.b
-    umullb          z30.h, z7.b, z7.b
-    umullt          z31.h, z7.b, z7.b
-    uadalp          z2.s, p0/m, z24.h
-    uadalp          z2.s, p0/m, z25.h
-    uadalp          z2.s, p0/m, z26.h
-    uadalp          z2.s, p0/m, z27.h
-    uadalp          z3.s, p0/m, z28.h
-    uadalp          z3.s, p0/m, z29.h
-    uadalp          z3.s, p0/m, z30.h
-    uadalp          z3.s, p0/m, z31.h
-.endr
-    uaddlv          s0, v0.8h
-    uaddlv          s1, v1.8h
-    fadd            s0, s0, s1
-    add             z2.s, z2.s, z3.s
-    uaddlv          d2, v2.4s
-    fmov            w0, s0
-    fmov            x2, d2
-    orr             x0, x0, x2, lsl #32
+    pixel_var_start
+    mov             w12, #64
+.loop_var_64_sve2:
+    sub             w12, w12, #1
+    ld1             {v4.16b-v7.16b}, [x0], x1
+    pixel_var_1 v4
+    pixel_var_1 v5
+    pixel_var_1 v6
+    pixel_var_1 v7
+    cbnz            w12, .loop_var_64_sve2
+    pixel_var_end
     ret
 .vl_gt_16_pixel_var_64x64:
     cmp             x9, #48
@@ -4711,30 +4652,25 @@ function PFX(dequant_normal_sve2)
     rdvl            x9, #1
     cmp             x9, #16
     bgt             .vl_gt_16_dequant_normal_sve2
-    ptrue           p0.h, vl8
 .dqn_loop1_sve2:
-    ld1h            {z2.h}, p0/z, [x0]
-    ld1h            {z3.h}, p0/z, [x0, #1, mul vl]
-    add             x0, x0, #32
-    smullb          z16.s, z2.h, z0.h
-    smullt          z17.s, z2.h, z0.h
-    smullb          z18.s, z3.h, z0.h
-    smullt          z19.s, z3.h, z0.h
+    ld1             {v2.8h, v3.8h}, [x0], #32
+    smull           v16.4s, v2.4h, v0.4h
+    smull2          v17.4s, v2.8h, v0.8h
+    smull           v18.4s, v3.4h, v0.4h
+    smull2          v19.4s, v3.8h, v0.8h
 
-    srshl           z16.s, p0/m, z16.s, z1.s
-    srshl           z17.s, p0/m, z17.s, z1.s
-    srshl           z18.s, p0/m, z18.s, z1.s
-    srshl           z19.s, p0/m, z19.s, z1.s
+    srshl           v16.4s, v16.4s, v1.4s
+    srshl           v17.4s, v17.4s, v1.4s
+    srshl           v18.4s, v18.4s, v1.4s
+    srshl           v19.4s, v19.4s, v1.4s
 
-    sqxtnb          z2.h, z16.s
-    sqxtnt          z2.h, z17.s
-    sqxtnb          z3.h, z18.s
-    sqxtnt          z3.h, z19.s
-    
+    sqxtn           v2.4h, v16.4s
+    sqxtn2          v2.8h, v17.4s
+    sqxtn           v3.4h, v18.4s
+    sqxtn2          v3.8h, v19.4s
+
     sub             w2, w2, #1
-    st1h            {z2.h}, p0, [x1]
-    st1h            {z3.h}, p0, [x1, #1, mul vl]
-    add             x1, x1, #32
+    st1             {v2.8h, v3.8h}, [x1], #32
     cbnz            w2, .dqn_loop1_sve2
     ret
 .vl_gt_16_dequant_normal_sve2:
@@ -5059,7 +4995,7 @@ endfunc
 
 .macro ssimDist_end_sve2
     uaddv           d0, p0, z0.s
-    uaddv           d1, p0, z1.s    
+    uaddv           d1, p0, z1.s
     str             d0, [x6]
     str             d1, [x4]
 .endm
