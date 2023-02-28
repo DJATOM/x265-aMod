@@ -206,48 +206,6 @@
 .endif
 .endm
 
-.macro qpel_load_64b_sve2 v
-.if \v == 0
-    add             x6, x6, x11       // do not load 3 values that are not used in qpel_filter_0
-    ld1b            {z3.h}, p0/z, [x6]
-    ld1b            {z11.h}, p0/z, [x6, #1, mul vl]
-    add             x6, x6, x1
-.elseif \v == 1 || \v == 2 || \v == 3
-.if \v != 3                           // not used in qpel_filter_3
-    ld1b            {z0.h}, p0/z, [x6]
-    ld1b            {z29.h}, p0/z, [x6, #1, mul vl]
-    add             x6, x6, x1
-.else
-    add             x6, x6, x1
-.endif
-    ld1b            {z1.h}, p0/z, [x6]
-    ld1b            {z30.h}, p0/z, [x6, #1, mul vl]
-    add             x6, x6, x1
-    ld1b            {z2.h}, p0/z, [x6]
-    ld1b            {z10.h}, p0/z, [x6, #1, mul vl]
-    add             x6, x6, x1
-    ld1b            {z3.h}, p0/z, [x6]
-    ld1b            {z11.h}, p0/z, [x6, #1, mul vl]
-    add             x6, x6, x1
-    ld1b            {z4.h}, p0/z, [x6]
-    ld1b            {z12.h}, p0/z, [x6, #1, mul vl]
-    add             x6, x6, x1
-    ld1b            {z5.h}, p0/z, [x6]
-    ld1b            {z13.h}, p0/z, [x6, #1, mul vl]
-    add             x6, x6, x1
-.if \v != 1                           // not used in qpel_filter_1
-    ld1b            {z6.h}, p0/z, [x6]
-    ld1b            {z14.h}, p0/z, [x6, #1, mul vl]
-    add             x6, x6, x1
-    ld1b            {z7.h}, p0/z, [x6]
-    ld1b            {z15.h}, p0/z, [x6, #1, mul vl]
-.else
-    ld1b            {z6.h}, p0/z, [x6]
-    ld1b            {z14.h}, p0/z, [x6, #1, mul vl]
-.endif
-.endif
-.endm
-
 .macro qpel_load_64b_sve2_gt_16 v
 .if \v == 0
     add             x6, x6, x11       // do not load 3 values that are not used in qpel_filter_0
@@ -1345,36 +1303,35 @@ LUMA_VPP_NEON 64, 48
     rdvl            x9, #1
     cmp             x9, #16
     bgt             .vl_gt_16_FILTER_LUMA_VPP_\v\()_\w\()x\h
-    ptrue           p0.h, vl8
-    qpel_start_sve2_\v
+    qpel_start_\v
 .loop_luma_vpp_sve2_\v\()_\w\()x\h:
     mov             x7, x2
     mov             x9, #0
 .loop_luma_vpp_w8_sve2_\v\()_\w\()x\h:
     add             x6, x0, x9
 .if \w == 8 || \w == 24
-    qpel_load_32b_sve2 \v
-    qpel_filter_sve2_\v\()_32b
-    vpp_end_sve2
+    qpel_load_32b \v
+    qpel_filter_\v\()_32b
+    vpp_end
     str             d17, [x7], #8
     add             x9, x9, #8
 .elseif \w == 12
-    qpel_load_32b_sve2 \v
-    qpel_filter_sve2_\v\()_32b
-    vpp_end_sve2
+    qpel_load_32b \v
+    qpel_filter_\v\()_32b
+    vpp_end
     str             d17, [x7], #8
     add             x6, x0, #8
-    qpel_load_32b_sve2 \v
-    qpel_filter_sve2_\v\()_32b
-    vpp_end_sve2
+    qpel_load_32b \v
+    qpel_filter_\v\()_32b
+    vpp_end
     fmov            w6, s17
     str             w6, [x7], #4
     add             x9, x9, #12
 .else
-    qpel_load_64b_sve2 \v
-    qpel_filter_sve2_\v\()_64b
-    vpp_end_sve2
-    add             z18.h, z18.h, z31.h
+    qpel_load_64b \v
+    qpel_filter_\v\()_64b
+    vpp_end
+    add             v18.8h, v18.8h, v31.8h
     sqshrun2        v17.16b, v18.8h, #6
     str             q17, [x7], #16
     add             x9, x9, #16
@@ -1738,35 +1695,34 @@ LUMA_VPS_NEON 64, 48
     rdvl            x14, #1
     cmp             x14, #16
     bgt             .vl_gt_16_FILTER_VPS_\v\()_\w\()x\h
-    ptrue           p0.h, vl8
-    qpel_start_sve2_\v
+    qpel_start_\v
 .loop_ps_sve2_\v\()_\w\()x\h:
     mov             x7, x2
     mov             x9, #0
 .loop_ps_w8_sve2_\v\()_\w\()x\h:
     add             x6, x0, x9
 .if \w == 8 || \w == 24
-    qpel_load_32b_sve2 \v
-    qpel_filter_sve2_\v\()_32b
-    vps_end_sve2
+    qpel_load_32b \v
+    qpel_filter_\v\()_32b
+    vps_end
     str             q17, [x7], #16
     add             x9, x9, #8
 .elseif \w == 12
-    qpel_load_32b_sve2 \v
-    qpel_filter_sve2_\v\()_32b
-    vps_end_sve2
+    qpel_load_32b \v
+    qpel_filter_\v\()_32b
+    vps_end
     str             q17, [x7], #16
     add             x6, x0, #8
-    qpel_load_32b_sve2 \v
-    qpel_filter_sve2_\v\()_32b
-    vps_end_sve2
+    qpel_load_32b \v
+    qpel_filter_\v\()_32b
+    vps_end
     str             d17, [x7], #8
     add             x9, x9, #12
 .else
-    qpel_load_64b_sve2 \v
-    qpel_filter_sve2_\v\()_64b
-    vps_end_sve2
-    sub             z18.h, z18.h, z31.h
+    qpel_load_64b \v
+    qpel_filter_\v\()_64b
+    vps_end
+    sub             v18.8h, v18.8h, v31.8h
     stp             q17, q18, [x7], #32
     add             x9, x9, #16
 .endif
