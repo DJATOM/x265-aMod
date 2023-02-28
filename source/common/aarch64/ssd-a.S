@@ -504,7 +504,9 @@ function PFX(pixel_sse_pp_4x4_sve2)
     sub             z16.s, p0/m, z16.s, z17.s
     mla             z0.s, p0/m, z16.s, z16.s
 .endr
-    ret_v0_w0
+    uaddv           d0, p0, z0.s
+    fmov            w0, s0
+    ret
 endfunc
 
 function PFX(pixel_sse_pp_4x8_sve2)
@@ -523,7 +525,9 @@ function PFX(pixel_sse_pp_4x8_sve2)
     sub             z16.s, p0/m, z16.s, z17.s
     mla             z0.s, p0/m, z16.s, z16.s
 .endr
-    ret_v0_w0
+    uaddv           d0, p0, z0.s
+    fmov            w0, s0
+    ret
 endfunc
 
 function PFX(pixel_sse_pp_8x8_sve2)
@@ -550,7 +554,9 @@ function PFX(pixel_sse_pp_8x8_sve2)
     smlalb          z0.s, z2.h, z2.h
     smlalt          z0.s, z2.h, z2.h
 .endr
-    ret_v0_w0
+    uaddv           d0, p0, z0.s
+    fmov            w0, s0
+    ret
 endfunc
 
 function PFX(pixel_sse_pp_8x16_sve2)
@@ -577,7 +583,9 @@ function PFX(pixel_sse_pp_8x16_sve2)
     smlalb          z0.s, z2.h, z2.h
     smlalt          z0.s, z2.h, z2.h
 .endr
-    ret_v0_w0
+    uaddv           d0, p0, z0.s
+    fmov            w0, s0
+    ret
 endfunc
 
 .macro sse_pp_16xN_sve2 h
@@ -605,7 +613,9 @@ function PFX(pixel_sse_pp_16x\h\()_sve2)
     smlalb          z0.s, z2.h, z2.h
     smlalt          z0.s, z2.h, z2.h
 .endr
-    ret_v0_w0
+    uaddv           d0, p0, z0.s
+    fmov            w0, s0
+    ret
 endfunc
 .endm
 
@@ -655,7 +665,9 @@ function PFX(pixel_sse_pp_32x32_sve2)
     smlalb          z0.s, z4.h, z4.h
     smlalt          z0.s, z4.h, z4.h
 .endr
-    ret_v0_w0
+    uaddv           d3, p0, z0.s
+    fmov            w0, s3
+    ret
 .vl_gt_16_pixel_sse_pp_32x32:
     ptrue           p0.b, vl32
     ld1b            {z16.b}, p0/z, [x0]
@@ -1388,7 +1400,9 @@ function PFX(pixel_ssd_s_4x4_sve2)
     smlalb          z0.s, z16.h, z16.h
     smlalt          z0.s, z16.h, z16.h
 .endr
-    ret_v0_w0
+    uaddv           d3, p0, z0.s
+    fmov            w0, s3
+    ret
 endfunc
 
 function PFX(pixel_ssd_s_8x8_sve2)
@@ -1403,7 +1417,9 @@ function PFX(pixel_ssd_s_8x8_sve2)
     smlalb          z0.s, z16.h, z16.h
     smlalt          z0.s, z16.h, z16.h
 .endr
-    ret_v0_w0
+    uaddv           d3, p0, z0.s
+    fmov            w0, s3
+    ret
 endfunc
 
 function PFX(pixel_ssd_s_16x16_sve2)
@@ -1427,7 +1443,9 @@ function PFX(pixel_ssd_s_16x16_sve2)
     smlalb          z0.s, z17.h, z17.h
     smlalt          z0.s, z17.h, z17.h
 .endr
-    ret_v0_w0
+    uaddv           d3, p0, z0.s
+    fmov            w0, s3
+    ret
 .vl_gt_16_pixel_ssd_s_16x16:
     ptrue           p0.b, vl32
     ld1b            {z16.b}, p0/z, [x0]
@@ -1478,7 +1496,9 @@ function PFX(pixel_ssd_s_32x32_sve2)
     smlalb          z0.s, z19.h, z19.h
     smlalt          z0.s, z19.h, z19.h
 .endr
-    ret_v0_w0
+    uaddv           d3, p0, z0.s
+    fmov            w0, s3
+    ret
 .vl_gt_16_pixel_ssd_s_32x32:
     cmp             x9, #48
     bgt             .vl_gt_48_pixel_ssd_s_32x32
