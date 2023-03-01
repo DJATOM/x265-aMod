@@ -22,7 +22,11 @@
  * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
+#if __ARM_FEATURE_SVE2
+.arch armv8-a+sve2
+#else
 .arch           armv8-a
+#endif
 
 #define PFX3(prefix, name) prefix ## _ ## name
 #define PFX2(prefix, name) PFX3(prefix, name)

@@ -24,7 +24,9 @@
 
 #include "asm.S"
 
+#if __ARM_FEATURE_SVE2
 .arch armv8-a+sve2
+#endif
 
 #ifdef __APPLE__
 .section __RODATA,__rodata
@@ -576,39 +578,6 @@ addAvg_64xN_neon 64
 
 /* ################### SVE2 ######################### */
 
-.macro pixel_avg_pp_4xN_sve2 h
-function PFX(pixel_avg_pp_4x\h\()_sve2)
-.rept \h
-    ld1             {v0.s}[0], [x2], x3
-    ld1             {v1.s}[0], [x4], x5
-    urhadd          v2.8b, v0.8b, v1.8b
-    st1             {v2.s}[0], [x0], x1
-.endr
-    ret
-endfunc
-.endm
-
-pixel_avg_pp_4xN_sve2 4
-pixel_avg_pp_4xN_sve2 8
-pixel_avg_pp_4xN_sve2 16
-
-.macro pixel_avg_pp_8xN_sve2 h
-function PFX(pixel_avg_pp_8x\h\()_sve2)
-.rept \h
-    ld1             {v0.8b}, [x2], x3
-    ld1             {v1.8b}, [x4], x5
-    urhadd          v2.8b, v0.8b, v1.8b
-    st1             {v2.8b}, [x0], x1
-.endr
-    ret
-endfunc
-.endm
-
-pixel_avg_pp_8xN_sve2 4
-pixel_avg_pp_8xN_sve2 8
-pixel_avg_pp_8xN_sve2 16
-pixel_avg_pp_8xN_sve2 32
-
 function PFX(pixel_avg_pp_12x16_sve2)
     sub             x1, x1, #4
     sub             x3, x3, #4
@@ -632,38 +601,6 @@ function PFX(pixel_avg_pp_12x16_sve2)
     add             x0, x0, #4
     add             x0, x0, x1
 .endr
-    ret
-endfunc
-
-.macro pixel_avg_pp_16xN_sve2 h
-function PFX(pixel_avg_pp_16x\h\()_sve2)
-.rept \h
-    ld1             {v0.16b}, [x2], x3
-    ld1             {v1.16b}, [x4], x5
-    urhadd          v2.16b, v0.16b, v1.16b
-    st1             {v2.16b}, [x0], x1
-.endr
-    ret
-endfunc
-.endm
-
-pixel_avg_pp_16xN_sve2 4
-pixel_avg_pp_16xN_sve2 8
-pixel_avg_pp_16xN_sve2 12
-pixel_avg_pp_16xN_sve2 16
-pixel_avg_pp_16xN_sve2 32
-
-function PFX(pixel_avg_pp_16x64_sve2)
-    mov             w12, #8
-.lpavg_16x64_sve2:
-    sub             w12, w12, #1
-.rept 8
-    ld1             {v0.16b}, [x2], x3
-    ld1             {v1.16b}, [x4], x5
-    urhadd          v2.16b, v0.16b, v1.16b
-    st1             {v2.16b}, [x0], x1
-.endr
-    cbnz            w12, .lpavg_16x64_sve2
     ret
 endfunc
 
@@ -962,34 +899,6 @@ endfunc
 addAvg_2xN_sve2 4
 addAvg_2xN_sve2 8
 addAvg_2xN_sve2 16
-
-.macro addAvg_4xN_sve2 h
-function PFX(addAvg_4x\h\()_sve2)
-    addAvg_start
-.rept \h / 2
-    ld1             {v0.8b}, [x0], x3
-    ld1             {v1.8b}, [x1], x4
-    ld1             {v2.8b}, [x0], x3
-    ld1             {v3.8b}, [x1], x4
-    add             v0.4h, v0.4h, v1.4h
-    add             v2.4h, v2.4h, v3.4h
-    saddl           v0.4s, v0.4h, v30.4h
-    saddl           v2.4s, v2.4h, v30.4h
-    shrn            v0.4h, v0.4s, #7
-    shrn2           v0.8h, v2.4s, #7
-    sqxtun          v0.8b, v0.8h
-    st1             {v0.s}[0], [x2], x5
-    st1             {v0.s}[1], [x2], x5
-.endr
-    ret
-endfunc
-.endm
-
-addAvg_4xN_sve2 2
-addAvg_4xN_sve2 4
-addAvg_4xN_sve2 8
-addAvg_4xN_sve2 16
-addAvg_4xN_sve2 32
 
 .macro addAvg_6xN_sve2 h
 function PFX(addAvg_6x\h\()_sve2)

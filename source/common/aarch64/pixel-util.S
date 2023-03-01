@@ -25,7 +25,9 @@
 
 #include "asm.S"
 
+#if __ARM_FEATURE_SVE2
 .arch armv8-a+sve2
+#endif
 
 #ifdef __APPLE__
 .section __RODATA,__rodata
@@ -3436,28 +3438,6 @@ function PFX(scale1D_128to64_sve2)
     ret
 endfunc
 
-// void scale2D_64to32(pixel* dst, const pixel* src, intptr_t stride)
-// Migrating the following function to SVE2 deteriorates
-// the performance. So, leaving it as is.
-function PFX(scale2D_64to32_sve2)
-    mov             w12, #32
-.loop_scale2D_sve2:
-    ld1             {v0.16b-v3.16b}, [x1], x2
-    sub             w12, w12, #1
-    ld1             {v4.16b-v7.16b}, [x1], x2
-    scale2D_1       v0, v4
-    scale2D_1       v1, v5
-    scale2D_1       v2, v6
-    scale2D_1       v3, v7
-    uqrshrn         v0.8b, v0.8h, #2
-    uqrshrn2        v0.16b, v1.8h, #2
-    uqrshrn         v1.8b, v2.8h, #2
-    uqrshrn2        v1.16b, v3.8h, #2
-    st1             {v0.16b-v1.16b}, [x0], #32
-    cbnz            w12, .loop_scale2D_sve2
-    ret
-endfunc
-
 // void planecopy_cp_c(const uint8_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int height, int shift)
 function PFX(pixel_planecopy_cp_sve2)
     ptrue           p0.b, vl16
@@ -3837,13 +3817,13 @@ endfunc
 
 function PFX(satd_16x4_sve2), export=0
     LOAD_DIFF_16x4_sve2  z16.h, z17.h, z18.h, z19.h, z20.h, z21.h, z22.h, z23.h
-    b               PFX(satd_8x4v_8x8h_sve2)
+    b                    PFX(satd_8x4v_8x8h_sve2)
 endfunc
 
 function PFX(satd_8x8_sve2), export=0
     LOAD_DIFF_8x4_sve2   z16.h, z17.h, z18.h, z19.h
     LOAD_DIFF_8x4_sve2   z20.h, z21.h, z22.h, z23.h
-    b               PFX(satd_8x4v_8x8h_sve2)
+    b                    PFX(satd_8x4v_8x8h_sve2)
 endfunc
 
 // one vertical hadamard pass and two horizontal
@@ -5692,114 +5672,6 @@ function PFX(weight_pp_sve2)
     add             x0, x0, x2
     sub             x4, x4, #1
     cbnz            x4, .loopHppUS_sve2
-    ret
-endfunc
-
-// int scanPosLast(
-//     const uint16_t *scan,      // x0
-//     const coeff_t *coeff,      // x1
-//     uint16_t *coeffSign,       // x2
-//     uint16_t *coeffFlag,       // x3
-//     uint8_t *coeffNum,         // x4
-//     int numSig,                // x5
-//     const uint16_t* scanCG4x4, // x6
-//     const int trSize)          // x7
-function PFX(scanPosLast_sve2)
-    // convert unit of Stride(trSize) to int16_t
-    add             x7, x7, x7
-
-    // load scan table and convert to Byte
-    ldp             q0, q1, [x6]
-    xtn             v0.8b, v0.8h
-    xtn2            v0.16b, v1.8h   // v0 - Zigzag scan table
-
-    // AND is bitwise. No significant gain here from SVE2
-    // So, continue using NEON instructions
-    movrel          x10, g_SPL_and_mask
-    ldr             q28, [x10]      // v28 = mask for pmovmskb
-    movi            v31.16b, #0     // v31 = {0, ..., 0}
-    add             x10, x7, x7     // 2*x7
-    add             x11, x10, x7    // 3*x7
-    add             x9, x4, #1      // CG count
-
-.loop_spl_sve2:
-    // position of current CG
-    ldrh            w6, [x0], #32
-    add             x6, x1, x6, lsl #1
-
-    // loading current CG
-    ldr             d2, [x6]
-    ldr             d3, [x6, x7]
-    ldr             d4, [x6, x10]
-    ldr             d5, [x6, x11]
-    mov             v2.d[1], v3.d[0]
-    mov             v4.d[1], v5.d[0]
-    sqxtn           v2.8b, v2.8h
-    sqxtn2          v2.16b, v4.8h
-
-    // Zigzag
-    tbl             v3.16b, {v2.16b}, v0.16b
-
-    // get sign
-    cmhi            v5.16b, v3.16b, v31.16b   // v5 = non-zero
-    cmlt            v3.16b, v3.16b, #0        // v3 = negative
-
-    // val - w13 = pmovmskb(v3)
-    and             v3.16b, v3.16b, v28.16b
-    mov             d4, v3.d[1]
-    addv            b23, v3.8b
-    addv            b24, v4.8b
-    mov             v23.b[1], v24.b[0]
-    fmov            w13, s23
-
-    // mask - w15 = pmovmskb(v5)
-    and             v5.16b, v5.16b, v28.16b
-    mov             d6, v5.d[1]
-    addv            b25, v5.8b
-    addv            b26, v6.8b
-    mov             v25.b[1], v26.b[0]
-    fmov            w15, s25
-
-    // coeffFlag = reverse_bit(w15) in 16-bit
-    rbit            w12, w15
-    lsr             w12, w12, #16
-    fmov            s30, w12
-    strh            w12, [x3], #2
-
-    // accelerate by preparing w13 = w13 & w15
-    and             w13, w13, w15
-    mov             x14, xzr
-.loop_spl_1_sve2:
-    cbz             w15, .pext_end_sve2
-    clz             w6, w15
-    lsl             w13, w13, w6
-    lsl             w15, w15, w6
-    extr            w14, w14, w13, #31
-    bfm             w15, wzr, #1, #0
-    b               .loop_spl_1_sve2
-.pext_end_sve2:
-    strh            w14, [x2], #2
-
-    // compute coeffNum = popcount(coeffFlag)
-    cnt             v30.8b, v30.8b
-    addp            v30.8b, v30.8b, v30.8b
-    fmov            w6, s30
-    sub             x5, x5, x6
-    strb            w6, [x4], #1
-
-    cbnz            x5, .loop_spl_sve2
-
-    // count trailing zeros
-    rbit            w13, w12
-    clz             w13, w13
-    lsr             w12, w12, w13
-    strh            w12, [x3, #-2]
-
-    // get last pos
-    sub             x9, x4, x9
-    lsl             x0, x9, #4
-    eor             w13, w13, #15
-    add             x0, x0, x13
     ret
 endfunc
 

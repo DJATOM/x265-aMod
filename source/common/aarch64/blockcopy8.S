@@ -23,7 +23,9 @@
 
 #include "asm.S"
 
+#if __ARM_FEATURE_SVE2
 .arch armv8-a+sve2
+#endif
 
 #ifdef __APPLE__
 .section __RODATA,__rodata
@@ -1656,18 +1658,6 @@ function PFX(blockcopy_ss_4x4_sve2)
     ret
 endfunc
 
-function PFX(blockcopy_ss_8x8_sve2)
-    lsl             x1, x1, #1
-    lsl             x3, x3, #1
-.rept 4
-    ld1             {v0.8h}, [x2], x3
-    ld1             {v1.8h}, [x2], x3
-    st1             {v0.8h}, [x0], x1
-    st1             {v1.8h}, [x0], x1
-.endr
-    ret
-endfunc
-
 function PFX(blockcopy_ss_16x16_sve2)
     rdvl            x9, #1
     cmp             x9, #16
@@ -1795,18 +1785,6 @@ function PFX(blockcopy_ss_4x8_sve2)
     st1d            {z0.d}, p0, [x0, z2.d]
     add             x2, x2, x3, lsl #1
     add             x0, x0, x1, lsl #1
-.endr
-    ret
-endfunc
-
-function PFX(blockcopy_ss_8x16_sve2)
-    lsl             x1, x1, #1
-    lsl             x3, x3, #1
-.rept 8
-    ld1             {v0.8h}, [x2], x3
-    ld1             {v1.8h}, [x2], x3
-    st1             {v0.8h}, [x0], x1
-    st1             {v1.8h}, [x0], x1
 .endr
     ret
 endfunc
@@ -2085,77 +2063,6 @@ endfunc
 blockcopy_pp_2xN_sve2 8
 blockcopy_pp_2xN_sve2 16
 
-function PFX(blockcopy_pp_4x2_sve2)
-    ldr             w9, [x2]
-    str             w9, [x0]
-    ldr             w10, [x2, x3]
-    str             w10, [x0, x1]
-    ret
-endfunc
-
-function PFX(blockcopy_pp_4x4_sve2)
-    ldr             w9, [x2]
-    add             x4, x1, x1
-    add             x14, x3, x3
-    str             w9, [x0]
-    ldr             w10, [x2, x3]
-    add             x5, x4, x1
-    add             x15, x14, x3
-    str             w10, [x0, x1]
-    ldr             w11, [x2, x14]
-    str             w11, [x0, x4]
-    ldr             w12, [x2, x15]
-    str             w12, [x0, x5]
-    ret
-endfunc
-
-.macro blockcopy_pp_4xN_sve2 h
-function PFX(blockcopy_pp_4x\h\()_sve2)
-    add             x4, x1, x1
-    add             x5, x4, x1
-    add             x6, x5, x1
-
-    add             x14, x3, x3
-    add             x15, x14, x3
-    add             x16, x15, x3
-
-.rept \h / 4
-    ldr             w9, [x2]
-    str             w9, [x0]
-    ldr             w10, [x2, x3]
-    str             w10, [x0, x1]
-    ldr             w11, [x2, x14]
-    str             w11, [x0, x4]
-    ldr             w12, [x2, x15]
-    str             w12, [x0, x5]
-    add             x2, x2, x16
-    add             x0, x0, x6
-.endr
-    ret
-endfunc
-.endm
-
-blockcopy_pp_4xN_sve2 8
-blockcopy_pp_4xN_sve2 16
-blockcopy_pp_4xN_sve2 32
-
-// There is no performance improvement if the following
-// function is migrated to SVE2. So, it is left intact
-.macro blockcopy_pp_6xN_sve2 h
-function PFX(blockcopy_pp_6x\h\()_sve2)
-    sub             x1, x1, #4
-.rept \h
-    ld1             {v0.8b}, [x2], x3
-    st1             {v0.s}[0], [x0], #4
-    st1             {v0.h}[2], [x0], x1
-.endr
-    ret
-endfunc
-.endm
-
-blockcopy_pp_6xN_sve2 8
-blockcopy_pp_6xN_sve2 16
-
 .macro blockcopy_pp_8xN_sve2 h
 function PFX(blockcopy_pp_8x\h\()_sve2)
     rdvl            x9, #1
@@ -2288,34 +2195,6 @@ endfunc
 blockcopy_pp_16xN1_sve2 24
 blockcopy_pp_16xN1_sve2 32
 blockcopy_pp_16xN1_sve2 64
-
-// There is no performance improvement if the following
-// function is migrated to SVE2. So, it is left intact
-function PFX(blockcopy_pp_12x16_sve2)
-    sub             x1, x1, #8
-.rept 16
-    ld1             {v0.16b}, [x2], x3
-    str             d0, [x0], #8
-    st1             {v0.s}[2], [x0], x1
-.endr
-    ret
-endfunc
-
-// There is no performance improvement if the following
-// function is migrated to SVE2. So, it is left intact
-function PFX(blockcopy_pp_12x32_sve2)
-    sub             x1, x1, #8
-    mov             w12, #4
-.loop_pp_12x32_sve2:
-    sub             w12, w12, #1
-.rept 8
-    ld1             {v0.16b}, [x2], x3
-    str             d0, [x0], #8
-    st1             {v0.s}[2], [x0], x1
-.endr
-    cbnz            w12, .loop_pp_12x32_sve2
-    ret
-endfunc
 
 function PFX(blockcopy_pp_24x32_sve2)
     rdvl            x9, #1
@@ -2536,29 +2415,6 @@ blockcopy_pp_64xN_sve2 16
 blockcopy_pp_64xN_sve2 32
 blockcopy_pp_64xN_sve2 48
 blockcopy_pp_64xN_sve2 64
-
-// void x265_blockfill_s_neon(int16_t* dst, intptr_t dstride, int16_t val)
-// There is no performance improvement if the following
-// function is migrated to SVE2. So, it is left intact
-function PFX(blockfill_s_4x4_sve2)
-    dup             v0.4h, w2
-    lsl             x1, x1, #1
-.rept 4
-    st1             {v0.4h}, [x0], x1
-.endr
-    ret
-endfunc
-
-// There is no performance improvement if the following
-// function is migrated to SVE2. So, it is left intact
-function PFX(blockfill_s_8x8_sve2)
-    dup             v0.8h, w2
-    lsl             x1, x1, #1
-.rept 8
-    st1             {v0.8h}, [x0], x1
-.endr
-    ret
-endfunc
 
 function PFX(blockfill_s_16x16_sve2)
     rdvl            x9, #1
@@ -3269,18 +3125,6 @@ endfunc
 
 // void cpy1Dto2D_shl(int16_t* dst, const int16_t* src, intptr_t dstStride, int shift)
 
-function PFX(cpy1Dto2D_shl_4x4_sve2)
-    cpy1Dto2D_shl_start
-    ld1             {v2.16b-v3.16b}, [x1]
-    sshl            v2.8h, v2.8h, v0.8h
-    sshl            v3.8h, v3.8h, v0.8h
-    st1             {v2.d}[0], [x0], x2
-    st1             {v2.d}[1], [x0], x2
-    st1             {v3.d}[0], [x0], x2
-    st1             {v3.d}[1], [x0], x2
-    ret
-endfunc
-
 function PFX(cpy1Dto2D_shl_8x8_sve2)
     dup             z0.h, w3
     ptrue           p0.h, vl8
@@ -3411,20 +3255,6 @@ function PFX(cpy1Dto2D_shl_64x64_sve2)
 endfunc
 
 // void cpy1Dto2D_shr(int16_t* dst, const int16_t* src, intptr_t dstStride, int shift)
-
-function PFX(cpy1Dto2D_shr_4x4_sve2)
-    cpy1Dto2D_shr_start
-    ld1             {v2.16b-v3.16b}, [x1]
-    sub             v2.8h, v2.8h, v1.8h
-    sub             v3.8h, v3.8h, v1.8h
-    sshl            v2.8h, v2.8h, v0.8h
-    sshl            v3.8h, v3.8h, v0.8h
-    st1             {v2.d}[0], [x0], x2
-    st1             {v2.d}[1], [x0], x2
-    st1             {v3.d}[0], [x0], x2
-    st1             {v3.d}[1], [x0], x2
-    ret
-endfunc
 
 function PFX(cpy1Dto2D_shr_8x8_sve2)
     dup             z0.h, w3

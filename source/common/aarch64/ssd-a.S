@@ -23,7 +23,9 @@
 
 #include "asm.S"
 
+#if __ARM_FEATURE_SVE2
 .arch armv8-a+sve2
+#endif
 
 #ifdef __APPLE__
 .section __RODATA,__rodata
