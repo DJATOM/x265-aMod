@@ -88,3 +88,15 @@ Note that cmake will update X265_VERSION each time cmake runs, if you are
 building out of a Mercurial source repository.  If you are building out of
 a release source package, the version will not change.  If Mercurial is not
 found, the version will be "unknown".
+
+= Build Instructions for Arm AArch64 Architecture That Support SVE2 =
+
+When a platform is based on Arm AArch64 architecture and supports the Scalable
+Vector Extension version two (SVE2), the GCC10.x and onwards must be installed.
+Also, the CMAKE_C_COMPILER and CMAKE_CXX_COMPILER enviroment variables should be
+set to point to the appropriate cross compilers of the gcc. For example:
+
+1. export CMAKE_C_COMPILER=aarch64-unknown-linux-gnu-gcc
+2. export CMAKE_CXX_COMPILER=aarch64-unknown-linux-gnu-g++
+
+Then, the normal building process can be followed.
