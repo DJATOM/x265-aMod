@@ -5360,6 +5360,7 @@ endfunc
 
 function PFX(normFact16_sve2)
     mov             w12, #16
+    rdvl            x9, #1
     cmp             x9, #16
     bgt             .vl_gt_16_normFact16
     normFact_start
