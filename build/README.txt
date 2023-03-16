@@ -6,9 +6,8 @@
 
 Note: MSVC12 requires cmake 2.8.11 or later
 
-Note: When the a platform is based on Arm AArch64 architecture and supports the
-      Scalable Vector Extension version two (SVE2), the GCC10.x and onwards must be installed
-      in order to compile x265 and use the SVE2 instruction set.
+Note: When the a platform is based on Arm AArch64 architecture, the GCC10.x and onwards must
+      be installed in order to compile x265.
 
 
 = Optional Prerequisites =
