@@ -64,6 +64,11 @@
 #endif
 #endif
 
+#define GLUE(a, b) a ## b
+#define JOIN(a, b) GLUE(a, b)
+
+#define PFX_C(name)        JOIN(JOIN(JOIN(EXTERN_ASM, X265_NS), _), name)
+
 #ifdef __APPLE__
 .macro endfunc
 ELF .size \name, . - \name
