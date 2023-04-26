@@ -1803,6 +1803,14 @@ void Lookahead::slicetypeDecide()
 
         Frame *curFrame = m_inputQueue.first();
         int j;
+		if (m_param->bResetZoneConfig)
+		{
+			for (int i = 0; i < m_param->rc.zonefileCount; i++)
+			{
+				if (m_param->rc.zones[i].startFrame == curFrame->m_poc)
+					m_param = m_param->rc.zones[i].zoneParam;
+			}
+		}
         for (j = 0; j < m_param->bframes + 2; j++)
         {
             if (!curFrame) break;
