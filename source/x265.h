@@ -703,6 +703,7 @@ struct x265_param;
 typedef struct x265_zone
 {
     int   startFrame, endFrame; /* range of frame numbers */
+    int   keyframeMax;          /* it store the default/user defined keyframeMax value*/
     int   bForceQp;             /* whether to use qp vs bitrate factor */
     int   qp;
     float bitrateFactor;

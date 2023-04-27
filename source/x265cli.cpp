@@ -515,6 +515,9 @@ namespace X265_NS {
 
         memcpy(globalParam->rc.zones[zonefileCount].zoneParam, globalParam, sizeof(x265_param));
 
+        if (zonefileCount == 0)
+            globalParam->rc.zones[zonefileCount].keyframeMax = globalParam->keyframeMax;
+
         for (optind = 0;;)
         {
             int long_options_index = -1;

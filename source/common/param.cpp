@@ -2710,6 +2710,7 @@ void x265_copy_params(x265_param* dst, x265_param* src)
         for (int i = 0; i < src->rc.zonefileCount; i++)
         {
             dst->rc.zones[i].startFrame = src->rc.zones[i].startFrame;
+            dst->rc.zones[0].keyframeMax = src->rc.zones[0].keyframeMax;
             memcpy(dst->rc.zones[i].zoneParam, src->rc.zones[i].zoneParam, sizeof(x265_param));
         }
     }
