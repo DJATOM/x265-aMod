@@ -2616,7 +2616,7 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
             nextZoneStart += (i + 1 < m_param->rc.zonefileCount) ? m_param->rc.zones[i + 1].startFrame + m_param->rc.zones[i + 1].zoneParam->radl : m_param->totalFrames;
             if (curZoneStart <= frames[0]->frameNum && nextZoneStart > frames[0]->frameNum)
                 m_param->keyframeMax = nextZoneStart - curZoneStart;
-            if ((i + 1 == m_param->rc.zonefileCount) && nextZoneStart == 0)
+            if (m_param->rc.zones[m_param->rc.zonefileCount - 1].startFrame <= frames[0]->frameNum && nextZoneStart == 0)
                 m_param->keyframeMax = m_param->rc.zones[0].keyframeMax;
         }
     }
