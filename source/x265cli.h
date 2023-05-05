@@ -274,6 +274,7 @@ static const struct option long_options[] =
     { "zones",          required_argument, NULL, 0 },
     { "qpfile",         required_argument, NULL, 0 },
     { "zonefile",       required_argument, NULL, 0 },
+    { "no-zonefile-rc-init",  no_argument, NULL, 0 },
     { "lambda-file",    required_argument, NULL, 0 },
     { "b-intra",              no_argument, NULL, 0 },
     { "no-b-intra",           no_argument, NULL, 0 },

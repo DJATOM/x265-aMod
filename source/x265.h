@@ -2138,6 +2138,10 @@ typedef struct x265_param
       Default 1 (Enabled). API only. */
     int       bResetZoneConfig;
 
+    /*Flag to indicate rate-control history has not to be reset during zone reconfiguration.
+      Default 0 (Disabled) */
+    int       bNoResetZoneConfig;
+
     /* It reduces the bits spent on the inter-frames within the scenecutWindow before and / or after a scenecut
      * by increasing their QP in ratecontrol pass2 algorithm without any deterioration in visual quality.
      * 0 - Disabled (default).
