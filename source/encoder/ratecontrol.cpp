@@ -2392,27 +2392,15 @@ void RateControl::rateControlUpdateStats(RateControlEntry* rce)
     }
 }
 
-
-void RateControl::checkAndResetCRF(RateControlEntry* rce)
-{
-    if(rce->poc % m_param->keyframeMax == 0)
-    {
-        init(*m_curSlice->m_sps);
-        m_shortTermCplxSum = rce->lastSatd / (CLIP_DURATION(m_frameDuration) / BASE_FRAME_DURATION);
-        m_shortTermCplxCount = 1;
-        rce->blurredComplexity = m_shortTermCplxSum / m_shortTermCplxCount;
-    }
-}
-
 void RateControl::checkAndResetABR(RateControlEntry* rce, bool isFrameDone)
 {
     double abrBuffer = 2 * m_rateTolerance * m_bitrate;
 
     // Check if current Slice is a scene cut that follows low detailed/blank frames
-    if (rce->lastSatd > 4 * rce->movingAvgSum || rce->scenecut || rce->isFadeEnd || (m_param->bEnableSBRC && (rce->poc % m_param->keyframeMax == 0)))
+    if (rce->lastSatd > 4 * rce->movingAvgSum || rce->scenecut || rce->isFadeEnd)
     {
         if (!m_isAbrReset && rce->movingAvgSum > 0
-            && (m_isPatternPresent || !m_param->bframes ||(m_param->bEnableSBRC && (rce->poc % m_param->keyframeMax == 0))))
+            && (m_isPatternPresent || !m_param->bframes))
         {
             int pos = X265_MAX(m_sliderPos - m_param->frameNumThreads, 0);
             int64_t shrtTermWantedBits = (int64_t) (X265_MIN(pos, s_slidingWindowFrames) * m_bitrate * m_frameDuration);
@@ -2422,7 +2410,7 @@ void RateControl::checkAndResetABR(RateControlEntry* rce, bool isFrameDone)
                 shrtTermTotalBitsSum += m_encodedBitsWindow[i];
             double underflow = (shrtTermTotalBitsSum - shrtTermWantedBits) / abrBuffer;
             const double epsilon = 0.0001f;
-            if ((underflow < epsilon || rce->isFadeEnd || (m_param->bEnableSBRC && (rce->poc % m_param->keyframeMax == 0))) && !isFrameDone)
+            if ((underflow < epsilon || rce->isFadeEnd) && !isFrameDone)
             {
                 init(*m_curSlice->m_sps);
                 // Reduce tune complexity factor for scenes that follow blank frames
@@ -2508,7 +2496,7 @@ double RateControl::clipQscale(Frame* curFrame, RateControlEntry* rce, double q)
                 for (int j = 0; bufferFillCur >= 0 && iter ; j++)
                 {
                     int type = curFrame->m_lowres.plannedType[j];
-                    if (type == X265_TYPE_AUTO || totalDuration >= 1.0 || (m_param->bEnableSBRC && type == X265_TYPE_IDR))
+                    if (type == X265_TYPE_AUTO || totalDuration >= 1.0)
                         break;
                     totalDuration += m_frameDuration;
                     double wantedFrameSize = m_vbvMaxRate * m_frameDuration;
