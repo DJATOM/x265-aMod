@@ -8,7 +8,9 @@ if(APPLE)
                     ERROR_QUIET
                     OUTPUT_STRIP_TRAILING_WHITESPACE)
 else()
-    execute_process(COMMAND cat /proc/cpuinfo | grep Features | grep neon
+    execute_process(COMMAND cat /proc/cpuinfo
+                    COMMAND grep Features
+                    COMMAND grep neon
                     OUTPUT_VARIABLE neon_version
                     ERROR_QUIET
                     OUTPUT_STRIP_TRAILING_WHITESPACE)

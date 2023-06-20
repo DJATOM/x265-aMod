@@ -22,11 +22,10 @@
  * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
-#if __ARM_FEATURE_SVE2
-.arch armv8-a+sve2
-#else
+#ifndef ASM_S_  // #include guards
+#define ASM_S_
+
 .arch           armv8-a
-#endif
 
 #define PFX3(prefix, name) prefix ## _ ## name
 #define PFX2(prefix, name) PFX3(prefix, name)
@@ -67,11 +66,6 @@
 #define FUNC @
 #endif
 #endif
-
-#define GLUE(a, b) a ## b
-#define JOIN(a, b) GLUE(a, b)
-
-#define PFX_C(name)        JOIN(JOIN(JOIN(EXTERN_ASM, X265_NS), _), name)
 
 #ifdef __APPLE__
 .macro endfunc
@@ -139,9 +133,11 @@ ELF     .size   \name, . - \name
         adrp            \rd, \val+(\offset)
         add             \rd, \rd, :lo12:\val+(\offset)
   .endif
-#else
+#elif defined(PIC)
         adrp            \rd, \val+(\offset)
         add             \rd, \rd, :lo12:\val+(\offset)
+#else
+        ldr             \rd, =\val+\offset
 #endif
 .endm
 
@@ -175,18 +171,6 @@ ELF     .size   \name, . - \name
     ABS2            \v6, \v7
 .endm
 
-.macro ABS2_SVE2 a b c
-    abs             \a, \c\()/m, \a
-    abs             \b, \c\()/m, \b
-.endm
-
-.macro ABS8_SVE2 z0, z1, z2, z3, z4, z5, z6, z7, p0
-    ABS2_SVE2       \z0, \z1, p0
-    ABS2_SVE2       \z2, \z3, p0
-    ABS2_SVE2       \z4, \z5, p0
-    ABS2_SVE2       \z6, \z7, p0
-.endm
-
 .macro vtrn t1, t2, s1, s2
     trn1            \t1, \s1, \s2
     trn2            \t2, \s1, \s2
@@ -197,5 +181,4 @@ ELF     .size   \name, . - \name
     vtrn            \t3, \t4, \s3, \s4
 .endm
 
-
-
+#endif

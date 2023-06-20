@@ -109,8 +109,12 @@ const cpu_name_t cpu_names[] =
 
 #elif X265_ARCH_ARM64
     { "NEON",            X265_CPU_NEON },
+#if defined(HAVE_SVE)
+    { "SVE",            X265_CPU_SVE },
+#endif
+#if defined(HAVE_SVE2)
     { "SVE2",            X265_CPU_SVE2 },
-
+#endif
 #elif X265_ARCH_POWER8
     { "Altivec",         X265_CPU_ALTIVEC },
 
@@ -385,8 +389,11 @@ uint32_t cpu_detect(bool benableavx512)
 {
     int flags = 0;
 
-    #if HAVE_SVE2
+    #if defined(HAVE_SVE2)
          flags |= X265_CPU_SVE2;
+         flags |= X265_CPU_SVE;
+    #elif defined(HAVE_SVE)
+         flags |= X265_CPU_SVE;
     #elif HAVE_NEON
          flags |= X265_CPU_NEON;
     #endif
