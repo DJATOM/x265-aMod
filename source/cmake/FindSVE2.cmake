@@ -17,5 +17,6 @@ else()
 endif()
 
 if(sve2_version)
+    set(CPU_HAS_SVE 1)
     set(CPU_HAS_SVE2 1)
 endif()
