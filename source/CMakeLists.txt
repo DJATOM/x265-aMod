@@ -596,18 +596,7 @@ if((MSVC_IDE OR XCODE OR GCC) AND ENABLE_ASSEMBLY)
                 ARGS ${ARM_ARGS} ${ASM_FLAGS} -c ${ASM_SRC} -o ${ASM}.${SUFFIX}
                 DEPENDS ${ASM_SRC})
         endforeach()
-        if(CPU_HAS_SVE OR CROSS_COMPILE_SVE)
-            foreach(ASM ${ARM_ASMS_SVE})
-                set(ASM_SRC ${CMAKE_CURRENT_SOURCE_DIR}/common/aarch64/${ASM})
-                list(APPEND ASM_SRCS ${ASM_SRC})
-                list(APPEND ASM_OBJS ${ASM}.${SUFFIX})
-                add_custom_command(
-                    OUTPUT ${ASM}.${SUFFIX}
-                    COMMAND ${CMAKE_CXX_COMPILER}
-                    ARGS ${ARM_ARGS} ${ASM_FLAGS} -c ${ASM_SRC} -o ${ASM}.${SUFFIX}
-                    DEPENDS ${ASM_SRC})
-            endforeach()
-        elseif(CPU_HAS_SVE2 OR CROSS_COMPILE_SVE2)
+        if(CPU_HAS_SVE2 OR CROSS_COMPILE_SVE2)
             foreach(ASM ${ARM_ASMS_SVE})
                 set(ASM_SRC ${CMAKE_CURRENT_SOURCE_DIR}/common/aarch64/${ASM})
                 list(APPEND ASM_SRCS ${ASM_SRC})
@@ -619,6 +608,17 @@ if((MSVC_IDE OR XCODE OR GCC) AND ENABLE_ASSEMBLY)
                     DEPENDS ${ASM_SRC})
             endforeach()
             foreach(ASM ${ARM_ASMS_SVE2})
+                set(ASM_SRC ${CMAKE_CURRENT_SOURCE_DIR}/common/aarch64/${ASM})
+                list(APPEND ASM_SRCS ${ASM_SRC})
+                list(APPEND ASM_OBJS ${ASM}.${SUFFIX})
+                add_custom_command(
+                    OUTPUT ${ASM}.${SUFFIX}
+                    COMMAND ${CMAKE_CXX_COMPILER}
+                    ARGS ${ARM_ARGS} ${ASM_FLAGS} -c ${ASM_SRC} -o ${ASM}.${SUFFIX}
+                    DEPENDS ${ASM_SRC})
+            endforeach()
+        elseif(CPU_HAS_SVE OR CROSS_COMPILE_SVE)
+            foreach(ASM ${ARM_ASMS_SVE})
                 set(ASM_SRC ${CMAKE_CURRENT_SOURCE_DIR}/common/aarch64/${ASM})
                 list(APPEND ASM_SRCS ${ASM_SRC})
                 list(APPEND ASM_OBJS ${ASM}.${SUFFIX})
