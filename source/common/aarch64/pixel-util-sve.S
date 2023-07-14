@@ -131,11 +131,9 @@ function PFX(pixel_planecopy_cp_sve)
     mov             x12, x2
     mov             x7, #0
 .loop_w_sve:
-    ldr             z0, [x6]
+    ldr             q0, [x6], #16
     lsl             z0.b, p0/m, z0.b, z2.b
-    str             z0, [x12]
-    add             x6, x6, #16
-    add             x12, x12, #16
+    str             q0, [x12], #16
     add             x7, x7, #16
     cmp             x7, x4
     blt             .loop_w_sve
@@ -149,8 +147,7 @@ function PFX(pixel_planecopy_cp_sve)
     mov             x5, x4
     lsr             x5, x5, #3
 .loopW8_sve:
-    ldr             z0, [x0]
-    add             x0, x0, #8
+    ldr             d0, [x0], #8
     lsl             z0.b, p0/m, z0.b, z2.b
     str             d0, [x2], #8
     sub             x4, x4, #8
@@ -463,28 +460,29 @@ endfunc
 .endm
 
 .macro LOAD_DIFF_16x4_sve z0 z1 z2 z3 z4 z5 z6 z7
+    mov             x11, #8 // in order to consider CPUs whose vector size is greater than 128 bits
     ld1b            {z0.h}, p0/z, [x0]
-    ld1b            {z1.h}, p0/z, [x0, #1, mul vl]
+    ld1b            {z1.h}, p0/z, [x0, x11]
     ld1b            {z2.h}, p0/z, [x2]
-    ld1b            {z3.h}, p0/z, [x2, #1, mul vl]
+    ld1b            {z3.h}, p0/z, [x2, x11]
     add             x0, x0, x1
     add             x2, x2, x3
     ld1b            {z4.h}, p0/z, [x0]
-    ld1b            {z5.h}, p0/z, [x0, #1, mul vl]
+    ld1b            {z5.h}, p0/z, [x0, x11]
     ld1b            {z6.h}, p0/z, [x2]
-    ld1b            {z7.h}, p0/z, [x2, #1, mul vl]
+    ld1b            {z7.h}, p0/z, [x2, x11]
     add             x0, x0, x1
     add             x2, x2, x3
     ld1b            {z8.h}, p0/z, [x0]
-    ld1b            {z9.h}, p0/z, [x0, #1, mul vl]
+    ld1b            {z9.h}, p0/z, [x0, x11]
     ld1b            {z10.h}, p0/z, [x2]
-    ld1b            {z11.h}, p0/z, [x2, #1, mul vl]
+    ld1b            {z11.h}, p0/z, [x2, x11]
     add             x0, x0, x1
     add             x2, x2, x3
     ld1b            {z12.h}, p0/z, [x0]
-    ld1b            {z13.h}, p0/z, [x0, #1, mul vl]
+    ld1b            {z13.h}, p0/z, [x0, x11]
     ld1b            {z14.h}, p0/z, [x2]
-    ld1b            {z15.h}, p0/z, [x2, #1, mul vl]
+    ld1b            {z15.h}, p0/z, [x2, x11]
     add             x0, x0, x1
     add             x2, x2, x3
 

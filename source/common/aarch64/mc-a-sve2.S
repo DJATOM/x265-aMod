@@ -63,13 +63,13 @@ function PFX(pixel_avg_pp_12x16_sve2)
 endfunc
 
 function PFX(pixel_avg_pp_24x32_sve2)
-    sub             x1, x1, #16
-    sub             x3, x3, #16
-    sub             x5, x5, #16
     mov             w12, #4
     rdvl            x9, #1
     cmp             x9, #16
     bgt             .vl_gt_16_pixel_avg_pp_24x32
+    sub             x1, x1, #16
+    sub             x3, x3, #16
+    sub             x5, x5, #16
 .lpavg_24x32_sve2:
     sub             w12, w12, #1
 .rept 8
@@ -85,20 +85,18 @@ function PFX(pixel_avg_pp_24x32_sve2)
     cbnz            w12, .lpavg_24x32_sve2
     ret
 .vl_gt_16_pixel_avg_pp_24x32:
-    mov             w0, #24
-    whilelt         p0.b, wzr, w0
+    mov             x10, #24
+    mov             x11, #0
+    whilelt         p0.b, x11, x10
 .vl_gt_16_loop_pixel_avg_pp_24x32:
     sub             w12, w12, #1
 .rept 8
     ld1b            {z0.b}, p0/z, [x2]
     ld1b            {z2.b}, p0/z, [x4]
-    add             x2, x2, #16
     add             x2, x2, x3
-    add             x4, x4, #16
     add             x4, x4, x5
     urhadd          z0.b, p0/m, z0.b, z2.b
     st1b            {z0.b}, p0, [x0]
-    add             x0, x0, #16
     add             x0, x0, x1
 .endr
     cbnz            w12, .vl_gt_16_loop_pixel_avg_pp_24x32
@@ -217,8 +215,9 @@ function PFX(pixel_avg_pp_48x64_sve2)
     cbnz            w12, .vl_eq_32_pixel_avg_pp_48x64
     ret
 .vl_gt_32_pixel_avg_pp_48x64:
-    mov             w0, #48
-    whilelt         p0.b, wzr, w0
+    mov             x10, #48
+    mov             x11, #0
+    whilelt         p0.b, x11, x10
     mov             w12, #8
 .loop_gt_32_pixel_avg_pp_48x64:
     sub             w12, w12, #1
@@ -255,8 +254,8 @@ function PFX(pixel_avg_pp_64x\h\()_sve2)
     cbnz            w12, .lpavg_sve2_64x\h
     ret
 .vl_gt_16_pixel_avg_pp_64x\h\():
-    cmp             x9, #32
-    bgt             .vl_gt_32_pixel_avg_pp_64x\h
+    cmp             x9, #48
+    bgt             .vl_gt_48_pixel_avg_pp_64x\h
     ptrue           p0.b, vl32
     mov             w12, #\h / 4
 .vl_eq_32_pixel_avg_pp_64x\h\():
@@ -275,29 +274,6 @@ function PFX(pixel_avg_pp_64x\h\()_sve2)
     add             x0, x0, x1
 .endr
     cbnz            w12, .vl_eq_32_pixel_avg_pp_64x\h
-    ret
-.vl_gt_32_pixel_avg_pp_64x\h\():
-    cmp             x9, #48
-    bgt             .vl_gt_48_pixel_avg_pp_64x\h
-    ptrue           p0.b, mul4
-    ptrue           p1.b, vl16
-    mov             w12, #\h / 4
-.vl_eq_48_pixel_avg_pp_64x\h\():
-    sub             w12, w12, #1
-.rept 4
-    ld1b            {z0.b}, p0/z, [x2]
-    ld1b            {z1.b}, p1/z, [x2, #1, mul vl]
-    ld1b            {z2.b}, p0/z, [x4]
-    ld1b            {z3.b}, p1/z, [x4, #1, mul vl]
-    add             x2, x2, x3
-    add             x4, x4, x5
-    urhadd          z0.b, p0/m, z0.b, z2.b
-    urhadd          z1.b, p1/m, z1.b, z3.b
-    st1b            {z0.b}, p0, [x0]
-    st1b            {z1.b}, p1, [x0, #1, mul vl]
-    add             x0, x0, x1
-.endr
-    cbnz            w12, .vl_eq_48_pixel_avg_pp_64x\h
     ret
 .vl_gt_48_pixel_avg_pp_64x\h\():
     ptrue           p0.b, vl64
@@ -484,8 +460,9 @@ function PFX(addAvg_12x\h\()_sve2)
     cbnz            w12, .loop_sve2_addavg_12x\h
     ret
 .vl_gt_16_addAvg_12x\h\():
-    mov             w0, #24
-    whilelt         p0.b, wzr, w0
+    mov             x10, #24
+    mov             x11, #0
+    whilelt         p0.b, x11, x10
 .loop_sve2_gt_16_addavg_12x\h\():
     sub             w12, w12, #1
     ld1b            {z0.b}, p0/z, [x0]
@@ -551,8 +528,9 @@ function PFX(addAvg_16x\h\()_sve2)
     cbnz            w12, .loop_gt_16_sve2_addavg_16x\h
     ret
 .vl_gt_32_addAvg_16x\h\():
-    mov             w0, #48
-    whilelt         p0.b, wzr, w0
+    mov             x10, #48
+    mov             x11, #0
+    whilelt         p0.b, x11, x10
 .loop_gt_32_sve2_addavg_16x\h\():
     sub             w12, w12, #1
     ld1b            {z0.b}, p0/z, [x0]
@@ -621,8 +599,9 @@ function PFX(addAvg_24x\h\()_sve2)
     cbnz            w12, .loop_gt_16_sve2_addavg_24x\h
     ret
 .vl_gt_48_addAvg_24x\h\():
-    mov             w0, #48
-    whilelt         p0.b, wzr, w0
+    mov             x10, #48
+    mov             x11, #0
+    whilelt         p0.b, x11, x10
 .loop_gt_48_sve2_addavg_24x\h\():
     sub             w12, w12, #1
     ld1b            {z0.b}, p0/z, [x0]
@@ -811,8 +790,9 @@ function PFX(addAvg_48x64_sve2)
     cbnz            w12, .loop_gt_48_sve2_addavg_48x64
     ret
 .vl_gt_112_addAvg_48x64:
-    mov             w0, #96
-    whilelt         p0.b, wzr, w0
+    mov             x10, #96
+    mov             x11, #0
+    whilelt         p0.b, x11, x10
 .loop_gt_112_sve2_addavg_48x64:
     sub             w12, w12, #1
     ld1b            {z0.b}, p0/z, [x0]

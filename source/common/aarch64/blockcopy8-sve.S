@@ -108,28 +108,14 @@ function PFX(blockcopy_sp_32x32_sve)
 .endr
     ret
 .vl_gt_16_blockcopy_sp_32_32:
-    cmp             x9, #32
-    bgt             .vl_gt_32_blockcopy_sp_32_32
+    cmp             x9, #48
+    bgt             .vl_gt_48_blockcopy_sp_32_32
     ptrue           p0.h, vl16
 .rept 32
     ld1h            {z0.h}, p0/z, [x2]
     ld1h            {z1.h}, p0/z, [x2, #1, mul vl]
     st1b            {z0.h}, p0, [x0]
     st1b            {z1.h}, p0, [x0, #1, mul vl]
-    add             x2, x2, x3, lsl #1
-    add             x0, x0, x1
-.endr
-    ret
-.vl_gt_32_blockcopy_sp_32_32:
-    cmp             x9, #48
-    bgt             .vl_gt_48_blockcopy_sp_32_32
-    ptrue           p0.h, mul4
-    ptrue           p1.h, vl8
-.rept 32
-    ld1h            {z0.h}, p0/z, [x2]
-    ld1h            {z1.h}, p1/z, [x2, #1, mul vl]
-    st1b            {z0.h}, p0, [x0]
-    st1b            {z1.h}, p1, [x0, #1, mul vl]
     add             x2, x2, x3, lsl #1
     add             x0, x0, x1
 .endr
@@ -410,28 +396,14 @@ function PFX(blockcopy_ss_32x32_sve)
     cbnz            w12, .loop_css32_sve
     ret
 .vl_gt_16_blockcopy_ss_32_32:
-    cmp             x9, #32
-    bgt             .vl_gt_32_blockcopy_ss_32_32
+    cmp             x9, #48
+    bgt             .vl_gt_48_blockcopy_ss_32_32
     ptrue           p0.h, vl16
 .rept 32
     ld1h            {z0.h}, p0/z, [x2]
     ld1h            {z1.h}, p0/z, [x2, #1, mul vl]
     st1h            {z0.h}, p0, [x0]
     st1h            {z1.h}, p0, [x0, #1, mul vl]
-    add             x2, x2, x3, lsl #1
-    add             x0, x0, x1, lsl #1
-.endr
-    ret
-.vl_gt_32_blockcopy_ss_32_32:
-    cmp             x9, #48
-    bgt             .vl_gt_48_blockcopy_ss_32_32
-    ptrue           p0.h, mul4
-    ptrue           p1.h, vl8
-.rept 32
-    ld1h            {z0.h}, p0/z, [x2]
-    ld1h            {z1.h}, p1/z, [x2, #1, mul vl]
-    st1h            {z0.h}, p0, [x0]
-    st1h            {z1.h}, p1, [x0, #1, mul vl]
     add             x2, x2, x3, lsl #1
     add             x0, x0, x1, lsl #1
 .endr
@@ -786,24 +758,23 @@ function PFX(blockcopy_pp_8x\h\()_sve)
 .endr
     ret
 .vl_gt_16_blockcopy_pp_8xN_\h\():
-    cmp             x9, #48
-    bgt             .vl_gt_48_blockcopy_pp_8xN_\h
-    ptrue           p0.d, vl4
     index           z1.d, #0, x3
     index           z2.d, #0, x1
-.rept \h / 2
+    mov             x11, #\h
+    mov             x10, #0
+    whilelt         p0.d, x10, x11
+.L_blockcopy_pp_inner_8xN_\h\():
+    mov             x12, #0
     ld1d            {z0.d}, p0/z, [x2, z1.d]
     st1d            {z0.d}, p0, [x0, z2.d]
-    add             x2, x2, x3, lsl #1
-    add             x0, x0, x1, lsl #1
-.endr
-    ret
-.vl_gt_48_blockcopy_pp_8xN_\h\():
-    ptrue           p0.d, vl8
-    index           z1.d, #0, x3
-    index           z2.d, #0, x1
-    ld1d            {z0.d}, p0/z, [x2, z1.d]
-    st1d            {z0.d}, p0, [x0, z2.d]
+    incd            x10
+    incd            x12
+    mul             x14, x3, x12
+    add             x2, x2, x14
+    mul             x14, x1, x12
+    add             x0, x0, x14
+    whilelt         p0.d, x10, x11
+    b.first         .L_blockcopy_pp_inner_8xN_\h
     ret
 endfunc
 .endm
@@ -831,41 +802,23 @@ function PFX(blockcopy_pp_8x64_sve)
 .endr
     ret
 .vl_gt_16_blockcopy_pp_8x64:
-    cmp             x9, #48
-    bgt             .vl_gt_48_blockcopy_pp_8x64
-    ptrue           p0.d, vl4
     index           z1.d, #0, x3
     index           z2.d, #0, x1
-.rept 16
+    mov             x11, #64
+    mov             x10, #0
+    whilelt         p0.d, x10, x11
+.L_blockcopy_pp_inner_8x64:
+    mov             x12, #0
     ld1d            {z0.d}, p0/z, [x2, z1.d]
     st1d            {z0.d}, p0, [x0, z2.d]
-    add             x2, x2, x3, lsl #1
-    add             x0, x0, x1, lsl #1
-.endr
-    ret
-.vl_gt_48_blockcopy_pp_8x64:
-    cmp             x9, #112
-    bgt             .vl_gt_112_blockcopy_pp_8x64
-    ptrue           p0.d, vl8
-    index           z1.d, #0, x3
-    index           z2.d, #0, x1
-.rept 8
-    ld1d            {z0.d}, p0/z, [x2, z1.d]
-    st1d            {z0.d}, p0, [x0, z2.d]
-    add             x2, x2, x3, lsl #1
-    add             x0, x0, x1, lsl #1
-.endr
-    ret
-.vl_gt_112_blockcopy_pp_8x64:
-    ptrue           p0.d, vl16
-    index           z1.d, #0, x3
-    index           z2.d, #0, x1
-.rept 4
-    ld1d            {z0.d}, p0/z, [x2, z1.d]
-    st1d            {z0.d}, p0, [x0, z2.d]
-    add             x2, x2, x3, lsl #1
-    add             x0, x0, x1, lsl #1
-.endr
+    incd            x10
+    incd            x12
+    mul             x14, x3, x12
+    add             x2, x2, x14
+    mul             x14, x1, x12
+    add             x0, x0, x14
+    whilelt         p0.d, x10, x11
+    b.first         .L_blockcopy_pp_inner_8x64
     ret
 endfunc
 
@@ -998,7 +951,6 @@ function PFX(blockcopy_pp_32x\h\()_sve)
     rdvl            x9, #1
     cmp             x9, #16
     bgt             .vl_gt_16_blockcopy_pp_32xN_\h
-    mov             w12, #\h / 8
 .loop_sve_32x\h\():
     sub             w12, w12, #1
 .rept 8
@@ -1017,7 +969,6 @@ function PFX(blockcopy_pp_32x\h\()_sve)
     add             x2, x2, x3
     add             x0, x0, x1
 .endr
-    ret
     cbnz            w12, .L_gt_16_blockcopy_pp_32xN_\h
     ret
 endfunc
@@ -1076,8 +1027,8 @@ function PFX(blockcopy_pp_64x\h\()_sve)
     cbnz            w12, .loop_sve_64x\h
     ret
 .vl_gt_16_blockcopy_pp_64xN_\h:
-    cmp             x9, #32
-    bgt             .vl_gt_32_blockcopy_pp_64xN_\h
+    cmp             x9, #48
+    bgt             .vl_gt_48_blockcopy_pp_64xN_\h
     ptrue           p0.b, vl32
 .L_le_32_blockcopy_pp_64xN_\h:
     sub             w12, w12, #1
@@ -1090,23 +1041,6 @@ function PFX(blockcopy_pp_64x\h\()_sve)
     add             x0, x0, x1
 .endr
     cbnz            w12, .L_le_32_blockcopy_pp_64xN_\h
-    ret
-.vl_gt_32_blockcopy_pp_64xN_\h:
-    cmp             x9, #48
-    bgt             .vl_gt_48_blockcopy_pp_64xN_\h
-    ptrue           p0.b, mul4
-    ptrue           p1.b, vl16
-.L_le_48_blockcopy_pp_64xN_\h:
-    sub             w12, w12, #1
-.rept 4
-    ld1b            {z0.b}, p0/z, [x2]
-    ld1b            {z1.b}, p1/z, [x2, #1, mul vl]
-    st1b            {z0.b}, p0, [x0]
-    st1b            {z1.b}, p1, [x0, #1, mul vl]
-    add             x2, x2, x3
-    add             x0, x0, x1
-.endr
-    cbnz            w12, .L_le_48_blockcopy_pp_64xN_\h
     ret
 .vl_gt_48_blockcopy_pp_64xN_\h:
     ptrue           p0.b, vl64
@@ -1164,25 +1098,13 @@ function PFX(blockfill_s_32x32_sve)
 .endr
     ret
 .vl_gt_16_blockfill_s_32_32:
-    cmp             x9, #32
-    bgt             .vl_gt_32_blockfill_s_32_32
+    cmp             x9, #48
+    bgt             .vl_gt_48_blockfill_s_32_32
     dup             z0.h, w2
     ptrue           p0.h, vl16
 .rept 32
     st1h            {z0.h}, p0, [x0]
     st1h            {z0.h}, p0, [x0, #1, mul vl]
-    add             x0, x0, x1, lsl #1
-.endr
-    ret
-.vl_gt_32_blockfill_s_32_32:
-    cmp             x9, #48
-    bgt             .vl_gt_48_blockfill_s_32_32
-    dup             z0.h, w2
-    ptrue           p0.h, mul4
-    ptrue           p1.h, vl8
-.rept 32
-    st1h            {z0.h}, p0, [x0]
-    st1h            {z0.h}, p1, [x0, #1, mul vl]
     add             x0, x0, x1, lsl #1
 .endr
     ret
@@ -1358,10 +1280,11 @@ endfunc
 
 // int  count_nonzero_c(const int16_t* quantCoeff)
 function PFX(count_nonzero_4_sve)
+    mov             x11, 8 // For VL > 128 bits
     mov             x15, #0
     ptrue           p5.h, vl8
     ld1h            {z0.h}, p5/z, [x0]
-    ld1h            {z1.h}, p5/z, [x0, #1, mul vl]
+    ld1h            {z1.h}, p5/z, [x0, x11, lsl #1]
     cmphi           p0.h, p5/z, z0.h, #0
     cmphi           p1.h, p5/z, z1.h, #0
     incp            x15, p0.h
@@ -1450,7 +1373,7 @@ function PFX(count_nonzero_16_sve)
     ret
 .vl_gt_112_count_nonzero_16:
     ptrue           p7.h, vl64
-.rept 2
+.rept 4
     ld1d            {z0.d}, p7/z, [x0, z1.d]
     add             x0, x0, #128
     cmphi           p0.h, p7/z, z0.h, #0
@@ -1479,7 +1402,7 @@ function PFX(count_nonzero_32_sve)
     cmp             x9, #48
     bgt             .vl_gt_48_count_nonzero_32
     ptrue           p7.h, vl16
-.rept 32
+.rept 64
     ld1d            {z0.d}, p7/z, [x0, z1.d]
     add             x0, x0, #32
     cmphi           p0.h, p7/z, z0.h, #0
@@ -1491,7 +1414,7 @@ function PFX(count_nonzero_32_sve)
     cmp             x9, #112
     bgt             .vl_gt_112_count_nonzero_32
     ptrue           p7.h, vl32
-.rept 16
+.rept 32
     ld1d            {z0.d}, p7/z, [x0, z1.d]
     add             x0, x0, #64
     cmphi           p0.h, p7/z, z0.h, #0
@@ -1503,7 +1426,7 @@ function PFX(count_nonzero_32_sve)
     cmp             x9, #240
     bgt             .vl_gt_240_count_nonzero_32
     ptrue           p7.h, vl64
-.rept 8
+.rept 16
     ld1d            {z0.d}, p7/z, [x0, z1.d]
     add             x0, x0, #128
     cmphi           p0.h, p7/z, z0.h, #0
@@ -1513,7 +1436,7 @@ function PFX(count_nonzero_32_sve)
     ret
 .vl_gt_240_count_nonzero_32:
     ptrue           p7.h, vl128
-.rept 4
+.rept 8
     ld1d            {z0.d}, p7/z, [x0, z1.d]
     add             x0, x0, #256
     cmphi           p0.h, p7/z, z0.h, #0
@@ -1608,8 +1531,8 @@ function PFX(cpy2Dto1D_shl_32x32_sve)
     cbnz            w12, .loop_cpy2Dto1D_shl_32_sve
     ret
 .vl_gt_16_cpy2Dto1D_shl_32x32:
-    cmp             x9, #32
-    bgt             .vl_gt_32_cpy2Dto1D_shl_32x32
+    cmp             x9, #48
+    bgt             .vl_gt_48_cpy2Dto1D_shl_32x32
     ptrue           p0.h, vl16
 .rept 32
     ld1h            {z1.h}, p0/z, [x1]
@@ -1618,22 +1541,6 @@ function PFX(cpy2Dto1D_shl_32x32_sve)
     lsl             z2.h, p0/m, z2.h, z0.h
     st1h            {z1.h}, p0, [x0]
     st1h            {z2.h}, p0, [x0, #1, mul vl]
-    add             x1, x1, x2, lsl #1
-    add             x0, x0, #64
-.endr
-    ret
-.vl_gt_32_cpy2Dto1D_shl_32x32:
-    cmp             x9, #48
-    bgt             .vl_gt_48_cpy2Dto1D_shl_32x32
-    ptrue           p0.h, mul4
-    ptrue           p1.h, vl8
-.rept 32
-    ld1h            {z1.h}, p0/z, [x1]
-    ld1h            {z2.h}, p1/z, [x1, #1, mul vl]
-    lsl             z1.h, p0/m, z1.h, z0.h
-    lsl             z2.h, p1/m, z2.h, z0.h
-    st1h            {z1.h}, p0, [x0]
-    st1h            {z2.h}, p1, [x0, #1, mul vl]
     add             x1, x1, x2, lsl #1
     add             x0, x0, #64
 .endr
@@ -1764,7 +1671,7 @@ function PFX(cpy2Dto1D_shr_16x16_sve)
     ptrue           p0.h, vl16
     mov             z2.h, #1
     lsl             z2.h, p0/m, z2.h, z1.h
-.rept 8
+.rept 16
     ld1d            {z5.d}, p0/z, [x1]
     add             x1, x1, x2, lsl #1
     add             z5.h, p0/m, z5.h, z2.h
@@ -1908,8 +1815,8 @@ function PFX(cpy1Dto2D_shl_32x32_sve)
 .endr
     ret
 .vl_gt_16_cpy1Dto2D_shl_32x32:
-    cmp             x9, #32
-    bgt             .vl_gt_32_cpy1Dto2D_shl_32x32
+    cmp             x9, #48
+    bgt             .vl_gt_48_cpy1Dto2D_shl_32x32
     ptrue           p0.h, vl16
 .rept 32
     ld1h            {z1.h}, p0/z, [x1]
@@ -1918,22 +1825,6 @@ function PFX(cpy1Dto2D_shl_32x32_sve)
     lsl             z2.h, p0/m, z2.h, z0.h
     st1h            {z1.h}, p0, [x0]
     st1h            {z2.h}, p0, [x0, #1, mul vl]
-    add             x1, x1, #64
-    add             x0, x0, x2, lsl #1
-.endr
-    ret
-.vl_gt_32_cpy1Dto2D_shl_32x32:
-    cmp             x9, #48
-    bgt             .vl_gt_48_cpy1Dto2D_shl_32x32
-    ptrue           p0.h, mul4
-    ptrue           p1.h, vl8
-.rept 32
-    ld1h            {z1.h}, p0/z, [x1]
-    ld1h            {z2.h}, p1/z, [x1, #1, mul vl]
-    lsl             z1.h, p0/m, z1.h, z0.h
-    lsl             z2.h, p1/m, z2.h, z0.h
-    st1h            {z1.h}, p0, [x0]
-    st1h            {z2.h}, p1, [x0, #1, mul vl]
     add             x1, x1, #64
     add             x0, x0, x2, lsl #1
 .endr
@@ -2018,7 +1909,7 @@ function PFX(cpy1Dto2D_shr_16x16_sve)
     ptrue           p0.h, vl16
     mov             z2.h, #1
     lsl             z2.h, p0/m, z2.h, z1.h
-.rept 8
+.rept 16
     ld1d            {z5.d}, p0/z, [x1]
     add             x1, x1, #32
     add             z5.h, p0/m, z5.h, z2.h

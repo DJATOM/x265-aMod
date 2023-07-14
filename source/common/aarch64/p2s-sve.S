@@ -216,30 +216,31 @@ p2s_8xN_sve 64
 .macro p2s_12xN_sve h
 function PFX(filterPixelToShort_12x\h\()_sve)
     p2s_start_sve
+    mov             x11, 8 // For VL > 128 bits
     ptrue           p0.h, vl8
     ptrue           p1.h, vl4
 .rept \h
 #if HIGH_BIT_DEPTH
     ld1h            {z0.h}, p0/z, [x0]
-    ld1h            {z1.h}, p0/z, [x0, #1, mul vl]
+    ld1h            {z1.h}, p0/z, [x0, x11, lsl #1]
     add             x0, x0, x1
     lsl             z0.h, p0/m, z0.h, #P2S_SHIFT
     lsl             z1.h, p0/m, z1.h, #P2S_SHIFT
     add             z0.h, p0/m, z0.h, z31.h
     add             z1.h, p0/m, z1.h, z31.h
     st1h            {z0.h}, p0, [x2]
-    st1h            {z1.h}, p1, [x2, #1, mul vl]
+    st1h            {z1.h}, p1, [x2, x11, lsl #1]
     add             x2, x2, x3
 #else
     ld1b            {z0.h}, p0/z, [x0]
-    ld1b            {z1.h}, p0/z, [x0, #1, mul vl]
+    ld1b            {z1.h}, p0/z, [x0, x11]
     add             x0, x0, x1
     lsl             z0.h, p0/m, z0.h, #P2S_SHIFT
     lsl             z1.h, p0/m, z1.h, #P2S_SHIFT
     add             z0.h, p0/m, z0.h, z31.h
     add             z1.h, p0/m, z1.h, z31.h
     st1h            {z0.h}, p0, [x2]
-    st1h            {z1.h}, p1, [x2, #1, mul vl]
+    st1h            {z1.h}, p1, [x2, x11, lsl #1]
     add             x2, x2, x3
 #endif
 .endr
@@ -359,7 +360,7 @@ function PFX(filterPixelToShort_24x\h\()_sve)
     ld1h            {z0.h}, p0/z, [x0, x9, lsl #1]
     lsl             z0.h, p0/m, z0.h, #P2S_SHIFT
     add             z0.h, p0/m, z0.h, z31.h
-    st1h            {z0.h}, p0, [x0, x9, lsl #1]
+    st1h            {z0.h}, p0, [x2, x9, lsl #1]
     inch            x9
     whilelt         p0.h, x9, x8
     b.first         .vl_gt_16_filterPixelToShort_high_24_innerx\h
@@ -390,20 +391,23 @@ function PFX(filterPixelToShort_24x\h\()_sve)
 .endr
     ret
 .vl_gt_16_filterPixelToShort_low_24x\h\():
-    mov             w0, #12
-    whilelt         p0.h, wzr, w0
-.rept \h
-    ld1b            {z2.h}, p0/z, [x0]
-    ld1b            {z3.h}, p0/z, [x0, #1, mul vl]
-    add             x0, x0, x1
-    lsl             z2.h, p0/m, z2.h, #P2S_SHIFT
-    lsl             z3.h, p0/m, z3.h, #P2S_SHIFT
-    add             z2.h, p0/m, z2.h, z31.h
-    add             z3.h, p0/m, z3.h, z31.h
-    st1h            {z2.h}, p0, [x2]
-    st1h            {z3.h}, p0, [x2, #1, mul vl]
+    mov             w12, #\h
+    mov             x8, #24
+.vl_gt_16_filterPixelToShort_low_24_outx\h\():
+    sub             w12, w12, #1
+    mov             x9, #0
+    whilelt         p0.h, x9, x8
+.vl_gt_16_filterPixelToShort_low_24_innerx\h\():
+    ld1b            {z0.h}, p0/z, [x0, x9]
+    lsl             z0.h, p0/m, z0.h, #P2S_SHIFT
+    add             z0.h, p0/m, z0.h, z31.h
+    st1h            {z0.h}, p0, [x2, x9, lsl #1]
+    inch            x9
+    whilelt         p0.h, x9, x8
+    b.first         .vl_gt_16_filterPixelToShort_low_24_innerx\h
     add             x2, x2, x3
-.endr
+    add             x0, x0, x1
+    cbnz            w12, .vl_gt_16_filterPixelToShort_low_24_outx\h
     ret
 #endif
 endfunc
@@ -452,7 +456,7 @@ function PFX(filterPixelToShort_32x\h\()_sve)
     ld1h            {z0.h}, p0/z, [x0, x9, lsl #1]
     lsl             z0.h, p0/m, z0.h, #P2S_SHIFT
     add             z0.h, p0/m, z0.h, z31.h
-    st1h            {z0.h}, p0, [x0, x9, lsl #1]
+    st1h            {z0.h}, p0, [x2, x9, lsl #1]
     inch            x9
     whilelt         p0.h, x9, x8
     b.first         .vl_gt_16_filterPixelToShort_high_32_innerx\h
@@ -575,7 +579,7 @@ function PFX(filterPixelToShort_64x\h\()_sve)
     ld1h            {z0.h}, p0/z, [x0, x9, lsl #1]
     lsl             z0.h, p0/m, z0.h, #P2S_SHIFT
     add             z0.h, p0/m, z0.h, z31.h
-    st1h            {z0.h}, p0, [x0, x9, lsl #1]
+    st1h            {z0.h}, p0, [x2, x9, lsl #1]
     inch            x9
     whilelt         p0.h, x9, x8
     b.first         .vl_gt_16_filterPixelToShort_high_64_innerx\h
@@ -697,7 +701,7 @@ function PFX(filterPixelToShort_48x64_sve)
     ld1h            {z0.h}, p0/z, [x0, x9, lsl #1]
     lsl             z0.h, p0/m, z0.h, #P2S_SHIFT
     add             z0.h, p0/m, z0.h, z31.h
-    st1h            {z0.h}, p0, [x0, x9, lsl #1]
+    st1h            {z0.h}, p0, [x2, x9, lsl #1]
     inch            x9
     whilelt         p0.h, x9, x8
     b.first         .vl_gt_16_filterPixelToShort_high_48_64_inner
@@ -706,9 +710,6 @@ function PFX(filterPixelToShort_48x64_sve)
     cbnz            w12, .vl_gt_16_filterPixelToShort_high_48_64_out
     ret
 #else
-    rdvl            x9, #1
-    cmp             x9, #16
-    bgt             .vl_gt_16_filterPixelToShort_low_48x64
     p2s_start
     sub             x3, x3, #64
     mov             x9, #64
@@ -730,34 +731,6 @@ function PFX(filterPixelToShort_48x64_sve)
     st1             {v16.16b-v19.16b}, [x2], #64
     st1             {v20.16b-v21.16b}, [x2], x3
     cbnz            x9, .loop_filterP2S_sve_48x64
-    ret
-.vl_gt_16_filterPixelToShort_low_48x64:
-    p2s_start_sve
-    mov             w12, #64
-    mov             x8, #24
-.vl_gt_16_filterPixelToShort_48_64_out:
-    sub             w12, w12, #1
-    mov             x9, #0
-    mov             x10, #0
-    whilelt         p0.h, x9, x8
-.vl_gt_16_filterPixelToShort_48_64_inner:
-    ld1h            {z0.h}, p0/z, [x0, x9, lsl #1]
-    uunpklo         z2.h, z0.b
-    uunpkhi         z3.h, z0.b
-    lsl             z2.h, p0/m, z2.h, #P2S_SHIFT
-    lsl             z3.h, p0/m, z3.h, #P2S_SHIFT
-    add             z2.h, p0/m, z2.h, z31.h
-    add             z3.h, p0/m, z3.h, z31.h
-    st1h            {z2.h}, p0, [x2, x10, lsl #1]
-    inch            x10
-    st1h            {z3.h}, p0, [x2, x10, lsl #1]
-    inch            x10
-    inch            x9
-    whilelt         p0.h, x9, x8
-    b.first         .vl_gt_16_filterPixelToShort_48_64_inner
-    add             x2, x2, x3
-    add             x0, x0, x1
-    cbnz            w12, .vl_gt_16_filterPixelToShort_48_64_out
     ret
 #endif
 endfunc

@@ -115,8 +115,9 @@
 
 .macro SAD_SVE2_24 h
     mov             z16.d, #0
-    mov             w10, #24
-    whilelt         p0.b, wzr, w10
+    mov             x10, #24
+    mov             x11, #0
+    whilelt         p0.b, x11, x10
 .rept \h
     ld1b            {z0.b}, p0/z, [x0]
     ld1b            {z8.b}, p0/z, [x2]
@@ -160,8 +161,9 @@
 .vl_gt_48_pixel_sad_48x\h\():
     mov             z16.d, #0
     mov             z17.d, #0
-    mov             w10, #48
-    whilelt         p0.b, wzr, w10
+    mov             x10, #48
+    mov             x11, #0
+    whilelt         p0.b, x11, x10
 .rept \h
     ld1b            {z0.b}, p0/z, [x0]
     ld1b            {z8.b}, p0/z, [x2]
@@ -284,8 +286,9 @@ SAD_FUNC_LOOP_SVE2  48, 64
     mov             z21.d, #0
     mov             z22.d, #0
     mov             z23.d, #0
-    mov             w10, #24
-    whilelt         p0.b, wzr, w10
+    mov             x10, #24
+    mov             x11, #0
+    whilelt         p0.b, x11, x10
 .rept \h
     ld1b            {z0.b}, p0/z, [x0]
     add             x0, x0, x9
