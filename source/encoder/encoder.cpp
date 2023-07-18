@@ -3506,6 +3506,11 @@ void Encoder::configureZone(x265_param *p, x265_param *zone)
             p->rc.aqMode = X265_AQ_NONE;
             p->rc.hevcAq = 0;
         }
+        if (p->rc.aqMode == 0 && p->rc.cuTree)
+        {
+            p->rc.aqMode = X265_AQ_VARIANCE;
+            p->rc.aqStrength = 0;
+        }
         p->radl = zone->radl;
     }
     memcpy(zone, p, sizeof(x265_param));
