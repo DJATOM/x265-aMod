@@ -234,16 +234,18 @@ function PFX(getResidual16_sve2)
     rdvl            x9, #1
     cmp             x9, #16
     bgt             .vl_gt_16_getResidual16
-    ptrue           p0.b, vl16
-.rept 16
-    ld1b            {z0.b}, p0/z, [x0]
-    ld1b            {z1.b}, p0/z, [x1]
-    add             x0, x0, x3
-    add             x1, x1, x3
-    usublb          z4.h, z0.b, z1.b
-    usublt          z5.h, z0.b, z1.b
-    st2h            {z4.h, z5.h}, p0, [x2]
-    add             x2, x2, x3, lsl #1
+    lsl             x4, x3, #1
+.rept 8
+    ld1             {v0.16b}, [x0], x3
+    ld1             {v1.16b}, [x1], x3
+    ld1             {v2.16b}, [x0], x3
+    ld1             {v3.16b}, [x1], x3
+    usubl           v4.8h, v0.8b, v1.8b
+    usubl2          v5.8h, v0.16b, v1.16b
+    usubl           v6.8h, v2.8b, v3.8b
+    usubl2          v7.8h, v2.16b, v3.16b
+    st1             {v4.8h-v5.8h}, [x2], x4
+    st1             {v6.8h-v7.8h}, [x2], x4
 .endr
     ret
 .vl_gt_16_getResidual16:
@@ -264,22 +266,27 @@ function PFX(getResidual32_sve2)
     rdvl            x9, #1
     cmp             x9, #16
     bgt             .vl_gt_16_getResidual32
-    ptrue           p0.b, vl16
-.rept 32
-    ld1b            {z0.b}, p0/z, [x0]
-    ld1b            {z1.b}, p0/z, [x0, #1, mul vl]
-    ld1b            {z2.b}, p0/z, [x1]
-    ld1b            {z3.b}, p0/z, [x1, #1, mul vl]
-    add             x0, x0, x3
-    add             x1, x1, x3
-    usublb          z4.h, z0.b, z2.b
-    usublt          z5.h, z0.b, z2.b
-    usublb          z6.h, z1.b, z3.b
-    usublt          z7.h, z1.b, z3.b
-    st2h            {z4.h, z5.h}, p0, [x2]
-    st2h            {z6.h, z7.h}, p0, [x2, #2, mul vl]
-    add             x2, x2, x3, lsl #1
+    lsl             x4, x3, #1
+    mov             w12, #4
+.loop_residual_32:
+    sub             w12, w12, #1
+.rept 4
+    ld1             {v0.16b-v1.16b}, [x0], x3
+    ld1             {v2.16b-v3.16b}, [x1], x3
+    ld1             {v4.16b-v5.16b}, [x0], x3
+    ld1             {v6.16b-v7.16b}, [x1], x3
+    usubl           v16.8h, v0.8b, v2.8b
+    usubl2          v17.8h, v0.16b, v2.16b
+    usubl           v18.8h, v1.8b, v3.8b
+    usubl2          v19.8h, v1.16b, v3.16b
+    usubl           v20.8h, v4.8b, v6.8b
+    usubl2          v21.8h, v4.16b, v6.16b
+    usubl           v22.8h, v5.8b, v7.8b
+    usubl2          v23.8h, v5.16b, v7.16b
+    st1             {v16.8h-v19.8h}, [x2], x4
+    st1             {v20.8h-v23.8h}, [x2], x4
 .endr
+    cbnz            w12, .loop_residual_32
     ret
 .vl_gt_16_getResidual32:
     cmp             x9, #48
@@ -310,62 +317,40 @@ function PFX(getResidual32_sve2)
     ret
 endfunc
 
-function PFX(pixel_sub_ps_16x16_sve2)
-    rdvl            x9, #1
-    cmp             x9, #16
-    bgt             .vl_gt_16_pixel_sub_ps_16x16
-    ptrue           p0.b, vl16
-.rept 16
-    ld1b            {z0.b}, p0/z, [x2]
-    ld1b            {z4.b}, p0/z, [x3]
-    add             x2, x2, x4
-    add             x3, x3, x5
-    usublb          z8.h, z0.b, z4.b
-    usublt          z9.h, z0.b, z4.b
-    st2h            {z8.h, z9.h}, p0, [x0]
-    add             x0, x0, x1, lsl #1
-.endr
-    ret
-.vl_gt_16_pixel_sub_ps_16x16:
-    ptrue           p0.h, vl16
-.rept 16
-    ld1b            {z0.h}, p0/z, [x2]
-    ld1b            {z4.h}, p0/z, [x3]
-    add             x2, x2, x4
-    add             x3, x3, x5
-    sub             z8.h, z0.h, z4.h
-    st1h            {z8.h}, p0, [x0]
-    add             x0, x0, x1, lsl #1
-.endr
-    ret
-endfunc
-
 function PFX(pixel_sub_ps_32x32_sve2)
     rdvl            x9, #1
     cmp             x9, #16
     bgt             .vl_gt_16_pixel_sub_ps_32x32
-    ptrue           p0.b, vl16
-.rept 32
-    ld1b            {z0.b}, p0/z, [x2]
-    ld1b            {z1.b}, p0/z, [x2, #1, mul vl]
-    ld1b            {z2.b}, p0/z, [x3]
-    ld1b            {z3.b}, p0/z, [x3, #1, mul vl]
-    add             x2, x2, x4
-    add             x3, x3, x5
-    usublb          z16.h, z0.b, z2.b
-    usublt          z17.h, z0.b, z2.b
-    usublb          z18.h, z1.b, z3.b
-    usublt          z19.h, z1.b, z3.b
-    st2h            {z16.h, z17.h}, p0, [x0]
-    st2h            {z18.h, z19.h}, p0, [x0, #2, mul vl]
-    add             x0, x0, x1, lsl #1
+    lsl             x1, x1, #1
+    mov             w12, #4
+.loop_sub_ps_32_sve2:
+    sub             w12, w12, #1
+.rept 4
+    ld1             {v0.16b-v1.16b}, [x2], x4
+    ld1             {v2.16b-v3.16b}, [x3], x5
+    ld1             {v4.16b-v5.16b}, [x2], x4
+    ld1             {v6.16b-v7.16b}, [x3], x5
+    usubl           v16.8h, v0.8b, v2.8b
+    usubl2          v17.8h, v0.16b, v2.16b
+    usubl           v18.8h, v1.8b, v3.8b
+    usubl2          v19.8h, v1.16b, v3.16b
+    usubl           v20.8h, v4.8b, v6.8b
+    usubl2          v21.8h, v4.16b, v6.16b
+    usubl           v22.8h, v5.8b, v7.8b
+    usubl2          v23.8h, v5.16b, v7.16b
+    st1             {v16.8h-v19.8h}, [x0], x1
+    st1             {v20.8h-v23.8h}, [x0], x1
 .endr
+    cbnz            w12, .loop_sub_ps_32_sve2
     ret
 .vl_gt_16_pixel_sub_ps_32x32:
     cmp             x9, #48
     bgt             .vl_gt_48_pixel_sub_ps_32x32
     ptrue           p0.b, vl32
-.rept 32
+    mov             w12, #8
+.vl_gt_16_loop_sub_ps_32_sve2:
+    sub             w12, w12, #1
+.rept 4
     ld1b            {z0.b}, p0/z, [x2]
     ld1b            {z2.b}, p0/z, [x3]
     add             x2, x2, x4
@@ -375,10 +360,14 @@ function PFX(pixel_sub_ps_32x32_sve2)
     st2h            {z16.h, z17.h}, p0, [x0]
     add             x0, x0, x1, lsl #1
 .endr
+    cbnz            w12, .vl_gt_16_loop_sub_ps_32_sve2
     ret
 .vl_gt_48_pixel_sub_ps_32x32:
     ptrue           p0.h, vl32
-.rept 32
+    mov             w12, #8
+.vl_gt_48_loop_sub_ps_32_sve2:
+    sub             w12, w12, #1
+.rept 4
     ld1b            {z0.h}, p0/z, [x2]
     ld1b            {z4.h}, p0/z, [x3]
     add             x2, x2, x4
@@ -387,6 +376,7 @@ function PFX(pixel_sub_ps_32x32_sve2)
     st1h            {z8.h}, p0, [x0]
     add             x0, x0, x1, lsl #1
 .endr
+    cbnz            w12, .vl_gt_48_loop_sub_ps_32_sve2
     ret
 endfunc
 
@@ -394,39 +384,36 @@ function PFX(pixel_sub_ps_64x64_sve2)
     rdvl            x9, #1
     cmp             x9, #16
     bgt             .vl_gt_16_pixel_sub_ps_64x64
-    ptrue           p0.b, vl16
-.rept 64
-    ld1b            {z0.b}, p0/z, [x2]
-    ld1b            {z1.b}, p0/z, [x2, #1, mul vl]
-    ld1b            {z2.b}, p0/z, [x2, #2, mul vl]
-    ld1b            {z3.b}, p0/z, [x2, #3, mul vl]
-    ld1b            {z4.b}, p0/z, [x3]
-    ld1b            {z5.b}, p0/z, [x3, #1, mul vl]
-    ld1b            {z6.b}, p0/z, [x3, #2, mul vl]
-    ld1b            {z7.b}, p0/z, [x3, #3, mul vl]
-    add             x2, x2, x4
-    add             x3, x3, x5
-    usublb          z16.h, z0.b, z4.b
-    usublt          z17.h, z0.b, z4.b
-    usublb          z18.h, z1.b, z5.b
-    usublt          z19.h, z1.b, z5.b
-    usublb          z20.h, z2.b, z6.b
-    usublt          z21.h, z2.b, z6.b
-    usublb          z22.h, z3.b, z7.b
-    usublt          z23.h, z3.b, z7.b
-    st2h            {z16.h, z17.h}, p0, [x0]
-    st2h            {z18.h, z19.h}, p0, [x0, #2, mul vl]
-    st2h            {z20.h, z21.h}, p0, [x0, #4, mul vl]
-    st2h            {z22.h, z23.h}, p0, [x0, #6, mul vl]
-    add             x0, x0, x1, lsl #1
+    lsl             x1, x1, #1
+    sub             x1, x1, #64
+    mov             w12, #16
+.loop_sub_ps_64_sve2:
+    sub             w12, w12, #1
+.rept 4
+    ld1             {v0.16b-v3.16b}, [x2], x4
+    ld1             {v4.16b-v7.16b}, [x3], x5
+    usubl           v16.8h, v0.8b, v4.8b
+    usubl2          v17.8h, v0.16b, v4.16b
+    usubl           v18.8h, v1.8b, v5.8b
+    usubl2          v19.8h, v1.16b, v5.16b
+    usubl           v20.8h, v2.8b, v6.8b
+    usubl2          v21.8h, v2.16b, v6.16b
+    usubl           v22.8h, v3.8b, v7.8b
+    usubl2          v23.8h, v3.16b, v7.16b
+    st1             {v16.8h-v19.8h}, [x0], #64
+    st1             {v20.8h-v23.8h}, [x0], x1
 .endr
+    cbnz            w12, .loop_sub_ps_64_sve2
     ret
 .vl_gt_16_pixel_sub_ps_64x64:
     rdvl            x9, #1
     cmp             x9, #16
     bgt             .vl_gt_16_pixel_sub_ps_64x64
     ptrue           p0.b, vl32
-.rept 64
+    mov             w12, #16
+.vl_gt_16_loop_sub_ps_64_sve2:
+    sub             w12, w12, #1
+.rept 4
     ld1b            {z0.b}, p0/z, [x2]
     ld1b            {z1.b}, p0/z, [x2, #1, mul vl]
     ld1b            {z4.b}, p0/z, [x3]
@@ -441,12 +428,16 @@ function PFX(pixel_sub_ps_64x64_sve2)
     st2h            {z18.h, z19.h}, p0, [x0, #2, mul vl]
     add             x0, x0, x1, lsl #1
 .endr
+    cbnz            w12, .vl_gt_16_loop_sub_ps_64_sve2
     ret
 .vl_gt_48_pixel_sub_ps_64x64:
     cmp             x9, #112
     bgt             .vl_gt_112_pixel_sub_ps_64x64
     ptrue           p0.b, vl64
-.rept 64
+    mov             w12, #16
+.vl_gt_48_loop_sub_ps_64_sve2:
+    sub             w12, w12, #1
+.rept 4
     ld1b            {z0.b}, p0/z, [x2]
     ld1b            {z4.b}, p0/z, [x3]
     add             x2, x2, x4
@@ -456,10 +447,14 @@ function PFX(pixel_sub_ps_64x64_sve2)
     st2h            {z16.h, z17.h}, p0, [x0]
     add             x0, x0, x1, lsl #1
 .endr
+    cbnz            w12, .vl_gt_48_loop_sub_ps_64_sve2
     ret
 .vl_gt_112_pixel_sub_ps_64x64:
     ptrue           p0.h, vl64
-.rept 64
+    mov             w12, #16
+.vl_gt_112_loop_sub_ps_64_sve2:
+    sub             w12, w12, #1
+.rept 4
     ld1b            {z0.h}, p0/z, [x2]
     ld1b            {z8.h}, p0/z, [x3]
     add             x2, x2, x4
@@ -468,37 +463,7 @@ function PFX(pixel_sub_ps_64x64_sve2)
     st1h            {z16.h}, p0, [x0]
     add             x0, x0, x1, lsl #1
 .endr
-    ret
-endfunc
-
-// chroma sub_ps
-function PFX(pixel_sub_ps_16x32_sve2)
-    rdvl            x9, #1
-    cmp             x9, #16
-    bgt             .vl_gt_16_pixel_sub_ps_16x32
-    ptrue           p0.b, vl16
-.rept 32
-    ld1b            {z0.b}, p0/z, [x2]
-    ld1b            {z4.b}, p0/z, [x3]
-    add             x2, x2, x4
-    add             x3, x3, x5
-    usublb          z8.h, z0.b, z4.b
-    usublt          z9.h, z0.b, z4.b
-    st2h            {z8.h, z9.h}, p0, [x0]
-    add             x0, x0, x1, lsl #1
-.endr
-    ret
-.vl_gt_16_pixel_sub_ps_16x32:
-    ptrue           p0.h, vl16
-.rept 32
-    ld1b            {z0.h}, p0/z, [x2]
-    ld1b            {z4.h}, p0/z, [x3]
-    add             x2, x2, x4
-    add             x3, x3, x5
-    sub             z8.h, z0.h, z4.h
-    st1h            {z8.h}, p0, [x0]
-    add             x0, x0, x1, lsl #1
-.endr
+    cbnz            w12, .vl_gt_112_loop_sub_ps_64_sve2
     ret
 endfunc
 
@@ -506,28 +471,36 @@ function PFX(pixel_sub_ps_32x64_sve2)
     rdvl            x9, #1
     cmp             x9, #16
     bgt             .vl_gt_16_pixel_sub_ps_32x64
-    ptrue           p0.b, vl16
-.rept 64
-    ld1b            {z0.b}, p0/z, [x2]
-    ld1b            {z1.b}, p0/z, [x2, #1, mul vl]
-    ld1b            {z2.b}, p0/z, [x3]
-    ld1b            {z3.b}, p0/z, [x3, #1, mul vl]
-    add             x2, x2, x4
-    add             x3, x3, x5
-    usublb          z16.h, z0.b, z2.b
-    usublt          z17.h, z0.b, z2.b
-    usublb          z18.h, z1.b, z3.b
-    usublt          z19.h, z1.b, z3.b
-    st2h            {z16.h, z17.h}, p0, [x0]
-    st2h            {z18.h, z19.h}, p0, [x0, #2, mul vl]
-    add             x0, x0, x1, lsl #1
+    lsl             x1, x1, #1
+    mov             w12, #8
+.loop_sub_ps_32x64_sve2:
+    sub             w12, w12, #1
+.rept 4
+    ld1             {v0.16b-v1.16b}, [x2], x4
+    ld1             {v2.16b-v3.16b}, [x3], x5
+    ld1             {v4.16b-v5.16b}, [x2], x4
+    ld1             {v6.16b-v7.16b}, [x3], x5
+    usubl           v16.8h, v0.8b, v2.8b
+    usubl2          v17.8h, v0.16b, v2.16b
+    usubl           v18.8h, v1.8b, v3.8b
+    usubl2          v19.8h, v1.16b, v3.16b
+    usubl           v20.8h, v4.8b, v6.8b
+    usubl2          v21.8h, v4.16b, v6.16b
+    usubl           v22.8h, v5.8b, v7.8b
+    usubl2          v23.8h, v5.16b, v7.16b
+    st1             {v16.8h-v19.8h}, [x0], x1
+    st1             {v20.8h-v23.8h}, [x0], x1
 .endr
+    cbnz            w12, .loop_sub_ps_32x64_sve2
     ret
 .vl_gt_16_pixel_sub_ps_32x64:
     cmp             x9, #48
     bgt             .vl_gt_48_pixel_sub_ps_32x64
     ptrue           p0.b, vl32
-.rept 64
+    mov             w12, #8
+.vl_gt_16_loop_sub_ps_32x64_sve2:
+    sub             w12, w12, #1
+.rept 8
     ld1b            {z0.b}, p0/z, [x2]
     ld1b            {z2.b}, p0/z, [x3]
     add             x2, x2, x4
@@ -537,10 +510,14 @@ function PFX(pixel_sub_ps_32x64_sve2)
     st2h            {z16.h, z17.h}, p0, [x0]
     add             x0, x0, x1, lsl #1
 .endr
+    cbnz            w12, .vl_gt_16_loop_sub_ps_32x64_sve2
     ret
 .vl_gt_48_pixel_sub_ps_32x64:
     ptrue           p0.h, vl32
-.rept 64
+    mov             w12, #8
+.vl_gt_48_loop_sub_ps_32x64_sve2:
+    sub             w12, w12, #1
+.rept 8
     ld1b            {z0.h}, p0/z, [x2]
     ld1b            {z4.h}, p0/z, [x3]
     add             x2, x2, x4
@@ -549,6 +526,7 @@ function PFX(pixel_sub_ps_32x64_sve2)
     st1h            {z8.h}, p0, [x0]
     add             x0, x0, x1, lsl #1
 .endr
+    cbnz            w12, .vl_gt_48_loop_sub_ps_32x64_sve2
     ret
 endfunc
 
@@ -629,32 +607,28 @@ pixel_add_ps_16xN_sve2 32
     rdvl            x9, #1
     cmp             x9, #16
     bgt             .vl_gt_16_pixel_add_ps_32x\h
-    ptrue           p0.b, vl16
-.rept \h
-    ld1b            {z0.h}, p0/z, [x2]
-    ld1b            {z1.h}, p0/z, [x2, #1, mul vl]
-    ld1b            {z2.h}, p0/z, [x2, #2, mul vl]
-    ld1b            {z3.h}, p0/z, [x2, #3, mul vl]
-    ld1h            {z4.h}, p0/z, [x3]
-    ld1h            {z5.h}, p0/z, [x3, #1, mul vl]
-    ld1h            {z6.h}, p0/z, [x3, #2, mul vl]
-    ld1h            {z7.h}, p0/z, [x3, #3, mul vl]
-    add             x2, x2, x4
-    add             x3, x3, x5, lsl #1
-    add             z24.h, z0.h, z4.h
-    add             z25.h, z1.h, z5.h
-    add             z26.h, z2.h, z6.h
-    add             z27.h, z3.h, z7.h
-    sqxtunb         z6.b, z24.h
-    sqxtunb         z7.b, z25.h
-    sqxtunb         z8.b, z26.h
-    sqxtunb         z9.b, z27.h
-    st1b            {z6.h}, p0, [x0]
-    st1b            {z7.h}, p0, [x0, #1, mul vl]
-    st1b            {z8.h}, p0, [x0, #2, mul vl]
-    st1b            {z9.h}, p0, [x0, #3, mul vl]
-    add             x0, x0, x1
+    lsl             x5, x5, #1
+    mov             w12, #\h / 4
+.loop_add_ps__sve2_32x\h\():
+    sub             w12, w12, #1
+.rept 4
+    ld1             {v0.16b-v1.16b}, [x2], x4
+    ld1             {v16.8h-v19.8h}, [x3], x5
+    uxtl            v4.8h, v0.8b
+    uxtl2           v5.8h, v0.16b
+    uxtl            v6.8h, v1.8b
+    uxtl2           v7.8h, v1.16b
+    add             v24.8h, v4.8h, v16.8h
+    add             v25.8h, v5.8h, v17.8h
+    add             v26.8h, v6.8h, v18.8h
+    add             v27.8h, v7.8h, v19.8h
+    sqxtun          v4.8b, v24.8h
+    sqxtun2         v4.16b, v25.8h
+    sqxtun          v5.8b, v26.8h
+    sqxtun2         v5.16b, v27.8h
+    st1             {v4.16b-v5.16b}, [x0], x1
 .endr
+    cbnz            w12, .loop_add_ps__sve2_32x\h
     ret
 .vl_gt_16_pixel_add_ps_32x\h\():
     cmp             x9, #48

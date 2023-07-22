@@ -24,61 +24,31 @@
 // This file contains the macros written using NEON instruction set
 // that are also used by the SVE2 functions
 
+#include "asm.S"
+
 .arch           armv8-a
 
-#ifdef __APPLE__
-.section __RODATA,__rodata
-#else
-.section .rodata
-#endif
-
-.align 4
-
-.macro pixel_var_start
-    movi            v0.16b, #0
-    movi            v1.16b, #0
-    movi            v2.16b, #0
-    movi            v3.16b, #0
+// void cpy1Dto2D_shr(int16_t* dst, const int16_t* src, intptr_t dstStride, int shift)
+.macro cpy1Dto2D_shr_start
+    add             x2, x2, x2
+    dup             v0.8h, w3
+    cmeq            v1.8h, v1.8h, v1.8h
+    sshl            v1.8h, v1.8h, v0.8h
+    sri             v1.8h, v1.8h, #1
+    neg             v0.8h, v0.8h
 .endm
 
-.macro pixel_var_1 v
-    uaddw           v0.8h, v0.8h, \v\().8b
-    umull           v30.8h, \v\().8b, \v\().8b
-    uaddw2          v1.8h, v1.8h, \v\().16b
-    umull2          v31.8h, \v\().16b, \v\().16b
-    uadalp          v2.4s, v30.8h
-    uadalp          v3.4s, v31.8h
+.macro cpy2Dto1D_shr_start
+    add             x2, x2, x2
+    dup             v0.8h, w3
+    cmeq            v1.8h, v1.8h, v1.8h
+    sshl            v1.8h, v1.8h, v0.8h
+    sri             v1.8h, v1.8h, #1
+    neg             v0.8h, v0.8h
 .endm
 
-.macro pixel_var_end
-    uaddlv          s0, v0.8h
-    uaddlv          s1, v1.8h
-    add             v2.4s, v2.4s, v3.4s
-    fadd            s0, s0, s1
-    uaddlv          d2, v2.4s
-    fmov            w0, s0
-    fmov            x2, d2
-    orr             x0, x0, x2, lsl #32
-.endm
-
-.macro ssimDist_start
-    movi            v0.16b, #0
-    movi            v1.16b, #0
-.endm
-
-.macro ssimDist_end
-    uaddlv          d0, v0.4s
-    uaddlv          d1, v1.4s
-    str             d0, [x6]
-    str             d1, [x4]
-.endm
-
-.macro normFact_start
-    movi            v0.16b, #0
-.endm
-
-.macro normFact_end
-    uaddlv          d0, v0.4s
-    str             d0, [x3]
-.endm
+const xtn_xtn2_table, align=4
+.byte    0, 2, 4, 6, 8, 10, 12, 14
+.byte    16, 18, 20, 22, 24, 26, 28, 30
+endconst
 

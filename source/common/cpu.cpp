@@ -392,8 +392,10 @@ uint32_t cpu_detect(bool benableavx512)
     #if defined(HAVE_SVE2)
          flags |= X265_CPU_SVE2;
          flags |= X265_CPU_SVE;
+         flags |= X265_CPU_NEON;
     #elif defined(HAVE_SVE)
          flags |= X265_CPU_SVE;
+         flags |= X265_CPU_NEON;
     #elif HAVE_NEON
          flags |= X265_CPU_NEON;
     #endif

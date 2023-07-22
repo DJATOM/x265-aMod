@@ -22,6 +22,7 @@
  *****************************************************************************/
 
 #include "asm-sve.S"
+#include "ssd-a-common.S"
 
 .arch armv8-a+sve2
 
@@ -35,144 +36,34 @@
 
 .text
 
-function PFX(pixel_sse_pp_8x8_sve2)
-    ptrue           p0.b, vl8
-    ld1b            {z16.b}, p0/z, [x0]
-    ld1b            {z17.b}, p0/z, [x2]
-    add             x0, x0, x1
-    add             x2, x2, x3
-    usublb          z1.h, z16.b, z17.b
-    usublt          z2.h, z16.b, z17.b
-    smullb          z0.s, z1.h, z1.h
-    smlalt          z0.s, z1.h, z1.h
-    smlalb          z0.s, z2.h, z2.h
-    smlalt          z0.s, z2.h, z2.h
-.rept 7
-    ld1b            {z16.b}, p0/z, [x0]
-    ld1b            {z17.b}, p0/z, [x2]
-    add             x0, x0, x1
-    add             x2, x2, x3
-    usublb          z1.h, z16.b, z17.b
-    usublt          z2.h, z16.b, z17.b
-    smlalb          z0.s, z1.h, z1.h
-    smlalt          z0.s, z1.h, z1.h
-    smlalb          z0.s, z2.h, z2.h
-    smlalt          z0.s, z2.h, z2.h
-.endr
-    uaddv           d0, p0, z0.s
-    fmov            w0, s0
-    ret
-endfunc
-
-function PFX(pixel_sse_pp_8x16_sve2)
-    ptrue           p0.b, vl8
-    ld1b            {z16.b}, p0/z, [x0]
-    ld1b            {z17.b}, p0/z, [x2]
-    add             x0, x0, x1
-    add             x2, x2, x3
-    usublb          z1.h, z16.b, z17.b
-    usublt          z2.h, z16.b, z17.b
-    smullb          z0.s, z1.h, z1.h
-    smlalt          z0.s, z1.h, z1.h
-    smlalb          z0.s, z2.h, z2.h
-    smlalt          z0.s, z2.h, z2.h
-.rept 15
-    ld1b            {z16.b}, p0/z, [x0]
-    ld1b            {z17.b}, p0/z, [x2]
-    add             x0, x0, x1
-    add             x2, x2, x3
-    usublb          z1.h, z16.b, z17.b
-    usublt          z2.h, z16.b, z17.b
-    smlalb          z0.s, z1.h, z1.h
-    smlalt          z0.s, z1.h, z1.h
-    smlalb          z0.s, z2.h, z2.h
-    smlalt          z0.s, z2.h, z2.h
-.endr
-    uaddv           d0, p0, z0.s
-    fmov            w0, s0
-    ret
-endfunc
-
-.macro sse_pp_16xN_sve2 h
-function PFX(pixel_sse_pp_16x\h\()_sve2)
-    ptrue           p0.b, vl16
-    ld1b            {z16.b}, p0/z, [x0]
-    ld1b            {z17.b}, p0/z, [x2]
-    add             x0, x0, x1
-    add             x2, x2, x3
-    usublb          z1.h, z16.b, z17.b
-    usublt          z2.h, z16.b, z17.b
-    smullb          z0.s, z1.h, z1.h
-    smlalt          z0.s, z1.h, z1.h
-    smlalb          z0.s, z2.h, z2.h
-    smlalt          z0.s, z2.h, z2.h
-.rept \h - 1
-    ld1b            {z16.b}, p0/z, [x0]
-    ld1b            {z17.b}, p0/z, [x2]
-    add             x0, x0, x1
-    add             x2, x2, x3
-    usublb          z1.h, z16.b, z17.b
-    usublt          z2.h, z16.b, z17.b
-    smlalb          z0.s, z1.h, z1.h
-    smlalt          z0.s, z1.h, z1.h
-    smlalb          z0.s, z2.h, z2.h
-    smlalt          z0.s, z2.h, z2.h
-.endr
-    uaddv           d0, p0, z0.s
-    fmov            w0, s0
-    ret
-endfunc
-.endm
-
-sse_pp_16xN_sve2 16
-sse_pp_16xN_sve2 32
-
 function PFX(pixel_sse_pp_32x32_sve2)
     rdvl            x9, #1
     cmp             x9, #16
     bgt             .vl_gt_16_pixel_sse_pp_32x32
-    ptrue           p0.b, vl16
-    ld1b            {z16.b}, p0/z, [x0]
-    ld1b            {z17.b}, p0/z, [x0, #1, mul vl]
-    ld1b            {z18.b}, p0/z, [x2]
-    ld1b            {z19.b}, p0/z, [x2, #1, mul vl]
-    add             x0, x0, x1
-    add             x2, x2, x3
-    usublb          z1.h, z16.b, z18.b
-    usublt          z2.h, z16.b, z18.b
-    usublb          z3.h, z17.b, z19.b
-    usublt          z4.h, z17.b, z19.b
-    smullb          z0.s, z1.h, z1.h
-    smlalt          z0.s, z1.h, z1.h
-    smlalb          z0.s, z2.h, z2.h
-    smlalt          z0.s, z2.h, z2.h
-    smlalb          z0.s, z3.h, z3.h
-    smlalt          z0.s, z3.h, z3.h
-    smlalb          z0.s, z4.h, z4.h
-    smlalt          z0.s, z4.h, z4.h
-.rept 31
-    ld1b            {z16.b}, p0/z, [x0]
-    ld1b            {z17.b}, p0/z, [x0, #1, mul vl]
-    ld1b            {z18.b}, p0/z, [x2]
-    ld1b            {z19.b}, p0/z, [x2, #1, mul vl]
-    add             x0, x0, x1
-    add             x2, x2, x3
-    usublb          z1.h, z16.b, z18.b
-    usublt          z2.h, z16.b, z18.b
-    usublb          z3.h, z17.b, z19.b
-    usublt          z4.h, z17.b, z19.b
-    smlalb          z0.s, z1.h, z1.h
-    smlalt          z0.s, z1.h, z1.h
-    smlalb          z0.s, z2.h, z2.h
-    smlalt          z0.s, z2.h, z2.h
-    smlalb          z0.s, z3.h, z3.h
-    smlalt          z0.s, z3.h, z3.h
-    smlalb          z0.s, z4.h, z4.h
-    smlalt          z0.s, z4.h, z4.h
+    mov             w12, #8
+    movi            v0.16b, #0
+    movi            v1.16b, #0
+.loop_sse_pp_32_sve2:
+    sub             w12, w12, #1
+.rept 4
+    ld1             {v16.16b,v17.16b}, [x0], x1
+    ld1             {v18.16b,v19.16b}, [x2], x3
+    usubl           v2.8h, v16.8b, v18.8b
+    usubl2          v3.8h, v16.16b, v18.16b
+    usubl           v4.8h, v17.8b, v19.8b
+    usubl2          v5.8h, v17.16b, v19.16b
+    smlal           v0.4s, v2.4h, v2.4h
+    smlal2          v1.4s, v2.8h, v2.8h
+    smlal           v0.4s, v3.4h, v3.4h
+    smlal2          v1.4s, v3.8h, v3.8h
+    smlal           v0.4s, v4.4h, v4.4h
+    smlal2          v1.4s, v4.8h, v4.8h
+    smlal           v0.4s, v5.4h, v5.4h
+    smlal2          v1.4s, v5.8h, v5.8h
 .endr
-    uaddv           d3, p0, z0.s
-    fmov            w0, s3
-    ret
+    cbnz            w12, .loop_sse_pp_32_sve2
+    add             v0.4s, v0.4s, v1.4s
+    ret_v0_w0
 .vl_gt_16_pixel_sse_pp_32x32:
     ptrue           p0.b, vl32
     ld1b            {z16.b}, p0/z, [x0]
@@ -287,83 +178,45 @@ function PFX(pixel_sse_pp_64x64_sve2)
     rdvl            x9, #1
     cmp             x9, #16
     bgt             .vl_gt_16_pixel_sse_pp_64x64
-    ptrue           p0.b, vl16
-    ld1b            {z16.b}, p0/z, [x0]
-    ld1b            {z17.b}, p0/z, [x0, #1, mul vl]
-    ld1b            {z18.b}, p0/z, [x0, #2, mul vl]
-    ld1b            {z19.b}, p0/z, [x0, #3, mul vl]
-    ld1b            {z20.b}, p0/z, [x2]
-    ld1b            {z21.b}, p0/z, [x2, #1, mul vl]
-    ld1b            {z22.b}, p0/z, [x2, #2, mul vl]
-    ld1b            {z23.b}, p0/z, [x2, #3, mul vl]
-    add             x0, x0, x1
-    add             x2, x2, x3
-    usublb          z1.h, z16.b, z20.b
-    usublt          z2.h, z16.b, z20.b
-    usublb          z3.h, z17.b, z21.b
-    usublt          z4.h, z17.b, z21.b
-    usublb          z5.h, z18.b, z22.b
-    usublt          z6.h, z18.b, z22.b
-    usublb          z7.h, z19.b, z23.b
-    usublt          z8.h, z19.b, z23.b
-    smullb          z24.s, z1.h, z1.h
-    smullt          z25.s, z1.h, z1.h
-    smlalb          z24.s, z2.h, z2.h
-    smlalt          z25.s, z2.h, z2.h
-    smlalb          z24.s, z3.h, z3.h
-    smlalt          z25.s, z3.h, z3.h
-    smlalb          z24.s, z4.h, z4.h
-    smlalt          z25.s, z4.h, z4.h
-    smlalb          z24.s, z5.h, z5.h
-    smlalt          z25.s, z5.h, z5.h
-    smlalb          z24.s, z6.h, z6.h
-    smlalt          z25.s, z6.h, z6.h
-    smlalb          z24.s, z7.h, z7.h
-    smlalt          z25.s, z7.h, z7.h
-    smlalb          z24.s, z8.h, z8.h
-    smlalt          z25.s, z8.h, z8.h
-.rept 63
-    ld1b            {z16.b}, p0/z, [x0]
-    ld1b            {z17.b}, p0/z, [x0, #1, mul vl]
-    ld1b            {z18.b}, p0/z, [x0, #2, mul vl]
-    ld1b            {z19.b}, p0/z, [x0, #3, mul vl]
-    ld1b            {z20.b}, p0/z, [x2]
-    ld1b            {z21.b}, p0/z, [x2, #1, mul vl]
-    ld1b            {z22.b}, p0/z, [x2, #2, mul vl]
-    ld1b            {z23.b}, p0/z, [x2, #3, mul vl]
-    add             x0, x0, x1
-    add             x2, x2, x3
-    usublb          z1.h, z16.b, z20.b
-    usublt          z2.h, z16.b, z20.b
-    usublb          z3.h, z17.b, z21.b
-    usublt          z4.h, z17.b, z21.b
-    usublb          z5.h, z18.b, z22.b
-    usublt          z6.h, z18.b, z22.b
-    usublb          z7.h, z19.b, z23.b
-    usublt          z8.h, z19.b, z23.b
-    smlalb          z24.s, z1.h, z1.h
-    smlalt          z25.s, z1.h, z1.h
-    smlalb          z24.s, z2.h, z2.h
-    smlalt          z25.s, z2.h, z2.h
-    smlalb          z24.s, z3.h, z3.h
-    smlalt          z25.s, z3.h, z3.h
-    smlalb          z24.s, z4.h, z4.h
-    smlalt          z25.s, z4.h, z4.h
-    smlalb          z24.s, z5.h, z5.h
-    smlalt          z25.s, z5.h, z5.h
-    smlalb          z24.s, z6.h, z6.h
-    smlalt          z25.s, z6.h, z6.h
-    smlalb          z24.s, z7.h, z7.h
-    smlalt          z25.s, z7.h, z7.h
-    smlalb          z24.s, z8.h, z8.h
-    smlalt          z25.s, z8.h, z8.h
+    mov             w12, #16
+    movi            v0.16b, #0
+    movi            v1.16b, #0
+
+.loop_sse_pp_64_sve2:
+    sub             w12, w12, #1
+.rept 4
+    ld1             {v16.16b-v19.16b}, [x0], x1
+    ld1             {v20.16b-v23.16b}, [x2], x3
+
+    usubl           v2.8h, v16.8b, v20.8b
+    usubl2          v3.8h, v16.16b, v20.16b
+    usubl           v4.8h, v17.8b, v21.8b
+    usubl2          v5.8h, v17.16b, v21.16b
+    smlal           v0.4s, v2.4h, v2.4h
+    smlal2          v1.4s, v2.8h, v2.8h
+    smlal           v0.4s, v3.4h, v3.4h
+    smlal2          v1.4s, v3.8h, v3.8h
+    smlal           v0.4s, v4.4h, v4.4h
+    smlal2          v1.4s, v4.8h, v4.8h
+    smlal           v0.4s, v5.4h, v5.4h
+    smlal2          v1.4s, v5.8h, v5.8h
+
+    usubl           v2.8h, v18.8b, v22.8b
+    usubl2          v3.8h, v18.16b, v22.16b
+    usubl           v4.8h, v19.8b, v23.8b
+    usubl2          v5.8h, v19.16b, v23.16b
+    smlal           v0.4s, v2.4h, v2.4h
+    smlal2          v1.4s, v2.8h, v2.8h
+    smlal           v0.4s, v3.4h, v3.4h
+    smlal2          v1.4s, v3.8h, v3.8h
+    smlal           v0.4s, v4.4h, v4.4h
+    smlal2          v1.4s, v4.8h, v4.8h
+    smlal           v0.4s, v5.4h, v5.4h
+    smlal2          v1.4s, v5.8h, v5.8h
 .endr
-    uaddv           d3, p0, z24.s
-    fmov            w0, s3
-    uaddv           d4, p0, z25.s
-    fmov            w1, s4
-    add             w0, w0, w1
-    ret
+    cbnz            w12, .loop_sse_pp_64_sve2
+    add             v0.4s, v0.4s, v1.4s
+    ret_v0_w0
 .vl_gt_16_pixel_sse_pp_64x64:
     cmp             x9, #48
     bgt             .vl_gt_48_pixel_sse_pp_64x64
@@ -931,26 +784,27 @@ function PFX(pixel_ssd_s_16x16_sve2)
     rdvl            x9, #1
     cmp             x9, #16
     bgt             .vl_gt_16_pixel_ssd_s_16x16
-    ptrue           p0.b, vl16
-    ld1b            {z16.b}, p0/z, [x0]
-    ld1b            {z17.b}, p0/z, [x0, #1, mul vl]
-    add             x0, x0, x1, lsl #1
-    smullb          z0.s, z16.h, z16.h
-    smlalt          z0.s, z16.h, z16.h
-    smlalb          z0.s, z17.h, z17.h
-    smlalt          z0.s, z17.h, z17.h
-.rept 15
-    ld1b            {z16.b}, p0/z, [x0]
-    ld1b            {z17.b}, p0/z, [x0, #1, mul vl]
-    add             x0, x0, x1, lsl #1
-    smlalb          z0.s, z16.h, z16.h
-    smlalt          z0.s, z16.h, z16.h
-    smlalb          z0.s, z17.h, z17.h
-    smlalt          z0.s, z17.h, z17.h
+    add             x1, x1, x1
+    mov             w12, #4
+    movi            v0.16b, #0
+    movi            v1.16b, #0
+.loop_ssd_s_16_sve2:
+    sub             w12, w12, #1
+.rept 2
+    ld1             {v4.16b,v5.16b}, [x0], x1
+    ld1             {v6.16b,v7.16b}, [x0], x1
+    smlal           v0.4s, v4.4h, v4.4h
+    smlal2          v1.4s, v4.8h, v4.8h
+    smlal           v0.4s, v5.4h, v5.4h
+    smlal2          v1.4s, v5.8h, v5.8h
+    smlal           v0.4s, v6.4h, v6.4h
+    smlal2          v1.4s, v6.8h, v6.8h
+    smlal           v0.4s, v7.4h, v7.4h
+    smlal2          v1.4s, v7.8h, v7.8h
 .endr
-    uaddv           d3, p0, z0.s
-    fmov            w0, s3
-    ret
+    cbnz            w12, .loop_ssd_s_16_sve2
+    add             v0.4s, v0.4s, v1.4s
+    ret_v0_w0
 .vl_gt_16_pixel_ssd_s_16x16:
     ptrue           p0.b, vl32
     ld1b            {z16.b}, p0/z, [x0]
@@ -972,38 +826,26 @@ function PFX(pixel_ssd_s_32x32_sve2)
     rdvl            x9, #1
     cmp             x9, #16
     bgt             .vl_gt_16_pixel_ssd_s_32x32
-    ptrue           p0.b, vl16
-    ld1b            {z16.b}, p0/z, [x0]
-    ld1b            {z17.b}, p0/z, [x0, #1, mul vl]
-    ld1b            {z18.b}, p0/z, [x0, #2, mul vl]
-    ld1b            {z19.b}, p0/z, [x0, #3, mul vl]
-    add             x0, x0, x1, lsl #1
-    smullb          z0.s, z16.h, z16.h
-    smlalt          z0.s, z16.h, z16.h
-    smlalb          z0.s, z17.h, z17.h
-    smlalt          z0.s, z17.h, z17.h
-    smlalb          z0.s, z18.h, z18.h
-    smlalt          z0.s, z18.h, z18.h
-    smlalb          z0.s, z19.h, z19.h
-    smlalt          z0.s, z19.h, z19.h
-.rept 31
-    ld1b            {z16.b}, p0/z, [x0]
-    ld1b            {z17.b}, p0/z, [x0, #1, mul vl]
-    ld1b            {z18.b}, p0/z, [x0, #2, mul vl]
-    ld1b            {z19.b}, p0/z, [x0, #3, mul vl]
-    add             x0, x0, x1, lsl #1
-    smlalb          z0.s, z16.h, z16.h
-    smlalt          z0.s, z16.h, z16.h
-    smlalb          z0.s, z17.h, z17.h
-    smlalt          z0.s, z17.h, z17.h
-    smlalb          z0.s, z18.h, z18.h
-    smlalt          z0.s, z18.h, z18.h
-    smlalb          z0.s, z19.h, z19.h
-    smlalt          z0.s, z19.h, z19.h
+    add             x1, x1, x1
+    mov             w12, #8
+    movi            v0.16b, #0
+    movi            v1.16b, #0
+.loop_ssd_s_32:
+    sub             w12, w12, #1
+.rept 4
+    ld1             {v4.16b-v7.16b}, [x0], x1
+    smlal           v0.4s, v4.4h, v4.4h
+    smlal2          v1.4s, v4.8h, v4.8h
+    smlal           v0.4s, v5.4h, v5.4h
+    smlal2          v1.4s, v5.8h, v5.8h
+    smlal           v0.4s, v6.4h, v6.4h
+    smlal2          v1.4s, v6.8h, v6.8h
+    smlal           v0.4s, v7.4h, v7.4h
+    smlal2          v1.4s, v7.8h, v7.8h
 .endr
-    uaddv           d3, p0, z0.s
-    fmov            w0, s3
-    ret
+    cbnz            w12, .loop_ssd_s_32
+    add             v0.4s, v0.4s, v1.4s
+    ret_v0_w0
 .vl_gt_16_pixel_ssd_s_32x32:
     cmp             x9, #48
     bgt             .vl_gt_48_pixel_ssd_s_32x32
