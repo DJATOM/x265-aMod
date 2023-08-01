@@ -36,66 +36,6 @@
 
 .text
 
-function PFX(getResidual4_sve)
-    lsl             x4, x3, #1
-    ptrue           p0.h, vl8
-.rept 2
-    ld1b            {z0.h}, p0/z, [x0]
-    ld1b            {z1.h}, p0/z, [x1]
-    add             x0, x0, x3
-    add             x1, x1, x3
-    ld1b            {z2.h}, p0/z, [x0]
-    ld1b            {z3.h}, p0/z, [x1]
-    add             x0, x0, x3
-    add             x1, x1, x3
-    sub             z4.h, z0.h, z1.h
-    sub             z5.h, z2.h, z3.h
-    st1             {v4.8b}, [x2], x4
-    st1             {v5.8b}, [x2], x4
-.endr
-    ret
-endfunc
-
-function PFX(getResidual8_sve)
-    lsl             x4, x3, #1
-    ptrue           p0.h, vl8
-.rept 4
-    ld1b            {z0.h}, p0/z, [x0]
-    ld1b            {z1.h}, p0/z, [x1]
-    add             x0, x0, x3
-    add             x1, x1, x3
-    ld1b            {z2.h}, p0/z, [x0]
-    ld1b            {z3.h}, p0/z, [x1]
-    add             x0, x0, x3
-    add             x1, x1, x3
-    sub             z4.h, z0.h, z1.h
-    sub             z5.h, z2.h, z3.h
-    st1             {v4.16b}, [x2], x4
-    st1             {v5.16b}, [x2], x4
-.endr
-    ret
-endfunc
-
-function PFX(pixel_sub_ps_4x8_sve)
-    lsl             x1, x1, #1
-    ptrue           p0.h, vl4
-.rept 4
-    ld1b            {z0.h}, p0/z, [x2]
-    ld1b            {z1.h}, p0/z, [x3]
-    add             x2, x2, x4
-    add             x3, x3, x5
-    ld1b            {z2.h}, p0/z, [x2]
-    ld1b            {z3.h}, p0/z, [x3]
-    add             x2, x2, x4
-    add             x3, x3, x5
-    sub             z4.h, z0.h, z1.h
-    sub             z5.h, z2.h, z3.h
-    st1             {v4.4h}, [x0], x1
-    st1             {v5.4h}, [x0], x1
-.endr
-    ret
-endfunc
-
 function PFX(pixel_sub_ps_8x16_sve)
     lsl             x1, x1, #1
     ptrue           p0.h, vl8
@@ -112,39 +52,6 @@ function PFX(pixel_sub_ps_8x16_sve)
     sub             z5.h, z2.h, z3.h
     st1             {v4.8h}, [x0], x1
     st1             {v5.8h}, [x0], x1
-.endr
-    ret
-endfunc
-
-// chroma sub_ps
-function PFX(pixel_sub_ps_16x32_sve)
-    rdvl            x9, #1
-    cmp             x9, #16
-    bgt             .vl_gt_16_pixel_sub_ps_16x32
-    lsl             x1, x1, #1
-.rept 16
-    ld1             {v0.16b}, [x2], x4
-    ld1             {v1.16b}, [x3], x5
-    ld1             {v2.16b}, [x2], x4
-    ld1             {v3.16b}, [x3], x5
-    usubl           v4.8h, v0.8b, v1.8b
-    usubl2          v5.8h, v0.16b, v1.16b
-    usubl           v6.8h, v2.8b, v3.8b
-    usubl2          v7.8h, v2.16b, v3.16b
-    st1             {v4.8h-v5.8h}, [x0], x1
-    st1             {v6.8h-v7.8h}, [x0], x1
-.endr
-    ret
-.vl_gt_16_pixel_sub_ps_16x32:
-    ptrue           p0.h, vl16
-.rept 32
-    ld1b            {z0.h}, p0/z, [x2]
-    ld1b            {z4.h}, p0/z, [x3]
-    add             x2, x2, x4
-    add             x3, x3, x5
-    sub             z8.h, z0.h, z4.h
-    st1h            {z8.h}, p0, [x0]
-    add             x0, x0, x1, lsl #1
 .endr
     ret
 endfunc

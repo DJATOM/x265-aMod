@@ -231,8 +231,6 @@ uint64_t x265_pixel_var_16x16_sve2(const pixel* pix, intptr_t stride);
 uint64_t x265_pixel_var_32x32_sve2(const pixel* pix, intptr_t stride);
 uint64_t x265_pixel_var_64x64_sve2(const pixel* pix, intptr_t stride);
 
-void x265_getResidual4_sve(const pixel* fenc, const pixel* pred, int16_t* residual, intptr_t stride);
-void x265_getResidual8_sve(const pixel* fenc, const pixel* pred, int16_t* residual, intptr_t stride);
 void x265_getResidual16_sve2(const pixel* fenc, const pixel* pred, int16_t* residual, intptr_t stride);
 void x265_getResidual32_sve2(const pixel* fenc, const pixel* pred, int16_t* residual, intptr_t stride);
 

@@ -1157,7 +1157,7 @@ void setupSvePrimitives(EncoderPrimitives &p)
 
     // Blockcopy_ps
     p.cu[BLOCK_4x4].copy_ps   = PFX(blockcopy_ps_4x4_neon);
-    p.cu[BLOCK_8x8].copy_ps   = PFX(blockcopy_ps_8x8_sve);
+    p.cu[BLOCK_8x8].copy_ps   = PFX(blockcopy_ps_8x8_neon);
     p.cu[BLOCK_16x16].copy_ps = PFX(blockcopy_ps_16x16_sve);
     p.cu[BLOCK_32x32].copy_ps = PFX(blockcopy_ps_32x32_sve);
     p.cu[BLOCK_64x64].copy_ps = PFX(blockcopy_ps_64x64_sve);
@@ -1167,7 +1167,7 @@ void setupSvePrimitives(EncoderPrimitives &p)
     p.cu[BLOCK_8x8].copy_sp   = PFX(blockcopy_sp_8x8_sve);
     p.cu[BLOCK_16x16].copy_sp = PFX(blockcopy_sp_16x16_sve);
     p.cu[BLOCK_32x32].copy_sp = PFX(blockcopy_sp_32x32_sve);
-    p.cu[BLOCK_64x64].copy_sp = PFX(blockcopy_sp_64x64_sve);
+    p.cu[BLOCK_64x64].copy_sp = PFX(blockcopy_sp_64x64_neon);
 
     // chroma blockcopy_ss
     p.chroma[X265_CSP_I420].cu[BLOCK_420_4x4].copy_ss   = PFX(blockcopy_ss_4x4_neon);
@@ -1181,7 +1181,7 @@ void setupSvePrimitives(EncoderPrimitives &p)
 
     // chroma blockcopy_ps
     p.chroma[X265_CSP_I420].cu[BLOCK_420_4x4].copy_ps   = PFX(blockcopy_ps_4x4_neon);
-    p.chroma[X265_CSP_I420].cu[BLOCK_420_8x8].copy_ps   = PFX(blockcopy_ps_8x8_sve);
+    p.chroma[X265_CSP_I420].cu[BLOCK_420_8x8].copy_ps   = PFX(blockcopy_ps_8x8_neon);
     p.chroma[X265_CSP_I420].cu[BLOCK_420_16x16].copy_ps = PFX(blockcopy_ps_16x16_sve);
     p.chroma[X265_CSP_I420].cu[BLOCK_420_32x32].copy_ps = PFX(blockcopy_ps_32x32_sve);
     p.chroma[X265_CSP_I422].cu[BLOCK_422_4x8].copy_ps   = PFX(blockcopy_ps_4x8_sve);
@@ -1309,13 +1309,13 @@ void setupSvePrimitives(EncoderPrimitives &p)
     p.cu[BLOCK_64x64].var = PFX(pixel_var_64x64_neon);
 
     // calc_Residual
-    p.cu[BLOCK_4x4].calcresidual[NONALIGNED]   = PFX(getResidual4_sve);
-    p.cu[BLOCK_8x8].calcresidual[NONALIGNED]   = PFX(getResidual8_sve);
+    p.cu[BLOCK_4x4].calcresidual[NONALIGNED]   = PFX(getResidual4_neon);
+    p.cu[BLOCK_8x8].calcresidual[NONALIGNED]   = PFX(getResidual8_neon);
     p.cu[BLOCK_16x16].calcresidual[NONALIGNED] = PFX(getResidual16_neon);
     p.cu[BLOCK_32x32].calcresidual[NONALIGNED] = PFX(getResidual32_neon);
 
-    p.cu[BLOCK_4x4].calcresidual[ALIGNED]   = PFX(getResidual4_sve);
-    p.cu[BLOCK_8x8].calcresidual[ALIGNED]   = PFX(getResidual8_sve);
+    p.cu[BLOCK_4x4].calcresidual[ALIGNED]   = PFX(getResidual4_neon);
+    p.cu[BLOCK_8x8].calcresidual[ALIGNED]   = PFX(getResidual8_neon);
     p.cu[BLOCK_16x16].calcresidual[ALIGNED] = PFX(getResidual16_neon);
     p.cu[BLOCK_32x32].calcresidual[ALIGNED] = PFX(getResidual32_neon);
 
@@ -1331,9 +1331,9 @@ void setupSvePrimitives(EncoderPrimitives &p)
     p.chroma[X265_CSP_I420].cu[BLOCK_420_8x8].sub_ps   = PFX(pixel_sub_ps_8x8_neon);
     p.chroma[X265_CSP_I420].cu[BLOCK_420_16x16].sub_ps = PFX(pixel_sub_ps_16x16_neon);
     p.chroma[X265_CSP_I420].cu[BLOCK_420_32x32].sub_ps = PFX(pixel_sub_ps_32x32_neon);
-    p.chroma[X265_CSP_I422].cu[BLOCK_422_4x8].sub_ps   = PFX(pixel_sub_ps_4x8_sve);
+    p.chroma[X265_CSP_I422].cu[BLOCK_422_4x8].sub_ps   = PFX(pixel_sub_ps_4x8_neon);
     p.chroma[X265_CSP_I422].cu[BLOCK_422_8x16].sub_ps  = PFX(pixel_sub_ps_8x16_sve);
-    p.chroma[X265_CSP_I422].cu[BLOCK_422_16x32].sub_ps = PFX(pixel_sub_ps_16x32_sve);
+    p.chroma[X265_CSP_I422].cu[BLOCK_422_16x32].sub_ps = PFX(pixel_sub_ps_16x32_neon);
     p.chroma[X265_CSP_I422].cu[BLOCK_422_32x64].sub_ps = PFX(pixel_sub_ps_32x64_neon);
 
     // pixel_add_ps
@@ -1579,7 +1579,7 @@ void setupSve2Primitives(EncoderPrimitives &p)
 
     // Blockcopy_ps
     p.cu[BLOCK_4x4].copy_ps   = PFX(blockcopy_ps_4x4_neon);
-    p.cu[BLOCK_8x8].copy_ps   = PFX(blockcopy_ps_8x8_sve);
+    p.cu[BLOCK_8x8].copy_ps   = PFX(blockcopy_ps_8x8_neon);
     p.cu[BLOCK_16x16].copy_ps = PFX(blockcopy_ps_16x16_sve);
     p.cu[BLOCK_32x32].copy_ps = PFX(blockcopy_ps_32x32_sve);
     p.cu[BLOCK_64x64].copy_ps = PFX(blockcopy_ps_64x64_sve);
@@ -1589,7 +1589,7 @@ void setupSve2Primitives(EncoderPrimitives &p)
     p.cu[BLOCK_8x8].copy_sp   = PFX(blockcopy_sp_8x8_sve);
     p.cu[BLOCK_16x16].copy_sp = PFX(blockcopy_sp_16x16_sve);
     p.cu[BLOCK_32x32].copy_sp = PFX(blockcopy_sp_32x32_sve);
-    p.cu[BLOCK_64x64].copy_sp = PFX(blockcopy_sp_64x64_sve);
+    p.cu[BLOCK_64x64].copy_sp = PFX(blockcopy_sp_64x64_neon);
 
     // chroma blockcopy_ss
     p.chroma[X265_CSP_I420].cu[BLOCK_420_4x4].copy_ss   = PFX(blockcopy_ss_4x4_neon);
@@ -1603,7 +1603,7 @@ void setupSve2Primitives(EncoderPrimitives &p)
 
     // chroma blockcopy_ps
     p.chroma[X265_CSP_I420].cu[BLOCK_420_4x4].copy_ps   = PFX(blockcopy_ps_4x4_neon);
-    p.chroma[X265_CSP_I420].cu[BLOCK_420_8x8].copy_ps   = PFX(blockcopy_ps_8x8_sve);
+    p.chroma[X265_CSP_I420].cu[BLOCK_420_8x8].copy_ps   = PFX(blockcopy_ps_8x8_neon);
     p.chroma[X265_CSP_I420].cu[BLOCK_420_16x16].copy_ps = PFX(blockcopy_ps_16x16_sve);
     p.chroma[X265_CSP_I420].cu[BLOCK_420_32x32].copy_ps = PFX(blockcopy_ps_32x32_sve);
     p.chroma[X265_CSP_I422].cu[BLOCK_422_4x8].copy_ps   = PFX(blockcopy_ps_4x8_sve);
@@ -1739,13 +1739,13 @@ void setupSve2Primitives(EncoderPrimitives &p)
     p.cu[BLOCK_64x64].var = PFX(pixel_var_64x64_sve2);
 
     // calc_Residual
-    p.cu[BLOCK_4x4].calcresidual[NONALIGNED]   = PFX(getResidual4_sve);
-    p.cu[BLOCK_8x8].calcresidual[NONALIGNED]   = PFX(getResidual8_sve);
+    p.cu[BLOCK_4x4].calcresidual[NONALIGNED]   = PFX(getResidual4_neon);
+    p.cu[BLOCK_8x8].calcresidual[NONALIGNED]   = PFX(getResidual8_neon);
     p.cu[BLOCK_16x16].calcresidual[NONALIGNED] = PFX(getResidual16_sve2);
     p.cu[BLOCK_32x32].calcresidual[NONALIGNED] = PFX(getResidual32_sve2);
 
-    p.cu[BLOCK_4x4].calcresidual[ALIGNED]   = PFX(getResidual4_sve);
-    p.cu[BLOCK_8x8].calcresidual[ALIGNED]   = PFX(getResidual8_sve);
+    p.cu[BLOCK_4x4].calcresidual[ALIGNED]   = PFX(getResidual4_neon);
+    p.cu[BLOCK_8x8].calcresidual[ALIGNED]   = PFX(getResidual8_neon);
     p.cu[BLOCK_16x16].calcresidual[ALIGNED] = PFX(getResidual16_sve2);
     p.cu[BLOCK_32x32].calcresidual[ALIGNED] = PFX(getResidual32_sve2);
 
@@ -1761,9 +1761,9 @@ void setupSve2Primitives(EncoderPrimitives &p)
     p.chroma[X265_CSP_I420].cu[BLOCK_420_8x8].sub_ps   = PFX(pixel_sub_ps_8x8_neon);
     p.chroma[X265_CSP_I420].cu[BLOCK_420_16x16].sub_ps = PFX(pixel_sub_ps_16x16_neon);
     p.chroma[X265_CSP_I420].cu[BLOCK_420_32x32].sub_ps = PFX(pixel_sub_ps_32x32_sve2);
-    p.chroma[X265_CSP_I422].cu[BLOCK_422_4x8].sub_ps   = PFX(pixel_sub_ps_4x8_sve);
+    p.chroma[X265_CSP_I422].cu[BLOCK_422_4x8].sub_ps   = PFX(pixel_sub_ps_4x8_neon);
     p.chroma[X265_CSP_I422].cu[BLOCK_422_8x16].sub_ps  = PFX(pixel_sub_ps_8x16_sve);
-    p.chroma[X265_CSP_I422].cu[BLOCK_422_16x32].sub_ps = PFX(pixel_sub_ps_16x32_sve);
+    p.chroma[X265_CSP_I422].cu[BLOCK_422_16x32].sub_ps = PFX(pixel_sub_ps_16x32_neon);
     p.chroma[X265_CSP_I422].cu[BLOCK_422_32x64].sub_ps = PFX(pixel_sub_ps_32x64_sve2);
 
     // pixel_add_ps
