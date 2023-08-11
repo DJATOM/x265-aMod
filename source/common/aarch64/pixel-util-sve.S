@@ -203,14 +203,14 @@ endfunc
     add             x0, x0, x1
     add             x2, x2, x3
 
-    sub             \z0, z0.h, z2.h
-    sub             \z4, z1.h, z3.h
-    sub             \z1, z4.h, z6.h
-    sub             \z5, z5.h, z7.h
-    sub             \z2, z8.h, z10.h
-    sub             \z6, z9.h, z11.h
-    sub             \z3, z12.h, z14.h
-    sub             \z7, z13.h, z15.h
+    sub             \z0\().h, z0.h, z2.h
+    sub             \z4\().h, z1.h, z3.h
+    sub             \z1\().h, z4.h, z6.h
+    sub             \z5\().h, z5.h, z7.h
+    sub             \z2\().h, z8.h, z10.h
+    sub             \z6\().h, z9.h, z11.h
+    sub             \z3\().h, z12.h, z14.h
+    sub             \z7\().h, z13.h, z15.h
 .endm
 
 // one vertical hadamard pass and two horizontal
@@ -232,7 +232,7 @@ function PFX(satd_8x4v_8x8h_sve), export=0
 endfunc
 
 function PFX(satd_16x4_sve), export=0
-    LOAD_DIFF_16x4_sve  z16.h, z17.h, z18.h, z19.h, z20.h, z21.h, z22.h, z23.h
+    LOAD_DIFF_16x4_sve  z16, z17, z18, z19, z20, z21, z22, z23
     b                    PFX(satd_8x4v_8x8h_sve)
 endfunc
 
