@@ -176,7 +176,7 @@ function PFX(pixel_satd_8x12_sve)
     ret
 endfunc
 
-.macro LOAD_DIFF_16x4_sve z0 z1 z2 z3 z4 z5 z6 z7
+.macro LOAD_DIFF_16x4_sve v0 v1 v2 v3 v4 v5 v6 v7
     mov             x11, #8 // in order to consider CPUs whose vector size is greater than 128 bits
     ld1b            {z0.h}, p0/z, [x0]
     ld1b            {z1.h}, p0/z, [x0, x11]
@@ -190,7 +190,7 @@ endfunc
     ld1b            {z7.h}, p0/z, [x2, x11]
     add             x0, x0, x1
     add             x2, x2, x3
-    ld1b            {z8.h}, p0/z, [x0]
+    ld1b            {z29.h}, p0/z, [x0]
     ld1b            {z9.h}, p0/z, [x0, x11]
     ld1b            {z10.h}, p0/z, [x2]
     ld1b            {z11.h}, p0/z, [x2, x11]
@@ -203,14 +203,14 @@ endfunc
     add             x0, x0, x1
     add             x2, x2, x3
 
-    sub             \z0\().h, z0.h, z2.h
-    sub             \z4\().h, z1.h, z3.h
-    sub             \z1\().h, z4.h, z6.h
-    sub             \z5\().h, z5.h, z7.h
-    sub             \z2\().h, z8.h, z10.h
-    sub             \z6\().h, z9.h, z11.h
-    sub             \z3\().h, z12.h, z14.h
-    sub             \z7\().h, z13.h, z15.h
+    sub             \v0\().h, z0.h, z2.h
+    sub             \v4\().h, z1.h, z3.h
+    sub             \v1\().h, z4.h, z6.h
+    sub             \v5\().h, z5.h, z7.h
+    sub             \v2\().h, z29.h, z10.h
+    sub             \v6\().h, z9.h, z11.h
+    sub             \v3\().h, z12.h, z14.h
+    sub             \v7\().h, z13.h, z15.h
 .endm
 
 // one vertical hadamard pass and two horizontal
