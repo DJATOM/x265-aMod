@@ -394,7 +394,7 @@ if(EXTRA_LIB)
 endif(EXTRA_LIB)
 mark_as_advanced(EXTRA_LIB EXTRA_LINK_FLAGS)
 
-if(X64)
+if(X64 OR ARM64 OR PPC64)
     # NOTE: We only officially support high-bit-depth compiles of x265
     # on 64bit architectures. Main10 plus large resolution plus slow
     # preset plus 32bit address space usually means malloc failure.  You
@@ -403,7 +403,7 @@ if(X64)
     # license" so to speak.  If it breaks you get to keep both halves.
     # You will need to disable assembly manually.
     option(HIGH_BIT_DEPTH "Store pixel samples as 16bit values (Main10/Main12)" OFF)
-endif(X64)
+endif(X64 OR ARM64 OR PPC64)
 if(HIGH_BIT_DEPTH)
     option(MAIN12 "Support Main12 instead of Main10" OFF)
     if(MAIN12)
