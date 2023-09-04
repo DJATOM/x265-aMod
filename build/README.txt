@@ -6,6 +6,9 @@
 
 Note: MSVC12 requires cmake 2.8.11 or later
 
+Note: When the SVE/SVE2 instruction set of Arm AArch64 architecture is to be used, the GCC10.x and onwards must
+      be installed in order to compile x265.
+
 
 = Optional Prerequisites =
 
@@ -88,3 +91,25 @@ Note that cmake will update X265_VERSION each time cmake runs, if you are
 building out of a Mercurial source repository.  If you are building out of
 a release source package, the version will not change.  If Mercurial is not
 found, the version will be "unknown".
+
+= Build Instructions for cross-compilation for Arm AArch64 Targets=
+
+When the target platform is based on Arm AArch64 architecture, the x265 can be
+built in x86 platforms. However, the CMAKE_C_COMPILER and CMAKE_CXX_COMPILER
+enviroment variables should be set to point to the cross compilers of the
+appropriate gcc. For example:
+
+1. export CMAKE_C_COMPILER=aarch64-unknown-linux-gnu-gcc
+2. export CMAKE_CXX_COMPILER=aarch64-unknown-linux-gnu-g++
+
+The default ones are aarch64-linux-gnu-gcc and aarch64-linux-gnu-g++.
+Then, the normal building process can be followed.
+
+Moreover, if the target platform supports SVE or SVE2 instruction set, the
+CROSS_COMPILE_SVE or CROSS_COMPILE_SVE2 environment variables should be set
+to true, respectively. For example:
+
+1. export CROSS_COMPILE_SVE2=true
+2. export CROSS_COMPILE_SVE=true
+
+Then, the normal building process can be followed.

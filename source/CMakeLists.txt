@@ -260,11 +260,27 @@ if(GCC)
         endif()
     endif()
 	if(ARM64 OR CROSS_COMPILE_ARM64)
-	    set(ARM_ARGS -fPIC -flax-vector-conversions)
         find_package(Neon)
-        if(CPU_HAS_NEON)
+        find_package(SVE)
+        find_package(SVE2)
+        if(CPU_HAS_SVE2 OR CROSS_COMPILE_SVE2)
+            message(STATUS "Found SVE2")
+	        set(ARM_ARGS -O3 -march=armv8-a+sve2 -fPIC -flax-vector-conversions)
+            add_definitions(-DHAVE_SVE2)
+            add_definitions(-DHAVE_SVE)
+            add_definitions(-DHAVE_NEON) # for NEON c/c++ primitives, as currently there is no implementation that use SVE2
+        elseif(CPU_HAS_SVE OR CROSS_COMPILE_SVE)
+            message(STATUS "Found SVE")
+	        set(ARM_ARGS -O3 -march=armv8-a+sve -fPIC -flax-vector-conversions)
+            add_definitions(-DHAVE_SVE)
+            add_definitions(-DHAVE_NEON) # for NEON c/c++ primitives, as currently there is no implementation that use SVE
+        elseif(CPU_HAS_NEON)
+            message(STATUS "Found NEON")
+            set(ARM_ARGS -fPIC -flax-vector-conversions)
             add_definitions(-DHAVE_NEON)
-        endif()
+        else()
+            set(ARM_ARGS -fPIC -flax-vector-conversions)
+        endif()        
     endif()
 	if(ENABLE_PIC)
 	list(APPEND ARM_ARGS -DPIC)
@@ -580,6 +596,39 @@ if((MSVC_IDE OR XCODE OR GCC) AND ENABLE_ASSEMBLY)
                 ARGS ${ARM_ARGS} ${ASM_FLAGS} -c ${ASM_SRC} -o ${ASM}.${SUFFIX}
                 DEPENDS ${ASM_SRC})
         endforeach()
+        if(CPU_HAS_SVE2 OR CROSS_COMPILE_SVE2)
+            foreach(ASM ${ARM_ASMS_SVE})
+                set(ASM_SRC ${CMAKE_CURRENT_SOURCE_DIR}/common/aarch64/${ASM})
+                list(APPEND ASM_SRCS ${ASM_SRC})
+                list(APPEND ASM_OBJS ${ASM}.${SUFFIX})
+                add_custom_command(
+                    OUTPUT ${ASM}.${SUFFIX}
+                    COMMAND ${CMAKE_CXX_COMPILER}
+                    ARGS ${ARM_ARGS} ${ASM_FLAGS} -c ${ASM_SRC} -o ${ASM}.${SUFFIX}
+                    DEPENDS ${ASM_SRC})
+            endforeach()
+            foreach(ASM ${ARM_ASMS_SVE2})
+                set(ASM_SRC ${CMAKE_CURRENT_SOURCE_DIR}/common/aarch64/${ASM})
+                list(APPEND ASM_SRCS ${ASM_SRC})
+                list(APPEND ASM_OBJS ${ASM}.${SUFFIX})
+                add_custom_command(
+                    OUTPUT ${ASM}.${SUFFIX}
+                    COMMAND ${CMAKE_CXX_COMPILER}
+                    ARGS ${ARM_ARGS} ${ASM_FLAGS} -c ${ASM_SRC} -o ${ASM}.${SUFFIX}
+                    DEPENDS ${ASM_SRC})
+            endforeach()
+        elseif(CPU_HAS_SVE OR CROSS_COMPILE_SVE)
+            foreach(ASM ${ARM_ASMS_SVE})
+                set(ASM_SRC ${CMAKE_CURRENT_SOURCE_DIR}/common/aarch64/${ASM})
+                list(APPEND ASM_SRCS ${ASM_SRC})
+                list(APPEND ASM_OBJS ${ASM}.${SUFFIX})
+                add_custom_command(
+                    OUTPUT ${ASM}.${SUFFIX}
+                    COMMAND ${CMAKE_CXX_COMPILER}
+                    ARGS ${ARM_ARGS} ${ASM_FLAGS} -c ${ASM_SRC} -o ${ASM}.${SUFFIX}
+                    DEPENDS ${ASM_SRC})
+            endforeach()
+        endif()
     elseif(X86)
     # compile X86 arch asm files here
         foreach(ASM ${MSVC_ASMS})

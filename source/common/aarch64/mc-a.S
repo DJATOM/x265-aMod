@@ -23,6 +23,7 @@
  *****************************************************************************/
 
 #include "asm.S"
+#include "mc-a-common.S"
 
 #ifdef __APPLE__
 .section __RODATA,__rodata
@@ -215,13 +216,6 @@ pixel_avg_pp_64xN_neon 48
 pixel_avg_pp_64xN_neon 64
 
 // void addAvg(const int16_t* src0, const int16_t* src1, pixel* dst, intptr_t src0Stride, intptr_t src1Stride, intptr_t dstStride)
-.macro addAvg_start
-    lsl             x3, x3, #1
-    lsl             x4, x4, #1
-    mov             w11, #0x40
-    dup             v30.16b, w11
-.endm
-
 .macro addAvg_2xN h
 function PFX(addAvg_2x\h\()_neon)
     addAvg_start
@@ -416,14 +410,6 @@ endfunc
 
 addAvg_12xN 16
 addAvg_12xN 32
-
-.macro addavg_1 v0, v1
-    add             \v0\().8h, \v0\().8h, \v1\().8h
-    saddl           v16.4s, \v0\().4h, v30.4h
-    saddl2          v17.4s, \v0\().8h, v30.8h
-    shrn            \v0\().4h, v16.4s, #7
-    shrn2           \v0\().8h, v17.4s, #7
-.endm
 
 .macro addAvg_16xN h
 function PFX(addAvg_16x\h\()_neon)

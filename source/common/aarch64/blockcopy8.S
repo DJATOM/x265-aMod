@@ -22,6 +22,7 @@
  *****************************************************************************/
 
 #include "asm.S"
+#include "blockcopy8-common.S"
 
 #ifdef __APPLE__
 .section __RODATA,__rodata
@@ -1047,15 +1048,6 @@ function PFX(cpy2Dto1D_shl_64x64_neon)
 endfunc
 
 // void cpy2Dto1D_shr(int16_t* dst, const int16_t* src, intptr_t srcStride, int shift)
-.macro cpy2Dto1D_shr_start
-    add             x2, x2, x2
-    dup             v0.8h, w3
-    cmeq            v1.8h, v1.8h, v1.8h
-    sshl            v1.8h, v1.8h, v0.8h
-    sri             v1.8h, v1.8h, #1
-    neg             v0.8h, v0.8h
-.endm
-
 function PFX(cpy2Dto1D_shr_4x4_neon)
     cpy2Dto1D_shr_start
     ld1             {v2.d}[0], [x1], x2
@@ -1208,16 +1200,6 @@ function PFX(cpy1Dto2D_shl_64x64_neon)
     ret
 endfunc
 
-// void cpy1Dto2D_shr(int16_t* dst, const int16_t* src, intptr_t dstStride, int shift)
-.macro cpy1Dto2D_shr_start
-    add             x2, x2, x2
-    dup             v0.8h, w3
-    cmeq            v1.8h, v1.8h, v1.8h
-    sshl            v1.8h, v1.8h, v0.8h
-    sri             v1.8h, v1.8h, #1
-    neg             v0.8h, v0.8h
-.endm
-
 function PFX(cpy1Dto2D_shr_4x4_neon)
     cpy1Dto2D_shr_start
     ld1             {v2.16b-v3.16b}, [x1]
@@ -1315,8 +1297,3 @@ function PFX(cpy1Dto2D_shr_64x64_neon)
     cbnz            w12, .loop_cpy1Dto2D_shr_64
     ret
 endfunc
-
-const xtn_xtn2_table, align=4
-.byte    0, 2, 4, 6, 8, 10, 12, 14
-.byte    16, 18, 20, 22, 24, 26, 28, 30
-endconst

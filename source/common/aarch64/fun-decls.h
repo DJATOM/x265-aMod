@@ -151,6 +151,9 @@
     FUNCDEF_TU_S2(void, normFact, cpu, const pixel *src, uint32_t blockSize, int shift, uint64_t *z_k)
 
 DECLS(neon);
+DECLS(sve);
+DECLS(sve2);
+
 
 void x265_pixel_planecopy_cp_neon(const uint8_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int height, int shift);
 
@@ -222,3 +225,32 @@ void PFX(weight_pp_neon)(const pixel* src, pixel* dst, intptr_t stride, int widt
 void PFX(weight_sp_neon)(const int16_t* src, pixel* dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset);
 int PFX(scanPosLast_neon)(const uint16_t *scan, const coeff_t *coeff, uint16_t *coeffSign, uint16_t *coeffFlag, uint8_t *coeffNum, int numSig, const uint16_t* scanCG4x4, const int trSize);
 uint32_t PFX(costCoeffNxN_neon)(const uint16_t *scan, const coeff_t *coeff, intptr_t trSize, uint16_t *absCoeff, const uint8_t *tabSigCtx, uint32_t scanFlagMask, uint8_t *baseCtx, int offset, int scanPosSigOff, int subPosBase);
+
+uint64_t x265_pixel_var_8x8_sve2(const pixel* pix, intptr_t stride);
+uint64_t x265_pixel_var_16x16_sve2(const pixel* pix, intptr_t stride);
+uint64_t x265_pixel_var_32x32_sve2(const pixel* pix, intptr_t stride);
+uint64_t x265_pixel_var_64x64_sve2(const pixel* pix, intptr_t stride);
+
+void x265_getResidual16_sve2(const pixel* fenc, const pixel* pred, int16_t* residual, intptr_t stride);
+void x265_getResidual32_sve2(const pixel* fenc, const pixel* pred, int16_t* residual, intptr_t stride);
+
+void x265_scale1D_128to64_sve2(pixel *dst, const pixel *src);
+void x265_scale2D_64to32_sve2(pixel* dst, const pixel* src, intptr_t stride);
+
+int x265_pixel_satd_4x4_sve(const pixel* pix1, intptr_t stride_pix1, const pixel* pix2, intptr_t stride_pix2);
+int x265_pixel_satd_8x4_sve(const pixel* pix1, intptr_t stride_pix1, const pixel* pix2, intptr_t stride_pix2);
+int x265_pixel_satd_8x12_sve(const pixel* pix1, intptr_t stride_pix1, const pixel* pix2, intptr_t stride_pix2);
+int x265_pixel_satd_32x16_sve(const pixel* pix1, intptr_t stride_pix1, const pixel* pix2, intptr_t stride_pix2);
+int x265_pixel_satd_32x32_sve(const pixel* pix1, intptr_t stride_pix1, const pixel* pix2, intptr_t stride_pix2);
+int x265_pixel_satd_64x48_sve(const pixel* pix1, intptr_t stride_pix1, const pixel* pix2, intptr_t stride_pix2);
+
+uint32_t PFX(quant_sve)(const int16_t* coef, const int32_t* quantCoeff, int32_t* deltaU, int16_t* qCoef, int qBits, int add, int numCoeff);
+
+void x265_dequant_scaling_sve2(const int16_t* quantCoef, const int32_t* deQuantCoef, int16_t* coef, int num, int per, int shift);
+void x265_dequant_normal_sve2(const int16_t* quantCoef, int16_t* coef, int num, int scale, int shift);
+
+void x265_ssim_4x4x2_core_sve2(const pixel* pix1, intptr_t stride1, const pixel* pix2, intptr_t stride2, int sums[2][4]);
+
+int PFX(psyCost_8x8_sve2)(const pixel* source, intptr_t sstride, const pixel* recon, intptr_t rstride);
+void PFX(weight_sp_sve2)(const int16_t* src, pixel* dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset);
+int PFX(scanPosLast_sve2)(const uint16_t *scan, const coeff_t *coeff, uint16_t *coeffSign, uint16_t *coeffFlag, uint8_t *coeffNum, int numSig, const uint16_t* scanCG4x4, const int trSize);

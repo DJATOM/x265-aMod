@@ -245,6 +245,7 @@ void setupIntraPrimitives_neon(EncoderPrimitives &p)
     p.cu[BLOCK_16x16].intra_pred_allangs = all_angs_pred_neon<4>;
     p.cu[BLOCK_32x32].intra_pred_allangs = all_angs_pred_neon<5>;
 }
+
 }
 
 

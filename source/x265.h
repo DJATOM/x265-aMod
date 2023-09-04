@@ -538,6 +538,8 @@ typedef enum
 /* ARM */
 #define X265_CPU_ARMV6           0x0000001
 #define X265_CPU_NEON            0x0000002  /* ARM NEON */
+#define X265_CPU_SVE2            0x0000008  /* ARM SVE2 */
+#define X265_CPU_SVE             0x0000010  /* ARM SVE2 */
 #define X265_CPU_FAST_NEON_MRC   0x0000004  /* Transfer from NEON to ARM register is fast (Cortex-A9) */
 
 /* IBM Power8 */

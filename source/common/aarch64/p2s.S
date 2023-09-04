@@ -22,6 +22,7 @@
  *****************************************************************************/
 
 #include "asm.S"
+#include "p2s-common.S"
 
 #ifdef __APPLE__
 .section __RODATA,__rodata
@@ -32,45 +33,6 @@
 .align 4
 
 .text
-
-#if HIGH_BIT_DEPTH
-# if BIT_DEPTH == 10
-#  define P2S_SHIFT 4
-# elif BIT_DEPTH == 12
-#  define P2S_SHIFT 2
-# endif
-.macro p2s_start
-    add             x3, x3, x3
-    add             x1, x1, x1
-    movi            v31.8h, #0xe0, lsl #8
-.endm
-
-#else // if !HIGH_BIT_DEPTH
-# define P2S_SHIFT 6
-.macro p2s_start
-    add             x3, x3, x3
-    movi            v31.8h, #0xe0, lsl #8
-.endm
-#endif // HIGH_BIT_DEPTH
-
-.macro p2s_2x2
-#if HIGH_BIT_DEPTH
-    ld1             {v0.s}[0], [x0], x1
-    ld1             {v0.s}[1], [x0], x1
-    shl             v3.8h, v0.8h, #P2S_SHIFT
-#else
-    ldrh            w10, [x0]
-    add             x0, x0, x1
-    ldrh            w11, [x0]
-    orr             w10, w10, w11, lsl #16
-    add             x0, x0, x1
-    dup             v0.4s, w10
-    ushll           v3.8h, v0.8b, #P2S_SHIFT
-#endif
-    add             v3.8h, v3.8h, v31.8h
-    st1             {v3.s}[0], [x2], x3
-    st1             {v3.s}[1], [x2], x3
-.endm
 
 // filterPixelToShort(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride)
 .macro p2s_2xN h
@@ -86,34 +48,6 @@ endfunc
 p2s_2xN 4
 p2s_2xN 8
 p2s_2xN 16
-
-.macro p2s_6x2
-#if HIGH_BIT_DEPTH
-    ld1             {v0.d}[0], [x0], #8
-    ld1             {v1.s}[0], [x0], x1
-    ld1             {v0.d}[1], [x0], #8
-    ld1             {v1.s}[1], [x0], x1
-    shl             v3.8h, v0.8h, #P2S_SHIFT
-    shl             v4.8h, v1.8h, #P2S_SHIFT
-#else
-    ldr             s0, [x0]
-    ldrh            w10, [x0, #4]
-    add             x0, x0, x1
-    ld1             {v0.s}[1], [x0]
-    ldrh            w11, [x0, #4]
-    add             x0, x0, x1
-    orr             w10, w10, w11, lsl #16
-    dup             v1.4s, w10
-    ushll           v3.8h, v0.8b, #P2S_SHIFT
-    ushll           v4.8h, v1.8b, #P2S_SHIFT
-#endif
-    add             v3.8h, v3.8h, v31.8h
-    add             v4.8h, v4.8h, v31.8h
-    st1             {v3.d}[0], [x2], #8
-    st1             {v4.s}[0], [x2], x3
-    st1             {v3.d}[1], [x2], #8
-    st1             {v4.s}[1], [x2], x3
-.endm
 
 .macro p2s_6xN h
 function PFX(filterPixelToShort_6x\h\()_neon)

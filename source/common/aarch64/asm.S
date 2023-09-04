@@ -22,6 +22,9 @@
  * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
+#ifndef ASM_S_  // #include guards
+#define ASM_S_
+
 .arch           armv8-a
 
 #define PFX3(prefix, name) prefix ## _ ## name
@@ -63,11 +66,6 @@
 #define FUNC @
 #endif
 #endif
-
-#define GLUE(a, b) a ## b
-#define JOIN(a, b) GLUE(a, b)
-
-#define PFX_C(name)        JOIN(JOIN(JOIN(EXTERN_ASM, X265_NS), _), name)
 
 #ifdef __APPLE__
 .macro endfunc
@@ -135,9 +133,11 @@ ELF     .size   \name, . - \name
         adrp            \rd, \val+(\offset)
         add             \rd, \rd, :lo12:\val+(\offset)
   .endif
-#else
+#elif defined(PIC)
         adrp            \rd, \val+(\offset)
         add             \rd, \rd, :lo12:\val+(\offset)
+#else
+        ldr             \rd, =\val+\offset
 #endif
 .endm
 
@@ -180,3 +180,5 @@ ELF     .size   \name, . - \name
     vtrn            \t1, \t2, \s1, \s2
     vtrn            \t3, \t4, \s3, \s4
 .endm
+
+#endif
