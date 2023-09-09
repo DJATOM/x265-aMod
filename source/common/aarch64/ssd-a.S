@@ -22,6 +22,7 @@
  *****************************************************************************/
 
 #include "asm.S"
+#include "ssd-a-common.S"
 
 #ifdef __APPLE__
 .section __RODATA,__rodata
@@ -32,14 +33,6 @@
 .align 4
 
 .text
-
-.macro ret_v0_w0
-    trn2            v1.2d, v0.2d, v0.2d
-    add             v0.2s, v0.2s, v1.2s
-    addp            v0.2s, v0.2s, v0.2s
-    fmov            w0, s0
-    ret
-.endm
 
 function PFX(pixel_sse_pp_4x4_neon)
     ld1             {v16.s}[0], [x0], x1

@@ -24,6 +24,7 @@
  *****************************************************************************/
 
 #include "asm.S"
+#include "pixel-util-common.S"
 
 #ifdef __APPLE__
 .section __RODATA,__rodata
@@ -55,33 +56,6 @@ function PFX(pixel_var_8x8_neon)
     orr             x0, x0, x1, lsl #32      // return sum + ((uint64_t)sqr << 32);
     ret
 endfunc
-
-.macro pixel_var_start
-    movi            v0.16b, #0
-    movi            v1.16b, #0
-    movi            v2.16b, #0
-    movi            v3.16b, #0
-.endm
-
-.macro pixel_var_1 v
-    uaddw           v0.8h, v0.8h, \v\().8b
-    umull           v30.8h, \v\().8b, \v\().8b
-    uaddw2          v1.8h, v1.8h, \v\().16b
-    umull2          v31.8h, \v\().16b, \v\().16b
-    uadalp          v2.4s, v30.8h
-    uadalp          v3.4s, v31.8h
-.endm
-
-.macro pixel_var_end
-    uaddlv          s0, v0.8h
-    uaddlv          s1, v1.8h
-    add             v2.4s, v2.4s, v3.4s
-    fadd            s0, s0, s1
-    uaddlv          d2, v2.4s
-    fmov            w0, s0
-    fmov            x2, d2
-    orr             x0, x0, x2, lsl #32
-.endm
 
 function PFX(pixel_var_16x16_neon)
     pixel_var_start
@@ -1918,11 +1892,6 @@ function PFX(nquant_neon)
 endfunc
 
 // void ssimDist_c(const pixel* fenc, uint32_t fStride, const pixel* recon, intptr_t rstride, uint64_t *ssBlock, int shift, uint64_t *ac_k)
-.macro ssimDist_start
-    movi            v0.16b, #0
-    movi            v1.16b, #0
-.endm
-
 .macro ssimDist_1  v4 v5
     sub             v20.8h, \v4\().8h, \v5\().8h
     smull           v16.4s, \v4\().4h, \v4\().4h
@@ -1933,13 +1902,6 @@ endfunc
     add             v0.4s, v0.4s, v17.4s
     add             v1.4s, v1.4s, v18.4s
     add             v1.4s, v1.4s, v19.4s
-.endm
-
-.macro ssimDist_end
-    uaddlv          d0, v0.4s
-    uaddlv          d1, v1.4s
-    str             d0, [x6]
-    str             d1, [x4]
 .endm
 
 function PFX(ssimDist4_neon)
@@ -2052,22 +2014,12 @@ endfunc
 
 // void normFact_c(const pixel* src, uint32_t blockSize, int shift, uint64_t *z_k)
 
-.macro normFact_start
-    movi            v0.16b, #0
-.endm
-
 .macro normFact_1  v4
     smull           v16.4s, \v4\().4h, \v4\().4h
     smull2          v17.4s, \v4\().8h, \v4\().8h
     add             v0.4s, v0.4s, v16.4s
     add             v0.4s, v0.4s, v17.4s
 .endm
-
-.macro normFact_end
-    uaddlv          d0, v0.4s
-    str             d0, [x3]
-.endm
-
 
 function PFX(normFact8_neon)
     normFact_start
@@ -2407,7 +2359,7 @@ function PFX(costCoeffNxN_neon)
     // x5 - scanFlagMask
     // x6 - baseCtx
     mov             x0, #0
-    movrel          x1, PFX_C(entropyStateBits)
+    movrel          x1, x265_entropyStateBits
     mov             x4, #0
     mov             x11, #0
     movi            v31.16b, #0

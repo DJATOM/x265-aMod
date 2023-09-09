@@ -126,8 +126,8 @@ static inline uint32_t __rdtsc(void)
         x265_emms(); \
         float optperf = (10.0f * cycles / runs) / 4; \
         float refperf = (10.0f * refcycles / refruns) / 4; \
-        printf("\t%3.2fx ", refperf / optperf); \
-        printf("\t %-8.2lf \t %-8.2lf\n", optperf, refperf); \
+        printf(" | \t%3.2fx | ", refperf / optperf); \
+        printf("\t %-8.2lf | \t %-8.2lf\n", optperf, refperf); \
     }
 
 extern "C" {

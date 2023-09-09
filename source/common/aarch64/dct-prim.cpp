@@ -940,6 +940,7 @@ void setupDCTPrimitives_neon(EncoderPrimitives &p)
     p.scanPosLast  = scanPosLast_opt;
 
 }
+
 };
 
 

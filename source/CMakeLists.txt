@@ -29,7 +29,7 @@ option(NATIVE_BUILD "Target the build CPU" OFF)
 option(STATIC_LINK_CRT "Statically link C runtime for release builds" OFF)
 mark_as_advanced(FPROFILE_USE FPROFILE_GENERATE NATIVE_BUILD)
 # X265_BUILD must be incremented each time the public API is changed
-set(X265_BUILD 207)
+set(X265_BUILD 208)
 configure_file("${PROJECT_SOURCE_DIR}/x265.def.in"
                "${PROJECT_BINARY_DIR}/x265.def")
 configure_file("${PROJECT_SOURCE_DIR}/x265_config.h.in"
@@ -260,11 +260,27 @@ if(GCC)
         endif()
     endif()
 	if(ARM64 OR CROSS_COMPILE_ARM64)
-	    set(ARM_ARGS -fPIC -flax-vector-conversions)
         find_package(Neon)
-        if(CPU_HAS_NEON)
+        find_package(SVE)
+        find_package(SVE2)
+        if(CPU_HAS_SVE2 OR CROSS_COMPILE_SVE2)
+            message(STATUS "Found SVE2")
+	        set(ARM_ARGS -O3 -march=armv8-a+sve2 -fPIC -flax-vector-conversions)
+            add_definitions(-DHAVE_SVE2)
+            add_definitions(-DHAVE_SVE)
+            add_definitions(-DHAVE_NEON) # for NEON c/c++ primitives, as currently there is no implementation that use SVE2
+        elseif(CPU_HAS_SVE OR CROSS_COMPILE_SVE)
+            message(STATUS "Found SVE")
+	        set(ARM_ARGS -O3 -march=armv8-a+sve -fPIC -flax-vector-conversions)
+            add_definitions(-DHAVE_SVE)
+            add_definitions(-DHAVE_NEON) # for NEON c/c++ primitives, as currently there is no implementation that use SVE
+        elseif(CPU_HAS_NEON)
+            message(STATUS "Found NEON")
+            set(ARM_ARGS -fPIC -flax-vector-conversions)
             add_definitions(-DHAVE_NEON)
-        endif()
+        else()
+            set(ARM_ARGS -fPIC -flax-vector-conversions)
+        endif()        
     endif()
 	if(ENABLE_PIC)
 	list(APPEND ARM_ARGS -DPIC)
@@ -394,7 +410,7 @@ if(EXTRA_LIB)
 endif(EXTRA_LIB)
 mark_as_advanced(EXTRA_LIB EXTRA_LINK_FLAGS)
 
-if(X64)
+if(X64 OR ARM64 OR PPC64)
     # NOTE: We only officially support high-bit-depth compiles of x265
     # on 64bit architectures. Main10 plus large resolution plus slow
     # preset plus 32bit address space usually means malloc failure.  You
@@ -403,7 +419,7 @@ if(X64)
     # license" so to speak.  If it breaks you get to keep both halves.
     # You will need to disable assembly manually.
     option(HIGH_BIT_DEPTH "Store pixel samples as 16bit values (Main10/Main12)" OFF)
-endif(X64)
+endif(X64 OR ARM64 OR PPC64)
 if(HIGH_BIT_DEPTH)
     option(MAIN12 "Support Main12 instead of Main10" OFF)
     if(MAIN12)
@@ -580,6 +596,39 @@ if((MSVC_IDE OR XCODE OR GCC) AND ENABLE_ASSEMBLY)
                 ARGS ${ARM_ARGS} ${ASM_FLAGS} -c ${ASM_SRC} -o ${ASM}.${SUFFIX}
                 DEPENDS ${ASM_SRC})
         endforeach()
+        if(CPU_HAS_SVE2 OR CROSS_COMPILE_SVE2)
+            foreach(ASM ${ARM_ASMS_SVE})
+                set(ASM_SRC ${CMAKE_CURRENT_SOURCE_DIR}/common/aarch64/${ASM})
+                list(APPEND ASM_SRCS ${ASM_SRC})
+                list(APPEND ASM_OBJS ${ASM}.${SUFFIX})
+                add_custom_command(
+                    OUTPUT ${ASM}.${SUFFIX}
+                    COMMAND ${CMAKE_CXX_COMPILER}
+                    ARGS ${ARM_ARGS} ${ASM_FLAGS} -c ${ASM_SRC} -o ${ASM}.${SUFFIX}
+                    DEPENDS ${ASM_SRC})
+            endforeach()
+            foreach(ASM ${ARM_ASMS_SVE2})
+                set(ASM_SRC ${CMAKE_CURRENT_SOURCE_DIR}/common/aarch64/${ASM})
+                list(APPEND ASM_SRCS ${ASM_SRC})
+                list(APPEND ASM_OBJS ${ASM}.${SUFFIX})
+                add_custom_command(
+                    OUTPUT ${ASM}.${SUFFIX}
+                    COMMAND ${CMAKE_CXX_COMPILER}
+                    ARGS ${ARM_ARGS} ${ASM_FLAGS} -c ${ASM_SRC} -o ${ASM}.${SUFFIX}
+                    DEPENDS ${ASM_SRC})
+            endforeach()
+        elseif(CPU_HAS_SVE OR CROSS_COMPILE_SVE)
+            foreach(ASM ${ARM_ASMS_SVE})
+                set(ASM_SRC ${CMAKE_CURRENT_SOURCE_DIR}/common/aarch64/${ASM})
+                list(APPEND ASM_SRCS ${ASM_SRC})
+                list(APPEND ASM_OBJS ${ASM}.${SUFFIX})
+                add_custom_command(
+                    OUTPUT ${ASM}.${SUFFIX}
+                    COMMAND ${CMAKE_CXX_COMPILER}
+                    ARGS ${ARM_ARGS} ${ASM_FLAGS} -c ${ASM_SRC} -o ${ASM}.${SUFFIX}
+                    DEPENDS ${ASM_SRC})
+            endforeach()
+        endif()
     elseif(X86)
     # compile X86 arch asm files here
         foreach(ASM ${MSVC_ASMS})
