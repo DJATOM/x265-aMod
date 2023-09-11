@@ -67,6 +67,11 @@
 #endif
 #endif
 
+#define GLUE(a, b) a ## b
+#define JOIN(a, b) GLUE(a, b)
+
+#define PFX_C(name)        JOIN(JOIN(JOIN(EXTERN_ASM, X265_NS), _), name)
+
 #ifdef __APPLE__
 .macro endfunc
 ELF .size \name, . - \name
@@ -133,11 +138,9 @@ ELF     .size   \name, . - \name
         adrp            \rd, \val+(\offset)
         add             \rd, \rd, :lo12:\val+(\offset)
   .endif
-#elif defined(PIC)
+#else
         adrp            \rd, \val+(\offset)
         add             \rd, \rd, :lo12:\val+(\offset)
-#else
-        ldr             \rd, =\val+\offset
 #endif
 .endm
 
