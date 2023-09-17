@@ -27,7 +27,7 @@
 #include <assert.h>
 #include <math.h>
 #include <cmath>
-#include <linux/types.h>
+#include <sys/types.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
