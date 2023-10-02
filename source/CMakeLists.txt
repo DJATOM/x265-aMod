@@ -88,6 +88,7 @@ elseif(ARM64MATCH GREATER "-1")
     # Options for cross compiling AArch64 optional extensions
     option(CROSS_COMPILE_SVE "Cross Compile for SVE Target" OFF)
     option(CROSS_COMPILE_SVE2 "Cross Compile for SVE2 Target" OFF)
+    option(CROSS_COMPILE_NEON_DOTPROD "Cross Compile for Neon DotProd Target" OFF)
 else()
     message(STATUS "CMAKE_SYSTEM_PROCESSOR value `${CMAKE_SYSTEM_PROCESSOR}` is unknown")
     message(STATUS "Please add this value near ${CMAKE_CURRENT_LIST_FILE}:${CMAKE_CURRENT_LIST_LINE}")
@@ -265,25 +266,42 @@ if(GCC)
         add_definitions(-DX265_ARCH_ARM64=1 -DHAVE_NEON=1)
 
         # Handle cross-compilation options.
+        if(CROSS_COMPILE_NEON_DOTPROD)
+            set(CPU_HAS_NEON_DOTPROD 1)
+        endif()
         if(CROSS_COMPILE_SVE)
             set(CPU_HAS_SVE 1)
+            # We impose the constraint that SVE implies Neon DotProd.
+            set(CPU_HAS_NEON_DOTPROD 1)
         endif()
         if(CROSS_COMPILE_SVE2)
             set(CPU_HAS_SVE2 1)
-            # SVE2 implies SVE.
+            # SVE2 implies SVE and Neon DotProd.
             set(CPU_HAS_SVE 1)
+            set(CPU_HAS_NEON_DOTPROD 1)
         endif()
 
+        find_package(NEON_DOTPROD)
         find_package(SVE)
         find_package(SVE2)
+        if(CPU_HAS_NEON_DOTPROD)
+            # Neon DotProd is mandatory from Armv8.4.
+            message(STATUS "Found Neon DotProd")
+            set(ARM_ARGS -O3 -march=armv8.2-a+dotprod)
+            add_definitions(-DHAVE_NEON_DOTPROD=1)
+        endif()
         if(CPU_HAS_SVE)
             message(STATUS "Found SVE")
-            set(ARM_ARGS -O3 -march=armv8.2-a+sve)
+            # We impose the constraint that SVE implies Neon DotProd.
+            if(NOT CPU_HAS_NEON_DOTPROD)
+                message(FATAL_ERROR "Unsupported AArch64 feature combination (SVE without Neon DotProd)")
+            endif()
+            set(ARM_ARGS -O3 -march=armv8.2-a+dotprod+sve)
             add_definitions(-DHAVE_SVE=1)
         endif()
         if(CPU_HAS_SVE2)
             message(STATUS "Found SVE2")
-            # SVE2 is only available from Armv9.0-A.
+            # SVE2 is only available from Armv9.0, and armv9-a implies +dotprod
             set(ARM_ARGS -O3 -march=armv9-a+sve2)
             add_definitions(-DHAVE_SVE2=1)
         endif()

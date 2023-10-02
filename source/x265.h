@@ -544,11 +544,12 @@ typedef enum
 #define X265_CPU_SLOW_PALIGNR    (1 << 25)  /* such as on the AMD Bobcat */
 
 /* ARM */
-#define X265_CPU_ARMV6           0x0000001
-#define X265_CPU_NEON            0x0000002  /* ARM NEON */
-#define X265_CPU_SVE2            0x0000008  /* ARM SVE2 */
-#define X265_CPU_SVE             0x0000010  /* ARM SVE2 */
-#define X265_CPU_FAST_NEON_MRC   0x0000004  /* Transfer from NEON to ARM register is fast (Cortex-A9) */
+#define X265_CPU_ARMV6           (1 << 0)
+#define X265_CPU_NEON            (1 << 1)   /* ARM NEON */
+#define X265_CPU_FAST_NEON_MRC   (1 << 2)   /* Transfer from NEON to ARM register is fast (Cortex-A9) */
+#define X265_CPU_SVE2            (1 << 3)   /* AArch64 SVE2 */
+#define X265_CPU_SVE             (1 << 4)   /* AArch64 SVE2 */
+#define X265_CPU_NEON_DOTPROD    (1 << 5)   /* AArch64 Neon DotProd */
 
 /* IBM Power8 */
 #define X265_CPU_ALTIVEC         0x0000001

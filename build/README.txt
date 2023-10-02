@@ -113,4 +113,12 @@ For example, when running CMake to configure the project:
 1. cmake -DCROSS_COMPILE_SVE=ON  <other configuration options...>
 2. cmake -DCROSS_COMPILE_SVE2=ON <other configuration options...>
 
+Note: when the CROSS_COMPILE_SVE option is set to ON the build configuration will
+compile for Neon DotProd, as we impose the constraint that SVE implies Neon DotProd.
+
+If target platform supports Armv8.4 Neon DotProd instructions, the
+CROSS_COMPILE_NEON_DOTPROD CMake option should be set to ON:
+
+* cmake -DCROSS_COMPILE_NEON_DOTPROD=ON  <other configuration options...>
+
 Then, the normal build process can be followed.

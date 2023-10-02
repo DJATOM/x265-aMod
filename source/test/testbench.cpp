@@ -159,7 +159,7 @@ int main(int argc, char *argv[])
 
     struct test_arch_t
     {
-        char name[12];
+        char name[13];
         int flag;
     } test_arch[] =
     {
@@ -176,6 +176,7 @@ int main(int argc, char *argv[])
         { "NEON", X265_CPU_NEON },
         { "SVE2", X265_CPU_SVE2 },
         { "SVE", X265_CPU_SVE },
+        { "Neon_DotProd", X265_CPU_NEON_DOTPROD },
         { "FastNeonMRC", X265_CPU_FAST_NEON_MRC },
         { "", 0 },
     };
