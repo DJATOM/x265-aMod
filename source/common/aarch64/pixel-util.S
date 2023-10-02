@@ -2311,7 +2311,7 @@ endfunc
 //    uint8_t *baseCtx,      // x6
 //    int offset,            // x7
 //    int scanPosSigOff,     // sp
-//    int subPosBase)        // sp + 8
+//    int subPosBase)        // sp + 8, or sp + 4 on APPLE
 function PFX(costCoeffNxN_neon)
     // abs(coeff)
     add             x2, x2, x2
@@ -2410,7 +2410,7 @@ function PFX(costCoeffNxN_neon)
     add             x4, x4, x15
     str             h2, [x13]              // absCoeff[numNonZero] = tmpCoeff[blkPos]
 
-    ldr             x9, [sp, #8]           // subPosBase
+    ldr             x9, [sp, #STACK_ARG_OFFSET(1)]           // subPosBase
     uxth            w9, w9
     cmp             w9, #0
     cset            x2, eq

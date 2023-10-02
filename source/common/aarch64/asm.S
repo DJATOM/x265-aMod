@@ -72,6 +72,16 @@
 
 #define PFX_C(name)        JOIN(JOIN(JOIN(EXTERN_ASM, X265_NS), _), name)
 
+// Alignment of stack arguments of size less than 8 bytes.
+#ifdef __APPLE__
+#define STACK_ARG_ALIGNMENT 4
+#else
+#define STACK_ARG_ALIGNMENT 8
+#endif
+
+// Get offset from SP of stack argument at index `idx`.
+#define STACK_ARG_OFFSET(idx) (idx * STACK_ARG_ALIGNMENT)
+
 #ifdef __APPLE__
 .macro endfunc
 ELF .size \name, . - \name
