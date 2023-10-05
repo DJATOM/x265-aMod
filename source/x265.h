@@ -623,6 +623,8 @@ typedef enum
 #define X265_MAX_GOP_LENGTH 16
 #define MAX_T_LAYERS 7
 
+#define X265_IPRATIO_STRENGTH   1.43
+
 typedef struct x265_cli_csp
 {
     int planes;
