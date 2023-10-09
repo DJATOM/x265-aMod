@@ -106,11 +106,11 @@ running CMake to configure the project. For example:
 
 * cmake -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++
 
-Moreover, if the target platform supports SVE or SVE2 instruction set, the
-CROSS_COMPILE_SVE or CROSS_COMPILE_SVE2 environment variables should be set
-to true, respectively. For example:
+Moreover, if the target platform supports SVE or SVE2, CROSS_COMPILE_SVE or
+CROSS_COMPILE_SVE2 CMake options should be set to ON, respectively.
+For example, when running CMake to configure the project:
 
-1. export CROSS_COMPILE_SVE2=true
-2. export CROSS_COMPILE_SVE=true
+1. cmake -DCROSS_COMPILE_SVE=ON  <other configuration options...>
+2. cmake -DCROSS_COMPILE_SVE2=ON <other configuration options...>
 
-Then, the normal building process can be followed.
+Then, the normal build process can be followed.

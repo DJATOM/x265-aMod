@@ -18,10 +18,3 @@ endif()
 # specify the target environment
 SET(CMAKE_FIND_ROOT_PATH  /opt/homebrew/bin/)
 
-# specify whether SVE/SVE2 is supported by the target platform
-if(DEFINED ENV{CROSS_COMPILE_SVE2})
-    set(CROSS_COMPILE_SVE2 1)
-elseif(DEFINED ENV{CROSS_COMPILE_SVE})
-    set(CROSS_COMPILE_SVE 1)
-endif()
-

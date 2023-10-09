@@ -88,6 +88,10 @@ elseif(ARM64MATCH GREATER "-1")
     message(STATUS "Detected ARM64 target processor")
     set(ARM64 1)
     add_definitions(-DX265_ARCH_ARM64=1 -DHAVE_NEON)
+
+    # Options for cross compiling AArch64 optional extensions
+    option(CROSS_COMPILE_SVE "Cross Compile for SVE Target" OFF)
+    option(CROSS_COMPILE_SVE2 "Cross Compile for SVE2 Target" OFF)
 else()
     message(STATUS "CMAKE_SYSTEM_PROCESSOR value `${CMAKE_SYSTEM_PROCESSOR}` is unknown")
     message(STATUS "Please add this value near ${CMAKE_CURRENT_LIST_FILE}:${CMAKE_CURRENT_LIST_LINE}")
