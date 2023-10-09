@@ -7,9 +7,13 @@ set(CROSS_COMPILE_ARM64 1)
 set(CMAKE_SYSTEM_NAME Darwin)
 set(CMAKE_SYSTEM_PROCESSOR aarch64)
 
-# specify the cross compiler
-set(CMAKE_C_COMPILER gcc-12)
-set(CMAKE_CXX_COMPILER g++-12)
+# specify the cross compiler (giving precedence to user-supplied CC/CXX)
+if(NOT DEFINED CMAKE_C_COMPILER)
+    set(CMAKE_C_COMPILER gcc)
+endif()
+if(NOT DEFINED CMAKE_CXX_COMPILER)
+    set(CMAKE_CXX_COMPILER g++)
+endif()
 
 # specify the target environment
 SET(CMAKE_FIND_ROOT_PATH  /opt/homebrew/bin/)

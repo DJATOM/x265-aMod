@@ -7,15 +7,11 @@ set(CROSS_COMPILE_ARM64 1)
 set(CMAKE_SYSTEM_NAME Linux)
 set(CMAKE_SYSTEM_PROCESSOR aarch64)
 
-# specify the cross compiler
-if(DEFINED ENV{CMAKE_C_COMPILER})
-    set(CMAKE_C_COMPILER $ENV{CMAKE_C_COMPILER})
-else()
+# specify the cross compiler (giving precedence to user-supplied CC/CXX)
+if(NOT DEFINED CMAKE_C_COMPILER)
     set(CMAKE_C_COMPILER aarch64-linux-gnu-gcc)
 endif()
-if(DEFINED ENV{CMAKE_CXX_COMPILER})
-    set(CMAKE_CXX_COMPILER $ENV{CMAKE_CXX_COMPILER})
-else()
+if(NOT DEFINED CMAKE_CXX_COMPILER)
     set(CMAKE_CXX_COMPILER aarch64-linux-gnu-g++)
 endif()
 
