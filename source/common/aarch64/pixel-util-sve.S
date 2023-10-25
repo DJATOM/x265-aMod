@@ -333,7 +333,7 @@ function PFX(quant_sve)
     eor             w10, w10, w10
     eor             z17.d, z17.d, z17.d
 
-.loop_quant_sve:
+.Loop_quant_sve:
     ld1             {v18.4h}, [x0], #8
     ld1             {v7.4s}, [x1], #16
     sxtl            v6.4s, v18.4h
@@ -364,7 +364,7 @@ function PFX(quant_sve)
     st1             {v5.4h}, [x3], #8
 
     subs            w6, w6, #1
-    b.ne             .loop_quant_sve
+    b.ne             .Loop_quant_sve
 
     addv            s4, v4.4s
     mov             w9, v4.s[0]

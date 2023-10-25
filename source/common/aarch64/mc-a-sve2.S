@@ -219,7 +219,7 @@ function PFX(pixel_avg_pp_48x64_sve2)
     mov             x11, #0
     whilelt         p0.b, x11, x10
     mov             w12, #8
-.loop_gt_32_pixel_avg_pp_48x64:
+.Loop_gt_32_pixel_avg_pp_48x64:
     sub             w12, w12, #1
 .rept 8
     ld1b            {z0.b}, p0/z, [x2]
@@ -230,7 +230,7 @@ function PFX(pixel_avg_pp_48x64_sve2)
     st1b            {z0.b}, p0, [x0]
     add             x0, x0, x1
 .endr
-    cbnz            w12, .loop_gt_32_pixel_avg_pp_48x64
+    cbnz            w12, .Loop_gt_32_pixel_avg_pp_48x64
     ret
 endfunc
 
@@ -339,7 +339,7 @@ function PFX(addAvg_6x\h\()_sve2)
     mov             w12, #\h / 2
     ptrue           p0.b, vl16
     ptrue           p2.h, vl6
-.loop_sve2_addavg_6x\h\():
+.Loop_sve2_addavg_6x\h\():
     sub             w12, w12, #1
     ld1b            {z0.b}, p0/z, [x0]
     ld1b            {z1.b}, p0/z, [x1]
@@ -359,7 +359,7 @@ function PFX(addAvg_6x\h\()_sve2)
     add             x2, x2, x5
     st1b            {z2.h}, p2, [x2]
     add             x2, x2, x5
-    cbnz            w12, .loop_sve2_addavg_6x\h
+    cbnz            w12, .Loop_sve2_addavg_6x\h
     ret
 endfunc
 .endm
@@ -398,7 +398,7 @@ endfunc
 function PFX(addAvg_8x\h\()_sve2)
     mov             w12, #\h / 2
     ptrue           p0.b, vl16
-.loop_sve2_addavg_8x\h\():
+.Loop_sve2_addavg_8x\h\():
     sub             w12, w12, #1
     ld1b            {z0.b}, p0/z, [x0]
     ld1b            {z1.b}, p0/z, [x1]
@@ -418,7 +418,7 @@ function PFX(addAvg_8x\h\()_sve2)
     add             x2, x2, x5
     st1b            {z2.h}, p0, [x2]
     add             x2, x2, x5
-    cbnz            w12, .loop_sve2_addavg_8x\h
+    cbnz            w12, .Loop_sve2_addavg_8x\h
     ret
 endfunc
 .endm
@@ -440,7 +440,7 @@ function PFX(addAvg_12x\h\()_sve2)
     bgt             .vl_gt_16_addAvg_12x\h
     ptrue           p0.b, vl16
     ptrue           p1.b, vl8
-.loop_sve2_addavg_12x\h\():
+.Loop_sve2_addavg_12x\h\():
     sub             w12, w12, #1
     ld1b            {z0.b}, p0/z, [x0]
     ld1b            {z1.b}, p0/z, [x1]
@@ -457,13 +457,13 @@ function PFX(addAvg_12x\h\()_sve2)
     st1b            {z0.h}, p0, [x2]
     st1b            {z2.h}, p1, [x2, #1, mul vl]
     add             x2, x2, x5
-    cbnz            w12, .loop_sve2_addavg_12x\h
+    cbnz            w12, .Loop_sve2_addavg_12x\h
     ret
 .vl_gt_16_addAvg_12x\h\():
     mov             x10, #24
     mov             x11, #0
     whilelt         p0.b, x11, x10
-.loop_sve2_gt_16_addavg_12x\h\():
+.Loop_sve2_gt_16_addavg_12x\h\():
     sub             w12, w12, #1
     ld1b            {z0.b}, p0/z, [x0]
     ld1b            {z1.b}, p0/z, [x1]
@@ -476,7 +476,7 @@ function PFX(addAvg_12x\h\()_sve2)
     add             z2.b, z2.b, #0x80
     st1b            {z0.h}, p0, [x2]
     add             x2, x2, x5
-    cbnz            w12, .loop_sve2_gt_16_addavg_12x\h
+    cbnz            w12, .Loop_sve2_gt_16_addavg_12x\h
     ret
 endfunc
 .endm
@@ -491,7 +491,7 @@ function PFX(addAvg_16x\h\()_sve2)
     cmp             x9, #16
     bgt             .vl_gt_16_addAvg_16x\h
     ptrue           p0.b, vl16
-.loop_eq_16_sve2_addavg_16x\h\():
+.Loop_eq_16_sve2_addavg_16x\h\():
     sub             w12, w12, #1
     ld1b            {z0.b}, p0/z, [x0]
     ld1b            {z1.b}, p0/z, [x1]
@@ -508,13 +508,13 @@ function PFX(addAvg_16x\h\()_sve2)
     st1b            {z0.h}, p0, [x2]
     st1b            {z2.h}, p0, [x2, #1, mul vl]
     add             x2, x2, x5
-    cbnz            w12, .loop_eq_16_sve2_addavg_16x\h
+    cbnz            w12, .Loop_eq_16_sve2_addavg_16x\h
     ret
 .vl_gt_16_addAvg_16x\h\():
     cmp             x9, #32
     bgt             .vl_gt_32_addAvg_16x\h
     ptrue           p0.b, vl32
-.loop_gt_16_sve2_addavg_16x\h\():
+.Loop_gt_16_sve2_addavg_16x\h\():
     sub             w12, w12, #1
     ld1b            {z0.b}, p0/z, [x0]
     ld1b            {z1.b}, p0/z, [x1]
@@ -525,13 +525,13 @@ function PFX(addAvg_16x\h\()_sve2)
     add             z0.b, z0.b, #0x80
     st1b            {z0.h}, p1, [x2]
     add             x2, x2, x5
-    cbnz            w12, .loop_gt_16_sve2_addavg_16x\h
+    cbnz            w12, .Loop_gt_16_sve2_addavg_16x\h
     ret
 .vl_gt_32_addAvg_16x\h\():
     mov             x10, #48
     mov             x11, #0
     whilelt         p0.b, x11, x10
-.loop_gt_32_sve2_addavg_16x\h\():
+.Loop_gt_32_sve2_addavg_16x\h\():
     sub             w12, w12, #1
     ld1b            {z0.b}, p0/z, [x0]
     add             x0, x0, x3, lsl #1
@@ -541,7 +541,7 @@ function PFX(addAvg_16x\h\()_sve2)
     add             z0.b, z0.b, #0x80
     st1b            {z0.h}, p0, [x2]
     add             x2, x2, x5
-    cbnz            w12, .loop_gt_32_sve2_addavg_16x\h
+    cbnz            w12, .Loop_gt_32_sve2_addavg_16x\h
     ret
 endfunc
 .endm
@@ -561,7 +561,7 @@ function PFX(addAvg_24x\h\()_sve2)
     cmp             x9, #16
     bgt             .vl_gt_16_addAvg_24x\h
     addAvg_start
-.loop_eq_16_sve2_addavg_24x\h\():
+.Loop_eq_16_sve2_addavg_24x\h\():
     sub             w12, w12, #1
     ld1             {v0.16b-v2.16b}, [x0], x3
     ld1             {v3.16b-v5.16b}, [x1], x4
@@ -572,14 +572,14 @@ function PFX(addAvg_24x\h\()_sve2)
     sqxtun          v1.8b, v1.8h
     sqxtun          v2.8b, v2.8h
     st1             {v0.8b-v2.8b}, [x2], x5
-    cbnz            w12, .loop_eq_16_sve2_addavg_24x\h
+    cbnz            w12, .Loop_eq_16_sve2_addavg_24x\h
     ret
 .vl_gt_16_addAvg_24x\h\():
     cmp             x9, #48
     bgt             .vl_gt_48_addAvg_24x\h
     ptrue           p0.b, vl32
     ptrue           p1.b, vl16
-.loop_gt_16_sve2_addavg_24x\h\():
+.Loop_gt_16_sve2_addavg_24x\h\():
     sub             w12, w12, #1
     ld1b            {z0.b}, p0/z, [x0]
     ld1b            {z1.b}, p1/z, [x0, #1, mul vl]
@@ -596,13 +596,13 @@ function PFX(addAvg_24x\h\()_sve2)
     st1b            {z0.h}, p0, [x2]
     st1b            {z1.h}, p1, [x2, #1, mul vl]
     add             x2, x2, x5
-    cbnz            w12, .loop_gt_16_sve2_addavg_24x\h
+    cbnz            w12, .Loop_gt_16_sve2_addavg_24x\h
     ret
 .vl_gt_48_addAvg_24x\h\():
     mov             x10, #48
     mov             x11, #0
     whilelt         p0.b, x11, x10
-.loop_gt_48_sve2_addavg_24x\h\():
+.Loop_gt_48_sve2_addavg_24x\h\():
     sub             w12, w12, #1
     ld1b            {z0.b}, p0/z, [x0]
     ld1b            {z2.b}, p0/z, [x1]
@@ -613,7 +613,7 @@ function PFX(addAvg_24x\h\()_sve2)
     add             z0.b, z0.b, #0x80
     st1b            {z0.h}, p0, [x2]
     add             x2, x2, x5
-    cbnz            w12, .loop_gt_48_sve2_addavg_24x\h
+    cbnz            w12, .Loop_gt_48_sve2_addavg_24x\h
     ret
 endfunc
 .endm
@@ -628,7 +628,7 @@ function PFX(addAvg_32x\h\()_sve2)
     cmp             x9, #16
     bgt             .vl_gt_16_addAvg_32x\h
     ptrue           p0.b, vl16
-.loop_eq_16_sve2_addavg_32x\h\():
+.Loop_eq_16_sve2_addavg_32x\h\():
     sub             w12, w12, #1
     ld1b            {z0.b}, p0/z, [x0]
     ld1b            {z1.b}, p0/z, [x0, #1, mul vl]
@@ -657,13 +657,13 @@ function PFX(addAvg_32x\h\()_sve2)
     st1b            {z2.h}, p0, [x2, #2, mul vl]
     st1b            {z3.h}, p0, [x2, #3, mul vl]
     add             x2, x2, x5
-    cbnz            w12, .loop_eq_16_sve2_addavg_32x\h
+    cbnz            w12, .Loop_eq_16_sve2_addavg_32x\h
     ret
 .vl_gt_16_addAvg_32x\h\():
     cmp             x9, #48
     bgt             .vl_gt_48_addAvg_32x\h
     ptrue           p0.b, vl32
-.loop_gt_eq_32_sve2_addavg_32x\h\():
+.Loop_gt_eq_32_sve2_addavg_32x\h\():
     sub             w12, w12, #1
     ld1b            {z0.b}, p0/z, [x0]
     ld1b            {z1.b}, p0/z, [x0, #1, mul vl]
@@ -680,11 +680,11 @@ function PFX(addAvg_32x\h\()_sve2)
     st1b            {z0.h}, p0, [x2]
     st1b            {z1.h}, p0, [x2, #1, mul vl]
     add             x2, x2, x5
-    cbnz            w12, .loop_gt_eq_32_sve2_addavg_32x\h
+    cbnz            w12, .Loop_gt_eq_32_sve2_addavg_32x\h
     ret
 .vl_gt_48_addAvg_32x\h\():
     ptrue           p0.b, vl64
-.loop_eq_64_sve2_addavg_32x\h\():
+.Loop_eq_64_sve2_addavg_32x\h\():
     sub             w12, w12, #1
     ld1b            {z0.b}, p0/z, [x0]
     ld1b            {z1.b}, p0/z, [x1]
@@ -695,7 +695,7 @@ function PFX(addAvg_32x\h\()_sve2)
     add             z0.b, z0.b, #0x80
     st1b            {z0.h}, p0, [x2]
     add             x2, x2, x5
-    cbnz            w12, .loop_eq_64_sve2_addavg_32x\h
+    cbnz            w12, .Loop_eq_64_sve2_addavg_32x\h
     ret
 endfunc
 .endm
@@ -715,7 +715,7 @@ function PFX(addAvg_48x64_sve2)
     addAvg_start
     sub             x3, x3, #64
     sub             x4, x4, #64
-.loop_eq_16_sve2_addavg_48x64:
+.Loop_eq_16_sve2_addavg_48x64:
     sub             w12, w12, #1
     ld1             {v0.8h-v3.8h}, [x0], #64
     ld1             {v4.8h-v7.8h}, [x1], #64
@@ -734,13 +734,13 @@ function PFX(addAvg_48x64_sve2)
     sqxtun          v2.8b, v20.8h
     sqxtun2         v2.16b, v21.8h
     st1             {v0.16b-v2.16b}, [x2], x5
-    cbnz            w12, .loop_eq_16_sve2_addavg_48x64
+    cbnz            w12, .Loop_eq_16_sve2_addavg_48x64
     ret
 .vl_gt_16_addAvg_48x64:
     cmp             x9, #48
     bgt             .vl_gt_48_addAvg_48x64
     ptrue           p0.b, vl32
-.loop_gt_eq_32_sve2_addavg_48x64:
+.Loop_gt_eq_32_sve2_addavg_48x64:
     sub             w12, w12, #1
     ld1b            {z0.b}, p0/z, [x0]
     ld1b            {z1.b}, p0/z, [x0, #1, mul vl]
@@ -763,14 +763,14 @@ function PFX(addAvg_48x64_sve2)
     st1b            {z1.h}, p0, [x2, #1, mul vl]
     st1b            {z2.h}, p0, [x2, #2, mul vl]
     add             x2, x2, x5
-    cbnz            w12, .loop_gt_eq_32_sve2_addavg_48x64
+    cbnz            w12, .Loop_gt_eq_32_sve2_addavg_48x64
     ret
 .vl_gt_48_addAvg_48x64:
     cmp             x9, #112
     bgt             .vl_gt_112_addAvg_48x64
     ptrue           p0.b, vl64
     ptrue           p1.b, vl32
-.loop_gt_48_sve2_addavg_48x64:
+.Loop_gt_48_sve2_addavg_48x64:
     sub             w12, w12, #1
     ld1b            {z0.b}, p0/z, [x0]
     ld1b            {z1.b}, p1/z, [x0, #1, mul vl]
@@ -787,13 +787,13 @@ function PFX(addAvg_48x64_sve2)
     st1b            {z0.h}, p0, [x2]
     st1b            {z1.h}, p1, [x2, #1, mul vl]
     add             x2, x2, x5
-    cbnz            w12, .loop_gt_48_sve2_addavg_48x64
+    cbnz            w12, .Loop_gt_48_sve2_addavg_48x64
     ret
 .vl_gt_112_addAvg_48x64:
     mov             x10, #96
     mov             x11, #0
     whilelt         p0.b, x11, x10
-.loop_gt_112_sve2_addavg_48x64:
+.Loop_gt_112_sve2_addavg_48x64:
     sub             w12, w12, #1
     ld1b            {z0.b}, p0/z, [x0]
     ld1b            {z4.b}, p0/z, [x1]
@@ -804,7 +804,7 @@ function PFX(addAvg_48x64_sve2)
     add             z0.b, z0.b, #0x80
     st1b            {z0.h}, p0, [x2]
     add             x2, x2, x5
-    cbnz            w12, .loop_gt_112_sve2_addavg_48x64
+    cbnz            w12, .Loop_gt_112_sve2_addavg_48x64
     ret
 endfunc
 
@@ -817,7 +817,7 @@ function PFX(addAvg_64x\h\()_sve2)
     addAvg_start
     sub             x3, x3, #64
     sub             x4, x4, #64
-.loop_eq_16_sve2_addavg_64x\h\():
+.Loop_eq_16_sve2_addavg_64x\h\():
     sub             w12, w12, #1
     ld1             {v0.8h-v3.8h}, [x0], #64
     ld1             {v4.8h-v7.8h}, [x1], #64
@@ -840,13 +840,13 @@ function PFX(addAvg_64x\h\()_sve2)
     sqxtun          v3.8b, v22.8h
     sqxtun2         v3.16b, v23.8h
     st1             {v0.16b-v3.16b}, [x2], x5
-    cbnz            w12, .loop_eq_16_sve2_addavg_64x\h
+    cbnz            w12, .Loop_eq_16_sve2_addavg_64x\h
     ret
 .vl_gt_16_addAvg_64x\h\():
     cmp             x9, #48
     bgt             .vl_gt_48_addAvg_64x\h
     ptrue           p0.b, vl32
-.loop_gt_eq_32_sve2_addavg_64x\h\():
+.Loop_gt_eq_32_sve2_addavg_64x\h\():
     sub             w12, w12, #1
     ld1b            {z0.b}, p0/z, [x0]
     ld1b            {z1.b}, p0/z, [x0, #1, mul vl]
@@ -875,13 +875,13 @@ function PFX(addAvg_64x\h\()_sve2)
     st1b            {z2.h}, p0, [x2, #2, mul vl]
     st1b            {z3.h}, p0, [x2, #3, mul vl]
     add             x2, x2, x5
-    cbnz            w12, .loop_gt_eq_32_sve2_addavg_64x\h
+    cbnz            w12, .Loop_gt_eq_32_sve2_addavg_64x\h
     ret
 .vl_gt_48_addAvg_64x\h\():
     cmp             x9, #112
     bgt             .vl_gt_112_addAvg_64x\h
     ptrue           p0.b, vl64
-.loop_gt_eq_48_sve2_addavg_64x\h\():
+.Loop_gt_eq_48_sve2_addavg_64x\h\():
     sub             w12, w12, #1
     ld1b            {z0.b}, p0/z, [x0]
     ld1b            {z1.b}, p0/z, [x0, #1, mul vl]
@@ -898,11 +898,11 @@ function PFX(addAvg_64x\h\()_sve2)
     st1b            {z0.h}, p0, [x2]
     st1b            {z1.h}, p0, [x2, #1, mul vl]
     add             x2, x2, x5
-    cbnz            w12, .loop_gt_eq_48_sve2_addavg_64x\h
+    cbnz            w12, .Loop_gt_eq_48_sve2_addavg_64x\h
     ret
 .vl_gt_112_addAvg_64x\h\():
     ptrue           p0.b, vl128
-.loop_gt_eq_128_sve2_addavg_64x\h\():
+.Loop_gt_eq_128_sve2_addavg_64x\h\():
     sub             w12, w12, #1
     ld1b            {z0.b}, p0/z, [x0]
     ld1b            {z4.b}, p0/z, [x1]
@@ -913,7 +913,7 @@ function PFX(addAvg_64x\h\()_sve2)
     add             z0.b, z0.b, #0x80
     st1b            {z0.h}, p0, [x2]
     add             x2, x2, x5
-    cbnz            w12, .loop_gt_eq_128_sve2_addavg_64x\h
+    cbnz            w12, .Loop_gt_eq_128_sve2_addavg_64x\h
     ret
 endfunc
 .endm

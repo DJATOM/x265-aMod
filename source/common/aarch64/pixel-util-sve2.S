@@ -64,11 +64,11 @@ function PFX(pixel_var_16x16_sve2)
     bgt             .vl_gt_16_pixel_var_16x16
     pixel_var_start
     mov             w12, #16
-.loop_var_16_sve2:
+.Loop_var_16_sve2:
     sub             w12, w12, #1
     ld1             {v4.16b}, [x0], x1
     pixel_var_1 v4
-    cbnz            w12, .loop_var_16_sve2
+    cbnz            w12, .Loop_var_16_sve2
     pixel_var_end
     ret
 .vl_gt_16_pixel_var_16x16:
@@ -95,12 +95,12 @@ function PFX(pixel_var_32x32_sve2)
     bgt             .vl_gt_16_pixel_var_32x32
     pixel_var_start
     mov             w12, #32
-.loop_var_32_sve2:
+.Loop_var_32_sve2:
     sub             w12, w12, #1
     ld1             {v4.16b-v5.16b}, [x0], x1
     pixel_var_1 v4
     pixel_var_1 v5
-    cbnz            w12, .loop_var_32_sve2
+    cbnz            w12, .Loop_var_32_sve2
     pixel_var_end
     ret
 .vl_gt_16_pixel_var_32x32:
@@ -150,14 +150,14 @@ function PFX(pixel_var_64x64_sve2)
     bgt             .vl_gt_16_pixel_var_64x64
     pixel_var_start
     mov             w12, #64
-.loop_var_64_sve2:
+.Loop_var_64_sve2:
     sub             w12, w12, #1
     ld1             {v4.16b-v7.16b}, [x0], x1
     pixel_var_1 v4
     pixel_var_1 v5
     pixel_var_1 v6
     pixel_var_1 v7
-    cbnz            w12, .loop_var_64_sve2
+    cbnz            w12, .Loop_var_64_sve2
     pixel_var_end
     ret
 .vl_gt_16_pixel_var_64x64:
@@ -268,7 +268,7 @@ function PFX(getResidual32_sve2)
     bgt             .vl_gt_16_getResidual32
     lsl             x4, x3, #1
     mov             w12, #4
-.loop_residual_32:
+.Loop_residual_32:
     sub             w12, w12, #1
 .rept 4
     ld1             {v0.16b-v1.16b}, [x0], x3
@@ -286,7 +286,7 @@ function PFX(getResidual32_sve2)
     st1             {v16.8h-v19.8h}, [x2], x4
     st1             {v20.8h-v23.8h}, [x2], x4
 .endr
-    cbnz            w12, .loop_residual_32
+    cbnz            w12, .Loop_residual_32
     ret
 .vl_gt_16_getResidual32:
     cmp             x9, #48
@@ -323,7 +323,7 @@ function PFX(pixel_sub_ps_32x32_sve2)
     bgt             .vl_gt_16_pixel_sub_ps_32x32
     lsl             x1, x1, #1
     mov             w12, #4
-.loop_sub_ps_32_sve2:
+.Loop_sub_ps_32_sve2:
     sub             w12, w12, #1
 .rept 4
     ld1             {v0.16b-v1.16b}, [x2], x4
@@ -341,7 +341,7 @@ function PFX(pixel_sub_ps_32x32_sve2)
     st1             {v16.8h-v19.8h}, [x0], x1
     st1             {v20.8h-v23.8h}, [x0], x1
 .endr
-    cbnz            w12, .loop_sub_ps_32_sve2
+    cbnz            w12, .Loop_sub_ps_32_sve2
     ret
 .vl_gt_16_pixel_sub_ps_32x32:
     cmp             x9, #48
@@ -387,7 +387,7 @@ function PFX(pixel_sub_ps_64x64_sve2)
     lsl             x1, x1, #1
     sub             x1, x1, #64
     mov             w12, #16
-.loop_sub_ps_64_sve2:
+.Loop_sub_ps_64_sve2:
     sub             w12, w12, #1
 .rept 4
     ld1             {v0.16b-v3.16b}, [x2], x4
@@ -403,7 +403,7 @@ function PFX(pixel_sub_ps_64x64_sve2)
     st1             {v16.8h-v19.8h}, [x0], #64
     st1             {v20.8h-v23.8h}, [x0], x1
 .endr
-    cbnz            w12, .loop_sub_ps_64_sve2
+    cbnz            w12, .Loop_sub_ps_64_sve2
     ret
 .vl_gt_16_pixel_sub_ps_64x64:
     rdvl            x9, #1
@@ -473,7 +473,7 @@ function PFX(pixel_sub_ps_32x64_sve2)
     bgt             .vl_gt_16_pixel_sub_ps_32x64
     lsl             x1, x1, #1
     mov             w12, #8
-.loop_sub_ps_32x64_sve2:
+.Loop_sub_ps_32x64_sve2:
     sub             w12, w12, #1
 .rept 4
     ld1             {v0.16b-v1.16b}, [x2], x4
@@ -491,7 +491,7 @@ function PFX(pixel_sub_ps_32x64_sve2)
     st1             {v16.8h-v19.8h}, [x0], x1
     st1             {v20.8h-v23.8h}, [x0], x1
 .endr
-    cbnz            w12, .loop_sub_ps_32x64_sve2
+    cbnz            w12, .Loop_sub_ps_32x64_sve2
     ret
 .vl_gt_16_pixel_sub_ps_32x64:
     cmp             x9, #48
@@ -609,7 +609,7 @@ pixel_add_ps_16xN_sve2 32
     bgt             .vl_gt_16_pixel_add_ps_32x\h
     lsl             x5, x5, #1
     mov             w12, #\h / 4
-.loop_add_ps__sve2_32x\h\():
+.Loop_add_ps__sve2_32x\h\():
     sub             w12, w12, #1
 .rept 4
     ld1             {v0.16b-v1.16b}, [x2], x4
@@ -628,7 +628,7 @@ pixel_add_ps_16xN_sve2 32
     sqxtun2         v5.16b, v27.8h
     st1             {v4.16b-v5.16b}, [x0], x1
 .endr
-    cbnz            w12, .loop_add_ps__sve2_32x\h
+    cbnz            w12, .Loop_add_ps__sve2_32x\h
     ret
 .vl_gt_16_pixel_add_ps_32x\h\():
     cmp             x9, #48
@@ -1157,7 +1157,7 @@ function PFX(ssimDist16_sve2)
     bgt             .vl_gt_16_ssimDist16
     ssimDist_start
     ptrue           p0.s, vl4
-.loop_ssimDist16_sve2:
+.Loop_ssimDist16_sve2:
     sub             w12, w12, #1
     ld1b            {z4.s}, p0/z, [x0]
     ld1b            {z5.s}, p0/z, [x0, #1, mul vl]
@@ -1171,7 +1171,7 @@ function PFX(ssimDist16_sve2)
     add             x2, x2, x3
     ssimDist_1_sve2 z4, z5, z8, z9
     ssimDist_1_sve2 z6, z7, z10, z11
-    cbnz            w12, .loop_ssimDist16_sve2
+    cbnz            w12, .Loop_ssimDist16_sve2
     ssimDist_end
     ret
 .vl_gt_16_ssimDist16:
@@ -1217,7 +1217,7 @@ function PFX(ssimDist32_sve2)
     bgt             .vl_gt_16_ssimDist32
     ssimDist_start
     ptrue           p0.s, vl4
-.loop_ssimDist32_sve2:
+.Loop_ssimDist32_sve2:
     sub             w12, w12, #1
     ld1b            {z2.s}, p0/z, [x0]
     ld1b            {z3.s}, p0/z, [x0, #1, mul vl]
@@ -1241,7 +1241,7 @@ function PFX(ssimDist32_sve2)
     ssimDist_1_sve2 z4, z5, z12, z13
     ssimDist_1_sve2 z6, z7, z14, z15
     ssimDist_1_sve2 z8, z9, z30, z31
-    cbnz            w12, .loop_ssimDist32_sve2
+    cbnz            w12, .Loop_ssimDist32_sve2
     ssimDist_end
     ret
 .vl_gt_16_ssimDist32:
@@ -1309,7 +1309,7 @@ function PFX(ssimDist64_sve2)
     bgt             .vl_gt_16_ssimDist64
     ssimDist_start
     ptrue           p0.s, vl4
-.loop_ssimDist64_sve2:
+.Loop_ssimDist64_sve2:
     sub             w12, w12, #1
     ld1b            {z2.s}, p0/z, [x0]
     ld1b            {z3.s}, p0/z, [x0, #1, mul vl]
@@ -1357,7 +1357,7 @@ function PFX(ssimDist64_sve2)
     ssimDist_1_sve2 z8, z9, z29, z30
     add             x0, x0, x1
     add             x2, x2, x3
-    cbnz            w12, .loop_ssimDist64_sve2
+    cbnz            w12, .Loop_ssimDist64_sve2
     ssimDist_end
     ret
 .vl_gt_16_ssimDist64:
@@ -1482,7 +1482,7 @@ function PFX(normFact16_sve2)
     bgt             .vl_gt_16_normFact16
     normFact_start
     ptrue           p0.s, vl4
-.loop_normFact16_sve2:
+.Loop_normFact16_sve2:
     sub             w12, w12, #1
     ld1b            {z4.s}, p0/z, [x0]
     ld1b            {z5.s}, p0/z, [x0, #1, mul vl]
@@ -1491,7 +1491,7 @@ function PFX(normFact16_sve2)
     add             x0, x0, x1
     normFact_1_sve2 z4, z5
     normFact_1_sve2 z6, z7
-    cbnz            w12, .loop_normFact16_sve2
+    cbnz            w12, .Loop_normFact16_sve2
     normFact_end
     ret
 .vl_gt_16_normFact16:
@@ -1529,7 +1529,7 @@ function PFX(normFact32_sve2)
     bgt             .vl_gt_16_normFact32
     normFact_start
     ptrue           p0.s, vl4
-.loop_normFact32_sve2:
+.Loop_normFact32_sve2:
     sub             w12, w12, #1
     ld1b            {z4.s}, p0/z, [x0]
     ld1b            {z5.s}, p0/z, [x0, #1, mul vl]
@@ -1544,7 +1544,7 @@ function PFX(normFact32_sve2)
     normFact_1_sve2 z6, z7
     normFact_1_sve2 z8, z9
     normFact_1_sve2 z10, z11
-    cbnz            w12, .loop_normFact32_sve2
+    cbnz            w12, .Loop_normFact32_sve2
     normFact_end
     ret
 .vl_gt_16_normFact32:
@@ -1599,7 +1599,7 @@ function PFX(normFact64_sve2)
     bgt             .vl_gt_16_normFact64
     normFact_start
     ptrue           p0.s, vl4
-.loop_normFact64_sve2:
+.Loop_normFact64_sve2:
     sub             w12, w12, #1
     ld1b            {z4.s}, p0/z, [x0]
     ld1b            {z5.s}, p0/z, [x0, #1, mul vl]
@@ -1628,7 +1628,7 @@ function PFX(normFact64_sve2)
     normFact_1_sve2 z8, z9
     normFact_1_sve2 z10, z11
     add             x0, x0, x1
-    cbnz            w12, .loop_normFact64_sve2
+    cbnz            w12, .Loop_normFact64_sve2
     normFact_end
     ret
 .vl_gt_16_normFact64:

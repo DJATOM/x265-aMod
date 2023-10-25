@@ -112,7 +112,7 @@ function PFX(blockcopy_sp_32x32_sve)
     lsl             x3, x3, #1
     movrel          x11, xtn_xtn2_table
     ld1             {v31.16b}, [x11]
-.loop_csp32_sve:
+.Loop_csp32_sve:
     sub             w12, w12, #1
 .rept 4
     ld1             {v0.8h-v3.8h}, [x2], x3
@@ -124,7 +124,7 @@ function PFX(blockcopy_sp_32x32_sve)
     st1             {v0.16b-v1.16b}, [x0], x1
     st1             {v2.16b-v3.16b}, [x0], x1
 .endr
-    cbnz            w12, .loop_csp32_sve
+    cbnz            w12, .Loop_csp32_sve
     ret
 .vl_gt_16_blockcopy_sp_32_32:
     cmp             x9, #48
@@ -199,7 +199,7 @@ function PFX(blockcopy_ps_32x32_sve)
     bgt             .vl_gt_16_blockcopy_ps_32_32
     lsl             x1, x1, #1
     mov             w12, #4
-.loop_cps32_sve:
+.Loop_cps32_sve:
     sub             w12, w12, #1
 .rept 4
     ld1             {v16.16b-v17.16b}, [x2], x3
@@ -215,7 +215,7 @@ function PFX(blockcopy_ps_32x32_sve)
     st1             {v0.8h-v3.8h}, [x0], x1
     st1             {v4.8h-v7.8h}, [x0], x1
 .endr
-    cbnz            w12, .loop_cps32_sve
+    cbnz            w12, .Loop_cps32_sve
     ret
 .vl_gt_16_blockcopy_ps_32_32:
     cmp             x9, #48
@@ -248,7 +248,7 @@ function PFX(blockcopy_ps_64x64_sve)
     lsl             x1, x1, #1
     sub             x1, x1, #64
     mov             w12, #16
-.loop_cps64_sve:
+.Loop_cps64_sve:
     sub             w12, w12, #1
 .rept 4
     ld1             {v16.16b-v19.16b}, [x2], x3
@@ -263,7 +263,7 @@ function PFX(blockcopy_ps_64x64_sve)
     st1             {v0.8h-v3.8h}, [x0], #64
     st1             {v4.8h-v7.8h}, [x0], x1
 .endr
-    cbnz            w12, .loop_cps64_sve
+    cbnz            w12, .Loop_cps64_sve
     ret
 .vl_gt_16_blockcopy_ps_64_64:
     cmp             x9, #48
@@ -338,13 +338,13 @@ function PFX(blockcopy_ss_32x32_sve)
     lsl             x1, x1, #1
     lsl             x3, x3, #1
     mov             w12, #4
-.loop_css32_sve:
+.Loop_css32_sve:
     sub             w12, w12, #1
 .rept 8
     ld1             {v0.8h-v3.8h}, [x2], x3
     st1             {v0.8h-v3.8h}, [x0], x1
 .endr
-    cbnz            w12, .loop_css32_sve
+    cbnz            w12, .Loop_css32_sve
     ret
 .vl_gt_16_blockcopy_ss_32_32:
     cmp             x9, #48
@@ -379,7 +379,7 @@ function PFX(blockcopy_ss_64x64_sve)
     lsl             x3, x3, #1
     sub             x3, x3, #64
     mov             w12, #8
-.loop_css64_sve:
+.Loop_css64_sve:
     sub             w12, w12, #1
 .rept 8
     ld1             {v0.8h-v3.8h}, [x2], #64
@@ -387,7 +387,7 @@ function PFX(blockcopy_ss_64x64_sve)
     st1             {v0.8h-v3.8h}, [x0], #64
     st1             {v4.8h-v7.8h}, [x0], x1
 .endr
-    cbnz            w12, .loop_css64_sve
+    cbnz            w12, .Loop_css64_sve
     ret
 .vl_gt_16_blockcopy_ss_64_64:
     cmp             x9, #48
@@ -474,13 +474,13 @@ function PFX(blockcopy_ss_32x64_sve)
     lsl             x1, x1, #1
     lsl             x3, x3, #1
     mov             w12, #8
-.loop_css32x64_sve:
+.Loop_css32x64_sve:
     sub             w12, w12, #1
 .rept 8
     ld1             {v0.8h-v3.8h}, [x2], x3
     st1             {v0.8h-v3.8h}, [x0], x1
 .endr
-    cbnz            w12, .loop_css32x64_sve
+    cbnz            w12, .Loop_css32x64_sve
     ret
 .vl_gt_16_blockcopy_ss_32_64:
     cmp             x9, #48
@@ -570,7 +570,7 @@ function PFX(blockcopy_ps_32x64_sve)
     bgt             .vl_gt_16_blockcopy_ps_32_64
     lsl             x1, x1, #1
     mov             w12, #8
-.loop_cps32x64_sve:
+.Loop_cps32x64_sve:
     sub             w12, w12, #1
 .rept 4
     ld1             {v16.16b-v17.16b}, [x2], x3
@@ -586,7 +586,7 @@ function PFX(blockcopy_ps_32x64_sve)
     st1             {v0.8h-v3.8h}, [x0], x1
     st1             {v4.8h-v7.8h}, [x0], x1
 .endr
-    cbnz            w12, .loop_cps32x64_sve
+    cbnz            w12, .Loop_cps32x64_sve
     ret
 .vl_gt_16_blockcopy_ps_32_64:
     cmp             x9, #48
@@ -730,13 +730,13 @@ function PFX(blockcopy_pp_32x\h\()_sve)
     rdvl            x9, #1
     cmp             x9, #16
     bgt             .vl_gt_16_blockcopy_pp_32xN_\h
-.loop_sve_32x\h\():
+.Loop_sve_32x\h\():
     sub             w12, w12, #1
 .rept 8
     ld1             {v0.16b-v1.16b}, [x2], x3
     st1             {v0.16b-v1.16b}, [x0], x1
 .endr
-    cbnz            w12, .loop_sve_32x\h
+    cbnz            w12, .Loop_sve_32x\h
     ret
 .vl_gt_16_blockcopy_pp_32xN_\h:
     ptrue           p0.b, vl32
@@ -765,13 +765,13 @@ function PFX(blockcopy_pp_64x\h\()_sve)
     rdvl            x9, #1
     cmp             x9, #16
     bgt             .vl_gt_16_blockcopy_pp_64xN_\h
-.loop_sve_64x\h\():
+.Loop_sve_64x\h\():
     sub             w12, w12, #1
 .rept 4
     ld1             {v0.16b-v3.16b}, [x2], x3
     st1             {v0.16b-v3.16b}, [x0], x1
 .endr
-    cbnz            w12, .loop_sve_64x\h
+    cbnz            w12, .Loop_sve_64x\h
     ret
 .vl_gt_16_blockcopy_pp_64xN_\h:
     cmp             x9, #48
@@ -856,7 +856,7 @@ function PFX(cpy2Dto1D_shl_16x16_sve)
     bgt             .vl_gt_16_cpy2Dto1D_shl_16x16
     cpy2Dto1D_shl_start_sve
     mov             w12, #4
-.loop_cpy2Dto1D_shl_16_sve:
+.Loop_cpy2Dto1D_shl_16_sve:
     sub             w12, w12, #1
 .rept 4
     ld1             {v2.16b-v3.16b}, [x1], x2
@@ -864,7 +864,7 @@ function PFX(cpy2Dto1D_shl_16x16_sve)
     sshl            v3.8h, v3.8h, v0.8h
     st1             {v2.16b-v3.16b}, [x0], #32
 .endr
-    cbnz            w12, .loop_cpy2Dto1D_shl_16_sve
+    cbnz            w12, .Loop_cpy2Dto1D_shl_16_sve
     ret
 .vl_gt_16_cpy2Dto1D_shl_16x16:
     ptrue           p0.h, vl16
@@ -885,7 +885,7 @@ function PFX(cpy2Dto1D_shl_32x32_sve)
     bgt             .vl_gt_16_cpy2Dto1D_shl_32x32
     cpy2Dto1D_shl_start_sve
     mov             w12, #16
-.loop_cpy2Dto1D_shl_32_sve:
+.Loop_cpy2Dto1D_shl_32_sve:
     sub             w12, w12, #1
 .rept 2
     ld1             {v2.16b-v5.16b}, [x1], x2
@@ -895,7 +895,7 @@ function PFX(cpy2Dto1D_shl_32x32_sve)
     sshl            v5.8h, v5.8h, v0.8h
     st1             {v2.16b-v5.16b}, [x0], #64
 .endr
-    cbnz            w12, .loop_cpy2Dto1D_shl_32_sve
+    cbnz            w12, .Loop_cpy2Dto1D_shl_32_sve
     ret
 .vl_gt_16_cpy2Dto1D_shl_32x32:
     cmp             x9, #48
@@ -931,7 +931,7 @@ function PFX(cpy2Dto1D_shl_64x64_sve)
     cpy2Dto1D_shl_start_sve
     mov             w12, #32
     sub             x2, x2, #64
-.loop_cpy2Dto1D_shl_64_sve:
+.Loop_cpy2Dto1D_shl_64_sve:
     sub             w12, w12, #1
 .rept 2
     ld1             {v2.16b-v5.16b}, [x1], #64
@@ -947,7 +947,7 @@ function PFX(cpy2Dto1D_shl_64x64_sve)
     st1             {v2.16b-v5.16b}, [x0], #64
     st1             {v16.16b-v19.16b}, [x0], #64
 .endr
-    cbnz            w12, .loop_cpy2Dto1D_shl_64_sve
+    cbnz            w12, .Loop_cpy2Dto1D_shl_64_sve
     ret
 .vl_gt_16_cpy2Dto1D_shl_64x64:
     dup             z0.h, w3
@@ -1055,7 +1055,7 @@ function PFX(cpy2Dto1D_shr_32x32_sve)
     bgt             .vl_gt_16_cpy2Dto1D_shr_32x32
     cpy2Dto1D_shr_start
     mov             w12, #16
-.loop_cpy2Dto1D_shr_32_sve:
+.Loop_cpy2Dto1D_shr_32_sve:
     sub             w12, w12, #1
 .rept 2
     ld1             {v2.8h-v5.8h}, [x1], x2
@@ -1069,7 +1069,7 @@ function PFX(cpy2Dto1D_shr_32x32_sve)
     sshl            v5.8h, v5.8h, v0.8h
     st1             {v2.8h-v5.8h}, [x0], #64
 .endr
-    cbnz            w12, .loop_cpy2Dto1D_shr_32_sve
+    cbnz            w12, .Loop_cpy2Dto1D_shr_32_sve
     ret
 .vl_gt_16_cpy2Dto1D_shr_32x32:
     dup             z0.h, w3
@@ -1218,7 +1218,7 @@ function PFX(cpy1Dto2D_shr_16x16_sve)
     bgt             .vl_gt_16_cpy1Dto2D_shr_16x16
     cpy1Dto2D_shr_start
     mov             w12, #4
-.loop_cpy1Dto2D_shr_16:
+.Loop_cpy1Dto2D_shr_16:
     sub             w12, w12, #1
 .rept 4
     ld1             {v2.8h-v3.8h}, [x1], #32
@@ -1228,7 +1228,7 @@ function PFX(cpy1Dto2D_shr_16x16_sve)
     sshl            v3.8h, v3.8h, v0.8h
     st1             {v2.8h-v3.8h}, [x0], x2
 .endr
-    cbnz            w12, .loop_cpy1Dto2D_shr_16
+    cbnz            w12, .Loop_cpy1Dto2D_shr_16
     ret
 .vl_gt_16_cpy1Dto2D_shr_16x16:
     dup             z0.h, w3
@@ -1254,7 +1254,7 @@ function PFX(cpy1Dto2D_shr_32x32_sve)
     bgt             .vl_gt_16_cpy1Dto2D_shr_32x32
     cpy1Dto2D_shr_start
     mov             w12, #16
-.loop_cpy1Dto2D_shr_32_sve:
+.Loop_cpy1Dto2D_shr_32_sve:
     sub             w12, w12, #1
 .rept 2
     ld1             {v2.16b-v5.16b}, [x1], #64
@@ -1268,7 +1268,7 @@ function PFX(cpy1Dto2D_shr_32x32_sve)
     sshl            v5.8h, v5.8h, v0.8h
     st1             {v2.16b-v5.16b}, [x0], x2
 .endr
-    cbnz            w12, .loop_cpy1Dto2D_shr_32_sve
+    cbnz            w12, .Loop_cpy1Dto2D_shr_32_sve
     ret
 .vl_gt_16_cpy1Dto2D_shr_32x32:
     dup             z0.h, w3

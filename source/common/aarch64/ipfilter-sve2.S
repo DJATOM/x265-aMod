@@ -370,10 +370,10 @@
     cmp             x9, #16
     bgt             .vl_gt_16_FILTER_LUMA_VPP_\v\()_\w\()x\h
     qpel_start_\v
-.loop_luma_vpp_sve2_\v\()_\w\()x\h:
+.Loop_luma_vpp_sve2_\v\()_\w\()x\h:
     mov             x7, x2
     mov             x9, #0
-.loop_luma_vpp_w8_sve2_\v\()_\w\()x\h:
+.Loop_luma_vpp_w8_sve2_\v\()_\w\()x\h:
     add             x6, x0, x9
 .if \w == 8 || \w == 24
     qpel_load_32b \v
@@ -403,11 +403,11 @@
     add             x9, x9, #16
 .endif
     cmp             x9, #\w
-    blt             .loop_luma_vpp_w8_sve2_\v\()_\w\()x\h
+    blt             .Loop_luma_vpp_w8_sve2_\v\()_\w\()x\h
     add             x0, x0, x1
     add             x2, x2, x3
     sub             x5, x5, #1
-    cbnz            x5, .loop_luma_vpp_sve2_\v\()_\w\()x\h
+    cbnz            x5, .Loop_luma_vpp_sve2_\v\()_\w\()x\h
     ret
 .vl_gt_16_FILTER_LUMA_VPP_\v\()_\w\()x\h:
     ptrue           p0.h, vl8
@@ -522,7 +522,7 @@ function x265_interp_8tap_vert_ps_4x\h\()_sve2
     ld1rd           {z22.d}, p0/z, [x12, #48]
     ld1rd           {z23.d}, p0/z, [x12, #56]
 
-.loop_vps_sve2_4x\h:
+.Loop_vps_sve2_4x\h:
     mov             x6, x0
 
     ld1b            {z0.s}, p0/z, [x6]
@@ -557,7 +557,7 @@ function x265_interp_8tap_vert_ps_4x\h\()_sve2
 
     add             x0, x0, x1
     sub             x4, x4, #1
-    cbnz            x4, .loop_vps_sve2_4x\h
+    cbnz            x4, .Loop_vps_sve2_4x\h
     ret
 endfunc
 .endm
@@ -593,7 +593,7 @@ function x265_interp_8tap_vert_sp_4x\h\()_sve2
     ld1rd           {z22.d}, p0/z, [x12, #48]
     ld1rd           {z23.d}, p0/z, [x12, #56]
 
-.loop_vsp_sve2_4x\h:
+.Loop_vsp_sve2_4x\h:
     mov             x6, x0
 
     ld1             {v0.8b}, [x6], x1
@@ -630,7 +630,7 @@ function x265_interp_8tap_vert_sp_4x\h\()_sve2
 
     add             x0, x0, x1
     sub             x4, x4, #1
-    cbnz            x4, .loop_vsp_sve2_4x\h
+    cbnz            x4, .Loop_vsp_sve2_4x\h
     ret
 endfunc
 .endm
@@ -654,10 +654,10 @@ LUMA_VSP_4xN_SVE2 16
     cmp             x14, #16
     bgt             .vl_gt_16_FILTER_VPS_\v\()_\w\()x\h
     qpel_start_\v
-.loop_ps_sve2_\v\()_\w\()x\h:
+.Loop_ps_sve2_\v\()_\w\()x\h:
     mov             x7, x2
     mov             x9, #0
-.loop_ps_w8_sve2_\v\()_\w\()x\h:
+.Loop_ps_w8_sve2_\v\()_\w\()x\h:
     add             x6, x0, x9
 .if \w == 8 || \w == 24
     qpel_load_32b \v
@@ -685,11 +685,11 @@ LUMA_VSP_4xN_SVE2 16
     add             x9, x9, #16
 .endif
     cmp             x9, #\w
-    blt             .loop_ps_w8_sve2_\v\()_\w\()x\h
+    blt             .Loop_ps_w8_sve2_\v\()_\w\()x\h
     add             x0, x0, x1
     add             x2, x2, x3
     sub             x5, x5, #1
-    cbnz            x5, .loop_ps_sve2_\v\()_\w\()x\h
+    cbnz            x5, .Loop_ps_sve2_\v\()_\w\()x\h
     ret
 .vl_gt_16_FILTER_VPS_\v\()_\w\()x\h:
     ptrue           p0.h, vl8
@@ -796,10 +796,10 @@ LUMA_VPS_SVE2 64, 48
     mov             x12, #\w
     lsl             x12, x12, #1
     qpel_start_\v\()_1
-.loop_luma_vss_sve2_\v\()_\w\()x\h:
+.Loop_luma_vss_sve2_\v\()_\w\()x\h:
     mov             x7, x2
     mov             x9, #0
-.loop_luma_vss_w8_sve2_\v\()_\w\()x\h:
+.Loop_luma_vss_w8_sve2_\v\()_\w\()x\h:
     add             x6, x0, x9
     qpel_load_64b \v
     qpel_filter_\v\()_32b_1
@@ -820,11 +820,11 @@ LUMA_VPS_SVE2 64, 48
 .endif
 .endif
     cmp             x9, x12
-    blt             .loop_luma_vss_w8_sve2_\v\()_\w\()x\h
+    blt             .Loop_luma_vss_w8_sve2_\v\()_\w\()x\h
     add             x0, x0, x1
     add             x2, x2, x3
     sub             x5, x5, #1
-    cbnz            x5, .loop_luma_vss_sve2_\v\()_\w\()x\h
+    cbnz            x5, .Loop_luma_vss_sve2_\v\()_\w\()x\h
     ret
 .endm
 
@@ -884,10 +884,10 @@ LUMA_VSS_SVE2 48, 64
     mov             z31.h, #32
     sub             x0, x0, x1
     mov             x5, #\h
-.loop_chroma_vpp_sve2_\v\()_\w\()x\h:
+.Loop_chroma_vpp_sve2_\v\()_\w\()x\h:
     mov             x7, x2
     mov             x9, #0
-.loop_chroma_vpp_w8_sve2_\v\()_\w\()x\h:
+.Loop_chroma_vpp_w8_sve2_\v\()_\w\()x\h:
     add             x6, x0, x9
     qpel_chroma_load_32b_sve2 \v
     qpel_filter_chroma_sve2_\v\()_32b
@@ -914,11 +914,11 @@ LUMA_VSS_SVE2 48, 64
     str             d17, [x7], #8
 .endif
     cmp             x9, #\w
-    blt             .loop_chroma_vpp_w8_sve2_\v\()_\w\()x\h
+    blt             .Loop_chroma_vpp_w8_sve2_\v\()_\w\()x\h
     add             x0, x0, x1
     add             x2, x2, x3
     sub             x5, x5, #1
-    cbnz            x5, .loop_chroma_vpp_sve2_\v\()_\w\()x\h
+    cbnz            x5, .Loop_chroma_vpp_sve2_\v\()_\w\()x\h
     ret
 .endm
 
@@ -1008,10 +1008,10 @@ CHROMA_VPP_SVE2 48, 64
     lsl             x3, x3, #1
     sub             x0, x0, x1
     mov             x5, #\h
-.loop_vps_sve2_\v\()_\w\()x\h:
+.Loop_vps_sve2_\v\()_\w\()x\h:
     mov             x7, x2
     mov             x9, #0
-.loop_vps_w8_sve2_\v\()_\w\()x\h:
+.Loop_vps_w8_sve2_\v\()_\w\()x\h:
     add             x6, x0, x9
     qpel_chroma_load_32b_sve2 \v
     qpel_filter_chroma_sve2_\v\()_32b
@@ -1036,12 +1036,12 @@ CHROMA_VPP_SVE2 48, 64
     str             q17, [x7], #16
 .endif
     cmp             x9, #\w
-    blt             .loop_vps_w8_sve2_\v\()_\w\()x\h
+    blt             .Loop_vps_w8_sve2_\v\()_\w\()x\h
 
     add             x0, x0, x1
     add             x2, x2, x3
     sub             x5, x5, #1
-    cbnz            x5, .loop_vps_sve2_\v\()_\w\()x\h
+    cbnz            x5, .Loop_vps_sve2_\v\()_\w\()x\h
     ret
 .endm
 
@@ -1170,7 +1170,7 @@ CHROMA_VPS_SVE2 48, 64
     mov             x12, #\w
     lsl             x12, x12, #1
     qpel_start_chroma_sve2_\v\()_1
-.loop_vss_sve2_\v\()_\w\()x\h:
+.Loop_vss_sve2_\v\()_\w\()x\h:
     mov             x7, x2
     mov             x9, #0
 .if \w == 4
@@ -1183,7 +1183,7 @@ CHROMA_VPS_SVE2 48, 64
     add             x9, x9, #4
 .endr
 .else
-.loop_vss_w8_sve2_\v\()_\w\()x\h:
+.Loop_vss_w8_sve2_\v\()_\w\()x\h:
     add             x6, x0, x9
     qpel_chroma_load_64b \v
     qpel_filter_chroma_\v\()_32b_1
@@ -1199,12 +1199,12 @@ CHROMA_VPS_SVE2 48, 64
     add             x9, x9, #8
 .endif
     cmp             x9, x12
-    blt             .loop_vss_w8_sve2_\v\()_\w\()x\h
+    blt             .Loop_vss_w8_sve2_\v\()_\w\()x\h
 .endif
     add             x0, x0, x1
     add             x2, x2, x3
     sub             x5, x5, #1
-    cbnz            x5, .loop_vss_sve2_\v\()_\w\()x\h
+    cbnz            x5, .Loop_vss_sve2_\v\()_\w\()x\h
     ret
 .endm
 

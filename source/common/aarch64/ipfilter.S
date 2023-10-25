@@ -85,7 +85,7 @@ function x265_interp_8tap_vert_pp_4x\h\()_neon
     ushll           v3.8h, v3.8b, #0
 
     mov             x9, #\h
-.loop_4x\h:
+.Loop_4x\h:
     ld1             {v4.s}[0], [x0], x1
     ld1             {v4.s}[1], [x0], x1
     ushll           v4.8h, v4.8b, #0
@@ -124,7 +124,7 @@ function x265_interp_8tap_vert_pp_4x\h\()_neon
     st1             {v16.s}[1], [x2], x3
 
     sub             x9, x9, #2
-    cbnz            x9, .loop_4x\h
+    cbnz            x9, .Loop_4x\h
     ret
 endfunc
 .endm
@@ -202,7 +202,7 @@ function x265_interp_8tap_vert_ps_4x\h\()_neon
     ld1r            {v22.2d}, [x12], #8
     ld1r            {v23.2d}, [x12], #8
 
-.loop_vps_4x\h:
+.Loop_vps_4x\h:
     mov             x6, x0
 
     ld1             {v0.s}[0], [x6], x1
@@ -252,7 +252,7 @@ function x265_interp_8tap_vert_ps_4x\h\()_neon
 
     add             x0, x0, x1
     sub             x4, x4, #1
-    cbnz            x4, .loop_vps_4x\h
+    cbnz            x4, .Loop_vps_4x\h
     ret
 endfunc
 .endm
@@ -331,7 +331,7 @@ function x265_interp_8tap_vert_sp_4x\h\()_neon
     ld1r            {v21.2d}, [x12], #8
     ld1r            {v22.2d}, [x12], #8
     ld1r            {v23.2d}, [x12], #8
-.loop_vsp_4x\h:
+.Loop_vsp_4x\h:
     mov             x6, x0
 
     ld1             {v0.8b}, [x6], x1
@@ -368,7 +368,7 @@ function x265_interp_8tap_vert_sp_4x\h\()_neon
 
     add             x0, x0, x1
     sub             x4, x4, #1
-    cbnz            x4, .loop_vsp_4x\h
+    cbnz            x4, .Loop_vsp_4x\h
     ret
 endfunc
 .endm

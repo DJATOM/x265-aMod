@@ -800,10 +800,10 @@
     mov             w12, #32
     dup             v31.8h, w12
     qpel_start_\v
-.loop_luma_vpp_\v\()_\w\()x\h:
+.Loop_luma_vpp_\v\()_\w\()x\h:
     mov             x7, x2
     mov             x9, #0
-.loop_luma_vpp_w8_\v\()_\w\()x\h:
+.Loop_luma_vpp_w8_\v\()_\w\()x\h:
     add             x6, x0, x9
 .if \w == 8 || \w == 24
     qpel_load_32b \v
@@ -833,11 +833,11 @@
     add             x9, x9, #16
 .endif
     cmp             x9, #\w
-    blt             .loop_luma_vpp_w8_\v\()_\w\()x\h
+    blt             .Loop_luma_vpp_w8_\v\()_\w\()x\h
     add             x0, x0, x1
     add             x2, x2, x3
     sub             x5, x5, #1
-    cbnz            x5, .loop_luma_vpp_\v\()_\w\()x\h
+    cbnz            x5, .Loop_luma_vpp_\v\()_\w\()x\h
     ret
 .endm
 
@@ -854,10 +854,10 @@
     mov             w12, #8192
     dup             v31.8h, w12
     qpel_start_\v
-.loop_ps_\v\()_\w\()x\h:
+.Loop_ps_\v\()_\w\()x\h:
     mov             x7, x2
     mov             x9, #0
-.loop_ps_w8_\v\()_\w\()x\h:
+.Loop_ps_w8_\v\()_\w\()x\h:
     add             x6, x0, x9
 .if \w == 8 || \w == 24
     qpel_load_32b \v
@@ -885,11 +885,11 @@
     add             x9, x9, #16
 .endif
     cmp             x9, #\w
-    blt             .loop_ps_w8_\v\()_\w\()x\h
+    blt             .Loop_ps_w8_\v\()_\w\()x\h
     add             x0, x0, x1
     add             x2, x2, x3
     sub             x5, x5, #1
-    cbnz            x5, .loop_ps_\v\()_\w\()x\h
+    cbnz            x5, .Loop_ps_\v\()_\w\()x\h
     ret
 .endm
 
@@ -914,10 +914,10 @@
     mov             x12, #\w
     lsl             x12, x12, #1
     qpel_start_\v\()_1
-.loop_luma_vsp_\v\()_\w\()x\h:
+.Loop_luma_vsp_\v\()_\w\()x\h:
     mov             x7, x2
     mov             x9, #0
-.loop_luma_vsp_w8_\v\()_\w\()x\h:
+.Loop_luma_vsp_w8_\v\()_\w\()x\h:
     add             x6, x0, x9
     qpel_load_64b \v
     qpel_filter_\v\()_32b_1
@@ -933,11 +933,11 @@
     add             x9, x9, #8
 .endif
     cmp             x9, x12
-    blt             .loop_luma_vsp_w8_\v\()_\w\()x\h
+    blt             .Loop_luma_vsp_w8_\v\()_\w\()x\h
     add             x0, x0, x1
     add             x2, x2, x3
     sub             x5, x5, #1
-    cbnz            x5, .loop_luma_vsp_\v\()_\w\()x\h
+    cbnz            x5, .Loop_luma_vsp_\v\()_\w\()x\h
     ret
 .endm
 
@@ -957,10 +957,10 @@
     mov             x12, #\w
     lsl             x12, x12, #1
     qpel_start_\v\()_1
-.loop_luma_vss_\v\()_\w\()x\h:
+.Loop_luma_vss_\v\()_\w\()x\h:
     mov             x7, x2
     mov             x9, #0
-.loop_luma_vss_w8_\v\()_\w\()x\h:
+.Loop_luma_vss_w8_\v\()_\w\()x\h:
     add             x6, x0, x9
     qpel_load_64b \v
     qpel_filter_\v\()_32b_1
@@ -981,11 +981,11 @@
 .endif
 .endif
     cmp             x9, x12
-    blt             .loop_luma_vss_w8_\v\()_\w\()x\h
+    blt             .Loop_luma_vss_w8_\v\()_\w\()x\h
     add             x0, x0, x1
     add             x2, x2, x3
     sub             x5, x5, #1
-    cbnz            x5, .loop_luma_vss_\v\()_\w\()x\h
+    cbnz            x5, .Loop_luma_vss_\v\()_\w\()x\h
     ret
 .endm
 
@@ -1013,11 +1013,11 @@
 .endr
     ret
 .else
-.loop1_hpp_\v\()_\w\()x\h:
+.Loop1_hpp_\v\()_\w\()x\h:
     mov             x7, #\w
     mov             x11, x0
     sub             x11, x11, #4
-.loop2_hpp_\v\()_\w\()x\h:
+.Loop2_hpp_\v\()_\w\()x\h:
     vextin8 \v
     qpel_filter_\v\()_32b
     hpp_end
@@ -1031,11 +1031,11 @@
     str             s17, [x2], #4
     sub             x7, x7, #4
 .endif
-    cbnz            x7, .loop2_hpp_\v\()_\w\()x\h
+    cbnz            x7, .Loop2_hpp_\v\()_\w\()x\h
     sub             x6, x6, #1
     add             x0, x0, x1
     add             x2, x2, x3
-    cbnz            x6, .loop1_hpp_\v\()_\w\()x\h
+    cbnz            x6, .Loop1_hpp_\v\()_\w\()x\h
     ret
 .endif
 .endm
@@ -1051,7 +1051,7 @@
     dup             v31.8h, w12
     qpel_start_\v
 .if \w == 4
-.loop_hps_\v\()_\w\()x\h\():
+.Loop_hps_\v\()_\w\()x\h\():
     mov             x11, x0
     sub             x11, x11, #4
     vextin8 \v
@@ -1061,14 +1061,14 @@
     sub             w6, w6, #1
     add             x0, x0, x1
     add             x2, x2, x3
-    cbnz            w6, .loop_hps_\v\()_\w\()x\h
+    cbnz            w6, .Loop_hps_\v\()_\w\()x\h
     ret
 .else
-.loop1_hps_\v\()_\w\()x\h\():
+.Loop1_hps_\v\()_\w\()x\h\():
     mov             w7, #\w
     mov             x11, x0
     sub             x11, x11, #4
-.loop2_hps_\v\()_\w\()x\h\():
+.Loop2_hps_\v\()_\w\()x\h\():
 .if \w == 8 || \w == 12 || \w == 24
     vextin8 \v
     qpel_filter_\v\()_32b
@@ -1092,11 +1092,11 @@
     sub             w7, w7, #16
     sub             x11, x11, #16
 .endif
-    cbnz            w7, .loop2_hps_\v\()_\w\()x\h
+    cbnz            w7, .Loop2_hps_\v\()_\w\()x\h
     sub             w6, w6, #1
     add             x0, x0, x1
     add             x2, x2, x3
-    cbnz            w6, .loop1_hps_\v\()_\w\()x\h
+    cbnz            w6, .Loop1_hps_\v\()_\w\()x\h
     ret
 .endif
 .endm
@@ -1107,10 +1107,10 @@
     dup             v31.8h, w12
     sub             x0, x0, x1
     mov             x5, #\h
-.loop_chroma_vpp_\v\()_\w\()x\h:
+.Loop_chroma_vpp_\v\()_\w\()x\h:
     mov             x7, x2
     mov             x9, #0
-.loop_chroma_vpp_w8_\v\()_\w\()x\h:
+.Loop_chroma_vpp_w8_\v\()_\w\()x\h:
     add             x6, x0, x9
     qpel_chroma_load_32b \v
     qpel_filter_chroma_\v\()_32b
@@ -1137,11 +1137,11 @@
     str             d17, [x7], #8
 .endif
     cmp             x9, #\w
-    blt             .loop_chroma_vpp_w8_\v\()_\w\()x\h
+    blt             .Loop_chroma_vpp_w8_\v\()_\w\()x\h
     add             x0, x0, x1
     add             x2, x2, x3
     sub             x5, x5, #1
-    cbnz            x5, .loop_chroma_vpp_\v\()_\w\()x\h
+    cbnz            x5, .Loop_chroma_vpp_\v\()_\w\()x\h
     ret
 .endm
 
@@ -1152,10 +1152,10 @@
     lsl             x3, x3, #1
     sub             x0, x0, x1
     mov             x5, #\h
-.loop_vps_\v\()_\w\()x\h:
+.Loop_vps_\v\()_\w\()x\h:
     mov             x7, x2
     mov             x9, #0
-.loop_vps_w8_\v\()_\w\()x\h:
+.Loop_vps_w8_\v\()_\w\()x\h:
     add             x6, x0, x9
     qpel_chroma_load_32b \v
     qpel_filter_chroma_\v\()_32b
@@ -1180,12 +1180,12 @@
     str             q17, [x7], #16
 .endif
     cmp             x9, #\w
-    blt             .loop_vps_w8_\v\()_\w\()x\h
+    blt             .Loop_vps_w8_\v\()_\w\()x\h
 
     add             x0, x0, x1
     add             x2, x2, x3
     sub             x5, x5, #1
-    cbnz            x5, .loop_vps_\v\()_\w\()x\h
+    cbnz            x5, .Loop_vps_\v\()_\w\()x\h
     ret
 .endm
 
@@ -1200,10 +1200,10 @@
     mov             x12, #\w
     lsl             x12, x12, #1
     qpel_start_chroma_\v\()_1
-.loop_vsp_\v\()_\w\()x\h:
+.Loop_vsp_\v\()_\w\()x\h:
     mov             x7, x2
     mov             x9, #0
-.loop_vsp_w8_\v\()_\w\()x\h:
+.Loop_vsp_w8_\v\()_\w\()x\h:
     add             x6, x0, x9
     qpel_chroma_load_64b \v
     qpel_filter_chroma_\v\()_32b_1
@@ -1223,11 +1223,11 @@
     str             d17, [x7], #8
 .endif
     cmp             x9, x12
-    blt             .loop_vsp_w8_\v\()_\w\()x\h
+    blt             .Loop_vsp_w8_\v\()_\w\()x\h
     add             x0, x0, x1
     add             x2, x2, x3
     sub             x5, x5, #1
-    cbnz            x5, .loop_vsp_\v\()_\w\()x\h
+    cbnz            x5, .Loop_vsp_\v\()_\w\()x\h
     ret
 .endm
 
@@ -1239,7 +1239,7 @@
     mov             x12, #\w
     lsl             x12, x12, #1
     qpel_start_chroma_\v\()_1
-.loop_vss_\v\()_\w\()x\h:
+.Loop_vss_\v\()_\w\()x\h:
     mov             x7, x2
     mov             x9, #0
 .if \w == 4
@@ -1252,7 +1252,7 @@
     add             x9, x9, #4
 .endr
 .else
-.loop_vss_w8_\v\()_\w\()x\h:
+.Loop_vss_w8_\v\()_\w\()x\h:
     add             x6, x0, x9
     qpel_chroma_load_64b \v
     qpel_filter_chroma_\v\()_32b_1
@@ -1268,12 +1268,12 @@
     add             x9, x9, #8
 .endif
     cmp             x9, x12
-    blt             .loop_vss_w8_\v\()_\w\()x\h
+    blt             .Loop_vss_w8_\v\()_\w\()x\h
 .endif
     add             x0, x0, x1
     add             x2, x2, x3
     sub             x5, x5, #1
-    cbnz            x5, .loop_vss_\v\()_\w\()x\h
+    cbnz            x5, .Loop_vss_\v\()_\w\()x\h
     ret
 .endm
 
@@ -1284,7 +1284,7 @@
     mov             w6, #\h
     sub             x3, x3, #\w
 .if \w == 2 || \w == 4 || \w == 6 || \w == 12
-.loop4_chroma_hpp_\v\()_\w\()x\h:
+.Loop4_chroma_hpp_\v\()_\w\()x\h:
     mov             x11, x0
     sub             x11, x11, #2
     vextin8_chroma \v
@@ -1310,15 +1310,15 @@
     sub             w6, w6, #1
     add             x0, x0, x1
     add             x2, x2, x3
-    cbnz            w6, .loop4_chroma_hpp_\v\()_\w\()x\h
+    cbnz            w6, .Loop4_chroma_hpp_\v\()_\w\()x\h
     ret
 .else
-.loop2_chroma_hpp_\v\()_\w\()x\h:
+.Loop2_chroma_hpp_\v\()_\w\()x\h:
     mov             x7, #\w
     lsr             x7, x7, #3
     mov             x11, x0
     sub             x11, x11, #2
-.loop3_chroma_hpp_\v\()_\w\()x\h:
+.Loop3_chroma_hpp_\v\()_\w\()x\h:
 .if \w == 8 || \w == 24
     vextin8_chroma \v
     qpel_filter_chroma_\v\()_32b
@@ -1336,11 +1336,11 @@
     sub             x7, x7, #2
     sub             x11, x11, #16
 .endif
-    cbnz            x7, .loop3_chroma_hpp_\v\()_\w\()x\h
+    cbnz            x7, .Loop3_chroma_hpp_\v\()_\w\()x\h
     sub             w6, w6, #1
     add             x0, x0, x1
     add             x2, x2, x3
-    cbnz            w6, .loop2_chroma_hpp_\v\()_\w\()x\h
+    cbnz            w6, .Loop2_chroma_hpp_\v\()_\w\()x\h
     ret
 .endif
 .endm
@@ -1397,12 +1397,12 @@
     add             w10, w10, #3
 9:
     mov             w6, w10
-.loop1_chroma_hps_\v\()_\w\()x\h\():
+.Loop1_chroma_hps_\v\()_\w\()x\h\():
     mov             x7, #\w
     lsr             x7, x7, #3
     mov             x11, x0
     sub             x11, x11, #2
-.loop2_chroma_hps_\v\()_\w\()x\h\():
+.Loop2_chroma_hps_\v\()_\w\()x\h\():
 .if \w == 8 || \w == 24
     vextin8_chroma \v
     qpel_filter_chroma_\v\()_32b
@@ -1419,11 +1419,11 @@
     sub             x7, x7, #2
     sub             x11, x11, #16
 .endif
-    cbnz            x7, .loop2_chroma_hps_\v\()_\w\()x\h\()
+    cbnz            x7, .Loop2_chroma_hps_\v\()_\w\()x\h\()
     sub             w6, w6, #1
     add             x0, x0, x1
     add             x2, x2, x3
-    cbnz            w6, .loop1_chroma_hps_\v\()_\w\()x\h\()
+    cbnz            w6, .Loop1_chroma_hps_\v\()_\w\()x\h\()
     ret
 .endif
 .endm

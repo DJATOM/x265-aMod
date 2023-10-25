@@ -43,7 +43,7 @@ function PFX(pixel_sse_pp_32x32_sve2)
     mov             w12, #8
     movi            v0.16b, #0
     movi            v1.16b, #0
-.loop_sse_pp_32_sve2:
+.Loop_sse_pp_32_sve2:
     sub             w12, w12, #1
 .rept 4
     ld1             {v16.16b,v17.16b}, [x0], x1
@@ -61,7 +61,7 @@ function PFX(pixel_sse_pp_32x32_sve2)
     smlal           v0.4s, v5.4h, v5.4h
     smlal2          v1.4s, v5.8h, v5.8h
 .endr
-    cbnz            w12, .loop_sse_pp_32_sve2
+    cbnz            w12, .Loop_sse_pp_32_sve2
     add             v0.4s, v0.4s, v1.4s
     ret_v0_w0
 .vl_gt_16_pixel_sse_pp_32x32:
@@ -182,7 +182,7 @@ function PFX(pixel_sse_pp_64x64_sve2)
     movi            v0.16b, #0
     movi            v1.16b, #0
 
-.loop_sse_pp_64_sve2:
+.Loop_sse_pp_64_sve2:
     sub             w12, w12, #1
 .rept 4
     ld1             {v16.16b-v19.16b}, [x0], x1
@@ -214,7 +214,7 @@ function PFX(pixel_sse_pp_64x64_sve2)
     smlal           v0.4s, v5.4h, v5.4h
     smlal2          v1.4s, v5.8h, v5.8h
 .endr
-    cbnz            w12, .loop_sse_pp_64_sve2
+    cbnz            w12, .Loop_sse_pp_64_sve2
     add             v0.4s, v0.4s, v1.4s
     ret_v0_w0
 .vl_gt_16_pixel_sse_pp_64x64:
@@ -788,7 +788,7 @@ function PFX(pixel_ssd_s_16x16_sve2)
     mov             w12, #4
     movi            v0.16b, #0
     movi            v1.16b, #0
-.loop_ssd_s_16_sve2:
+.Loop_ssd_s_16_sve2:
     sub             w12, w12, #1
 .rept 2
     ld1             {v4.16b,v5.16b}, [x0], x1
@@ -802,7 +802,7 @@ function PFX(pixel_ssd_s_16x16_sve2)
     smlal           v0.4s, v7.4h, v7.4h
     smlal2          v1.4s, v7.8h, v7.8h
 .endr
-    cbnz            w12, .loop_ssd_s_16_sve2
+    cbnz            w12, .Loop_ssd_s_16_sve2
     add             v0.4s, v0.4s, v1.4s
     ret_v0_w0
 .vl_gt_16_pixel_ssd_s_16x16:
@@ -830,7 +830,7 @@ function PFX(pixel_ssd_s_32x32_sve2)
     mov             w12, #8
     movi            v0.16b, #0
     movi            v1.16b, #0
-.loop_ssd_s_32:
+.Loop_ssd_s_32:
     sub             w12, w12, #1
 .rept 4
     ld1             {v4.16b-v7.16b}, [x0], x1
@@ -843,7 +843,7 @@ function PFX(pixel_ssd_s_32x32_sve2)
     smlal           v0.4s, v7.4h, v7.4h
     smlal2          v1.4s, v7.8h, v7.8h
 .endr
-    cbnz            w12, .loop_ssd_s_32
+    cbnz            w12, .Loop_ssd_s_32
     add             v0.4s, v0.4s, v1.4s
     ret_v0_w0
 .vl_gt_16_pixel_ssd_s_32x32:

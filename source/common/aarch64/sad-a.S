@@ -55,12 +55,12 @@ function PFX(pixel_sad_\w\()x\h\()_neon)
     SAD_START_\w
 
     mov             w9, #\h/8
-.loop_\w\()x\h:
+.Loop_\w\()x\h:
     sub             w9, w9, #1
 .rept 4
     SAD_\w
 .endr
-    cbnz            w9, .loop_\w\()x\h
+    cbnz            w9, .Loop_\w\()x\h
 
     SAD_END_\w
 endfunc
@@ -129,7 +129,7 @@ function PFX(sad_x\x\()_\w\()x\h\()_neon)
 .endif
     SAD_X_START_\w \x
     mov             w12, #\h/4
-.loop_sad_x\x\()_\w\()x\h:
+.Loop_sad_x\x\()_\w\()x\h:
     sub             w12, w12, #1
  .rept 4
   .if \w == 24
@@ -149,7 +149,7 @@ function PFX(sad_x\x\()_\w\()x\h\()_neon)
     SAD_X_\w x4, v19, v23
   .endif
  .endr
-    cbnz            w12, .loop_sad_x\x\()_\w\()x\h
+    cbnz            w12, .Loop_sad_x\x\()_\w\()x\h
     SAD_X_END_\w \x
 endfunc
 .endm

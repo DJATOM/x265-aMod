@@ -283,7 +283,7 @@ function PFX(addAvg_6x\h\()_neon)
     addAvg_start
     mov             w12, #\h / 2
     sub             x5, x5, #4
-.loop_addavg_6x\h:
+.Loop_addavg_6x\h:
     sub             w12, w12, #1
     ld1             {v0.16b}, [x0], x3
     ld1             {v1.16b}, [x1], x4
@@ -305,7 +305,7 @@ function PFX(addAvg_6x\h\()_neon)
     st1             {v0.h}[2], [x2], x5
     str             s1, [x2], #4
     st1             {v1.h}[2], [x2], x5
-    cbnz            w12, .loop_addavg_6x\h
+    cbnz            w12, .Loop_addavg_6x\h
     ret
 endfunc
 .endm
@@ -344,7 +344,7 @@ endfunc
 function PFX(addAvg_8x\h\()_neon)
     addAvg_start
     mov             w12, #\h / 2
-.loop_addavg_8x\h:
+.Loop_addavg_8x\h:
     sub             w12, w12, #1
     ld1             {v0.16b}, [x0], x3
     ld1             {v1.16b}, [x1], x4
@@ -364,7 +364,7 @@ function PFX(addAvg_8x\h\()_neon)
     sqxtun          v1.8b, v1.8h
     st1             {v0.8b}, [x2], x5
     st1             {v1.8b}, [x2], x5
-    cbnz            w12, .loop_addavg_8x\h
+    cbnz            w12, .Loop_addavg_8x\h
     ret
 endfunc
 .endm
@@ -385,7 +385,7 @@ function PFX(addAvg_12x\h\()_neon)
     sub             x4, x4, #16
     sub             x5, x5, #8
     mov             w12, #\h
-.loop_addAvg_12X\h\():
+.Loop_addAvg_12X\h\():
     sub             w12, w12, #1
     ld1             {v0.16b}, [x0], #16
     ld1             {v1.16b}, [x1], #16
@@ -403,7 +403,7 @@ function PFX(addAvg_12x\h\()_neon)
     sqxtun          v1.8b, v1.8h
     st1             {v0.8b}, [x2], #8
     st1             {v1.s}[0], [x2], x5
-    cbnz            w12, .loop_addAvg_12X\h
+    cbnz            w12, .Loop_addAvg_12X\h
     ret
 endfunc
 .endm
@@ -415,7 +415,7 @@ addAvg_12xN 32
 function PFX(addAvg_16x\h\()_neon)
     addAvg_start
     mov             w12, #\h
-.loop_addavg_16x\h:
+.Loop_addavg_16x\h:
     sub             w12, w12, #1
     ld1             {v0.8h-v1.8h}, [x0], x3
     ld1             {v2.8h-v3.8h}, [x1], x4
@@ -424,7 +424,7 @@ function PFX(addAvg_16x\h\()_neon)
     sqxtun          v0.8b, v0.8h
     sqxtun2         v0.16b, v1.8h
     st1             {v0.16b}, [x2], x5
-    cbnz            w12, .loop_addavg_16x\h
+    cbnz            w12, .Loop_addavg_16x\h
     ret
 endfunc
 .endm
@@ -441,7 +441,7 @@ addAvg_16xN 64
 function PFX(addAvg_24x\h\()_neon)
     addAvg_start
     mov             w12, #\h
-.loop_addavg_24x\h\():
+.Loop_addavg_24x\h\():
     sub             w12, w12, #1
     ld1             {v0.16b-v2.16b}, [x0], x3
     ld1             {v3.16b-v5.16b}, [x1], x4
@@ -452,7 +452,7 @@ function PFX(addAvg_24x\h\()_neon)
     sqxtun          v1.8b, v1.8h
     sqxtun          v2.8b, v2.8h
     st1             {v0.8b-v2.8b}, [x2], x5
-    cbnz            w12, .loop_addavg_24x\h
+    cbnz            w12, .Loop_addavg_24x\h
     ret
 endfunc
 .endm
@@ -464,7 +464,7 @@ addAvg_24xN 64
 function PFX(addAvg_32x\h\()_neon)
     addAvg_start
     mov             w12, #\h
-.loop_addavg_32x\h\():
+.Loop_addavg_32x\h\():
     sub             w12, w12, #1
     ld1             {v0.8h-v3.8h}, [x0], x3
     ld1             {v4.8h-v7.8h}, [x1], x4
@@ -477,7 +477,7 @@ function PFX(addAvg_32x\h\()_neon)
     sqxtun          v2.8b, v2.8h
     sqxtun          v3.8b, v3.8h
     st1             {v0.8b-v3.8b}, [x2], x5
-    cbnz            w12, .loop_addavg_32x\h
+    cbnz            w12, .Loop_addavg_32x\h
     ret
 endfunc
 .endm
@@ -494,7 +494,7 @@ function PFX(addAvg_48x64_neon)
     sub             x3, x3, #64
     sub             x4, x4, #64
     mov             w12, #64
-.loop_addavg_48x64:
+.Loop_addavg_48x64:
     sub             w12, w12, #1
     ld1             {v0.8h-v3.8h}, [x0], #64
     ld1             {v4.8h-v7.8h}, [x1], #64
@@ -513,7 +513,7 @@ function PFX(addAvg_48x64_neon)
     sqxtun          v2.8b, v20.8h
     sqxtun2         v2.16b, v21.8h
     st1             {v0.16b-v2.16b}, [x2], x5
-    cbnz            w12, .loop_addavg_48x64
+    cbnz            w12, .Loop_addavg_48x64
     ret
 endfunc
 
@@ -523,7 +523,7 @@ function PFX(addAvg_64x\h\()_neon)
     mov             w12, #\h
     sub             x3, x3, #64
     sub             x4, x4, #64
-.loop_addavg_64x\h\():
+.Loop_addavg_64x\h\():
     sub             w12, w12, #1
     ld1             {v0.8h-v3.8h}, [x0], #64
     ld1             {v4.8h-v7.8h}, [x1], #64
@@ -546,7 +546,7 @@ function PFX(addAvg_64x\h\()_neon)
     sqxtun          v3.8b, v22.8h
     sqxtun2         v3.16b, v23.8h
     st1             {v0.16b-v3.16b}, [x2], x5
-    cbnz            w12, .loop_addavg_64x\h
+    cbnz            w12, .Loop_addavg_64x\h
     ret
 endfunc
 .endm

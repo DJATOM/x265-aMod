@@ -262,7 +262,7 @@ p2s_24xN 64
 function PFX(filterPixelToShort_32x\h\()_neon)
     p2s_start
     mov             x9, #\h
-.loop_filterP2S_32x\h:
+.Loop_filterP2S_32x\h:
     sub             x9, x9, #1
 #if HIGH_BIT_DEPTH
     ld1             {v0.16b-v3.16b}, [x0], x1
@@ -282,7 +282,7 @@ function PFX(filterPixelToShort_32x\h\()_neon)
     add             v24.8h, v24.8h, v31.8h
     add             v25.8h, v25.8h, v31.8h
     st1             {v22.16b-v25.16b}, [x2], x3
-    cbnz            x9, .loop_filterP2S_32x\h
+    cbnz            x9, .Loop_filterP2S_32x\h
     ret
 endfunc
 .endm
@@ -302,7 +302,7 @@ function PFX(filterPixelToShort_64x\h\()_neon)
 #endif
     sub             x3, x3, #64
     mov             x9, #\h
-.loop_filterP2S_64x\h:
+.Loop_filterP2S_64x\h:
     sub             x9, x9, #1
 #if HIGH_BIT_DEPTH
     ld1             {v0.16b-v3.16b}, [x0], #64
@@ -336,7 +336,7 @@ function PFX(filterPixelToShort_64x\h\()_neon)
     add             v23.8h, v23.8h, v31.8h
     st1             {v16.16b-v19.16b}, [x2], #64
     st1             {v20.16b-v23.16b}, [x2], x3
-    cbnz            x9, .loop_filterP2S_64x\h
+    cbnz            x9, .Loop_filterP2S_64x\h
     ret
 endfunc
 .endm
@@ -353,7 +353,7 @@ function PFX(filterPixelToShort_48x64_neon)
 #endif
     sub             x3, x3, #64
     mov             x9, #64
-.loop_filterP2S_48x64:
+.Loop_filterP2S_48x64:
     sub            x9, x9, #1
 #if HIGH_BIT_DEPTH
     ld1             {v0.16b-v3.16b}, [x0], #64
@@ -381,6 +381,6 @@ function PFX(filterPixelToShort_48x64_neon)
     add             v21.8h, v21.8h, v31.8h
     st1             {v16.16b-v19.16b}, [x2], #64
     st1             {v20.16b-v21.16b}, [x2], x3
-    cbnz            x9, .loop_filterP2S_48x64
+    cbnz            x9, .Loop_filterP2S_48x64
     ret
 endfunc
