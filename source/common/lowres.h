@@ -175,6 +175,7 @@ struct Lowres : public ReferencePlanes
 
     int    frameNum;         // Presentation frame number
     int    sliceType;        // Slice type decided by lookahead
+    int    sliceTypeReq;     // Slice type required as per the QP file
     int    width;            // width of lowres frame in pixels
     int    lines;            // height of lowres frame in pixel lines
     int    leadingBframes;   // number of leading B frames for P or I

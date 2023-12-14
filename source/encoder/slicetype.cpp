@@ -1924,6 +1924,8 @@ void Lookahead::slicetypeDecide()
         {
             Lowres& frm = list[bframes]->m_lowres;
 
+            if (frm.sliceTypeReq != X265_TYPE_AUTO && frm.sliceTypeReq != frm.sliceType)
+                frm.sliceType = frm.sliceTypeReq;
             if (frm.sliceType == X265_TYPE_BREF && !m_param->bBPyramid && brefs == m_param->bBPyramid)
             {
                 frm.sliceType = X265_TYPE_B;
