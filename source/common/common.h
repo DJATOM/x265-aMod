@@ -176,6 +176,12 @@ inline T x265_clip3(T minVal, T maxVal, T a) { return x265_min(x265_max(minVal, 
 template<typename T> /* clip to pixel range, 0..255 or 0..1023 */
 inline pixel x265_clip(T x) { return (pixel)x265_min<T>(T((1 << X265_DEPTH) - 1), x265_max<T>(T(0), x)); }
 
+/* get the sign of input variable */
+static inline int8_t x265_signOf(int32_t x)
+{
+    return (x >> 31) | ((int32_t)((((uint32_t) - x)) >> 31));
+}
+
 typedef int16_t  coeff_t;      // transform coefficient
 
 #define X265_MIN(a, b) ((a) < (b) ? (a) : (b))

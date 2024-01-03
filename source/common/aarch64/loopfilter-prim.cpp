@@ -1,3 +1,4 @@
+#include "common.h"
 #include "loopfilter-prim.h"
 
 #define PIXEL_MIN 0
@@ -10,12 +11,6 @@
 namespace
 {
 
-
-/* get the sign of input variable (TODO: this is a dup, make common) */
-static inline int8_t signOf(int x)
-{
-    return (x >> 31) | ((int)((((uint32_t) - x)) >> 31));
-}
 
 static inline int8x8_t sign_diff_neon(const uint8x8_t in0, const uint8x8_t in1)
 {
@@ -33,7 +28,7 @@ static void calSign_neon(int8_t *dst, const pixel *src1, const pixel *src2, cons
 
     for (; x < endX; x++)
     {
-        dst[x] = signOf(src1[x] - src2[x]);
+        dst[x] = x265_signOf(src1[x] - src2[x]);
     }
 }
 
@@ -108,7 +103,7 @@ static void processSaoCUE1_neon(pixel *rec, int8_t *upBuff1, int8_t *offsetEo, i
     }
     for (; x < width; x++)
     {
-        signDown = signOf(rec[x] - rec[x + stride]);
+        signDown = x265_signOf(rec[x] - rec[x + stride]);
         edgeType = signDown + upBuff1[x] + 2;
         upBuff1[x] = -signDown;
         rec[x] = x265_clip(rec[x] + offsetEo[edgeType]);
@@ -144,7 +139,7 @@ static void processSaoCUE1_2Rows_neon(pixel *rec, int8_t *upBuff1, int8_t *offse
         }
         for (; x < width; x++)
         {
-            signDown = signOf(rec[x] - rec[x + stride]);
+            signDown = x265_signOf(rec[x] - rec[x + stride]);
             edgeType = signDown + upBuff1[x] + 2;
             upBuff1[x] = -signDown;
             rec[x] = x265_clip(rec[x] + offsetEo[edgeType]);
@@ -161,7 +156,7 @@ static void processSaoCUE2_neon(pixel *rec, int8_t *bufft, int8_t *buff1, int8_t
     {
         for (x = 0; x < width; x++)
         {
-            int8_t signDown = signOf(rec[x] - rec[x + stride + 1]);
+            int8_t signDown = x265_signOf(rec[x] - rec[x + stride + 1]);
             int edgeType = signDown + buff1[x] + 2;
             bufft[x + 1] = -signDown;
             rec[x] = x265_clip(rec[x] + offsetEo[edgeType]);;
@@ -186,7 +181,7 @@ static void processSaoCUE2_neon(pixel *rec, int8_t *bufft, int8_t *buff1, int8_t
         }
         for (; x < width; x++)
         {
-            int8_t signDown = signOf(rec[x] - rec[x + stride + 1]);
+            int8_t signDown = x265_signOf(rec[x] - rec[x + stride + 1]);
             int edgeType = signDown + buff1[x] + 2;
             bufft[x + 1] = -signDown;
             rec[x] = x265_clip(rec[x] + offsetEo[edgeType]);;
@@ -219,7 +214,7 @@ static void processSaoCUE3_neon(pixel *rec, int8_t *upBuff1, int8_t *offsetEo, i
     }
     for (; x < endX; x++)
     {
-        signDown = signOf(rec[x] - rec[x + stride]);
+        signDown = x265_signOf(rec[x] - rec[x + stride]);
         edgeType = signDown + upBuff1[x] + 2;
         upBuff1[x - 1] = -signDown;
         rec[x] = x265_clip(rec[x] + offsetEo[edgeType]);
