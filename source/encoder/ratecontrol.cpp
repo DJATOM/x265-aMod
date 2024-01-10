@@ -2545,7 +2545,7 @@ double RateControl::clipQscale(Frame* curFrame, RateControlEntry* rce, double q)
                     {
                         finalDur = x265_clip3(0.4, 1.0, totalDuration);
                     }
-                    targetFill = X265_MIN(m_bufferFill + totalDuration * m_vbvMaxRate * 0.5, m_bufferSize * (1 - m_minBufferFill * finalDur));
+                    targetFill = X265_MIN(m_bufferFill + totalDuration * m_vbvMaxRate * 0.5, m_bufferSize * (m_minBufferFill * finalDur));
                     if (bufferFillCur < targetFill)
                     {
                         q *= 1.01;
