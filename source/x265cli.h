@@ -135,6 +135,7 @@ static const struct option long_options[] =
     { "no-fast-intra",        no_argument, NULL, 0 },
     { "no-open-gop",          no_argument, NULL, 0 },
     { "open-gop",             no_argument, NULL, 0 },
+    { "cra-nal",              no_argument, NULL, 0 },
     { "keyint",         required_argument, NULL, 'I' },
     { "min-keyint",     required_argument, NULL, 'i' },
     { "gop-lookahead",  required_argument, NULL, 0 },

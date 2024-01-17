@@ -3662,6 +3662,12 @@ void Encoder::configure(x265_param *p)
     if (!p->rdoqLevel)
         p->psyRdoq = 0;
 
+    if (p->craNal && p->keyframeMax > 1)
+    {
+        x265_log_file(NULL, X265_LOG_ERROR, " --cra-nal works only with keyint 1, but given keyint = %s\n", p->keyframeMax);
+        m_aborted = true;
+    }
+
     /* Disable features which are not supported by the current RD level */
     if (p->rdLevel < 3)
     {

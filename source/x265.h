@@ -1260,6 +1260,9 @@ typedef struct x265_param
      * performance impact, but the use case may preclude it.  Default true */
     int       bOpenGOP;
 
+	/*Force nal type to CRA to all frames expect first frame. Default disabled*/
+	int       craNal;
+
     /* Scene cuts closer together than this are coded as I, not IDR. */
     int       keyframeMin;
 

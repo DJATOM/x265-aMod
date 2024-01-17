@@ -40,6 +40,7 @@ public:
     int                m_lastIDR;
     int                m_pocCRA;
     int                m_bOpenGOP;
+	int                m_craNal;
     int                m_bhasLeadingPicture;
     bool               m_bRefreshPending;
     bool               m_bTemporalSublayer;
@@ -66,6 +67,7 @@ public:
         m_bRefreshPending = false;
         m_frameDataFreeList = NULL;
         m_bOpenGOP = param->bOpenGOP;
+		m_craNal = param->craNal;
         m_bTemporalSublayer = (param->bEnableTemporalSubLayers > 2);
     }
 

@@ -166,6 +166,7 @@ namespace X265_NS {
         H0("   --rdpenalty <0..2>            penalty for 32x32 intra TU in non-I slices. 0:disabled 1:RD-penalty 2:maximum. Default %d\n", param->rdPenalty);
         H0("\nSlice decision options:\n");
         H0("   --[no-]open-gop               Enable open-GOP, allows I slices to be non-IDR. Default %s\n", OPT(param->bOpenGOP));
+		H0("   --cra-nal                     Force nal type to CRA to all frames expect first frame, works only with keyint 1. Default %s\n", OPT(param->craNal));
         H0("-I/--keyint <integer>            Max IDR period in frames. -1 for infinite-gop. Default %d\n", param->keyframeMax);
         H0("-i/--min-keyint <integer>        Scenecuts closer together than this are coded as I, not IDR. Default: auto\n");
         H0("   --gop-lookahead <integer>     Extends gop boundary if a scenecut is found within this from keyint boundary. Default 0\n");

@@ -489,7 +489,7 @@ NalUnitType DPB::getNalUnitType(int curPOC, bool bIsKeyFrame)
     if (!curPOC)
         return NAL_UNIT_CODED_SLICE_IDR_N_LP;
     if (bIsKeyFrame)
-        return m_bOpenGOP ? NAL_UNIT_CODED_SLICE_CRA : m_bhasLeadingPicture ? NAL_UNIT_CODED_SLICE_IDR_W_RADL : NAL_UNIT_CODED_SLICE_IDR_N_LP;
+        return (m_bOpenGOP || m_craNal) ? NAL_UNIT_CODED_SLICE_CRA : m_bhasLeadingPicture ? NAL_UNIT_CODED_SLICE_IDR_W_RADL : NAL_UNIT_CODED_SLICE_IDR_N_LP;
     if (m_pocCRA && curPOC < m_pocCRA)
         // All leading pictures are being marked as TFD pictures here since
         // current encoder uses all reference pictures while encoding leading

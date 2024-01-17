@@ -165,6 +165,7 @@ void x265_param_default(x265_param* param)
     param->keyframeMax = 250;
     param->gopLookahead = 0;
     param->bOpenGOP = 1;
+	param->craNal = 0;
     param->bframes = 4;
     param->lookaheadDepth = 20;
     param->bFrameAdaptive = X265_B_ADAPT_TRELLIS;
@@ -1284,6 +1285,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         OPT("multi-pass-opt-distortion") p->analysisMultiPassDistortion = atobool(value);
         OPT("aq-motion") p->bAQMotion = atobool(value);
         OPT("dynamic-rd") p->dynamicRd = atof(value);
+		OPT("cra-nal") p->craNal = atobool(value);
         OPT("analysis-reuse-level")
         {
             p->analysisReuseLevel = atoi(value);
@@ -2594,6 +2596,7 @@ void x265_copy_params(x265_param* dst, x265_param* src)
     dst->decodedPictureHashSEI = src->decodedPictureHashSEI;
     dst->bEnableTemporalSubLayers = src->bEnableTemporalSubLayers;
     dst->bOpenGOP = src->bOpenGOP;
+	dst->craNal = src->craNal;
     dst->keyframeMax = src->keyframeMax;
     dst->keyframeMin = src->keyframeMin;
     dst->bframes = src->bframes;
