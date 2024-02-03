@@ -260,6 +260,8 @@ RateControl::RateControl(x265_param& p, Encoder *top)
     m_initVbv = false;
     m_singleFrameVbv = 0;
     m_rateTolerance = 1.0;
+    m_encodedSegmentBits = 0;
+    m_segDur = 0;
 
     if (m_param->rc.vbvBufferSize)
     {
@@ -448,7 +450,9 @@ bool RateControl::init(const SPS& sps)
 
     m_totalBits = 0;
     m_encodedBits = 0;
+    m_encodedSegmentBits = 0;
     m_framesDone = 0;
+    m_segDur = 0;
     m_residualCost = 0;
     m_partialResidualCost = 0;
     m_amortizeFraction = 0.85;
@@ -1351,6 +1355,16 @@ int RateControl::rateControlStart(Frame* curFrame, RateControlEntry* rce, Encode
     m_predType = getPredictorType(curFrame->m_lowres.sliceType, m_sliceType);
     rce->poc = m_curSlice->m_poc;
 
+    if (m_param->bEnableSBRC)
+    {
+        if (rce->poc == 0 || (m_framesDone % m_param->keyframeMax == 0))
+        {
+            //Reset SBRC buffer
+            m_encodedSegmentBits = 0;
+            m_segDur = 0;
+        }
+    }
+
     if (!m_param->bResetZoneConfig && (rce->encodeOrder % m_param->reconfigWindowSize == 0))
     {
         int index = m_zoneBufferIdx % m_param->rc.zonefileCount;
@@ -1974,8 +1988,16 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
             double minScenecutQscale =x265_qp2qScale(ABR_SCENECUT_INIT_QP_MIN); 
             m_lastQScaleFor[P_SLICE] = X265_MAX(minScenecutQscale, m_lastQScaleFor[P_SLICE]);
         }
+
         double qScale = x265_qp2qScale(q);
         rce->qpNoVbv = q;
+
+        if (m_param->bEnableSBRC)
+        {
+            qScale = tuneQscaleForSBRC(curFrame, qScale);
+            rce->qpNoVbv = x265_qScale2qp(qScale);
+        }
+
         double lmin = 0, lmax = 0;
         if (m_isGrainEnabled && m_isFirstMiniGop)
         {
@@ -2200,7 +2222,8 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
                     double rfConstant = m_param->rc.rfConstant;
                     if (m_currentSatd < rce->movingAvgSum)
                         rfConstant += 2;
-                    rfConstant = (rce->sliceType == I_SLICE ? rfConstant - m_ipOffset :
+                    double ipOffset = (curFrame->m_lowres.bScenecut ? m_ipOffset : m_ipOffset / 2.0);
+                    rfConstant = (rce->sliceType == I_SLICE ? rfConstant - ipOffset :
                         (rce->sliceType == B_SLICE ? rfConstant + m_pbOffset : rfConstant));
                     double mbtree_offset = m_param->rc.cuTree ? (1.0 - m_param->rc.qCompress) * 13.5 : 0;
                     double qComp = (m_param->rc.cuTree && !m_param->rc.hevcAq) ? 0.99 : m_param->rc.qCompress;
@@ -2288,6 +2311,9 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
                 q = X265_MAX(minScenecutQscale, q);
                 m_lastQScaleFor[P_SLICE] = X265_MAX(minScenecutQscale, m_lastQScaleFor[P_SLICE]);
             }
+            if (m_param->bEnableSBRC)
+                q = tuneQscaleForSBRC(curFrame, q);
+
             rce->qpNoVbv = x265_qScale2qp(q);
             if (m_sliceType == P_SLICE)
             {
@@ -2467,6 +2493,43 @@ void RateControl::updateVbvPlan(Encoder* enc)
 double RateControl::predictSize(Predictor *p, double q, double var)
 {
     return (p->coeff * var + p->offset) / (q * p->count);
+}
+
+double RateControl::tuneQscaleForSBRC(Frame* curFrame, double q)
+{
+    int depth = 0;
+    int framesDoneInSeg = m_framesDone % m_param->keyframeMax;
+    if (framesDoneInSeg + m_param->lookaheadDepth <= m_param->keyframeMax)
+        depth = m_param->lookaheadDepth;
+    else
+        depth = m_param->keyframeMax - framesDoneInSeg;
+    for (int iterations = 0; iterations < 1000; iterations++)
+    {
+        double totalDuration = m_segDur;
+        double frameBitsTotal = m_encodedSegmentBits + predictSize(&m_pred[m_predType], q, (double)m_currentSatd);
+        for (int i = 0; i < depth; i++)
+        {
+            int type = curFrame->m_lowres.plannedType[i];
+            if (type == X265_TYPE_AUTO)
+                break;
+            int64_t satd = curFrame->m_lowres.plannedSatd[i] >> (X265_DEPTH - 8);
+            type = IS_X265_TYPE_I(curFrame->m_lowres.plannedType[i]) ? I_SLICE : IS_X265_TYPE_B(curFrame->m_lowres.plannedType[i]) ? B_SLICE : P_SLICE;
+            int predType = getPredictorType(curFrame->m_lowres.plannedType[i], type);
+            double curBits = predictSize(&m_pred[predType], q, (double)satd);
+            frameBitsTotal += curBits;
+            totalDuration += m_frameDuration;
+        }
+        //Check for segment buffer overflow and adjust QP accordingly
+        double segDur = m_param->keyframeMax / m_fps;
+        double allowedSize = m_vbvMaxRate * segDur;
+        double remDur = segDur - totalDuration;
+        double remainingBits = frameBitsTotal / totalDuration * remDur;
+        if (frameBitsTotal + remainingBits > 0.9 * allowedSize)
+            q = q * 1.01;
+        else
+            break;
+    }
+    return q;
 }
 
 double RateControl::clipQscale(Frame* curFrame, RateControlEntry* rce, double q)
@@ -3072,6 +3135,8 @@ int RateControl::rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry*
         m_wantedBitsWindow += m_frameDuration * m_bitrate;
         m_totalBits += bits - rce->rowTotalBits;
         m_encodedBits += actualBits;
+        m_encodedSegmentBits += actualBits;
+        m_segDur += m_frameDuration;
         int pos = m_sliderPos - m_param->frameNumThreads;
         if (pos >= 0)
             m_encodedBitsWindow[pos % s_slidingWindowFrames] = actualBits;
