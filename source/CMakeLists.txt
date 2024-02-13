@@ -305,7 +305,13 @@ if(GCC)
             set(ARM_ARGS -O3 -march=armv9-a+sve2)
             add_definitions(-DHAVE_SVE2=1)
         endif()
-        set(ARM_ARGS ${ARM_ARGS} -fPIC -flax-vector-conversions)
+        set(ARM_ARGS ${ARM_ARGS} -fPIC)
+        # Do not allow implicit vector type conversions in Clang builds (this
+        # is already the default in GCC builds).
+        check_cxx_compiler_flag(-flax-vector-conversions=none CC_HAS_FLAX_VEC_CONV_NONE)
+        if(CC_HAS_FLAX_VEC_CONV_NONE)
+            set(ARM_ARGS ${ARM_ARGS} -flax-vector-conversions=none)
+        endif()
         if(CPU_HAS_SVE)
             set(SVE_HEADER_TEST "
 #ifndef __ARM_NEON_SVE_BRIDGE
