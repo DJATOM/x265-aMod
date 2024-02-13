@@ -812,7 +812,12 @@ X265_PRAGMA_UNROLL(8)
 }
 
 
-static void dct8_neon(const int16_t *src, int16_t *dst, intptr_t srcStride)
+}
+
+namespace X265_NS
+{
+// x265 private namespace
+void dct8_neon(const int16_t *src, int16_t *dst, intptr_t srcStride)
 {
     const int shift_1st = 2 + X265_DEPTH - 8;
     const int shift_2nd = 9;
@@ -829,7 +834,7 @@ static void dct8_neon(const int16_t *src, int16_t *dst, intptr_t srcStride)
     partialButterfly8(coef, dst, shift_2nd, 8);
 }
 
-static void dct16_neon(const int16_t *src, int16_t *dst, intptr_t srcStride)
+void dct16_neon(const int16_t *src, int16_t *dst, intptr_t srcStride)
 {
     const int shift_1st = 3 + X265_DEPTH - 8;
     const int shift_2nd = 10;
@@ -846,7 +851,7 @@ static void dct16_neon(const int16_t *src, int16_t *dst, intptr_t srcStride)
     partialButterfly16(coef, dst, shift_2nd, 16);
 }
 
-static void dct32_neon(const int16_t *src, int16_t *dst, intptr_t srcStride)
+void dct32_neon(const int16_t *src, int16_t *dst, intptr_t srcStride)
 {
     const int shift_1st = 4 + X265_DEPTH - 8;
     const int shift_2nd = 11;
@@ -863,7 +868,7 @@ static void dct32_neon(const int16_t *src, int16_t *dst, intptr_t srcStride)
     partialButterfly32(coef, dst, shift_2nd, 32);
 }
 
-static void idct4_neon(const int16_t *src, int16_t *dst, intptr_t dstStride)
+void idct4_neon(const int16_t *src, int16_t *dst, intptr_t dstStride)
 {
     const int shift_1st = 7;
     const int shift_2nd = 12 - (X265_DEPTH - 8);
@@ -880,7 +885,7 @@ static void idct4_neon(const int16_t *src, int16_t *dst, intptr_t dstStride)
     }
 }
 
-static void idct16_neon(const int16_t *src, int16_t *dst, intptr_t dstStride)
+void idct16_neon(const int16_t *src, int16_t *dst, intptr_t dstStride)
 {
     const int shift_1st = 7;
     const int shift_2nd = 12 - (X265_DEPTH - 8);
@@ -897,7 +902,7 @@ static void idct16_neon(const int16_t *src, int16_t *dst, intptr_t dstStride)
     }
 }
 
-static void idct32_neon(const int16_t *src, int16_t *dst, intptr_t dstStride)
+void idct32_neon(const int16_t *src, int16_t *dst, intptr_t dstStride)
 {
     const int shift_1st = 7;
     const int shift_2nd = 12 - (X265_DEPTH - 8);
@@ -914,13 +919,6 @@ static void idct32_neon(const int16_t *src, int16_t *dst, intptr_t dstStride)
     }
 }
 
-
-
-}
-
-namespace X265_NS
-{
-// x265 private namespace
 void setupDCTPrimitives_neon(EncoderPrimitives &p)
 {
     p.cu[BLOCK_4x4].nonPsyRdoQuant   = nonPsyRdoQuant_neon<2>;
