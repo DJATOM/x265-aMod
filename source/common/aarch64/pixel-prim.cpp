@@ -1069,10 +1069,9 @@ void sad_x4_neon(const pixel *pix1, const pixel *pix2, const pixel *pix3, const 
         {
             /* This is equivalent to adding across each of the sum vectors and then adding
              * to result. */
-            uint16x8_t a = vpaddq_s16(vsum16_0, vsum16_1);
-            uint16x8_t b = vpaddq_s16(vsum16_2, vsum16_3);
-            uint16x8_t c = vpaddq_s16(a, b);
-            result = vpadalq_s16(result, c);
+            uint32x4_t sum01 = vpaddlq_u16(vpaddq_u16(vsum16_0, vsum16_1));
+            uint32x4_t sum23 = vpaddlq_u16(vpaddq_u16(vsum16_2, vsum16_3));
+            result = vaddq_u32(result, vpaddq_u32(sum01, sum23));
         }
 
 #else
