@@ -7,6 +7,8 @@
 #include "arm64-utils.h"
 #if HAVE_NEON
 
+#include "mem-neon.h"
+
 #include <arm_neon.h>
 
 using namespace X265_NS;
@@ -197,30 +199,30 @@ static inline void _sub_8x8_fly(const uint16_t *pix1, intptr_t stride_pix1, cons
     int16x8_t v16, v17;
     int16x8_t v18, v19;
 
-    r0 = *(uint16x8_t *)(pix1 + 0 * stride_pix1);
-    r1 = *(uint16x8_t *)(pix1 + 1 * stride_pix1);
-    r2 = *(uint16x8_t *)(pix1 + 2 * stride_pix1);
-    r3 = *(uint16x8_t *)(pix1 + 3 * stride_pix1);
+    r0 = vld1q_u16(pix1 + 0 * stride_pix1);
+    r1 = vld1q_u16(pix1 + 1 * stride_pix1);
+    r2 = vld1q_u16(pix1 + 2 * stride_pix1);
+    r3 = vld1q_u16(pix1 + 3 * stride_pix1);
 
-    t0 = *(uint16x8_t *)(pix2 + 0 * stride_pix2);
-    t1 = *(uint16x8_t *)(pix2 + 1 * stride_pix2);
-    t2 = *(uint16x8_t *)(pix2 + 2 * stride_pix2);
-    t3 = *(uint16x8_t *)(pix2 + 3 * stride_pix2);
+    t0 = vld1q_u16(pix2 + 0 * stride_pix2);
+    t1 = vld1q_u16(pix2 + 1 * stride_pix2);
+    t2 = vld1q_u16(pix2 + 2 * stride_pix2);
+    t3 = vld1q_u16(pix2 + 3 * stride_pix2);
 
     v16 = vsubq_u16(r0, t0);
     v17 = vsubq_u16(r1, t1);
     v18 = vsubq_u16(r2, t2);
     v19 = vsubq_u16(r3, t3);
 
-    r0 = *(uint16x8_t *)(pix1 + 4 * stride_pix1);
-    r1 = *(uint16x8_t *)(pix1 + 5 * stride_pix1);
-    r2 = *(uint16x8_t *)(pix1 + 6 * stride_pix1);
-    r3 = *(uint16x8_t *)(pix1 + 7 * stride_pix1);
+    r0 = vld1q_u16(pix1 + 4 * stride_pix1);
+    r1 = vld1q_u16(pix1 + 5 * stride_pix1);
+    r2 = vld1q_u16(pix1 + 6 * stride_pix1);
+    r3 = vld1q_u16(pix1 + 7 * stride_pix1);
 
-    t0 = *(uint16x8_t *)(pix2 + 4 * stride_pix2);
-    t1 = *(uint16x8_t *)(pix2 + 5 * stride_pix2);
-    t2 = *(uint16x8_t *)(pix2 + 6 * stride_pix2);
-    t3 = *(uint16x8_t *)(pix2 + 7 * stride_pix2);
+    t0 = vld1q_u16(pix2 + 4 * stride_pix2);
+    t1 = vld1q_u16(pix2 + 5 * stride_pix2);
+    t2 = vld1q_u16(pix2 + 6 * stride_pix2);
+    t3 = vld1q_u16(pix2 + 7 * stride_pix2);
 
     v20 = vsubq_u16(r0, t0);
     v21 = vsubq_u16(r1, t1);
@@ -243,15 +245,15 @@ static void _satd_16x4_neon(const uint16_t *pix1, intptr_t stride_pix1, const ui
     int16x8_t v16, v17, v20, v21;
     int16x8_t v18, v19, v22, v23;
 
-    r0 = *(int16x8_t *)(pix1 + 0 * stride_pix1);
-    r1 = *(int16x8_t *)(pix1 + 1 * stride_pix1);
-    r2 = *(int16x8_t *)(pix1 + 2 * stride_pix1);
-    r3 = *(int16x8_t *)(pix1 + 3 * stride_pix1);
+    r0 = vld1q_u16(pix1 + 0 * stride_pix1);
+    r1 = vld1q_u16(pix1 + 1 * stride_pix1);
+    r2 = vld1q_u16(pix1 + 2 * stride_pix1);
+    r3 = vld1q_u16(pix1 + 3 * stride_pix1);
 
-    t0 = *(int16x8_t *)(pix2 + 0 * stride_pix2);
-    t1 = *(int16x8_t *)(pix2 + 1 * stride_pix2);
-    t2 = *(int16x8_t *)(pix2 + 2 * stride_pix2);
-    t3 = *(int16x8_t *)(pix2 + 3 * stride_pix2);
+    t0 = vld1q_u16(pix2 + 0 * stride_pix2);
+    t1 = vld1q_u16(pix2 + 1 * stride_pix2);
+    t2 = vld1q_u16(pix2 + 2 * stride_pix2);
+    t3 = vld1q_u16(pix2 + 3 * stride_pix2);
 
 
     v16 = vsubq_u16((r0), (t0));
@@ -259,15 +261,15 @@ static void _satd_16x4_neon(const uint16_t *pix1, intptr_t stride_pix1, const ui
     v18 = vsubq_u16((r2), (t2));
     v19 = vsubq_u16((r3), (t3));
 
-    r0 = *(int16x8_t *)(pix1 + 0 * stride_pix1 + 8);
-    r1 = *(int16x8_t *)(pix1 + 1 * stride_pix1 + 8);
-    r2 = *(int16x8_t *)(pix1 + 2 * stride_pix1 + 8);
-    r3 = *(int16x8_t *)(pix1 + 3 * stride_pix1 + 8);
+    r0 = vld1q_u16(pix1 + 0 * stride_pix1 + 8);
+    r1 = vld1q_u16(pix1 + 1 * stride_pix1 + 8);
+    r2 = vld1q_u16(pix1 + 2 * stride_pix1 + 8);
+    r3 = vld1q_u16(pix1 + 3 * stride_pix1 + 8);
 
-    t0 = *(int16x8_t *)(pix2 + 0 * stride_pix2 + 8);
-    t1 = *(int16x8_t *)(pix2 + 1 * stride_pix2 + 8);
-    t2 = *(int16x8_t *)(pix2 + 2 * stride_pix2 + 8);
-    t3 = *(int16x8_t *)(pix2 + 3 * stride_pix2 + 8);
+    t0 = vld1q_u16(pix2 + 0 * stride_pix2 + 8);
+    t1 = vld1q_u16(pix2 + 1 * stride_pix2 + 8);
+    t2 = vld1q_u16(pix2 + 2 * stride_pix2 + 8);
+    t3 = vld1q_u16(pix2 + 3 * stride_pix2 + 8);
 
 
     v20 = vsubq_u16(r0, t0);
@@ -285,16 +287,19 @@ static void _satd_16x4_neon(const uint16_t *pix1, intptr_t stride_pix1, const ui
 
 int pixel_satd_4x4_neon(const uint16_t *pix1, intptr_t stride_pix1, const uint16_t *pix2, intptr_t stride_pix2)
 {
-    uint64x2_t t0, t1, r0, r1;
-    t0[0] = *(uint64_t *)(pix1 + 0 * stride_pix1);
-    t1[0] = *(uint64_t *)(pix1 + 1 * stride_pix1);
-    t0[1] = *(uint64_t *)(pix1 + 2 * stride_pix1);
-    t1[1] = *(uint64_t *)(pix1 + 3 * stride_pix1);
+    uint16x4_t t0_0 = vld1_u16(pix1 + 0 * stride_pix1);
+    uint16x4_t t1_0 = vld1_u16(pix1 + 1 * stride_pix1);
+    uint16x4_t t0_1 = vld1_u16(pix1 + 2 * stride_pix1);
+    uint16x4_t t1_1 = vld1_u16(pix1 + 3 * stride_pix1);
+    uint16x8_t t0 = vcombine_u16(t0_0, t0_1);
+    uint16x8_t t1 = vcombine_u16(t1_0, t1_1);
 
-    r0[0] = *(uint64_t *)(pix2 + 0 * stride_pix1);
-    r1[0] = *(uint64_t *)(pix2 + 1 * stride_pix2);
-    r0[1] = *(uint64_t *)(pix2 + 2 * stride_pix2);
-    r1[1] = *(uint64_t *)(pix2 + 3 * stride_pix2);
+    uint16x4_t r0_0 = vld1_u16(pix2 + 0 * stride_pix2);
+    uint16x4_t r1_0 = vld1_u16(pix2 + 1 * stride_pix2);
+    uint16x4_t r0_1 = vld1_u16(pix2 + 2 * stride_pix2);
+    uint16x4_t r1_1 = vld1_u16(pix2 + 3 * stride_pix2);
+    uint16x8_t r0 = vcombine_u16(r0_0, r0_1);
+    uint16x8_t r1 = vcombine_u16(r1_0, r1_1);
 
     return _satd_4x4_neon(vsubq_u16(t0, r0), vsubq_u16(r1, t1));
 }
@@ -308,14 +313,14 @@ int pixel_satd_8x4_neon(const uint16_t *pix1, intptr_t stride_pix1, const uint16
 {
     uint16x8_t i0, i1, i2, i3, i4, i5, i6, i7;
 
-    i0 = *(uint16x8_t *)(pix1 + 0 * stride_pix1);
-    i1 = *(uint16x8_t *)(pix2 + 0 * stride_pix2);
-    i2 = *(uint16x8_t *)(pix1 + 1 * stride_pix1);
-    i3 = *(uint16x8_t *)(pix2 + 1 * stride_pix2);
-    i4 = *(uint16x8_t *)(pix1 + 2 * stride_pix1);
-    i5 = *(uint16x8_t *)(pix2 + 2 * stride_pix2);
-    i6 = *(uint16x8_t *)(pix1 + 3 * stride_pix1);
-    i7 = *(uint16x8_t *)(pix2 + 3 * stride_pix2);
+    i0 = vld1q_u16(pix1 + 0 * stride_pix1);
+    i1 = vld1q_u16(pix2 + 0 * stride_pix2);
+    i2 = vld1q_u16(pix1 + 1 * stride_pix1);
+    i3 = vld1q_u16(pix2 + 1 * stride_pix2);
+    i4 = vld1q_u16(pix1 + 2 * stride_pix1);
+    i5 = vld1q_u16(pix2 + 2 * stride_pix2);
+    i6 = vld1q_u16(pix1 + 3 * stride_pix1);
+    i7 = vld1q_u16(pix2 + 3 * stride_pix2);
 
     int16x8_t v0 = vsubq_u16(i0, i1);
     int16x8_t v1 = vsubq_u16(i2, i3);
@@ -351,15 +356,15 @@ static void _satd_16x4_neon(const uint8_t *pix1, intptr_t stride_pix1, const uin
     int16x8_t v16, v17, v20, v21;
     int16x8_t v18, v19, v22, v23;
 
-    r0 = *(uint8x16_t *)(pix1 + 0 * stride_pix1);
-    r1 = *(uint8x16_t *)(pix1 + 1 * stride_pix1);
-    r2 = *(uint8x16_t *)(pix1 + 2 * stride_pix1);
-    r3 = *(uint8x16_t *)(pix1 + 3 * stride_pix1);
+    r0 = vld1q_u8(pix1 + 0 * stride_pix1);
+    r1 = vld1q_u8(pix1 + 1 * stride_pix1);
+    r2 = vld1q_u8(pix1 + 2 * stride_pix1);
+    r3 = vld1q_u8(pix1 + 3 * stride_pix1);
 
-    t0 = *(uint8x16_t *)(pix2 + 0 * stride_pix2);
-    t1 = *(uint8x16_t *)(pix2 + 1 * stride_pix2);
-    t2 = *(uint8x16_t *)(pix2 + 2 * stride_pix2);
-    t3 = *(uint8x16_t *)(pix2 + 3 * stride_pix2);
+    t0 = vld1q_u8(pix2 + 0 * stride_pix2);
+    t1 = vld1q_u8(pix2 + 1 * stride_pix2);
+    t2 = vld1q_u8(pix2 + 2 * stride_pix2);
+    t3 = vld1q_u8(pix2 + 3 * stride_pix2);
 
 
 
@@ -389,30 +394,30 @@ static inline void _sub_8x8_fly(const uint8_t *pix1, intptr_t stride_pix1, const
     int16x8_t v16, v17;
     int16x8_t v18, v19;
 
-    r0 = *(uint8x8_t *)(pix1 + 0 * stride_pix1);
-    r1 = *(uint8x8_t *)(pix1 + 1 * stride_pix1);
-    r2 = *(uint8x8_t *)(pix1 + 2 * stride_pix1);
-    r3 = *(uint8x8_t *)(pix1 + 3 * stride_pix1);
+    r0 = vld1_u8(pix1 + 0 * stride_pix1);
+    r1 = vld1_u8(pix1 + 1 * stride_pix1);
+    r2 = vld1_u8(pix1 + 2 * stride_pix1);
+    r3 = vld1_u8(pix1 + 3 * stride_pix1);
 
-    t0 = *(uint8x8_t *)(pix2 + 0 * stride_pix2);
-    t1 = *(uint8x8_t *)(pix2 + 1 * stride_pix2);
-    t2 = *(uint8x8_t *)(pix2 + 2 * stride_pix2);
-    t3 = *(uint8x8_t *)(pix2 + 3 * stride_pix2);
+    t0 = vld1_u8(pix2 + 0 * stride_pix2);
+    t1 = vld1_u8(pix2 + 1 * stride_pix2);
+    t2 = vld1_u8(pix2 + 2 * stride_pix2);
+    t3 = vld1_u8(pix2 + 3 * stride_pix2);
 
     v16 = vsubl_u8(r0, t0);
     v17 = vsubl_u8(r1, t1);
     v18 = vsubl_u8(r2, t2);
     v19 = vsubl_u8(r3, t3);
 
-    r0 = *(uint8x8_t *)(pix1 + 4 * stride_pix1);
-    r1 = *(uint8x8_t *)(pix1 + 5 * stride_pix1);
-    r2 = *(uint8x8_t *)(pix1 + 6 * stride_pix1);
-    r3 = *(uint8x8_t *)(pix1 + 7 * stride_pix1);
+    r0 = vld1_u8(pix1 + 4 * stride_pix1);
+    r1 = vld1_u8(pix1 + 5 * stride_pix1);
+    r2 = vld1_u8(pix1 + 6 * stride_pix1);
+    r3 = vld1_u8(pix1 + 7 * stride_pix1);
 
-    t0 = *(uint8x8_t *)(pix2 + 4 * stride_pix2);
-    t1 = *(uint8x8_t *)(pix2 + 5 * stride_pix2);
-    t2 = *(uint8x8_t *)(pix2 + 6 * stride_pix2);
-    t3 = *(uint8x8_t *)(pix2 + 7 * stride_pix2);
+    t0 = vld1_u8(pix2 + 4 * stride_pix2);
+    t1 = vld1_u8(pix2 + 5 * stride_pix2);
+    t2 = vld1_u8(pix2 + 6 * stride_pix2);
+    t3 = vld1_u8(pix2 + 7 * stride_pix2);
 
     v20 = vsubl_u8(r0, t0);
     v21 = vsubl_u8(r1, t1);
@@ -427,16 +432,11 @@ static inline void _sub_8x8_fly(const uint8_t *pix1, intptr_t stride_pix1, const
 
 int pixel_satd_4x4_neon(const uint8_t *pix1, intptr_t stride_pix1, const uint8_t *pix2, intptr_t stride_pix2)
 {
-    uint32x2_t t0, t1, r0, r1;
-    t0[0] = *(uint32_t *)(pix1 + 0 * stride_pix1);
-    t1[0] = *(uint32_t *)(pix1 + 1 * stride_pix1);
-    t0[1] = *(uint32_t *)(pix1 + 2 * stride_pix1);
-    t1[1] = *(uint32_t *)(pix1 + 3 * stride_pix1);
+    uint8x8_t t0 = load_u8x4x2(pix1, 2 * stride_pix1);
+    uint8x8_t t1 = load_u8x4x2(pix1 + stride_pix1, 2 * stride_pix1);
 
-    r0[0] = *(uint32_t *)(pix2 + 0 * stride_pix1);
-    r1[0] = *(uint32_t *)(pix2 + 1 * stride_pix2);
-    r0[1] = *(uint32_t *)(pix2 + 2 * stride_pix2);
-    r1[1] = *(uint32_t *)(pix2 + 3 * stride_pix2);
+    uint8x8_t r0 = load_u8x4x2(pix2, 2 * stride_pix2);
+    uint8x8_t r1 = load_u8x4x2(pix2 + stride_pix2, 2 * stride_pix2);
 
     return _satd_4x4_neon(vsubl_u8(t0, r0), vsubl_u8(r1, t1));
 }
@@ -446,14 +446,14 @@ int pixel_satd_8x4_neon(const uint8_t *pix1, intptr_t stride_pix1, const uint8_t
 {
     uint8x8_t i0, i1, i2, i3, i4, i5, i6, i7;
 
-    i0 = *(uint8x8_t *)(pix1 + 0 * stride_pix1);
-    i1 = *(uint8x8_t *)(pix2 + 0 * stride_pix2);
-    i2 = *(uint8x8_t *)(pix1 + 1 * stride_pix1);
-    i3 = *(uint8x8_t *)(pix2 + 1 * stride_pix2);
-    i4 = *(uint8x8_t *)(pix1 + 2 * stride_pix1);
-    i5 = *(uint8x8_t *)(pix2 + 2 * stride_pix2);
-    i6 = *(uint8x8_t *)(pix1 + 3 * stride_pix1);
-    i7 = *(uint8x8_t *)(pix2 + 3 * stride_pix2);
+    i0 = vld1_u8(pix1 + 0 * stride_pix1);
+    i1 = vld1_u8(pix2 + 0 * stride_pix2);
+    i2 = vld1_u8(pix1 + 1 * stride_pix1);
+    i3 = vld1_u8(pix2 + 1 * stride_pix2);
+    i4 = vld1_u8(pix1 + 2 * stride_pix1);
+    i5 = vld1_u8(pix2 + 2 * stride_pix2);
+    i6 = vld1_u8(pix1 + 3 * stride_pix1);
+    i7 = vld1_u8(pix2 + 3 * stride_pix2);
 
     int16x8_t v0 = vsubl_u8(i0, i1);
     int16x8_t v1 = vsubl_u8(i2, i3);
@@ -812,7 +812,7 @@ void blockfill_s_neon(int16_t *dst, intptr_t dstride, int16_t val)
         int16x8_t v = vdupq_n_s16(val);
         for (; (x + 8) <= size; x += 8)
         {
-            *(int16x8_t *)&dst[y * dstride + x] = v;
+            vst1q_s16(dst + y * dstride + x, v);
         }
         for (; x < size; x++)
         {
@@ -834,15 +834,15 @@ int sad_pp_neon(const pixel *pix1, intptr_t stride_pix1, const pixel *pix2, intp
         uint16x8_t vsum16_1 = vdupq_n_u16(0);
         for (; (x + 8) <= lx; x += 8)
         {
-            uint16x8_t p1 = *(uint16x8_t *)&pix1[x];
-            uint16x8_t p2 = *(uint16x8_t *)&pix2[x];
+            uint16x8_t p1 = vld1q_u16(pix1 + x);
+            uint16x8_t p2 = vld1q_u16(pix2 + x);
             vsum16_1 = vabaq_s16(vsum16_1, p1, p2);
 
         }
         if (lx & 4)
         {
-            uint16x4_t p1 = *(uint16x4_t *)&pix1[x];
-            uint16x4_t p2 = *(uint16x4_t *)&pix2[x];
+            uint16x4_t p1 = vld1_u16(pix1 + x);
+            uint16x4_t p2 = vld1_u16(pix2 + x);
             sum += vaddlv_s16(vaba_s16(vdup_n_s16(0), p1, p2));
             x += 4;
         }
@@ -859,24 +859,22 @@ int sad_pp_neon(const pixel *pix1, intptr_t stride_pix1, const pixel *pix2, intp
 
         for (; (x + 16) <= lx; x += 16)
         {
-            uint8x16_t p1 = *(uint8x16_t *)&pix1[x];
-            uint8x16_t p2 = *(uint8x16_t *)&pix2[x];
+            uint8x16_t p1 = vld1q_u8(pix1 + x);
+            uint8x16_t p2 = vld1q_u8(pix2 + x);
             vsum16_1 = vabal_u8(vsum16_1, vget_low_u8(p1), vget_low_u8(p2));
             vsum16_2 = vabal_high_u8(vsum16_2, p1, p2);
         }
         if (lx & 8)
         {
-            uint8x8_t p1 = *(uint8x8_t *)&pix1[x];
-            uint8x8_t p2 = *(uint8x8_t *)&pix2[x];
+            uint8x8_t p1 = vld1_u8(pix1 + x);
+            uint8x8_t p2 = vld1_u8(pix2 + x);
             vsum16_1 = vabal_u8(vsum16_1, p1, p2);
             x += 8;
         }
         if (lx & 4)
         {
-            uint32x2_t p1 = vdup_n_u32(0);
-            p1[0] = *(uint32_t *)&pix1[x];
-            uint32x2_t p2 = vdup_n_u32(0);
-            p2[0] = *(uint32_t *)&pix2[x];
+            uint8x8_t p1 = load_u8x4x1(pix1 + x);
+            uint8x8_t p2 = load_u8x4x1(pix2 + x);
             vsum16_1 = vabal_u8(vsum16_1, p1, p2);
             x += 4;
         }
@@ -918,10 +916,10 @@ void sad_x3_neon(const pixel *pix1, const pixel *pix2, const pixel *pix3, const 
 #if HIGH_BIT_DEPTH
         for (; (x + 8) <= lx; x += 8)
         {
-            uint16x8_t p1 = *(uint16x8_t *)&pix1[x];
-            uint16x8_t p2 = *(uint16x8_t *)&pix2[x];
-            uint16x8_t p3 = *(uint16x8_t *)&pix3[x];
-            uint16x8_t p4 = *(uint16x8_t *)&pix4[x];
+            uint16x8_t p1 = vld1q_u16(pix1 + x);
+            uint16x8_t p2 = vld1q_u16(pix2 + x);
+            uint16x8_t p3 = vld1q_u16(pix3 + x);
+            uint16x8_t p4 = vld1q_u16(pix4 + x);
             vsum16_0 = vabaq_s16(vsum16_0, p1, p2);
             vsum16_1 = vabaq_s16(vsum16_1, p1, p3);
             vsum16_2 = vabaq_s16(vsum16_2, p1, p4);
@@ -929,10 +927,10 @@ void sad_x3_neon(const pixel *pix1, const pixel *pix2, const pixel *pix3, const 
         }
         if (lx & 4)
         {
-            uint16x4_t p1 = *(uint16x4_t *)&pix1[x];
-            uint16x4_t p2 = *(uint16x4_t *)&pix2[x];
-            uint16x4_t p3 = *(uint16x4_t *)&pix3[x];
-            uint16x4_t p4 = *(uint16x4_t *)&pix4[x];
+            uint16x4_t p1 = vld1_u16(pix1 + x);
+            uint16x4_t p2 = vld1_u16(pix2 + x);
+            uint16x4_t p3 = vld1_u16(pix3 + x);
+            uint16x4_t p4 = vld1_u16(pix4 + x);
             res[0] += vaddlv_s16(vaba_s16(vdup_n_s16(0), p1, p2));
             res[1] += vaddlv_s16(vaba_s16(vdup_n_s16(0), p1, p3));
             res[2] += vaddlv_s16(vaba_s16(vdup_n_s16(0), p1, p4));
@@ -948,10 +946,10 @@ void sad_x3_neon(const pixel *pix1, const pixel *pix2, const pixel *pix3, const 
 
         for (; (x + 16) <= lx; x += 16)
         {
-            uint8x16_t p1 = *(uint8x16_t *)&pix1[x];
-            uint8x16_t p2 = *(uint8x16_t *)&pix2[x];
-            uint8x16_t p3 = *(uint8x16_t *)&pix3[x];
-            uint8x16_t p4 = *(uint8x16_t *)&pix4[x];
+            uint8x16_t p1 = vld1q_u8(pix1 + x);
+            uint8x16_t p2 = vld1q_u8(pix2 + x);
+            uint8x16_t p3 = vld1q_u8(pix3 + x);
+            uint8x16_t p4 = vld1q_u8(pix4 + x);
             vsum16_0 = vabal_u8(vsum16_0, vget_low_u8(p1), vget_low_u8(p2));
             vsum16_0 = vabal_high_u8(vsum16_0, p1, p2);
             vsum16_1 = vabal_u8(vsum16_1, vget_low_u8(p1), vget_low_u8(p3));
@@ -961,10 +959,10 @@ void sad_x3_neon(const pixel *pix1, const pixel *pix2, const pixel *pix3, const 
         }
         if (lx & 8)
         {
-            uint8x8_t p1 = *(uint8x8_t *)&pix1[x];
-            uint8x8_t p2 = *(uint8x8_t *)&pix2[x];
-            uint8x8_t p3 = *(uint8x8_t *)&pix3[x];
-            uint8x8_t p4 = *(uint8x8_t *)&pix4[x];
+            uint8x8_t p1 = vld1_u8(pix1 + x);
+            uint8x8_t p2 = vld1_u8(pix2 + x);
+            uint8x8_t p3 = vld1_u8(pix3 + x);
+            uint8x8_t p4 = vld1_u8(pix4 + x);
             vsum16_0 = vabal_u8(vsum16_0, p1, p2);
             vsum16_1 = vabal_u8(vsum16_1, p1, p3);
             vsum16_2 = vabal_u8(vsum16_2, p1, p4);
@@ -972,14 +970,10 @@ void sad_x3_neon(const pixel *pix1, const pixel *pix2, const pixel *pix3, const 
         }
         if (lx & 4)
         {
-            uint32x2_t p1 = vdup_n_u32(0);
-            p1[0] = *(uint32_t *)&pix1[x];
-            uint32x2_t p2 = vdup_n_u32(0);
-            p2[0] = *(uint32_t *)&pix2[x];
-            uint32x2_t p3 = vdup_n_u32(0);
-            p3[0] = *(uint32_t *)&pix3[x];
-            uint32x2_t p4 = vdup_n_u32(0);
-            p4[0] = *(uint32_t *)&pix4[x];
+            uint8x8_t p1 = load_u8x4x1(pix1 + x);
+            uint8x8_t p2 = load_u8x4x1(pix2 + x);
+            uint8x8_t p3 = load_u8x4x1(pix3 + x);
+            uint8x8_t p4 = load_u8x4x1(pix4 + x);
             vsum16_0 = vabal_u8(vsum16_0, p1, p2);
             vsum16_1 = vabal_u8(vsum16_1, p1, p3);
             vsum16_2 = vabal_u8(vsum16_2, p1, p4);
@@ -1038,11 +1032,11 @@ void sad_x4_neon(const pixel *pix1, const pixel *pix2, const pixel *pix3, const 
         }
         if (lx & 8)
         {
-            uint16x8_t p1 = *(uint16x8_t *)&pix1[x];
-            uint16x8_t p2 = *(uint16x8_t *)&pix2[x];
-            uint16x8_t p3 = *(uint16x8_t *)&pix3[x];
-            uint16x8_t p4 = *(uint16x8_t *)&pix4[x];
-            uint16x8_t p5 = *(uint16x8_t *)&pix5[x];
+            uint16x8_t p1 = vld1q_u16(pix1 + x);
+            uint16x8_t p2 = vld1q_u16(pix2 + x);
+            uint16x8_t p3 = vld1q_u16(pix3 + x);
+            uint16x8_t p4 = vld1q_u16(pix4 + x);
+            uint16x8_t p5 = vld1q_u16(pix5 + x);
             vsum16_0 = vabaq_s16(vsum16_0, p1, p2);
             vsum16_1 = vabaq_s16(vsum16_1, p1, p3);
             vsum16_2 = vabaq_s16(vsum16_2, p1, p4);
@@ -1056,8 +1050,8 @@ void sad_x4_neon(const pixel *pix1, const pixel *pix2, const pixel *pix3, const 
              * result to result. */
             uint16x8_t p1 = vreinterpretq_s16_u64(
                     vld1q_dup_u64((uint64_t *)&pix1[x]));
-            uint16x8_t p2_3 = vcombine_s16(*(uint16x4_t *)&pix2[x], *(uint16x4_t *)&pix3[x]);
-            uint16x8_t p4_5 = vcombine_s16(*(uint16x4_t *)&pix4[x], *(uint16x4_t *)&pix5[x]);
+            uint16x8_t p2_3 = vcombine_s16(vld1_u16(pix2 + x), vld1_u16(pix3 + x));
+            uint16x8_t p4_5 = vcombine_s16(vld1_u16(pix4 + x), vld1_u16(pix5 + x));
 
             uint16x8_t a = vabdq_u16(p1, p2_3);
             uint16x8_t b = vabdq_u16(p1, p4_5);
@@ -1078,11 +1072,11 @@ void sad_x4_neon(const pixel *pix1, const pixel *pix2, const pixel *pix3, const 
 
         for (; (x + 16) <= lx; x += 16)
         {
-            uint8x16_t p1 = *(uint8x16_t *)&pix1[x];
-            uint8x16_t p2 = *(uint8x16_t *)&pix2[x];
-            uint8x16_t p3 = *(uint8x16_t *)&pix3[x];
-            uint8x16_t p4 = *(uint8x16_t *)&pix4[x];
-            uint8x16_t p5 = *(uint8x16_t *)&pix5[x];
+            uint8x16_t p1 = vld1q_u8(pix1 + x);
+            uint8x16_t p2 = vld1q_u8(pix2 + x);
+            uint8x16_t p3 = vld1q_u8(pix3 + x);
+            uint8x16_t p4 = vld1q_u8(pix4 + x);
+            uint8x16_t p5 = vld1q_u8(pix5 + x);
             vsum16_0 = vabal_u8(vsum16_0, vget_low_u8(p1), vget_low_u8(p2));
             vsum16_0 = vabal_high_u8(vsum16_0, p1, p2);
             vsum16_1 = vabal_u8(vsum16_1, vget_low_u8(p1), vget_low_u8(p3));
@@ -1094,11 +1088,11 @@ void sad_x4_neon(const pixel *pix1, const pixel *pix2, const pixel *pix3, const 
         }
         if (lx & 8)
         {
-            uint8x8_t p1 = *(uint8x8_t *)&pix1[x];
-            uint8x8_t p2 = *(uint8x8_t *)&pix2[x];
-            uint8x8_t p3 = *(uint8x8_t *)&pix3[x];
-            uint8x8_t p4 = *(uint8x8_t *)&pix4[x];
-            uint8x8_t p5 = *(uint8x8_t *)&pix5[x];
+            uint8x8_t p1 = vld1_u8(pix1 + x);
+            uint8x8_t p2 = vld1_u8(pix2 + x);
+            uint8x8_t p3 = vld1_u8(pix3 + x);
+            uint8x8_t p4 = vld1_u8(pix4 + x);
+            uint8x8_t p5 = vld1_u8(pix5 + x);
             vsum16_0 = vabal_u8(vsum16_0, p1, p2);
             vsum16_1 = vabal_u8(vsum16_1, p1, p3);
             vsum16_2 = vabal_u8(vsum16_2, p1, p4);
@@ -1110,7 +1104,7 @@ void sad_x4_neon(const pixel *pix1, const pixel *pix2, const pixel *pix3, const 
             uint8x16_t p1 = vreinterpretq_u32_u8(
                 vld1q_dup_u32((uint32_t *)&pix1[x]));
 
-            uint32x4_t p_x4;
+            uint32x4_t p_x4 = vdupq_n_u32(0);
             p_x4 = vld1q_lane_u32((uint32_t *)&pix2[x], p_x4, 0);
             p_x4 = vld1q_lane_u32((uint32_t *)&pix3[x], p_x4, 1);
             p_x4 = vld1q_lane_u32((uint32_t *)&pix4[x], p_x4, 2);
@@ -1164,11 +1158,19 @@ sse_t sse_neon(const T1 *pix1, intptr_t stride_pix1, const T2 *pix2, intptr_t st
             int16x8_t tmp;
             if (sizeof(T1) == 2 && sizeof(T2) == 2)
             {
-                tmp = vsubq_s16(*(int16x8_t *)&pix1[x], *(int16x8_t *)&pix2[x]);
+                // We have to cast to the 'real' type so that this block
+                // will compile for both low and high bitdepth.
+                const uint16_t *p1_u16 = (const uint16_t*)pix1;
+                const uint16_t *p2_u16 = (const uint16_t*)pix2;
+                tmp = vsubq_u16(vld1q_u16(p1_u16 + x), vld1q_u16(p2_u16 + x));
             }
             else if (sizeof(T1) == 1 && sizeof(T2) == 1)
             {
-                tmp = vsubl_u8(*(uint8x8_t *)&pix1[x], *(uint8x8_t *)&pix2[x]);
+                // We have to cast to the 'real' type so that this block
+                // will compile for both low and high bitdepth.
+                const uint8_t *p1_u8 = (const uint8_t*)pix1;
+                const uint8_t *p2_u8 = (const uint8_t*)pix2;
+                tmp = vsubl_u8(vld1_u8(p1_u8 + x), vld1_u8(p2_u8 + x));
             }
             else
             {
@@ -1208,9 +1210,9 @@ void blockcopy_ps_neon(int16_t *a, intptr_t stridea, const pixel *b, intptr_t st
         for (; (x + 8) <= bx; x += 8)
         {
 #if HIGH_BIT_DEPTH
-            *(int16x8_t *)&a[x] = *(int16x8_t *)&b[x];
+            vst1q_s16(a + x, vld1q_u16(b + x));
 #else
-            *(int16x8_t *)&a[x] = vmovl_u8(*(int8x8_t *)&b[x]);
+            vst1q_s16(a + x, vmovl_u8(vld1_u8(b + x)));
 #endif
         }
         for (; x < bx; x++)
@@ -1233,26 +1235,26 @@ void blockcopy_pp_neon(pixel *a, intptr_t stridea, const pixel *b, intptr_t stri
 #if HIGH_BIT_DEPTH
         for (; (x + 8) <= bx; x += 8)
         {
-            *(int16x8_t *)&a[x] = *(int16x8_t *)&b[x];
+            vst1q_u16(a + x, vld1q_u16(b + x));
         }
         if (bx & 4)
         {
-            *(uint64_t *)&a[x] = *(uint64_t *)&b[x];
+            vst1_u16(a + x, vld1_u16(b + x));
             x += 4;
         }
 #else
         for (; (x + 16) <= bx; x += 16)
         {
-            *(uint8x16_t *)&a[x] = *(uint8x16_t *)&b[x];
+            vst1q_u8(a + x, vld1q_u8(b + x));
         }
         if (bx & 8)
         {
-            *(uint8x8_t *)&a[x] = *(uint8x8_t *)&b[x];
+            vst1_u8(a + x, vld1_u8(b + x));
             x += 8;
         }
         if (bx & 4)
         {
-            *(uint32_t *)&a[x] = *(uint32_t *)&b[x];
+            store_u8x4x1(a + x, load_u8x4x1(b + x));
             x += 4;
         }
 #endif
@@ -1277,9 +1279,9 @@ void pixel_sub_ps_neon(int16_t *a, intptr_t dstride, const pixel *b0, const pixe
         for (; (x + 8) <= bx; x += 8)
         {
 #if HIGH_BIT_DEPTH
-            *(int16x8_t *)&a[x] = vsubq_s16(*(int16x8_t *)&b0[x], *(int16x8_t *)&b1[x]);
+            vst1q_s16(a + x, vsubq_u16(vld1q_u16(b0 + x), vld1q_u16(b1 + x)));
 #else
-            *(int16x8_t *)&a[x] = vsubl_u8(*(uint8x8_t *)&b0[x], *(uint8x8_t *)&b1[x]);
+            vst1q_s16(a + x, vsubl_u8(vld1_u8(b0 + x), vld1_u8(b1 + x)));
 #endif
         }
         for (; x < bx; x++)
@@ -1303,18 +1305,18 @@ void pixel_add_ps_neon(pixel *a, intptr_t dstride, const pixel *b0, const int16_
         for (; (x + 8) <= bx; x += 8)
         {
             int16x8_t t;
-            int16x8_t b1e = *(int16x8_t *)&b1[x];
+            int16x8_t b1e = vld1q_s16(b1 + x);
             int16x8_t b0e;
 #if HIGH_BIT_DEPTH
-            b0e = *(int16x8_t *)&b0[x];
+            b0e = vld1q_u16(b0 + x);
             t = vaddq_s16(b0e, b1e);
             t = vminq_s16(t, vdupq_n_s16((1 << X265_DEPTH) - 1));
             t = vmaxq_s16(t, vdupq_n_s16(0));
-            *(int16x8_t *)&a[x] = t;
+            vst1q_u16(a + x, t);
 #else
-            b0e = vmovl_u8(*(uint8x8_t *)&b0[x]);
+            b0e = vmovl_u8(vld1_u8(b0 + x));
             t = vaddq_s16(b0e, b1e);
-            *(uint8x8_t *)&a[x] = vqmovun_s16(t);
+            vst1_u8(a + x, vqmovun_s16(t));
 #endif
         }
         for (; x < bx; x++)
@@ -1343,8 +1345,8 @@ void addAvg_neon(const int16_t *src0, const int16_t *src1, pixel *dst, intptr_t 
 
         for (; (x + 8) <= bx; x += 8)
         {
-            int16x8_t in0 = *(int16x8_t *)&src0[x];
-            int16x8_t in1 = *(int16x8_t *)&src1[x];
+            int16x8_t in0 = vld1q_s16(src0 + x);
+            int16x8_t in1 = vld1q_s16(src1 + x);
             int32x4_t t1 = vaddl_s16(vget_low_s16(in0), vget_low_s16(in1));
             int32x4_t t2 = vaddl_high_s16(in0, in1);
             t1 = vaddq_s32(t1, addon);
@@ -1355,9 +1357,9 @@ void addAvg_neon(const int16_t *src0, const int16_t *src1, pixel *dst, intptr_t 
 #if HIGH_BIT_DEPTH
             t = vminq_s16(t, vdupq_n_s16((1 << X265_DEPTH) - 1));
             t = vmaxq_s16(t, vdupq_n_s16(0));
-            *(int16x8_t *)&dst[x] = t;
+            vst1q_u16(dst + x, t);
 #else
-            *(uint8x8_t *)&dst[x] = vqmovun_s16(t);
+            vst1_u8(dst + x, vqmovun_s16(t));
 #endif
         }
         for (; x < bx; x += 2)
@@ -1382,15 +1384,15 @@ void pixelavg_pp_neon(pixel *dst, intptr_t dstride, const pixel *src0, intptr_t 
         for (; (x + 8) <= lx; x += 8)
         {
 #if HIGH_BIT_DEPTH
-            uint16x8_t in0 = *(uint16x8_t *)&src0[x];
-            uint16x8_t in1 = *(uint16x8_t *)&src1[x];
+            uint16x8_t in0 = vld1q_u16(src0 + x);
+            uint16x8_t in1 = vld1q_u16(src1 + x);
             uint16x8_t t = vrhaddq_u16(in0, in1);
-            *(uint16x8_t *)&dst[x] = t;
+            vst1q_u16(dst + x, t);
 #else
-            int16x8_t in0 = vmovl_u8(*(uint8x8_t *)&src0[x]);
-            int16x8_t in1 = vmovl_u8(*(uint8x8_t *)&src1[x]);
+            int16x8_t in0 = vmovl_u8(vld1_u8(src0 + x));
+            int16x8_t in1 = vmovl_u8(vld1_u8(src1 + x));
             int16x8_t t = vrhaddq_s16(in0, in1);
-            *(uint8x8_t *)&dst[x] = vmovn_u16(t);
+            vst1_u8(dst + x, vmovn_u16(t));
 #endif
         }
         for (; x < lx; x++)
@@ -1417,7 +1419,7 @@ void cpy1Dto2D_shl_neon(int16_t *dst, const int16_t *src, intptr_t dstStride, in
         int j = 0;
         for (; (j + 8) <= size; j += 8)
         {
-            *(int16x8_t *)&dst[j] = vshlq_s16(*(int16x8_t *)&src[j], vdupq_n_s16(shift));
+            vst1q_s16(dst + j, vshlq_s16(vld1q_s16(src + j), vdupq_n_s16(shift)));
         }
         for (; j < size; j++)
         {
@@ -1442,7 +1444,7 @@ uint64_t pixel_var_neon(const uint8_t *pix, intptr_t i_stride)
         for (; (x + 8) <= size; x += 8)
         {
             int16x8_t in;
-            in = vmovl_u8(*(uint8x8_t *)&pix[x]);
+            in = vmovl_u8(vld1_u8(pix + x));
             vsum = vaddq_u16(vsum, in);
             vsqr = vmlal_s16(vsqr, vget_low_s16(in), vget_low_s16(in));
             vsqr = vmlal_high_s16(vsqr, in, in);
@@ -1470,13 +1472,13 @@ void getResidual_neon(const pixel *fenc, const pixel *pred, int16_t *residual, i
         {
             int16x8_t vfenc, vpred;
 #if HIGH_BIT_DEPTH
-            vfenc = *(int16x8_t *)&fenc[x];
-            vpred = *(int16x8_t *)&pred[x];
+            vfenc = vld1q_u16(fenc + x);
+            vpred = vld1q_u16(pred + x);
 #else
-            vfenc = vmovl_u8(*(uint8x8_t *)&fenc[x]);
-            vpred = vmovl_u8(*(uint8x8_t *)&pred[x]);
+            vfenc = vmovl_u8(vld1_u8(fenc + x));
+            vpred = vmovl_u8(vld1_u8(pred + x));
 #endif
-            *(int16x8_t *)&residual[x] = vsubq_s16(vfenc, vpred);
+            vst1q_s16(residual + x, vsubq_s16(vfenc, vpred));
         }
         for (; x < blockSize; x++)
         {
@@ -1676,7 +1678,7 @@ sse_t pixel_ssd_s_neon(const int16_t *a, intptr_t dstride)
 
         for (; (x + 8) <= size; x += 8)
         {
-            int16x8_t in = *(int16x8_t *)&a[x];
+            int16x8_t in = vld1q_s16(a + x);
             vsum = vmlal_s16(vsum, vget_low_s16(in), vget_low_s16(in));
             vsum = vmlal_high_s16(vsum, (in), (in));
         }
