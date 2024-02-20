@@ -498,9 +498,17 @@ int pixel_satd_16x16_neon(const uint8_t *pix1, intptr_t stride_pix1, const uint8
 }
 #endif      //HIGH_BIT_DEPTH
 
+#if HIGH_BIT_DEPTH
+typedef int32x4_t sa8d_out_type;
+#else
+typedef int16x8_t sa8d_out_type;
+#endif
 
-static inline void _sa8d_8x8_neon_end(int16x8_t &v0, int16x8_t &v1, int16x8_t v2, int16x8_t v3,
-                                      int16x8_t v20, int16x8_t v21, int16x8_t v22, int16x8_t v23)
+static inline void _sa8d_8x8_neon_end(int16x8_t v0, int16x8_t v1, int16x8_t v2,
+                                      int16x8_t v3, int16x8_t v20,
+                                      int16x8_t v21, int16x8_t v22,
+                                      int16x8_t v23, sa8d_out_type &out0,
+                                      sa8d_out_type &out1)
 {
     int16x8_t v16, v17, v18, v19;
     int16x8_t v4, v5, v6, v7;
@@ -560,15 +568,15 @@ static inline void _sa8d_8x8_neon_end(int16x8_t &v0, int16x8_t &v1, int16x8_t v2
     v19 = vmaxq_u16(v19, v23);
 
 #if HIGH_BIT_DEPTH
-    v0 = vpaddlq_u16(v16);
-    v1 = vpaddlq_u16(v17);
-    v0 = vpadalq_u16(v0, v18);
-    v1 = vpadalq_u16(v1, v19);
+    out0 = vpaddlq_u16(v16);
+    out1 = vpaddlq_u16(v17);
+    out0 = vpadalq_u16(out0, v18);
+    out1 = vpadalq_u16(out1, v19);
 
 #else //HIGH_BIT_DEPTH
 
-    v0 = vaddq_u16(v16, v17);
-    v1 = vaddq_u16(v18, v19);
+    out0 = vaddq_u16(v16, v17);
+    out1 = vaddq_u16(v18, v19);
 
 #endif //HIGH_BIT_DEPTH
 
@@ -674,8 +682,8 @@ static inline void _sa8d_8x8_neon_end(int16x8_t &v0, int16x8_t &v1, int16x8_t v2
     v18l = vaddq_u32(v18l, v18h);
     v19l = vaddq_u32(v19l, v19h);
 
-    v0 = vaddq_u32(v16l, v17l);
-    v1 = vaddq_u32(v18l, v19l);
+    out0 = vaddq_u32(v16l, v17l);
+    out1 = vaddq_u32(v18l, v19l);
 
 
 #endif
@@ -724,15 +732,16 @@ int pixel_sa8d_8x8_neon(const pixel *pix1, intptr_t stride_pix1, const pixel *pi
 {
     int16x8_t v0, v1, v2, v3;
     int16x8_t v20, v21, v22, v23;
+    sa8d_out_type res0, res1;
 
     _sub_8x8_fly(pix1, stride_pix1, pix2, stride_pix2, v0, v1, v2, v3, v20, v21, v22, v23);
-    _sa8d_8x8_neon_end(v0, v1, v2, v3, v20, v21, v22, v23);
+    _sa8d_8x8_neon_end(v0, v1, v2, v3, v20, v21, v22, v23, res0, res1);
 
 #if HIGH_BIT_DEPTH
-    int32x4_t s = vaddq_u32(v0, v1);
+    int32x4_t s = vaddq_u32(res0, res1);
     return (vaddvq_u32(s) + 1) >> 1;
 #else
-    return (vaddlvq_s16(vaddq_u16(v0, v1)) + 1) >> 1;
+    return (vaddlvq_s16(vaddq_u16(res0, res1)) + 1) >> 1;
 #endif
 }
 
@@ -744,51 +753,52 @@ int pixel_sa8d_16x16_neon(const pixel *pix1, intptr_t stride_pix1, const pixel *
 {
     int16x8_t v0, v1, v2, v3;
     int16x8_t v20, v21, v22, v23;
+    sa8d_out_type res0, res1;
     int32x4_t v30, v31;
 
     _sub_8x8_fly(pix1, stride_pix1, pix2, stride_pix2, v0, v1, v2, v3, v20, v21, v22, v23);
-    _sa8d_8x8_neon_end(v0, v1, v2, v3, v20, v21, v22, v23);
+    _sa8d_8x8_neon_end(v0, v1, v2, v3, v20, v21, v22, v23, res0, res1);
 
 #if !(HIGH_BIT_DEPTH)
-    v30 = vpaddlq_u16(v0);
-    v31 = vpaddlq_u16(v1);
+    v30 = vpaddlq_u16(res0);
+    v31 = vpaddlq_u16(res1);
 #else
-    v30 = vaddq_s32(v0, v1);
+    v30 = vaddq_s32(res0, res1);
 #endif
 
     _sub_8x8_fly(pix1 + 8, stride_pix1, pix2 + 8, stride_pix2, v0, v1, v2, v3, v20, v21, v22, v23);
-    _sa8d_8x8_neon_end(v0, v1, v2, v3, v20, v21, v22, v23);
+    _sa8d_8x8_neon_end(v0, v1, v2, v3, v20, v21, v22, v23, res0, res1);
 
 #if !(HIGH_BIT_DEPTH)
-    v30 = vpadalq_u16(v30, v0);
-    v31 = vpadalq_u16(v31, v1);
+    v30 = vpadalq_u16(v30, res0);
+    v31 = vpadalq_u16(v31, res1);
 #else
-    v31 = vaddq_s32(v0, v1);
+    v31 = vaddq_s32(res0, res1);
 #endif
 
 
     _sub_8x8_fly(pix1 + 8 * stride_pix1, stride_pix1, pix2 + 8 * stride_pix2, stride_pix2, v0, v1, v2, v3, v20, v21, v22,
                  v23);
-    _sa8d_8x8_neon_end(v0, v1, v2, v3, v20, v21, v22, v23);
+    _sa8d_8x8_neon_end(v0, v1, v2, v3, v20, v21, v22, v23, res0, res1);
 
 #if !(HIGH_BIT_DEPTH)
-    v30 = vpadalq_u16(v30, v0);
-    v31 = vpadalq_u16(v31, v1);
+    v30 = vpadalq_u16(v30, res0);
+    v31 = vpadalq_u16(v31, res1);
 #else
-    v30 = vaddq_s32(v30, v0);
-    v31 = vaddq_s32(v31, v1);
+    v30 = vaddq_s32(v30, res0);
+    v31 = vaddq_s32(v31, res1);
 #endif
 
     _sub_8x8_fly(pix1 + 8 * stride_pix1 + 8, stride_pix1, pix2 + 8 * stride_pix2 + 8, stride_pix2, v0, v1, v2, v3, v20, v21,
                  v22, v23);
-    _sa8d_8x8_neon_end(v0, v1, v2, v3, v20, v21, v22, v23);
+    _sa8d_8x8_neon_end(v0, v1, v2, v3, v20, v21, v22, v23, res0, res1);
 
 #if !(HIGH_BIT_DEPTH)
-    v30 = vpadalq_u16(v30, v0);
-    v31 = vpadalq_u16(v31, v1);
+    v30 = vpadalq_u16(v30, res0);
+    v31 = vpadalq_u16(v31, res1);
 #else
-    v30 = vaddq_s32(v30, v0);
-    v31 = vaddq_s32(v31, v1);
+    v30 = vaddq_s32(v30, res0);
+    v31 = vaddq_s32(v31, res1);
 #endif
 
     v30 = vaddq_u32(v30, v31);
