@@ -26,26 +26,26 @@ static inline void SUMSUB_AB(int16x8_t &sum, int16x8_t &sub, const int16x8_t a, 
     sub = vsubq_s16(a, b);
 }
 
-static inline void transpose_8h(int16x8_t &t1, int16x8_t &t2, const int16x8_t s1, const int16x8_t s2)
+static inline void transpose_8h_8h(int16x8_t &t1, int16x8_t &t2,
+                                   const int16x8_t s1, const int16x8_t s2)
 {
     t1 = vtrn1q_s16(s1, s2);
     t2 = vtrn2q_s16(s1, s2);
 }
 
-static inline void transpose_4s(int16x8_t &t1, int16x8_t &t2, const int16x8_t s1, const int16x8_t s2)
+static inline void transpose_4s_8h(int16x8_t &t1, int16x8_t &t2,
+                                   const int16x8_t s1, const int16x8_t s2)
 {
     t1 = vtrn1q_s32(s1, s2);
     t2 = vtrn2q_s32(s1, s2);
 }
 
-#if (X265_DEPTH <= 10)
-static inline void transpose_2d(int16x8_t &t1, int16x8_t &t2, const int16x8_t s1, const int16x8_t s2)
+static inline void transpose_2d_8h(int16x8_t &t1, int16x8_t &t2,
+                                   const int16x8_t s1, const int16x8_t s2)
 {
     t1 = vtrn1q_s64(s1, s2);
     t2 = vtrn2q_s64(s1, s2);
 }
-#endif
-
 
 static inline void SUMSUB_ABCD(int16x8_t &s1, int16x8_t &d1, int16x8_t &s2, int16x8_t &d2,
                                int16x8_t a, int16x8_t  b, int16x8_t  c, int16x8_t  d)
@@ -75,18 +75,14 @@ static int _satd_4x8_8x4_end_neon(int16x8_t v0, int16x8_t v1, int16x8_t v2, int1
     SUMSUB_AB(v4 , v6 , v16, v18);
     SUMSUB_AB(v5 , v7 , v17, v19);
 
-    v0 = vtrn1q_s16(v4, v5);
-    v1 = vtrn2q_s16(v4, v5);
-    v2 = vtrn1q_s16(v6, v7);
-    v3 = vtrn2q_s16(v6, v7);
+    transpose_8h_8h(v0, v1, v4, v5);
+    transpose_8h_8h(v2, v3, v6, v7);
 
     SUMSUB_AB(v16, v17, v0,  v1);
     SUMSUB_AB(v18, v19, v2,  v3);
 
-    v0 = vtrn1q_s32(v16, v18);
-    v1 = vtrn2q_s32(v16, v18);
-    v2 = vtrn1q_s32(v17, v19);
-    v3 = vtrn2q_s32(v17, v19);
+    transpose_4s_8h(v0, v1, v16, v18);
+    transpose_4s_8h(v2, v3, v17, v19);
 
     v0 = vabsq_s16(v0);
     v1 = vabsq_s16(v1);
@@ -105,16 +101,13 @@ static inline int _satd_4x4_neon(int16x8_t v0, int16x8_t v1)
     int16x8_t v2, v3;
     SUMSUB_AB(v2,  v3,  v0,  v1);
 
-    v0 = vzip1q_s64(v2, v3);
-    v1 = vzip2q_s64(v2, v3);
+    transpose_2d_8h(v0, v1, v2, v3);
     SUMSUB_AB(v2,  v3,  v0,  v1);
 
-    v0 = vtrn1q_s16(v2, v3);
-    v1 = vtrn2q_s16(v2, v3);
+    transpose_8h_8h(v0, v1, v2, v3);
     SUMSUB_AB(v2,  v3,  v0,  v1);
 
-    v0 = vtrn1q_s32(v2, v3);
-    v1 = vtrn2q_s32(v2, v3);
+    transpose_4s_8h(v0, v1, v2, v3);
 
     v0 = vabsq_s16(v0);
     v1 = vabsq_s16(v1);
@@ -133,20 +126,20 @@ static void _satd_8x4v_8x8h_neon(int16x8_t &v0, int16x8_t &v1, int16x8_t &v2, in
 
     HADAMARD4_V(v20, v21, v22, v23, v0,  v1, v2, v3);
 
-    transpose_8h(v0,  v1,  v16, v17);
-    transpose_8h(v2,  v3,  v18, v19);
-    transpose_8h(v4,  v5,  v20, v21);
-    transpose_8h(v6,  v7,  v22, v23);
+    transpose_8h_8h(v0,  v1,  v16, v17);
+    transpose_8h_8h(v2,  v3,  v18, v19);
+    transpose_8h_8h(v4,  v5,  v20, v21);
+    transpose_8h_8h(v6,  v7,  v22, v23);
 
     SUMSUB_AB(v16, v17, v0,  v1);
     SUMSUB_AB(v18, v19, v2,  v3);
     SUMSUB_AB(v20, v21, v4,  v5);
     SUMSUB_AB(v22, v23, v6,  v7);
 
-    transpose_4s(v0,  v2,  v16, v18);
-    transpose_4s(v1,  v3,  v17, v19);
-    transpose_4s(v4,  v6,  v20, v22);
-    transpose_4s(v5,  v7,  v21, v23);
+    transpose_4s_8h(v0,  v2,  v16, v18);
+    transpose_4s_8h(v1,  v3,  v17, v19);
+    transpose_4s_8h(v4,  v6,  v20, v22);
+    transpose_4s_8h(v5,  v7,  v21, v23);
 
     v0 = vabsq_s16(v0);
     v1 = vabsq_s16(v1);
@@ -167,7 +160,8 @@ static void _satd_8x4v_8x8h_neon(int16x8_t &v0, int16x8_t &v1, int16x8_t &v2, in
 #if HIGH_BIT_DEPTH
 
 #if (X265_DEPTH > 10)
-static inline void transpose_2d(int32x4_t &t1, int32x4_t &t2, const int32x4_t s1, const int32x4_t s2)
+static inline void transpose_2d_4s(int32x4_t &t1, int32x4_t &t2,
+                                   const int32x4_t s1, const int32x4_t s2)
 {
     t1 = vtrn1q_s64(s1, s2);
     t2 = vtrn2q_s64(s1, s2);
@@ -523,10 +517,10 @@ static inline void _sa8d_8x8_neon_end(int16x8_t v0, int16x8_t v1, int16x8_t v2,
     SUMSUB_AB(v2,  v18, v18, v22);
     SUMSUB_AB(v3,  v19, v19, v23);
 
-    transpose_8h(v20, v21, v16, v17);
-    transpose_8h(v4,  v5,  v0,  v1);
-    transpose_8h(v22, v23, v18, v19);
-    transpose_8h(v6,  v7,  v2,  v3);
+    transpose_8h_8h(v20, v21, v16, v17);
+    transpose_8h_8h(v4,  v5,  v0,  v1);
+    transpose_8h_8h(v22, v23, v18, v19);
+    transpose_8h_8h(v6,  v7,  v2,  v3);
 
 #if (X265_DEPTH <= 10)
 
@@ -537,20 +531,20 @@ static inline void _sa8d_8x8_neon_end(int16x8_t v0, int16x8_t v1, int16x8_t v2,
     SUMSUB_AB(v0,  v1,  v22, v23);
     SUMSUB_AB(v4,  v5,  v6,  v7);
 
-    transpose_4s(v20, v22, v2,  v0);
-    transpose_4s(v21, v23, v3,  v1);
-    transpose_4s(v16, v18, v24, v4);
-    transpose_4s(v17, v19, v25, v5);
+    transpose_4s_8h(v20, v22, v2,  v0);
+    transpose_4s_8h(v21, v23, v3,  v1);
+    transpose_4s_8h(v16, v18, v24, v4);
+    transpose_4s_8h(v17, v19, v25, v5);
 
     SUMSUB_AB(v0,  v2,  v20, v22);
     SUMSUB_AB(v1,  v3,  v21, v23);
     SUMSUB_AB(v4,  v6,  v16, v18);
     SUMSUB_AB(v5,  v7,  v17, v19);
 
-    transpose_2d(v16, v20,  v0,  v4);
-    transpose_2d(v17, v21,  v1,  v5);
-    transpose_2d(v18, v22,  v2,  v6);
-    transpose_2d(v19, v23,  v3,  v7);
+    transpose_2d_8h(v16, v20,  v0,  v4);
+    transpose_2d_8h(v17, v21,  v1,  v5);
+    transpose_2d_8h(v18, v22,  v2,  v6);
+    transpose_2d_8h(v19, v23,  v3,  v7);
 
 
     v16 = vabsq_s16(v16);
@@ -609,15 +603,15 @@ static inline void _sa8d_8x8_neon_end(int16x8_t v0, int16x8_t v1, int16x8_t v2,
     ISUMSUB_AB(v4l,  v5l,  v6l,  v7l);
     ISUMSUB_AB(v4h,  v5h,  v6h,  v7h);
 
-    transpose_2d(v20l, v22l, v2l,  v0l);
-    transpose_2d(v21l, v23l, v3l,  v1l);
-    transpose_2d(v16l, v18l, v24l, v4l);
-    transpose_2d(v17l, v19l, v25l, v5l);
+    transpose_2d_4s(v20l, v22l, v2l,  v0l);
+    transpose_2d_4s(v21l, v23l, v3l,  v1l);
+    transpose_2d_4s(v16l, v18l, v24l, v4l);
+    transpose_2d_4s(v17l, v19l, v25l, v5l);
 
-    transpose_2d(v20h, v22h, v2h,  v0h);
-    transpose_2d(v21h, v23h, v3h,  v1h);
-    transpose_2d(v16h, v18h, v24h, v4h);
-    transpose_2d(v17h, v19h, v25h, v5h);
+    transpose_2d_4s(v20h, v22h, v2h,  v0h);
+    transpose_2d_4s(v21h, v23h, v3h,  v1h);
+    transpose_2d_4s(v16h, v18h, v24h, v4h);
+    transpose_2d_4s(v17h, v19h, v25h, v5h);
 
     ISUMSUB_AB(v0l,  v2l,  v20l, v22l);
     ISUMSUB_AB(v1l,  v3l,  v21l, v23l);
