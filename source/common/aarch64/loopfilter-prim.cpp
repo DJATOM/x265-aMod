@@ -63,9 +63,7 @@ static void processSaoCUE0_neon(pixel *rec, int8_t *offsetEo, int width, int8_t 
                 shifter.val[1][0] = tmp[7];
                 int16x8_t t1 = vmovl_s8(vtbl1_s8(tbl, vedgeType));
                 t1 = vaddw_u8(t1, in);
-                t1 = vmaxq_s16(t1, vdupq_n_s16(0));
-                t1 = vminq_s16(t1, vdupq_n_s16(255));
-                *(uint8x8_t *)&rec[x] = vmovn_u16(t1);
+                *(uint8x8_t *)&rec[x] = vqmovun_s16(t1);
             }
             signLeft0 = shifter.val[1][0];
         }
@@ -131,9 +129,7 @@ static void processSaoCUE1_2Rows_neon(pixel *rec, int8_t *upBuff1, int8_t *offse
                 *(int8x8_t *)&upBuff1[x] = vneg_s8(vsignDown);
                 int16x8_t t1 = vmovl_s8(vtbl1_s8(tbl, vedgeType));
                 t1 = vaddw_u8(t1, in0);
-                t1 = vmaxq_s16(t1, vdupq_n_s16(0));
-                t1 = vminq_s16(t1, vdupq_n_s16(255));
-                *(uint8x8_t *)&rec[x] = vmovn_u16(t1);
+                *(uint8x8_t *)&rec[x] = vqmovun_s16(t1);
 
             }
         }
@@ -175,9 +171,7 @@ static void processSaoCUE2_neon(pixel *rec, int8_t *bufft, int8_t *buff1, int8_t
             *(int8x8_t *)&bufft[x + 1] = vneg_s8(vsignDown);
             int16x8_t t1 = vmovl_s8(vtbl1_s8(tbl, vedgeType));
             t1 = vaddw_u8(t1, in0);
-            t1 = vmaxq_s16(t1, vdupq_n_s16(0));
-            t1 = vminq_s16(t1, vdupq_n_s16(255));
-            *(uint8x8_t *)&rec[x] = vmovn_u16(t1);
+            *(uint8x8_t *)&rec[x] = vqmovun_s16(t1);
         }
         for (; x < width; x++)
         {
@@ -207,9 +201,7 @@ static void processSaoCUE3_neon(pixel *rec, int8_t *upBuff1, int8_t *offsetEo, i
         *(int8x8_t *)&upBuff1[x - 1] = vneg_s8(vsignDown);
         int16x8_t t1 = vmovl_s8(vtbl1_s8(tbl, vedgeType));
         t1 = vaddw_u8(t1, in0);
-        t1 = vmaxq_s16(t1, vdupq_n_s16(0));
-        t1 = vminq_s16(t1, vdupq_n_s16(255));
-        *(uint8x8_t *)&rec[x] = vmovn_u16(t1);
+        *(uint8x8_t *)&rec[x] = vqmovun_s16(t1);
 
     }
     for (; x < endX; x++)
@@ -238,9 +230,7 @@ static void processSaoCUB0_neon(pixel *rec, const int8_t *offset, int ctuWidth, 
             int8x8_t offsets = vtbl4_s8(table, vshr_n_u8(in, boShift));
             int16x8_t tmp = vmovl_s8(offsets);
             tmp = vaddw_u8(tmp, in);
-            tmp = vmaxq_s16(tmp, vdupq_n_s16(0));
-            tmp = vminq_s16(tmp, vdupq_n_s16(255));
-            *(uint8x8_t *)&rec[x] = vmovn_u16(tmp);
+            *(uint8x8_t *)&rec[x] = vqmovun_s16(tmp);
         }
         for (; x < ctuWidth; x++)
         {
