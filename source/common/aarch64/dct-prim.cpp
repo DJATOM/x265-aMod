@@ -13,28 +13,33 @@ using namespace X265_NS;
 
 static int16x8_t rev16(const int16x8_t a)
 {
-    static const int8x16_t tbl = {14, 15, 12, 13, 10, 11, 8, 9, 6, 7, 4, 5, 2, 3, 0, 1};
-    return vqtbx1q_u8(a, a, tbl);
+    static const uint8x16_t tbl = {14, 15, 12, 13, 10, 11, 8, 9, 6, 7, 4, 5, 2, 3, 0, 1};
+    const int8x16_t a_s8 = vreinterpretq_s8_s16(a);
+
+    return vreinterpretq_s16_s8(vqtbx1q_s8(a_s8, a_s8, tbl));
 }
 
 static int32x4_t rev32(const int32x4_t a)
 {
-    static const int8x16_t tbl = {12, 13, 14, 15, 8, 9, 10, 11, 4, 5, 6, 7, 0, 1, 2, 3};
-    return vqtbx1q_u8(a, a, tbl);
+    static const uint8x16_t tbl = {12, 13, 14, 15, 8, 9, 10, 11, 4, 5, 6, 7, 0, 1, 2, 3};
+    const int8x16_t a_s8 = vreinterpretq_s8_s32(a);
+
+    return vreinterpretq_s32_s8(vqtbx1q_s8(a_s8, a_s8, tbl));
 }
 
 static void transpose_4x4x16(int16x4_t &x0, int16x4_t &x1, int16x4_t &x2, int16x4_t &x3)
 {
-    int16x4_t s0, s1, s2, s3;
-    s0 = vtrn1_s32(x0, x2);
-    s1 = vtrn1_s32(x1, x3);
-    s2 = vtrn2_s32(x0, x2);
-    s3 = vtrn2_s32(x1, x3);
+    int32x2_t s0, s1, s2, s3;
 
-    x0 = vtrn1_s16(s0, s1);
-    x1 = vtrn2_s16(s0, s1);
-    x2 = vtrn1_s16(s2, s3);
-    x3 = vtrn2_s16(s2, s3);
+    s0 = vtrn1_s32(vreinterpret_s32_s16(x0), vreinterpret_s32_s16(x2));
+    s1 = vtrn1_s32(vreinterpret_s32_s16(x1), vreinterpret_s32_s16(x3));
+    s2 = vtrn2_s32(vreinterpret_s32_s16(x0), vreinterpret_s32_s16(x2));
+    s3 = vtrn2_s32(vreinterpret_s32_s16(x1), vreinterpret_s32_s16(x3));
+
+    x0 = vtrn1_s16(vreinterpret_s16_s32(s0), vreinterpret_s16_s32(s1));
+    x1 = vtrn2_s16(vreinterpret_s16_s32(s0), vreinterpret_s16_s32(s1));
+    x2 = vtrn1_s16(vreinterpret_s16_s32(s2), vreinterpret_s16_s32(s3));
+    x3 = vtrn2_s16(vreinterpret_s16_s32(s2), vreinterpret_s16_s32(s3));
 }
 
 
@@ -190,7 +195,8 @@ int  count_nonzero_neon(const int16_t *quantCoeff)
     for (; (i + 8) <= numCoeff; i += 8)
     {
         int16x8_t in = vld1q_s16(&quantCoeff[i]);
-        vcount = vaddq_s16(vcount, vtstq_s16(in, in));
+        uint16x8_t tst = vtstq_s16(in, in);
+        vcount = vaddq_s16(vcount, vreinterpretq_s16_u16(tst));
     }
     for (; i < numCoeff; i++)
     {
@@ -212,7 +218,8 @@ uint32_t copy_count_neon(int16_t *coeff, const int16_t *residual, intptr_t resiS
         {
             int16x8_t in = vld1q_s16(&residual[j]);
             vst1q_s16(&coeff[j], in);
-            vcount = vaddq_s16(vcount, vtstq_s16(in, in));
+            uint16x8_t tst = vtstq_s16(in, in);
+            vcount = vaddq_s16(vcount, vreinterpretq_s16_u16(tst));
         }
         for (; j < trSize; j++)
         {
