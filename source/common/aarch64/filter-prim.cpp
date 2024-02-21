@@ -8,6 +8,9 @@ namespace
 
 using namespace X265_NS;
 
+#if HIGH_BIT_DEPTH
+#define SHIFT_INTERP_PS (IF_FILTER_PREC - (IF_INTERNAL_PREC - X265_DEPTH))
+#endif
 
 template<int width, int height>
 void filterPixelToShort_neon(const pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride)
@@ -130,9 +133,7 @@ void interp_horiz_ps_neon(const uint16_t *src, intptr_t srcStride, int16_t *dst,
                           int isRowExt)
 {
     const int16_t *coeff = (N == 4) ? g_chromaFilter[coeffIdx] : g_lumaFilter[coeffIdx];
-    const int headRoom = IF_INTERNAL_PREC - X265_DEPTH;
-    const int shift = IF_FILTER_PREC - headRoom;
-    const int offset = (unsigned) - IF_INTERNAL_OFFS << shift;
+    const int offset = (unsigned) - IF_INTERNAL_OFFS << SHIFT_INTERP_PS;
 
     int blkheight = height;
     src -= N / 2 - 1;
@@ -144,7 +145,6 @@ void interp_horiz_ps_neon(const uint16_t *src, intptr_t srcStride, int16_t *dst,
     }
     int16x8_t vc3 = vld1q_s16(coeff);
     const int32x4_t voffset = vdupq_n_s32(offset);
-    const int32x4_t vhr = vdupq_n_s32(-shift);
 
     int row, col;
     for (row = 0; row < blkheight; row++)
@@ -189,10 +189,9 @@ void interp_horiz_ps_neon(const uint16_t *src, intptr_t srcStride, int16_t *dst,
                 vsum2 = vmlal_high_lane_s16(vsum2, input[7], vget_high_s16(vc3), 3);
             }
 
-            vsum = vshlq_s32(vsum, vhr);
-            vsum2 = vshlq_s32(vsum2, vhr);
-            *(int16x4_t *)&dst[col] = vmovn_u32(vsum);
-            *(int16x4_t *)&dst[col+4] = vmovn_u32(vsum2);
+            int16x4_t res_lo = vshrn_n_s32(vsum, SHIFT_INTERP_PS);
+            int16x4_t res_hi = vshrn_n_s32(vsum2, SHIFT_INTERP_PS);
+            vst1q_s16(dst + col, vcombine_s16(res_lo, res_hi));
         }
 
         src += srcStride;
@@ -340,8 +339,7 @@ void interp_vert_pp_neon(const uint16_t *src, intptr_t srcStride, uint16_t *dst,
 {
 
     const int16_t *c = (N == 4) ? g_chromaFilter[coeffIdx] : g_lumaFilter[coeffIdx];
-    int shift = IF_FILTER_PREC;
-    int offset = 1 << (shift - 1);
+    int offset = 1 << (IF_FILTER_PREC - 1);
     const uint16_t maxVal = (1 << X265_DEPTH) - 1;
 
     src -= (N / 2 - 1) * srcStride;
@@ -351,7 +349,6 @@ void interp_vert_pp_neon(const uint16_t *src, intptr_t srcStride, uint16_t *dst,
     int32x4_t high_vc = vmovl_s16(vget_high_s16(vc));
 
     const int32x4_t voffset = vdupq_n_s32(offset);
-    const int32x4_t vhr = vdupq_n_s32(-shift);
 
     int row, col;
     for (row = 0; row < height; row++)
@@ -381,10 +378,9 @@ void interp_vert_pp_neon(const uint16_t *src, intptr_t srcStride, uint16_t *dst,
                 vsum = vmlaq_laneq_s32(vsum, (input[7]), high_vc, 3);
             }
 
-            vsum = vshlq_s32(vsum, vhr);
-            vsum = vminq_s32(vsum, vdupq_n_s32(maxVal));
-            vsum = vmaxq_s32(vsum, vdupq_n_s32(0));
-            *(uint16x4_t *)&dst[col] = vmovn_u32(vsum);
+            uint16x4_t res = vqshrun_n_s32(vsum, IF_FILTER_PREC);
+            res = vmin_u16(res, vdup_n_u16(maxVal));
+            vst1_u16(dst + col, res);
         }
         src += srcStride;
         dst += dstStride;
@@ -401,16 +397,13 @@ void interp_vert_pp_neon(const uint8_t *src, intptr_t srcStride, uint8_t *dst, i
 {
 
     const int16_t *c = (N == 4) ? g_chromaFilter[coeffIdx] : g_lumaFilter[coeffIdx];
-    int shift = IF_FILTER_PREC;
-    int offset = 1 << (shift - 1);
-    const uint16_t maxVal = (1 << X265_DEPTH) - 1;
+    int offset = 1 << (IF_FILTER_PREC - 1);
 
     src -= (N / 2 - 1) * srcStride;
     int16x8_t vc;
     vc = *(int16x8_t *)c;
 
     const int16x8_t voffset = vdupq_n_s16(offset);
-    const int16x8_t vhr = vdupq_n_s16(-shift);
 
     int row, col;
     for (row = 0; row < height; row++)
@@ -441,13 +434,7 @@ void interp_vert_pp_neon(const uint8_t *src, intptr_t srcStride, uint8_t *dst, i
 
             }
 
-            vsum = vshlq_s16(vsum, vhr);
-
-            vsum = vminq_s16(vsum, vdupq_n_s16(maxVal));
-            vsum = vmaxq_s16(vsum, vdupq_n_s16(0));
-            uint8x16_t usum = vuzp1q_u8(vsum, vsum);
-            *(uint8x8_t *)&dst[col] = vget_low_u8(usum);
-
+            vst1_u8(dst + col, vqshrun_n_s16(vsum, IF_FILTER_PREC));
         }
 
         src += srcStride;
@@ -465,9 +452,7 @@ template<int N, int width, int height>
 void interp_vert_ps_neon(const uint16_t *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
 {
     const int16_t *c = (N == 4) ? g_chromaFilter[coeffIdx] : g_lumaFilter[coeffIdx];
-    int headRoom = IF_INTERNAL_PREC - X265_DEPTH;
-    int shift = IF_FILTER_PREC - headRoom;
-    int offset = (unsigned) - IF_INTERNAL_OFFS << shift;
+    int offset = (unsigned) - IF_INTERNAL_OFFS << SHIFT_INTERP_PS;
     src -= (N / 2 - 1) * srcStride;
 
     int16x8_t vc;
@@ -476,7 +461,6 @@ void interp_vert_ps_neon(const uint16_t *src, intptr_t srcStride, int16_t *dst, 
     int32x4_t high_vc = vmovl_s16(vget_high_s16(vc));
 
     const int32x4_t voffset = vdupq_n_s32(offset);
-    const int32x4_t vhr = vdupq_n_s32(-shift);
 
     int row, col;
     for (row = 0; row < height; row++)
@@ -507,9 +491,7 @@ void interp_vert_ps_neon(const uint16_t *src, intptr_t srcStride, int16_t *dst, 
                 vsum = vaddq_s32(vsum, vsum1);
             }
 
-            vsum = vshlq_s32(vsum, vhr);
-
-            *(uint16x4_t *)&dst[col] = vmovn_s32(vsum);
+            vst1_s16(dst + col, vshrn_n_s32(vsum, SHIFT_INTERP_PS));
         }
 
         src += srcStride;
