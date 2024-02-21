@@ -105,30 +105,40 @@ void intra_pred_ang_neon(pixel *dst, intptr_t dstStride, const pixel *srcPix0, i
             {
                 if (width >= 8 && sizeof(pixel) == 1)
                 {
+                    // We have to cast to the 'real' type so that this block
+                    // will compile for both low and high bitdepth.
+                    const uint8_t *ref_u8 = (const uint8_t *)ref + offset;
+                    uint8_t *dst_u8 = (uint8_t *)dst;
+
                     const int16x8_t f0 = vdupq_n_s16(32 - fraction);
                     const int16x8_t f1 = vdupq_n_s16(fraction);
                     for (int x = 0; x < width; x += 8)
                     {
-                        uint8x8_t in0 = *(uint8x8_t *)&ref[offset + x];
-                        uint8x8_t in1 = *(uint8x8_t *)&ref[offset + x + 1];
-                        int16x8_t lo = vmlaq_s16(vdupq_n_s16(16), vmovl_u8(in0), f0);
-                        lo = vmlaq_s16(lo, vmovl_u8(in1), f1);
+                        uint16x8_t in0 = vmovl_u8(vld1_u8(ref_u8 + x));
+                        uint16x8_t in1 = vmovl_u8(vld1_u8(ref_u8 + x + 1));
+                        int16x8_t lo = vmlaq_s16(vdupq_n_s16(16), in0, f0);
+                        lo = vmlaq_s16(lo, in1, f1);
                         lo = vshrq_n_s16(lo, 5);
-                        *(uint8x8_t *)&dst[y * dstStride + x] = vmovn_u16(lo);
+                        vst1_u8(dst_u8 + y * dstStride + x, vmovn_u16(lo));
                     }
                 }
                 else if (width >= 4 && sizeof(pixel) == 2)
                 {
+                    // We have to cast to the 'real' type so that this block
+                    // will compile for both low and high bitdepth.
+                    const uint16_t *ref_u16 = (const uint16_t *)ref + offset;
+                    uint16_t *dst_u16 = (uint16_t *)dst;
+
                     const int32x4_t f0 = vdupq_n_s32(32 - fraction);
                     const int32x4_t f1 = vdupq_n_s32(fraction);
                     for (int x = 0; x < width; x += 4)
                     {
-                        uint16x4_t in0 = *(uint16x4_t *)&ref[offset + x];
-                        uint16x4_t in1 = *(uint16x4_t *)&ref[offset + x + 1];
-                        int32x4_t lo = vmlaq_s32(vdupq_n_s32(16), vmovl_u16(in0), f0);
-                        lo = vmlaq_s32(lo, vmovl_u16(in1), f1);
+                        uint32x4_t in0 = vmovl_u16(vld1_u16(ref_u16 + x));
+                        uint32x4_t in1 = vmovl_u16(vld1_u16(ref_u16 + x + 1));
+                        int32x4_t lo = vmlaq_s32(vdupq_n_s32(16), in0, f0);
+                        lo = vmlaq_s32(lo, in1, f1);
                         lo = vshrq_n_s32(lo, 5);
-                        *(uint16x4_t *)&dst[y * dstStride + x] = vmovn_u32(lo);
+                        vst1_u16(dst_u16 + y * dstStride + x, vmovn_u32(lo));
                     }
                 }
                 else
