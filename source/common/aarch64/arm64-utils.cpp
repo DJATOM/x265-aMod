@@ -10,53 +10,58 @@ namespace X265_NS
 
 void transpose8x8(uint8_t *dst, const uint8_t *src, intptr_t dstride, intptr_t sstride)
 {
-    uint8x8_t a0, a1, a2, a3, a4, a5, a6, a7;
-    uint8x8_t b0, b1, b2, b3, b4, b5, b6, b7;
+    uint8x8_t a0 = vld1_u8(src + 0 * sstride);
+    uint8x8_t a1 = vld1_u8(src + 1 * sstride);
+    uint8x8_t a2 = vld1_u8(src + 2 * sstride);
+    uint8x8_t a3 = vld1_u8(src + 3 * sstride);
+    uint8x8_t a4 = vld1_u8(src + 4 * sstride);
+    uint8x8_t a5 = vld1_u8(src + 5 * sstride);
+    uint8x8_t a6 = vld1_u8(src + 6 * sstride);
+    uint8x8_t a7 = vld1_u8(src + 7 * sstride);
 
-    a0 = vld1_u8(src + 0 * sstride);
-    a1 = vld1_u8(src + 1 * sstride);
-    a2 = vld1_u8(src + 2 * sstride);
-    a3 = vld1_u8(src + 3 * sstride);
-    a4 = vld1_u8(src + 4 * sstride);
-    a5 = vld1_u8(src + 5 * sstride);
-    a6 = vld1_u8(src + 6 * sstride);
-    a7 = vld1_u8(src + 7 * sstride);
+    uint32x2_t b0 = vtrn1_u32(vreinterpret_u32_u8(a0), vreinterpret_u32_u8(a4));
+    uint32x2_t b1 = vtrn1_u32(vreinterpret_u32_u8(a1), vreinterpret_u32_u8(a5));
+    uint32x2_t b2 = vtrn1_u32(vreinterpret_u32_u8(a2), vreinterpret_u32_u8(a6));
+    uint32x2_t b3 = vtrn1_u32(vreinterpret_u32_u8(a3), vreinterpret_u32_u8(a7));
+    uint32x2_t b4 = vtrn2_u32(vreinterpret_u32_u8(a0), vreinterpret_u32_u8(a4));
+    uint32x2_t b5 = vtrn2_u32(vreinterpret_u32_u8(a1), vreinterpret_u32_u8(a5));
+    uint32x2_t b6 = vtrn2_u32(vreinterpret_u32_u8(a2), vreinterpret_u32_u8(a6));
+    uint32x2_t b7 = vtrn2_u32(vreinterpret_u32_u8(a3), vreinterpret_u32_u8(a7));
 
-    b0 = vtrn1_u32(a0, a4);
-    b1 = vtrn1_u32(a1, a5);
-    b2 = vtrn1_u32(a2, a6);
-    b3 = vtrn1_u32(a3, a7);
-    b4 = vtrn2_u32(a0, a4);
-    b5 = vtrn2_u32(a1, a5);
-    b6 = vtrn2_u32(a2, a6);
-    b7 = vtrn2_u32(a3, a7);
+    uint16x4_t c0 = vtrn1_u16(vreinterpret_u16_u32(b0),
+                              vreinterpret_u16_u32(b2));
+    uint16x4_t c1 = vtrn1_u16(vreinterpret_u16_u32(b1),
+                              vreinterpret_u16_u32(b3));
+    uint16x4_t c2 = vtrn2_u16(vreinterpret_u16_u32(b0),
+                              vreinterpret_u16_u32(b2));
+    uint16x4_t c3 = vtrn2_u16(vreinterpret_u16_u32(b1),
+                              vreinterpret_u16_u32(b3));
+    uint16x4_t c4 = vtrn1_u16(vreinterpret_u16_u32(b4),
+                              vreinterpret_u16_u32(b6));
+    uint16x4_t c5 = vtrn1_u16(vreinterpret_u16_u32(b5),
+                              vreinterpret_u16_u32(b7));
+    uint16x4_t c6 = vtrn2_u16(vreinterpret_u16_u32(b4),
+                              vreinterpret_u16_u32(b6));
+    uint16x4_t c7 = vtrn2_u16(vreinterpret_u16_u32(b5),
+                              vreinterpret_u16_u32(b7));
 
-    a0 = vtrn1_u16(b0, b2);
-    a1 = vtrn1_u16(b1, b3);
-    a2 = vtrn2_u16(b0, b2);
-    a3 = vtrn2_u16(b1, b3);
-    a4 = vtrn1_u16(b4, b6);
-    a5 = vtrn1_u16(b5, b7);
-    a6 = vtrn2_u16(b4, b6);
-    a7 = vtrn2_u16(b5, b7);
+    uint8x8_t d0 = vtrn1_u8(vreinterpret_u8_u16(c0), vreinterpret_u8_u16(c1));
+    uint8x8_t d1 = vtrn2_u8(vreinterpret_u8_u16(c0), vreinterpret_u8_u16(c1));
+    uint8x8_t d2 = vtrn1_u8(vreinterpret_u8_u16(c2), vreinterpret_u8_u16(c3));
+    uint8x8_t d3 = vtrn2_u8(vreinterpret_u8_u16(c2), vreinterpret_u8_u16(c3));
+    uint8x8_t d4 = vtrn1_u8(vreinterpret_u8_u16(c4), vreinterpret_u8_u16(c5));
+    uint8x8_t d5 = vtrn2_u8(vreinterpret_u8_u16(c4), vreinterpret_u8_u16(c5));
+    uint8x8_t d6 = vtrn1_u8(vreinterpret_u8_u16(c6), vreinterpret_u8_u16(c7));
+    uint8x8_t d7 = vtrn2_u8(vreinterpret_u8_u16(c6), vreinterpret_u8_u16(c7));
 
-    b0 = vtrn1_u8(a0, a1);
-    b1 = vtrn2_u8(a0, a1);
-    b2 = vtrn1_u8(a2, a3);
-    b3 = vtrn2_u8(a2, a3);
-    b4 = vtrn1_u8(a4, a5);
-    b5 = vtrn2_u8(a4, a5);
-    b6 = vtrn1_u8(a6, a7);
-    b7 = vtrn2_u8(a6, a7);
-
-    vst1_u8(dst + 0 * dstride, b0);
-    vst1_u8(dst + 1 * dstride, b1);
-    vst1_u8(dst + 2 * dstride, b2);
-    vst1_u8(dst + 3 * dstride, b3);
-    vst1_u8(dst + 4 * dstride, b4);
-    vst1_u8(dst + 5 * dstride, b5);
-    vst1_u8(dst + 6 * dstride, b6);
-    vst1_u8(dst + 7 * dstride, b7);
+    vst1_u8(dst + 0 * dstride, d0);
+    vst1_u8(dst + 1 * dstride, d1);
+    vst1_u8(dst + 2 * dstride, d2);
+    vst1_u8(dst + 3 * dstride, d3);
+    vst1_u8(dst + 4 * dstride, d4);
+    vst1_u8(dst + 5 * dstride, d5);
+    vst1_u8(dst + 6 * dstride, d6);
+    vst1_u8(dst + 7 * dstride, d7);
 }
 
 
@@ -66,95 +71,171 @@ void transpose8x8(uint8_t *dst, const uint8_t *src, intptr_t dstride, intptr_t s
 
 void transpose16x16(uint8_t *dst, const uint8_t *src, intptr_t dstride, intptr_t sstride)
 {
-    uint16x8_t a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, aA, aB, aC, aD, aE, aF;
-    uint16x8_t b0, b1, b2, b3, b4, b5, b6, b7, b8, b9, bA, bB, bC, bD, bE, bF;
-    uint16x8_t c0, c1, c2, c3, c4, c5, c6, c7, c8, c9, cA, cB, cC, cD, cE, cF;
-    uint16x8_t d0, d1, d2, d3, d4, d5, d6, d7, d8, d9, dA, dB, dC, dD, dE, dF;
+    uint8x16_t a0 = vld1q_u8(src + 0 * sstride);
+    uint8x16_t a1 = vld1q_u8(src + 1 * sstride);
+    uint8x16_t a2 = vld1q_u8(src + 2 * sstride);
+    uint8x16_t a3 = vld1q_u8(src + 3 * sstride);
+    uint8x16_t a4 = vld1q_u8(src + 4 * sstride);
+    uint8x16_t a5 = vld1q_u8(src + 5 * sstride);
+    uint8x16_t a6 = vld1q_u8(src + 6 * sstride);
+    uint8x16_t a7 = vld1q_u8(src + 7 * sstride);
+    uint8x16_t a8 = vld1q_u8(src + 8 * sstride);
+    uint8x16_t a9 = vld1q_u8(src + 9 * sstride);
+    uint8x16_t aA = vld1q_u8(src + 10 * sstride);
+    uint8x16_t aB = vld1q_u8(src + 11 * sstride);
+    uint8x16_t aC = vld1q_u8(src + 12 * sstride);
+    uint8x16_t aD = vld1q_u8(src + 13 * sstride);
+    uint8x16_t aE = vld1q_u8(src + 14 * sstride);
+    uint8x16_t aF = vld1q_u8(src + 15 * sstride);
 
-    a0 = vld1q_u8(src + 0 * sstride);
-    a1 = vld1q_u8(src + 1 * sstride);
-    a2 = vld1q_u8(src + 2 * sstride);
-    a3 = vld1q_u8(src + 3 * sstride);
-    a4 = vld1q_u8(src + 4 * sstride);
-    a5 = vld1q_u8(src + 5 * sstride);
-    a6 = vld1q_u8(src + 6 * sstride);
-    a7 = vld1q_u8(src + 7 * sstride);
-    a8 = vld1q_u8(src + 8 * sstride);
-    a9 = vld1q_u8(src + 9 * sstride);
-    aA = vld1q_u8(src + 10 * sstride);
-    aB = vld1q_u8(src + 11 * sstride);
-    aC = vld1q_u8(src + 12 * sstride);
-    aD = vld1q_u8(src + 13 * sstride);
-    aE = vld1q_u8(src + 14 * sstride);
-    aF = vld1q_u8(src + 15 * sstride);
+    uint64x2_t b0 = vtrn1q_u64(vreinterpretq_u64_u8(a0),
+                               vreinterpretq_u64_u8(a8));
+    uint64x2_t b1 = vtrn1q_u64(vreinterpretq_u64_u8(a1),
+                               vreinterpretq_u64_u8(a9));
+    uint64x2_t b2 = vtrn1q_u64(vreinterpretq_u64_u8(a2),
+                               vreinterpretq_u64_u8(aA));
+    uint64x2_t b3 = vtrn1q_u64(vreinterpretq_u64_u8(a3),
+                               vreinterpretq_u64_u8(aB));
+    uint64x2_t b4 = vtrn1q_u64(vreinterpretq_u64_u8(a4),
+                               vreinterpretq_u64_u8(aC));
+    uint64x2_t b5 = vtrn1q_u64(vreinterpretq_u64_u8(a5),
+                               vreinterpretq_u64_u8(aD));
+    uint64x2_t b6 = vtrn1q_u64(vreinterpretq_u64_u8(a6),
+                               vreinterpretq_u64_u8(aE));
+    uint64x2_t b7 = vtrn1q_u64(vreinterpretq_u64_u8(a7),
+                               vreinterpretq_u64_u8(aF));
+    uint64x2_t b8 = vtrn2q_u64(vreinterpretq_u64_u8(a0),
+                               vreinterpretq_u64_u8(a8));
+    uint64x2_t b9 = vtrn2q_u64(vreinterpretq_u64_u8(a1),
+                               vreinterpretq_u64_u8(a9));
+    uint64x2_t bA = vtrn2q_u64(vreinterpretq_u64_u8(a2),
+                               vreinterpretq_u64_u8(aA));
+    uint64x2_t bB = vtrn2q_u64(vreinterpretq_u64_u8(a3),
+                               vreinterpretq_u64_u8(aB));
+    uint64x2_t bC = vtrn2q_u64(vreinterpretq_u64_u8(a4),
+                               vreinterpretq_u64_u8(aC));
+    uint64x2_t bD = vtrn2q_u64(vreinterpretq_u64_u8(a5),
+                               vreinterpretq_u64_u8(aD));
+    uint64x2_t bE = vtrn2q_u64(vreinterpretq_u64_u8(a6),
+                               vreinterpretq_u64_u8(aE));
+    uint64x2_t bF = vtrn2q_u64(vreinterpretq_u64_u8(a7),
+                               vreinterpretq_u64_u8(aF));
 
-    b0 = vtrn1q_u64(a0, a8);
-    b1 = vtrn1q_u64(a1, a9);
-    b2 = vtrn1q_u64(a2, aA);
-    b3 = vtrn1q_u64(a3, aB);
-    b4 = vtrn1q_u64(a4, aC);
-    b5 = vtrn1q_u64(a5, aD);
-    b6 = vtrn1q_u64(a6, aE);
-    b7 = vtrn1q_u64(a7, aF);
-    b8 = vtrn2q_u64(a0, a8);
-    b9 = vtrn2q_u64(a1, a9);
-    bA = vtrn2q_u64(a2, aA);
-    bB = vtrn2q_u64(a3, aB);
-    bC = vtrn2q_u64(a4, aC);
-    bD = vtrn2q_u64(a5, aD);
-    bE = vtrn2q_u64(a6, aE);
-    bF = vtrn2q_u64(a7, aF);
+    uint32x4_t c0 = vtrn1q_u32(vreinterpretq_u32_u64(b0),
+                               vreinterpretq_u32_u64(b4));
+    uint32x4_t c1 = vtrn1q_u32(vreinterpretq_u32_u64(b1),
+                               vreinterpretq_u32_u64(b5));
+    uint32x4_t c2 = vtrn1q_u32(vreinterpretq_u32_u64(b2),
+                               vreinterpretq_u32_u64(b6));
+    uint32x4_t c3 = vtrn1q_u32(vreinterpretq_u32_u64(b3),
+                               vreinterpretq_u32_u64(b7));
+    uint32x4_t c4 = vtrn2q_u32(vreinterpretq_u32_u64(b0),
+                               vreinterpretq_u32_u64(b4));
+    uint32x4_t c5 = vtrn2q_u32(vreinterpretq_u32_u64(b1),
+                               vreinterpretq_u32_u64(b5));
+    uint32x4_t c6 = vtrn2q_u32(vreinterpretq_u32_u64(b2),
+                               vreinterpretq_u32_u64(b6));
+    uint32x4_t c7 = vtrn2q_u32(vreinterpretq_u32_u64(b3),
+                               vreinterpretq_u32_u64(b7));
+    uint32x4_t c8 = vtrn1q_u32(vreinterpretq_u32_u64(b8),
+                               vreinterpretq_u32_u64(bC));
+    uint32x4_t c9 = vtrn1q_u32(vreinterpretq_u32_u64(b9),
+                               vreinterpretq_u32_u64(bD));
+    uint32x4_t cA = vtrn1q_u32(vreinterpretq_u32_u64(bA),
+                               vreinterpretq_u32_u64(bE));
+    uint32x4_t cB = vtrn1q_u32(vreinterpretq_u32_u64(bB),
+                               vreinterpretq_u32_u64(bF));
+    uint32x4_t cC = vtrn2q_u32(vreinterpretq_u32_u64(b8),
+                               vreinterpretq_u32_u64(bC));
+    uint32x4_t cD = vtrn2q_u32(vreinterpretq_u32_u64(b9),
+                               vreinterpretq_u32_u64(bD));
+    uint32x4_t cE = vtrn2q_u32(vreinterpretq_u32_u64(bA),
+                               vreinterpretq_u32_u64(bE));
+    uint32x4_t cF = vtrn2q_u32(vreinterpretq_u32_u64(bB),
+                               vreinterpretq_u32_u64(bF));
 
-    c0 = vtrn1q_u32(b0, b4);
-    c1 = vtrn1q_u32(b1, b5);
-    c2 = vtrn1q_u32(b2, b6);
-    c3 = vtrn1q_u32(b3, b7);
-    c4 = vtrn2q_u32(b0, b4);
-    c5 = vtrn2q_u32(b1, b5);
-    c6 = vtrn2q_u32(b2, b6);
-    c7 = vtrn2q_u32(b3, b7);
-    c8 = vtrn1q_u32(b8, bC);
-    c9 = vtrn1q_u32(b9, bD);
-    cA = vtrn1q_u32(bA, bE);
-    cB = vtrn1q_u32(bB, bF);
-    cC = vtrn2q_u32(b8, bC);
-    cD = vtrn2q_u32(b9, bD);
-    cE = vtrn2q_u32(bA, bE);
-    cF = vtrn2q_u32(bB, bF);
+    uint16x8_t d0 = vtrn1q_u16(vreinterpretq_u16_u32(c0),
+                               vreinterpretq_u16_u32(c2));
+    uint16x8_t d1 = vtrn1q_u16(vreinterpretq_u16_u32(c1),
+                               vreinterpretq_u16_u32(c3));
+    uint16x8_t d2 = vtrn2q_u16(vreinterpretq_u16_u32(c0),
+                               vreinterpretq_u16_u32(c2));
+    uint16x8_t d3 = vtrn2q_u16(vreinterpretq_u16_u32(c1),
+                               vreinterpretq_u16_u32(c3));
+    uint16x8_t d4 = vtrn1q_u16(vreinterpretq_u16_u32(c4),
+                               vreinterpretq_u16_u32(c6));
+    uint16x8_t d5 = vtrn1q_u16(vreinterpretq_u16_u32(c5),
+                               vreinterpretq_u16_u32(c7));
+    uint16x8_t d6 = vtrn2q_u16(vreinterpretq_u16_u32(c4),
+                               vreinterpretq_u16_u32(c6));
+    uint16x8_t d7 = vtrn2q_u16(vreinterpretq_u16_u32(c5),
+                               vreinterpretq_u16_u32(c7));
+    uint16x8_t d8 = vtrn1q_u16(vreinterpretq_u16_u32(c8),
+                               vreinterpretq_u16_u32(cA));
+    uint16x8_t d9 = vtrn1q_u16(vreinterpretq_u16_u32(c9),
+                               vreinterpretq_u16_u32(cB));
+    uint16x8_t dA = vtrn2q_u16(vreinterpretq_u16_u32(c8),
+                               vreinterpretq_u16_u32(cA));
+    uint16x8_t dB = vtrn2q_u16(vreinterpretq_u16_u32(c9),
+                               vreinterpretq_u16_u32(cB));
+    uint16x8_t dC = vtrn1q_u16(vreinterpretq_u16_u32(cC),
+                               vreinterpretq_u16_u32(cE));
+    uint16x8_t dD = vtrn1q_u16(vreinterpretq_u16_u32(cD),
+                               vreinterpretq_u16_u32(cF));
+    uint16x8_t dE = vtrn2q_u16(vreinterpretq_u16_u32(cC),
+                               vreinterpretq_u16_u32(cE));
+    uint16x8_t dF = vtrn2q_u16(vreinterpretq_u16_u32(cD),
+                               vreinterpretq_u16_u32(cF));
 
-    d0 = vtrn1q_u16(c0, c2);
-    d1 = vtrn1q_u16(c1, c3);
-    d2 = vtrn2q_u16(c0, c2);
-    d3 = vtrn2q_u16(c1, c3);
-    d4 = vtrn1q_u16(c4, c6);
-    d5 = vtrn1q_u16(c5, c7);
-    d6 = vtrn2q_u16(c4, c6);
-    d7 = vtrn2q_u16(c5, c7);
-    d8 = vtrn1q_u16(c8, cA);
-    d9 = vtrn1q_u16(c9, cB);
-    dA = vtrn2q_u16(c8, cA);
-    dB = vtrn2q_u16(c9, cB);
-    dC = vtrn1q_u16(cC, cE);
-    dD = vtrn1q_u16(cD, cF);
-    dE = vtrn2q_u16(cC, cE);
-    dF = vtrn2q_u16(cD, cF);
+    uint8x16_t e0 = vtrn1q_u8(vreinterpretq_u8_u16(d0),
+                              vreinterpretq_u8_u16(d1));
+    uint8x16_t e1 = vtrn2q_u8(vreinterpretq_u8_u16(d0),
+                              vreinterpretq_u8_u16(d1));
+    uint8x16_t e2 = vtrn1q_u8(vreinterpretq_u8_u16(d2),
+                              vreinterpretq_u8_u16(d3));
+    uint8x16_t e3 = vtrn2q_u8(vreinterpretq_u8_u16(d2),
+                              vreinterpretq_u8_u16(d3));
+    uint8x16_t e4 = vtrn1q_u8(vreinterpretq_u8_u16(d4),
+                              vreinterpretq_u8_u16(d5));
+    uint8x16_t e5 = vtrn2q_u8(vreinterpretq_u8_u16(d4),
+                              vreinterpretq_u8_u16(d5));
+    uint8x16_t e6 = vtrn1q_u8(vreinterpretq_u8_u16(d6),
+                              vreinterpretq_u8_u16(d7));
+    uint8x16_t e7 = vtrn2q_u8(vreinterpretq_u8_u16(d6),
+                              vreinterpretq_u8_u16(d7));
+    uint8x16_t e8 = vtrn1q_u8(vreinterpretq_u8_u16(d8),
+                              vreinterpretq_u8_u16(d9));
+    uint8x16_t e9 = vtrn2q_u8(vreinterpretq_u8_u16(d8),
+                              vreinterpretq_u8_u16(d9));
+    uint8x16_t eA = vtrn1q_u8(vreinterpretq_u8_u16(dA),
+                              vreinterpretq_u8_u16(dB));
+    uint8x16_t eB = vtrn2q_u8(vreinterpretq_u8_u16(dA),
+                              vreinterpretq_u8_u16(dB));
+    uint8x16_t eC = vtrn1q_u8(vreinterpretq_u8_u16(dC),
+                              vreinterpretq_u8_u16(dD));
+    uint8x16_t eD = vtrn2q_u8(vreinterpretq_u8_u16(dC),
+                              vreinterpretq_u8_u16(dD));
+    uint8x16_t eE = vtrn1q_u8(vreinterpretq_u8_u16(dE),
+                              vreinterpretq_u8_u16(dF));
+    uint8x16_t eF = vtrn2q_u8(vreinterpretq_u8_u16(dE),
+                              vreinterpretq_u8_u16(dF));
 
-    vst1q_u8(dst + 0 * dstride, vtrn1q_u8(d0, d1));
-    vst1q_u8(dst + 1 * dstride, vtrn2q_u8(d0, d1));
-    vst1q_u8(dst + 2 * dstride, vtrn1q_u8(d2, d3));
-    vst1q_u8(dst + 3 * dstride, vtrn2q_u8(d2, d3));
-    vst1q_u8(dst + 4 * dstride, vtrn1q_u8(d4, d5));
-    vst1q_u8(dst + 5 * dstride, vtrn2q_u8(d4, d5));
-    vst1q_u8(dst + 6 * dstride, vtrn1q_u8(d6, d7));
-    vst1q_u8(dst + 7 * dstride, vtrn2q_u8(d6, d7));
-    vst1q_u8(dst + 8 * dstride, vtrn1q_u8(d8, d9));
-    vst1q_u8(dst + 9 * dstride, vtrn2q_u8(d8, d9));
-    vst1q_u8(dst + 10 * dstride, vtrn1q_u8(dA, dB));
-    vst1q_u8(dst + 11 * dstride, vtrn2q_u8(dA, dB));
-    vst1q_u8(dst + 12 * dstride, vtrn1q_u8(dC, dD));
-    vst1q_u8(dst + 13 * dstride, vtrn2q_u8(dC, dD));
-    vst1q_u8(dst + 14 * dstride, vtrn1q_u8(dE, dF));
-    vst1q_u8(dst + 15 * dstride, vtrn2q_u8(dE, dF));
+    vst1q_u8(dst + 0 * dstride, e0);
+    vst1q_u8(dst + 1 * dstride, e1);
+    vst1q_u8(dst + 2 * dstride, e2);
+    vst1q_u8(dst + 3 * dstride, e3);
+    vst1q_u8(dst + 4 * dstride, e4);
+    vst1q_u8(dst + 5 * dstride, e5);
+    vst1q_u8(dst + 6 * dstride, e6);
+    vst1q_u8(dst + 7 * dstride, e7);
+    vst1q_u8(dst + 8 * dstride, e8);
+    vst1q_u8(dst + 9 * dstride, e9);
+    vst1q_u8(dst + 10 * dstride, eA);
+    vst1q_u8(dst + 11 * dstride, eB);
+    vst1q_u8(dst + 12 * dstride, eC);
+    vst1q_u8(dst + 13 * dstride, eD);
+    vst1q_u8(dst + 14 * dstride, eE);
+    vst1q_u8(dst + 15 * dstride, eF);
 }
 
 
@@ -185,53 +266,74 @@ void transpose32x32(uint8_t *dst, const uint8_t *src, intptr_t dstride, intptr_t
 
 void transpose8x8(uint16_t *dst, const uint16_t *src, intptr_t dstride, intptr_t sstride)
 {
-    uint16x8_t a0, a1, a2, a3, a4, a5, a6, a7;
-    uint16x8_t b0, b1, b2, b3, b4, b5, b6, b7;
+    uint16x8_t a0 = vld1q_u16(src + 0 * sstride);
+    uint16x8_t a1 = vld1q_u16(src + 1 * sstride);
+    uint16x8_t a2 = vld1q_u16(src + 2 * sstride);
+    uint16x8_t a3 = vld1q_u16(src + 3 * sstride);
+    uint16x8_t a4 = vld1q_u16(src + 4 * sstride);
+    uint16x8_t a5 = vld1q_u16(src + 5 * sstride);
+    uint16x8_t a6 = vld1q_u16(src + 6 * sstride);
+    uint16x8_t a7 = vld1q_u16(src + 7 * sstride);
 
-    a0 = vld1q_u16(src + 0 * sstride);
-    a1 = vld1q_u16(src + 1 * sstride);
-    a2 = vld1q_u16(src + 2 * sstride);
-    a3 = vld1q_u16(src + 3 * sstride);
-    a4 = vld1q_u16(src + 4 * sstride);
-    a5 = vld1q_u16(src + 5 * sstride);
-    a6 = vld1q_u16(src + 6 * sstride);
-    a7 = vld1q_u16(src + 7 * sstride);
+    uint64x2_t b0 = vtrn1q_u64(vreinterpretq_u64_u16(a0),
+                               vreinterpretq_u64_u16(a4));
+    uint64x2_t b1 = vtrn1q_u64(vreinterpretq_u64_u16(a1),
+                               vreinterpretq_u64_u16(a5));
+    uint64x2_t b2 = vtrn1q_u64(vreinterpretq_u64_u16(a2),
+                               vreinterpretq_u64_u16(a6));
+    uint64x2_t b3 = vtrn1q_u64(vreinterpretq_u64_u16(a3),
+                               vreinterpretq_u64_u16(a7));
+    uint64x2_t b4 = vtrn2q_u64(vreinterpretq_u64_u16(a0),
+                               vreinterpretq_u64_u16(a4));
+    uint64x2_t b5 = vtrn2q_u64(vreinterpretq_u64_u16(a1),
+                               vreinterpretq_u64_u16(a5));
+    uint64x2_t b6 = vtrn2q_u64(vreinterpretq_u64_u16(a2),
+                               vreinterpretq_u64_u16(a6));
+    uint64x2_t b7 = vtrn2q_u64(vreinterpretq_u64_u16(a3),
+                               vreinterpretq_u64_u16(a7));
 
-    b0 = vtrn1q_u64(a0, a4);
-    b1 = vtrn1q_u64(a1, a5);
-    b2 = vtrn1q_u64(a2, a6);
-    b3 = vtrn1q_u64(a3, a7);
-    b4 = vtrn2q_u64(a0, a4);
-    b5 = vtrn2q_u64(a1, a5);
-    b6 = vtrn2q_u64(a2, a6);
-    b7 = vtrn2q_u64(a3, a7);
+    uint32x4_t c0 = vtrn1q_u32(vreinterpretq_u32_u64(b0),
+                               vreinterpretq_u32_u64(b2));
+    uint32x4_t c1 = vtrn1q_u32(vreinterpretq_u32_u64(b1),
+                               vreinterpretq_u32_u64(b3));
+    uint32x4_t c2 = vtrn2q_u32(vreinterpretq_u32_u64(b0),
+                               vreinterpretq_u32_u64(b2));
+    uint32x4_t c3 = vtrn2q_u32(vreinterpretq_u32_u64(b1),
+                               vreinterpretq_u32_u64(b3));
+    uint32x4_t c4 = vtrn1q_u32(vreinterpretq_u32_u64(b4),
+                               vreinterpretq_u32_u64(b6));
+    uint32x4_t c5 = vtrn1q_u32(vreinterpretq_u32_u64(b5),
+                               vreinterpretq_u32_u64(b7));
+    uint32x4_t c6 = vtrn2q_u32(vreinterpretq_u32_u64(b4),
+                               vreinterpretq_u32_u64(b6));
+    uint32x4_t c7 = vtrn2q_u32(vreinterpretq_u32_u64(b5),
+                               vreinterpretq_u32_u64(b7));
 
-    a0 = vtrn1q_u32(b0, b2);
-    a1 = vtrn1q_u32(b1, b3);
-    a2 = vtrn2q_u32(b0, b2);
-    a3 = vtrn2q_u32(b1, b3);
-    a4 = vtrn1q_u32(b4, b6);
-    a5 = vtrn1q_u32(b5, b7);
-    a6 = vtrn2q_u32(b4, b6);
-    a7 = vtrn2q_u32(b5, b7);
+    uint16x8_t d0 = vtrn1q_u16(vreinterpretq_u16_u32(c0),
+                               vreinterpretq_u16_u32(c1));
+    uint16x8_t d1 = vtrn2q_u16(vreinterpretq_u16_u32(c0),
+                               vreinterpretq_u16_u32(c1));
+    uint16x8_t d2 = vtrn1q_u16(vreinterpretq_u16_u32(c2),
+                               vreinterpretq_u16_u32(c3));
+    uint16x8_t d3 = vtrn2q_u16(vreinterpretq_u16_u32(c2),
+                               vreinterpretq_u16_u32(c3));
+    uint16x8_t d4 = vtrn1q_u16(vreinterpretq_u16_u32(c4),
+                               vreinterpretq_u16_u32(c5));
+    uint16x8_t d5 = vtrn2q_u16(vreinterpretq_u16_u32(c4),
+                               vreinterpretq_u16_u32(c5));
+    uint16x8_t d6 = vtrn1q_u16(vreinterpretq_u16_u32(c6),
+                               vreinterpretq_u16_u32(c7));
+    uint16x8_t d7 = vtrn2q_u16(vreinterpretq_u16_u32(c6),
+                               vreinterpretq_u16_u32(c7));
 
-    b0 = vtrn1q_u16(a0, a1);
-    b1 = vtrn2q_u16(a0, a1);
-    b2 = vtrn1q_u16(a2, a3);
-    b3 = vtrn2q_u16(a2, a3);
-    b4 = vtrn1q_u16(a4, a5);
-    b5 = vtrn2q_u16(a4, a5);
-    b6 = vtrn1q_u16(a6, a7);
-    b7 = vtrn2q_u16(a6, a7);
-
-    vst1q_u16(dst + 0 * dstride, b0);
-    vst1q_u16(dst + 1 * dstride, b1);
-    vst1q_u16(dst + 2 * dstride, b2);
-    vst1q_u16(dst + 3 * dstride, b3);
-    vst1q_u16(dst + 4 * dstride, b4);
-    vst1q_u16(dst + 5 * dstride, b5);
-    vst1q_u16(dst + 6 * dstride, b6);
-    vst1q_u16(dst + 7 * dstride, b7);
+    vst1q_u16(dst + 0 * dstride, d0);
+    vst1q_u16(dst + 1 * dstride, d1);
+    vst1q_u16(dst + 2 * dstride, d2);
+    vst1q_u16(dst + 3 * dstride, d3);
+    vst1q_u16(dst + 4 * dstride, d4);
+    vst1q_u16(dst + 5 * dstride, d5);
+    vst1q_u16(dst + 6 * dstride, d6);
+    vst1q_u16(dst + 7 * dstride, d7);
 }
 
 void transpose16x16(uint16_t *dst, const uint16_t *src, intptr_t dstride, intptr_t sstride)
