@@ -473,9 +473,6 @@ void setupCPrimitives(EncoderPrimitives &p);
 void setupIntrinsicPrimitives(EncoderPrimitives &p, int cpuMask);
 void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask);
 void setupAliasPrimitives(EncoderPrimitives &p);
-#if X265_ARCH_ARM64
-void setupAliasCPrimitives(EncoderPrimitives &cp, EncoderPrimitives &asmp, int cpuMask);
-#endif
 #if HAVE_ALTIVEC
 void setupPixelPrimitives_altivec(EncoderPrimitives &p);
 void setupDCTPrimitives_altivec(EncoderPrimitives &p);
