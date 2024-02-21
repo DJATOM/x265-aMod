@@ -1,6 +1,7 @@
 #ifndef __ARM64_UTILS_H__
 #define __ARM64_UTILS_H__
 
+#include <stdint.h>
 
 namespace X265_NS
 {
