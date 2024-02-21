@@ -190,7 +190,7 @@ int main(int argc, char *argv[])
         else
             continue;
 
-#if X265_ARCH_X86
+#if defined(X265_ARCH_X86) || defined(X265_ARCH_ARM64)
         EncoderPrimitives vecprim;
         memset(&vecprim, 0, sizeof(vecprim));
         setupIntrinsicPrimitives(vecprim, test_arch[i].flag);
@@ -231,7 +231,7 @@ int main(int argc, char *argv[])
 
     EncoderPrimitives optprim;
     memset(&optprim, 0, sizeof(optprim));
-#if X265_ARCH_X86
+#if defined(X265_ARCH_X86) || defined(X265_ARCH_ARM64)
     setupIntrinsicPrimitives(optprim, cpuid);
 #endif
 
