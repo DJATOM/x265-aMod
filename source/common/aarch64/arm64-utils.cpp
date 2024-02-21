@@ -3,7 +3,6 @@
 #include "arm64-utils.h"
 #include <arm_neon.h>
 
-#define COPY_16(d,s) *(uint8x16_t *)(d) = *(uint8x16_t *)(s)
 namespace X265_NS
 {
 
@@ -14,14 +13,14 @@ void transpose8x8(uint8_t *dst, const uint8_t *src, intptr_t dstride, intptr_t s
     uint8x8_t a0, a1, a2, a3, a4, a5, a6, a7;
     uint8x8_t b0, b1, b2, b3, b4, b5, b6, b7;
 
-    a0 = *(uint8x8_t *)(src + 0 * sstride);
-    a1 = *(uint8x8_t *)(src + 1 * sstride);
-    a2 = *(uint8x8_t *)(src + 2 * sstride);
-    a3 = *(uint8x8_t *)(src + 3 * sstride);
-    a4 = *(uint8x8_t *)(src + 4 * sstride);
-    a5 = *(uint8x8_t *)(src + 5 * sstride);
-    a6 = *(uint8x8_t *)(src + 6 * sstride);
-    a7 = *(uint8x8_t *)(src + 7 * sstride);
+    a0 = vld1_u8(src + 0 * sstride);
+    a1 = vld1_u8(src + 1 * sstride);
+    a2 = vld1_u8(src + 2 * sstride);
+    a3 = vld1_u8(src + 3 * sstride);
+    a4 = vld1_u8(src + 4 * sstride);
+    a5 = vld1_u8(src + 5 * sstride);
+    a6 = vld1_u8(src + 6 * sstride);
+    a7 = vld1_u8(src + 7 * sstride);
 
     b0 = vtrn1_u32(a0, a4);
     b1 = vtrn1_u32(a1, a5);
@@ -50,14 +49,14 @@ void transpose8x8(uint8_t *dst, const uint8_t *src, intptr_t dstride, intptr_t s
     b6 = vtrn1_u8(a6, a7);
     b7 = vtrn2_u8(a6, a7);
 
-    *(uint8x8_t *)(dst + 0 * dstride) = b0;
-    *(uint8x8_t *)(dst + 1 * dstride) = b1;
-    *(uint8x8_t *)(dst + 2 * dstride) = b2;
-    *(uint8x8_t *)(dst + 3 * dstride) = b3;
-    *(uint8x8_t *)(dst + 4 * dstride) = b4;
-    *(uint8x8_t *)(dst + 5 * dstride) = b5;
-    *(uint8x8_t *)(dst + 6 * dstride) = b6;
-    *(uint8x8_t *)(dst + 7 * dstride) = b7;
+    vst1_u8(dst + 0 * dstride, b0);
+    vst1_u8(dst + 1 * dstride, b1);
+    vst1_u8(dst + 2 * dstride, b2);
+    vst1_u8(dst + 3 * dstride, b3);
+    vst1_u8(dst + 4 * dstride, b4);
+    vst1_u8(dst + 5 * dstride, b5);
+    vst1_u8(dst + 6 * dstride, b6);
+    vst1_u8(dst + 7 * dstride, b7);
 }
 
 
@@ -72,22 +71,22 @@ void transpose16x16(uint8_t *dst, const uint8_t *src, intptr_t dstride, intptr_t
     uint16x8_t c0, c1, c2, c3, c4, c5, c6, c7, c8, c9, cA, cB, cC, cD, cE, cF;
     uint16x8_t d0, d1, d2, d3, d4, d5, d6, d7, d8, d9, dA, dB, dC, dD, dE, dF;
 
-    a0 = *(uint16x8_t *)(src + 0 * sstride);
-    a1 = *(uint16x8_t *)(src + 1 * sstride);
-    a2 = *(uint16x8_t *)(src + 2 * sstride);
-    a3 = *(uint16x8_t *)(src + 3 * sstride);
-    a4 = *(uint16x8_t *)(src + 4 * sstride);
-    a5 = *(uint16x8_t *)(src + 5 * sstride);
-    a6 = *(uint16x8_t *)(src + 6 * sstride);
-    a7 = *(uint16x8_t *)(src + 7 * sstride);
-    a8 = *(uint16x8_t *)(src + 8 * sstride);
-    a9 = *(uint16x8_t *)(src + 9 * sstride);
-    aA = *(uint16x8_t *)(src + 10 * sstride);
-    aB = *(uint16x8_t *)(src + 11 * sstride);
-    aC = *(uint16x8_t *)(src + 12 * sstride);
-    aD = *(uint16x8_t *)(src + 13 * sstride);
-    aE = *(uint16x8_t *)(src + 14 * sstride);
-    aF = *(uint16x8_t *)(src + 15 * sstride);
+    a0 = vld1q_u8(src + 0 * sstride);
+    a1 = vld1q_u8(src + 1 * sstride);
+    a2 = vld1q_u8(src + 2 * sstride);
+    a3 = vld1q_u8(src + 3 * sstride);
+    a4 = vld1q_u8(src + 4 * sstride);
+    a5 = vld1q_u8(src + 5 * sstride);
+    a6 = vld1q_u8(src + 6 * sstride);
+    a7 = vld1q_u8(src + 7 * sstride);
+    a8 = vld1q_u8(src + 8 * sstride);
+    a9 = vld1q_u8(src + 9 * sstride);
+    aA = vld1q_u8(src + 10 * sstride);
+    aB = vld1q_u8(src + 11 * sstride);
+    aC = vld1q_u8(src + 12 * sstride);
+    aD = vld1q_u8(src + 13 * sstride);
+    aE = vld1q_u8(src + 14 * sstride);
+    aF = vld1q_u8(src + 15 * sstride);
 
     b0 = vtrn1q_u64(a0, a8);
     b1 = vtrn1q_u64(a1, a9);
@@ -140,24 +139,22 @@ void transpose16x16(uint8_t *dst, const uint8_t *src, intptr_t dstride, intptr_t
     dE = vtrn2q_u16(cC, cE);
     dF = vtrn2q_u16(cD, cF);
 
-    *(uint16x8_t *)(dst + 0 * dstride)  = vtrn1q_u8(d0, d1);
-    *(uint16x8_t *)(dst + 1 * dstride)  = vtrn2q_u8(d0, d1);
-    *(uint16x8_t *)(dst + 2 * dstride)  = vtrn1q_u8(d2, d3);
-    *(uint16x8_t *)(dst + 3 * dstride)  = vtrn2q_u8(d2, d3);
-    *(uint16x8_t *)(dst + 4 * dstride)  = vtrn1q_u8(d4, d5);
-    *(uint16x8_t *)(dst + 5 * dstride)  = vtrn2q_u8(d4, d5);
-    *(uint16x8_t *)(dst + 6 * dstride)  = vtrn1q_u8(d6, d7);
-    *(uint16x8_t *)(dst + 7 * dstride)  = vtrn2q_u8(d6, d7);
-    *(uint16x8_t *)(dst + 8 * dstride)  = vtrn1q_u8(d8, d9);
-    *(uint16x8_t *)(dst + 9 * dstride)  = vtrn2q_u8(d8, d9);
-    *(uint16x8_t *)(dst + 10 * dstride)  = vtrn1q_u8(dA, dB);
-    *(uint16x8_t *)(dst + 11 * dstride)  = vtrn2q_u8(dA, dB);
-    *(uint16x8_t *)(dst + 12 * dstride)  = vtrn1q_u8(dC, dD);
-    *(uint16x8_t *)(dst + 13 * dstride)  = vtrn2q_u8(dC, dD);
-    *(uint16x8_t *)(dst + 14 * dstride)  = vtrn1q_u8(dE, dF);
-    *(uint16x8_t *)(dst + 15 * dstride)  = vtrn2q_u8(dE, dF);
-
-
+    vst1q_u8(dst + 0 * dstride, vtrn1q_u8(d0, d1));
+    vst1q_u8(dst + 1 * dstride, vtrn2q_u8(d0, d1));
+    vst1q_u8(dst + 2 * dstride, vtrn1q_u8(d2, d3));
+    vst1q_u8(dst + 3 * dstride, vtrn2q_u8(d2, d3));
+    vst1q_u8(dst + 4 * dstride, vtrn1q_u8(d4, d5));
+    vst1q_u8(dst + 5 * dstride, vtrn2q_u8(d4, d5));
+    vst1q_u8(dst + 6 * dstride, vtrn1q_u8(d6, d7));
+    vst1q_u8(dst + 7 * dstride, vtrn2q_u8(d6, d7));
+    vst1q_u8(dst + 8 * dstride, vtrn1q_u8(d8, d9));
+    vst1q_u8(dst + 9 * dstride, vtrn2q_u8(d8, d9));
+    vst1q_u8(dst + 10 * dstride, vtrn1q_u8(dA, dB));
+    vst1q_u8(dst + 11 * dstride, vtrn2q_u8(dA, dB));
+    vst1q_u8(dst + 12 * dstride, vtrn1q_u8(dC, dD));
+    vst1q_u8(dst + 13 * dstride, vtrn2q_u8(dC, dD));
+    vst1q_u8(dst + 14 * dstride, vtrn1q_u8(dE, dF));
+    vst1q_u8(dst + 15 * dstride, vtrn2q_u8(dE, dF));
 }
 
 
@@ -173,7 +170,7 @@ void transpose32x32(uint8_t *dst, const uint8_t *src, intptr_t dstride, intptr_t
         transpose16x16(dst + 16, src + 16 * sstride, dstride, sstride);
         for (int i = 0; i < 16; i++)
         {
-            COPY_16(dst + (16 + i)*dstride, tmp + 16 * i);
+            vst1q_u8(dst + (16 + i) * dstride, vld1q_u8(tmp + 16 * i));
         }
     }
     else
@@ -191,14 +188,14 @@ void transpose8x8(uint16_t *dst, const uint16_t *src, intptr_t dstride, intptr_t
     uint16x8_t a0, a1, a2, a3, a4, a5, a6, a7;
     uint16x8_t b0, b1, b2, b3, b4, b5, b6, b7;
 
-    a0 = *(uint16x8_t *)(src + 0 * sstride);
-    a1 = *(uint16x8_t *)(src + 1 * sstride);
-    a2 = *(uint16x8_t *)(src + 2 * sstride);
-    a3 = *(uint16x8_t *)(src + 3 * sstride);
-    a4 = *(uint16x8_t *)(src + 4 * sstride);
-    a5 = *(uint16x8_t *)(src + 5 * sstride);
-    a6 = *(uint16x8_t *)(src + 6 * sstride);
-    a7 = *(uint16x8_t *)(src + 7 * sstride);
+    a0 = vld1q_u16(src + 0 * sstride);
+    a1 = vld1q_u16(src + 1 * sstride);
+    a2 = vld1q_u16(src + 2 * sstride);
+    a3 = vld1q_u16(src + 3 * sstride);
+    a4 = vld1q_u16(src + 4 * sstride);
+    a5 = vld1q_u16(src + 5 * sstride);
+    a6 = vld1q_u16(src + 6 * sstride);
+    a7 = vld1q_u16(src + 7 * sstride);
 
     b0 = vtrn1q_u64(a0, a4);
     b1 = vtrn1q_u64(a1, a5);
@@ -227,14 +224,14 @@ void transpose8x8(uint16_t *dst, const uint16_t *src, intptr_t dstride, intptr_t
     b6 = vtrn1q_u16(a6, a7);
     b7 = vtrn2q_u16(a6, a7);
 
-    *(uint16x8_t *)(dst + 0 * dstride) = b0;
-    *(uint16x8_t *)(dst + 1 * dstride) = b1;
-    *(uint16x8_t *)(dst + 2 * dstride) = b2;
-    *(uint16x8_t *)(dst + 3 * dstride) = b3;
-    *(uint16x8_t *)(dst + 4 * dstride) = b4;
-    *(uint16x8_t *)(dst + 5 * dstride) = b5;
-    *(uint16x8_t *)(dst + 6 * dstride) = b6;
-    *(uint16x8_t *)(dst + 7 * dstride) = b7;
+    vst1q_u16(dst + 0 * dstride, b0);
+    vst1q_u16(dst + 1 * dstride, b1);
+    vst1q_u16(dst + 2 * dstride, b2);
+    vst1q_u16(dst + 3 * dstride, b3);
+    vst1q_u16(dst + 4 * dstride, b4);
+    vst1q_u16(dst + 5 * dstride, b5);
+    vst1q_u16(dst + 6 * dstride, b6);
+    vst1q_u16(dst + 7 * dstride, b7);
 }
 
 void transpose16x16(uint16_t *dst, const uint16_t *src, intptr_t dstride, intptr_t sstride)
@@ -250,7 +247,7 @@ void transpose16x16(uint16_t *dst, const uint16_t *src, intptr_t dstride, intptr
         transpose8x8(dst + 8, src + 8 * sstride, dstride, sstride);
         for (int i = 0; i < 8; i++)
         {
-            COPY_16(dst + (8 + i)*dstride, tmp + 8 * i);
+            vst1q_u16(dst + (8 + i) * dstride, vld1q_u16(tmp + 8 * i));
         }
     }
     else
@@ -278,7 +275,8 @@ void transpose32x32(uint16_t *dst, const uint16_t *src, intptr_t dstride, intptr
                 transpose8x8(dst + 8 * i + 8 * j * dstride, src + 8 * j + 8 * i * sstride, dstride, sstride);
                 for (int k = 0; k < 8; k++)
                 {
-                    COPY_16(dst + 8 * j + (8 * i + k)*dstride, tmp + 8 * k);
+                    vst1q_u16(dst + 8 * j + (8 * i + k) * dstride,
+                              vld1q_u16(tmp + 8 * k));
                 }
             }
             else
