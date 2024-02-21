@@ -23,7 +23,7 @@ void filterPixelToShort_neon(const pixel *src, intptr_t srcStride, int16_t *dst,
 
         for (col = 0; col < width; col += 8)
         {
-            int16x8_t in;
+            uint16x8_t in;
 
 #if HIGH_BIT_DEPTH
             in = vld1q_u16(src + col);
@@ -31,7 +31,7 @@ void filterPixelToShort_neon(const pixel *src, intptr_t srcStride, int16_t *dst,
             in = vmovl_u8(vld1_u8(src + col));
 #endif
 
-            int16x8_t tmp = vshlq_n_s16(in, shift);
+            int16x8_t tmp = vreinterpretq_s16_u16(vshlq_n_u16(in, shift));
             tmp = vsubq_s16(tmp, off);
             vst1q_s16(dst + col, tmp);
         }
@@ -71,9 +71,10 @@ void interp_horiz_pp_neon(const pixel *src, intptr_t srcStride, pixel *dst, intp
             for (int i = 0; i < N; i++)
             {
 #if HIGH_BIT_DEPTH
-                input[i] = vld1q_u16(src + col + i);
+                input[i] = vreinterpretq_s16_u16(vld1q_u16(src + col + i));
 #else
-                input[i] = vmovl_u8(vld1_u8(src + col + i));
+                uint8x8_t in_tmp = vld1_u8(src + col + i);
+                input[i] = vreinterpretq_s16_u16(vmovl_u8(in_tmp));
 #endif
             }
             vsum1 = voffset;
@@ -107,14 +108,14 @@ void interp_horiz_pp_neon(const pixel *src, intptr_t srcStride, pixel *dst, intp
             vsum1 = vshlq_s32(vsum1, vhr);
             vsum2 = vshlq_s32(vsum2, vhr);
 
-            int16x8_t vsum = vuzp1q_s16(vsum1, vsum2);
+            int16x8_t vsum = vuzp1q_s16(vreinterpretq_s16_s32(vsum1),
+                                        vreinterpretq_s16_s32(vsum2));
             vsum = vminq_s16(vsum, vdupq_n_s16(maxVal));
             vsum = vmaxq_s16(vsum, vdupq_n_s16(0));
 #if HIGH_BIT_DEPTH
-            vst1q_u16(dst + col, vsum);
+            vst1q_u16(dst + col, vreinterpretq_u16_s16(vsum));
 #else
-            uint8x16_t usum = vuzp1q_u8(vsum, vsum);
-            vst1_u8(dst + col, vget_low_u8(usum));
+            vst1_u8(dst + col, vmovn_u16(vreinterpretq_u16_s16(vsum)));
 #endif
 
         }
@@ -154,22 +155,26 @@ void interp_horiz_ps_neon(const uint16_t *src, intptr_t srcStride, int16_t *dst,
             int16x8_t input[N];
             for (int i = 0; i < N; i++)
             {
-                input[i] = vld1q_u16(src + col + i);
+                input[i] = vreinterpretq_s16_u16(vld1q_u16(src + col + i));
             }
 
             vsum = voffset;
             vsum2 = voffset;
 
-            vsum = vmlal_lane_s16(vsum, vget_low_u16(input[0]), vget_low_s16(vc3), 0);
+            vsum = vmlal_lane_s16(vsum, vget_low_s16(input[0]),
+                                  vget_low_s16(vc3), 0);
             vsum2 = vmlal_high_lane_s16(vsum2, input[0], vget_low_s16(vc3), 0);
 
-            vsum = vmlal_lane_s16(vsum, vget_low_u16(input[1]), vget_low_s16(vc3), 1);
+            vsum = vmlal_lane_s16(vsum, vget_low_s16(input[1]),
+                                  vget_low_s16(vc3), 1);
             vsum2 = vmlal_high_lane_s16(vsum2, input[1], vget_low_s16(vc3), 1);
 
-            vsum = vmlal_lane_s16(vsum, vget_low_u16(input[2]), vget_low_s16(vc3), 2);
+            vsum = vmlal_lane_s16(vsum, vget_low_s16(input[2]),
+                                  vget_low_s16(vc3), 2);
             vsum2 = vmlal_high_lane_s16(vsum2, input[2], vget_low_s16(vc3), 2);
 
-            vsum = vmlal_lane_s16(vsum, vget_low_u16(input[3]), vget_low_s16(vc3), 3);
+            vsum = vmlal_lane_s16(vsum, vget_low_s16(input[3]),
+                                  vget_low_s16(vc3), 3);
             vsum2 = vmlal_high_lane_s16(vsum2, input[3], vget_low_s16(vc3), 3);
 
             if (N == 8)
@@ -233,7 +238,8 @@ void interp_horiz_ps_neon(const uint8_t *src, intptr_t srcStride, int16_t *dst, 
 
             for (int i = 0; i < N; i++)
             {
-                input[i] = vmovl_u8(vld1_u8(src + col + i));
+                uint8x8_t in_tmp = vld1_u8(src + col + i);
+                input[i] = vreinterpretq_s16_u16(vmovl_u8(in_tmp));
             }
             vsum = voffset;
             vsum = vmlaq_laneq_s16(vsum, (input[0]), vc, 0);
@@ -317,7 +323,8 @@ void interp_vert_ss_neon(const int16_t *src, intptr_t srcStride, int16_t *dst, i
             vsum1 = vshlq_s32(vsum1, vhr);
             vsum2 = vshlq_s32(vsum2, vhr);
 
-            int16x8_t vsum = vuzp1q_s16(vsum1, vsum2);
+            int16x8_t vsum = vuzp1q_s16(vreinterpretq_s16_s32(vsum1),
+                                        vreinterpretq_s16_s32(vsum2));
             vst1q_s16(dst + col, vsum);
         }
 
@@ -356,7 +363,8 @@ void interp_vert_pp_neon(const uint16_t *src, intptr_t srcStride, uint16_t *dst,
 
             for (int i = 0; i < N; i++)
             {
-                input[i] = vmovl_u16(vld1_u16(src + col + i * srcStride));
+                uint16x4_t in_tmp = vld1_u16(src + col + i * srcStride);
+                input[i] = vreinterpretq_s32_u32(vmovl_u16(in_tmp));
             }
             vsum = voffset;
 
@@ -410,7 +418,8 @@ void interp_vert_pp_neon(const uint8_t *src, intptr_t srcStride, uint8_t *dst, i
 
             for (int i = 0; i < N; i++)
             {
-                input[i] = vmovl_u8(vld1_u8(src + col + i * srcStride));
+                uint8x8_t in_tmp = vld1_u8(src + col + i * srcStride);
+                input[i] = vreinterpretq_s16_u16(vmovl_u8(in_tmp));
             }
             vsum = voffset;
 
@@ -460,27 +469,28 @@ void interp_vert_ps_neon(const uint16_t *src, intptr_t srcStride, int16_t *dst, 
     {
         for (col = 0; col < width; col += 4)
         {
-            int16x8_t vsum;
+            int32x4_t vsum;
 
-            int16x8_t input[N];
+            int32x4_t input[N];
 
             for (int i = 0; i < N; i++)
             {
-                input[i] = vmovl_u16(vld1_u16(src + col + i * srcStride));
+                uint16x4_t in_tmp = vld1_u16(src + col + i * srcStride);
+                input[i] = vreinterpretq_s32_u32(vmovl_u16(in_tmp));
             }
             vsum = voffset;
 
-            vsum = vmlaq_laneq_s32(vsum, (input[0]), low_vc, 0);
-            vsum = vmlaq_laneq_s32(vsum, (input[1]), low_vc, 1);
-            vsum = vmlaq_laneq_s32(vsum, (input[2]), low_vc, 2);
-            vsum = vmlaq_laneq_s32(vsum, (input[3]), low_vc, 3);
+            vsum = vmlaq_laneq_s32(vsum, input[0], low_vc, 0);
+            vsum = vmlaq_laneq_s32(vsum, input[1], low_vc, 1);
+            vsum = vmlaq_laneq_s32(vsum, input[2], low_vc, 2);
+            vsum = vmlaq_laneq_s32(vsum, input[3], low_vc, 3);
 
             if (N == 8)
             {
-                int16x8_t  vsum1 = vmulq_laneq_s32((input[4]), high_vc, 0);
-                vsum1 = vmlaq_laneq_s32(vsum1, (input[5]), high_vc, 1);
-                vsum1 = vmlaq_laneq_s32(vsum1, (input[6]), high_vc, 2);
-                vsum1 = vmlaq_laneq_s32(vsum1, (input[7]), high_vc, 3);
+                int32x4_t vsum1 = vmulq_laneq_s32(input[4], high_vc, 0);
+                vsum1 = vmlaq_laneq_s32(vsum1, input[5], high_vc, 1);
+                vsum1 = vmlaq_laneq_s32(vsum1, input[6], high_vc, 2);
+                vsum1 = vmlaq_laneq_s32(vsum1, input[7], high_vc, 3);
                 vsum = vaddq_s32(vsum, vsum1);
             }
 
@@ -519,7 +529,8 @@ void interp_vert_ps_neon(const uint8_t *src, intptr_t srcStride, int16_t *dst, i
 
             for (int i = 0; i < N; i++)
             {
-                input[i] = vmovl_u8(vld1_u8(src + col + i * srcStride));
+                uint8x8_t in_tmp = vld1_u8(src + col + i * srcStride);
+                input[i] = vreinterpretq_s16_u16(vmovl_u8(in_tmp));
             }
             vsum = voffset;
 
@@ -537,7 +548,7 @@ void interp_vert_ps_neon(const uint8_t *src, intptr_t srcStride, int16_t *dst, i
                 vsum = vaddq_s16(vsum, vsum1);
             }
 
-            vsum = vshlq_s32(vsum, vhr);
+            vsum = vshlq_s16(vsum, vhr);
             vst1q_s16(dst + col, vsum);
         }
 
@@ -614,14 +625,14 @@ void interp_vert_sp_neon(const int16_t *src, intptr_t srcStride, pixel *dst, int
             vsum1 = vshlq_s32(vsum1, vhr);
             vsum2 = vshlq_s32(vsum2, vhr);
 
-            int16x8_t vsum = vuzp1q_s16(vsum1, vsum2);
+            int16x8_t vsum = vuzp1q_s16(vreinterpretq_s16_s32(vsum1),
+                                        vreinterpretq_s16_s32(vsum2));
             vsum = vminq_s16(vsum, vdupq_n_s16(maxVal));
             vsum = vmaxq_s16(vsum, vdupq_n_s16(0));
 #if HIGH_BIT_DEPTH
-            vst1q_u16(dst + col, vsum);
+            vst1q_u16(dst + col, vreinterpretq_u16_s16(vsum));
 #else
-            uint8x16_t usum = vuzp1q_u8(vsum, vsum);
-            vst1_u8(dst + col, vget_low_u8(usum));
+            vst1_u8(dst + col, vmovn_u16(vreinterpretq_u16_s16(vsum)));
 #endif
 
         }
