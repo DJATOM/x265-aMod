@@ -111,13 +111,13 @@ static void nonPsyRdoQuant_neon(int16_t *m_resiDctCoeff, int64_t *costUncoded, i
     int64x2_t vcost_sum_1 = vdupq_n_s64(0);
     for (int y = 0; y < MLS_CG_SIZE; y++)
     {
-        int16x4_t in = *(int16x4_t *)&m_resiDctCoeff[blkPos];
+        int16x4_t in = vld1_s16(&m_resiDctCoeff[blkPos]);
         int32x4_t mul = vmull_s16(in, in);
         int64x2_t cost0, cost1;
         cost0 = vshll_n_s32(vget_low_s32(mul), scaleBits);
         cost1 = vshll_high_n_s32(mul, scaleBits);
-        *(int64x2_t *)&costUncoded[blkPos + 0] = cost0;
-        *(int64x2_t *)&costUncoded[blkPos + 2] = cost1;
+        vst1q_s64(&costUncoded[blkPos + 0], cost0);
+        vst1q_s64(&costUncoded[blkPos + 2], cost1);
         vcost_sum_0 = vaddq_s64(vcost_sum_0, cost0);
         vcost_sum_1 = vaddq_s64(vcost_sum_1, cost1);
         blkPos += trSize;
@@ -143,8 +143,9 @@ static void psyRdoQuant_neon(int16_t *m_resiDctCoeff, int16_t *m_fencDctCoeff, i
     int32x4_t vpsy = vdupq_n_s32(*psyScale);
     for (int y = 0; y < MLS_CG_SIZE; y++)
     {
-        int32x4_t signCoef = vmovl_s16(*(int16x4_t *)&m_resiDctCoeff[blkPos]);
-        int32x4_t predictedCoef = vsubq_s32(vmovl_s16(*(int16x4_t *)&m_fencDctCoeff[blkPos]), signCoef);
+        int32x4_t signCoef = vmovl_s16(vld1_s16(&m_resiDctCoeff[blkPos]));
+        int32x4_t fencCoef = vmovl_s16(vld1_s16(&m_fencDctCoeff[blkPos]));
+        int32x4_t predictedCoef = vsubq_s32(fencCoef, signCoef);
         int64x2_t cost0, cost1;
         cost0 = vmull_s32(vget_low_s32(signCoef), vget_low_s32(signCoef));
         cost1 = vmull_high_s32(signCoef, signCoef);
@@ -160,8 +161,8 @@ static void psyRdoQuant_neon(int16_t *m_resiDctCoeff, int16_t *m_fencDctCoeff, i
         }
         cost0 = vsubq_s64(cost0, neg0);
         cost1 = vsubq_s64(cost1, neg1);
-        *(int64x2_t *)&costUncoded[blkPos + 0] = cost0;
-        *(int64x2_t *)&costUncoded[blkPos + 2] = cost1;
+        vst1q_s64(&costUncoded[blkPos + 0], cost0);
+        vst1q_s64(&costUncoded[blkPos + 2], cost1);
         vcost_sum_0 = vaddq_s64(vcost_sum_0, cost0);
         vcost_sum_1 = vaddq_s64(vcost_sum_1, cost1);
 
@@ -188,7 +189,7 @@ int  count_nonzero_neon(const int16_t *quantCoeff)
     int i = 0;
     for (; (i + 8) <= numCoeff; i += 8)
     {
-        int16x8_t in = *(int16x8_t *)&quantCoeff[i];
+        int16x8_t in = vld1q_s16(&quantCoeff[i]);
         vcount = vaddq_s16(vcount, vtstq_s16(in, in));
     }
     for (; i < numCoeff; i++)
@@ -209,8 +210,8 @@ uint32_t copy_count_neon(int16_t *coeff, const int16_t *residual, intptr_t resiS
         int j = 0;
         for (; (j + 8) <= trSize; j += 8)
         {
-            int16x8_t in = *(int16x8_t *)&residual[j];
-            *(int16x8_t *)&coeff[j] = in;
+            int16x8_t in = vld1q_s16(&residual[j]);
+            vst1q_s16(&coeff[j], in);
             vcount = vaddq_s16(vcount, vtstq_s16(in, in));
         }
         for (; j < trSize; j++)
@@ -237,8 +238,8 @@ static void partialButterfly16(const int16_t *src, int16_t *dst, int shift, int 
 
     for (j = 0; j < line; j++)
     {
-        int16x8_t in0 = *(int16x8_t *)src;
-        int16x8_t in1 = rev16(*(int16x8_t *)&src[8]);
+        int16x8_t in0 = vld1q_s16(src);
+        int16x8_t in1 = rev16(vld1q_s16(src + 8));
 
         E[0] = vaddl_s16(vget_low_s16(in0), vget_low_s16(in1));
         O[0] = vsubl_s16(vget_low_s16(in0), vget_low_s16(in1));
@@ -247,8 +248,8 @@ static void partialButterfly16(const int16_t *src, int16_t *dst, int shift, int 
 
         for (k = 1; k < 16; k += 2)
         {
-            int32x4_t c0 = vmovl_s16(*(int16x4_t *)&g_t16[k][0]);
-            int32x4_t c1 = vmovl_s16(*(int16x4_t *)&g_t16[k][4]);
+            int32x4_t c0 = vmovl_s16(vld1_s16(&g_t16[k][0]));
+            int32x4_t c1 = vmovl_s16(vld1_s16(&g_t16[k][4]));
 
             int32x4_t res = _vadd;
             res = vmlaq_s32(res, c0, O[0]);
@@ -262,7 +263,7 @@ static void partialButterfly16(const int16_t *src, int16_t *dst, int shift, int 
 
         for (k = 2; k < 16; k += 4)
         {
-            int32x4_t c0 = vmovl_s16(*(int16x4_t *)&g_t16[k][0]);
+            int32x4_t c0 = vmovl_s16(vld1_s16(&g_t16[k][0]));
             int32x4_t res = _vadd;
             res = vmlaq_s32(res, c0, EO);
             dst[k * line] = (int16_t)(vaddvq_s32(res) >> shift);
@@ -300,7 +301,7 @@ static void partialButterfly32(const int16_t *src, int16_t *dst, int shift, int 
         int EEEE[2], EEEO[2];
 
         int16x8x4_t inputs;
-        inputs = *(int16x8x4_t *)&src[0];
+        inputs = vld1q_s16_x4(src);
         int16x8x4_t in_rev;
 
         in_rev.val[1] = rev16(inputs.val[2]);
@@ -317,10 +318,10 @@ static void partialButterfly32(const int16_t *src, int16_t *dst, int shift, int 
 
         for (k = 1; k < 32; k += 2)
         {
-            int32x4_t c0 = vmovl_s16(*(int16x4_t *)&g_t32[k][0]);
-            int32x4_t c1 = vmovl_s16(*(int16x4_t *)&g_t32[k][4]);
-            int32x4_t c2 = vmovl_s16(*(int16x4_t *)&g_t32[k][8]);
-            int32x4_t c3 = vmovl_s16(*(int16x4_t *)&g_t32[k][12]);
+            int32x4_t c0 = vmovl_s16(vld1_s16(&g_t32[k][0]));
+            int32x4_t c1 = vmovl_s16(vld1_s16(&g_t32[k][4]));
+            int32x4_t c2 = vmovl_s16(vld1_s16(&g_t32[k][8]));
+            int32x4_t c3 = vmovl_s16(vld1_s16(&g_t32[k][12]));
             int32x4_t s = vmulq_s32(c0, VO0);
             s = vmlaq_s32(s, c1, VO1);
             s = vmlaq_s32(s, c2, VO2);
@@ -344,8 +345,8 @@ static void partialButterfly32(const int16_t *src, int16_t *dst, int shift, int 
         }
         for (k = 2; k < 32; k += 4)
         {
-            int32x4_t c0 = vmovl_s16(*(int16x4_t *)&g_t32[k][0]);
-            int32x4_t c1 = vmovl_s16(*(int16x4_t *)&g_t32[k][4]);
+            int32x4_t c0 = vmovl_s16(vld1_s16(&g_t32[k][0]));
+            int32x4_t c1 = vmovl_s16(vld1_s16(&g_t32[k][4]));
             int32x4_t s = vmulq_s32(c0, VEO[0]);
             s = vmlaq_s32(s, c1, VEO[1]);
 
@@ -358,7 +359,7 @@ static void partialButterfly32(const int16_t *src, int16_t *dst, int shift, int 
         VEEO = vsubq_s32(VEE[0], tmp);
         for (k = 4; k < 32; k += 8)
         {
-            int32x4_t c = vmovl_s16(*(int16x4_t *)&g_t32[k][0]);
+            int32x4_t c = vmovl_s16(vld1_s16(&g_t32[k][0]));
             int32x4_t s = vmulq_s32(c, VEEO);
 
             dst[k * line] = (int16_t)((vaddvq_s32(s) + add) >> shift);
@@ -451,8 +452,8 @@ static void partialButterflyInverse4(const int16_t *src, int16_t *dst, int shift
 
 static void partialButterflyInverse16_neon(const int16_t *src, int16_t *orig_dst, int shift, int line)
 {
-#define FMAK(x,l) s[l] = vmlal_lane_s16(s[l],*(int16x4_t*)&src[(x)*line],*(int16x4_t *)&g_t16[x][k],l)
-#define MULK(x,l) vmull_lane_s16(*(int16x4_t*)&src[x*line],*(int16x4_t *)&g_t16[x][k],l);
+#define FMAK(x,l) s[l] = vmlal_lane_s16(s[l],vld1_s16(&src[x*line]),vld1_s16(&g_t16[x][k]),l);
+#define MULK(x,l) vmull_lane_s16(vld1_s16(&src[x*line]),vld1_s16(&g_t16[x][k]),l);
 #define ODD3_15(k) FMAK(3,k);FMAK(5,k);FMAK(7,k);FMAK(9,k);FMAK(11,k);FMAK(13,k);FMAK(15,k);
 #define EVEN6_14_STEP4(k) FMAK(6,k);FMAK(10,k);FMAK(14,k);
 
@@ -473,10 +474,12 @@ static void partialButterflyInverse16_neon(const int16_t *src, int16_t *orig_dst
         for (k = 0; k < 2; k++)
         {
             int32x4_t s;
-            s = vmull_s16(vdup_n_s16(g_t16[4][k]), *(int16x4_t *)&src[4 * line]);;
-            EEO[k] = vmlal_s16(s, vdup_n_s16(g_t16[12][k]), *(int16x4_t *)&src[(12) * line]);
-            s = vmull_s16(vdup_n_s16(g_t16[0][k]), *(int16x4_t *)&src[0 * line]);;
-            EEE[k] = vmlal_s16(s, vdup_n_s16(g_t16[8][k]), *(int16x4_t *)&src[(8) * line]);
+            s = vmull_s16(vdup_n_s16(g_t16[4][k]), vld1_s16(&src[4 * line]));
+            EEO[k] = vmlal_s16(s, vdup_n_s16(g_t16[12][k]),
+                               vld1_s16(&src[12 * line]));
+            s = vmull_s16(vdup_n_s16(g_t16[0][k]), vld1_s16(&src[0 * line]));
+            EEE[k] = vmlal_s16(s, vdup_n_s16(g_t16[8][k]),
+                               vld1_s16(&src[8 * line]));
         }
 
         /* Combining even and odd terms at each hierarchy levels to calculate the final spatial domain vector */
@@ -567,10 +570,10 @@ static void partialButterflyInverse16_neon(const int16_t *src, int16_t *orig_dst
             x3 = vmovn_s32(t);
 
             transpose_4x4x16(x0, x1, x2, x3);
-            *(int16x4_t *)&orig_dst[0 * 16 + k] = x0;
-            *(int16x4_t *)&orig_dst[1 * 16 + k] = x1;
-            *(int16x4_t *)&orig_dst[2 * 16 + k] = x2;
-            *(int16x4_t *)&orig_dst[3 * 16 + k] = x3;
+            vst1_s16(&orig_dst[0 * 16 + k], x0);
+            vst1_s16(&orig_dst[1 * 16 + k], x1);
+            vst1_s16(&orig_dst[2 * 16 + k], x2);
+            vst1_s16(&orig_dst[3 * 16 + k], x3);
         }
 
 
@@ -606,10 +609,10 @@ static void partialButterflyInverse16_neon(const int16_t *src, int16_t *orig_dst
             x3 = vmovn_s32(t);
 
             transpose_4x4x16(x0, x1, x2, x3);
-            *(int16x4_t *)&orig_dst[0 * 16 + k + 8] = x0;
-            *(int16x4_t *)&orig_dst[1 * 16 + k + 8] = x1;
-            *(int16x4_t *)&orig_dst[2 * 16 + k + 8] = x2;
-            *(int16x4_t *)&orig_dst[3 * 16 + k + 8] = x3;
+            vst1_s16(&orig_dst[0 * 16 + k + 8], x0);
+            vst1_s16(&orig_dst[1 * 16 + k + 8], x1);
+            vst1_s16(&orig_dst[2 * 16 + k + 8], x2);
+            vst1_s16(&orig_dst[3 * 16 + k + 8], x3);
         }
         orig_dst += 4 * 16;
         src += 4;
@@ -629,10 +632,10 @@ static void partialButterflyInverse16_neon(const int16_t *src, int16_t *orig_dst
 
 static void partialButterflyInverse32_neon(const int16_t *src, int16_t *orig_dst, int shift, int line)
 {
-#define MUL(x) vmull_s16(vdup_n_s16(g_t32[x][k]),*(int16x4_t*)&src[x*line]);
-#define FMA(x) s = vmlal_s16(s,vdup_n_s16(g_t32[x][k]),*(int16x4_t*)&src[(x)*line])
-#define FMAK(x,l) s[l] = vmlal_lane_s16(s[l],*(int16x4_t*)&src[(x)*line],*(int16x4_t *)&g_t32[x][k],l)
-#define MULK(x,l) vmull_lane_s16(*(int16x4_t*)&src[x*line],*(int16x4_t *)&g_t32[x][k],l);
+#define MUL(x) vmull_s16(vdup_n_s16(g_t32[x][k]),vld1_s16(&src[x*line]));
+#define FMA(x) s = vmlal_s16(s,vdup_n_s16(g_t32[x][k]),vld1_s16(&src[x*line]));
+#define FMAK(x,l) s[l] = vmlal_lane_s16(s[l],vld1_s16(&src[x*line]),vld1_s16(&g_t32[x][k]),l);
+#define MULK(x,l) vmull_lane_s16(vld1_s16(&src[x*line]),vld1_s16(&g_t32[x][k]),l);
 #define ODD31(k) FMAK(3,k);FMAK(5,k);FMAK(7,k);FMAK(9,k);FMAK(11,k);FMAK(13,k);FMAK(15,k);FMAK(17,k);FMAK(19,k);FMAK(21,k);FMAK(23,k);FMAK(25,k);FMAK(27,k);FMAK(29,k);FMAK(31,k);
 
 #define ODD15(k) FMAK(6,k);FMAK(10,k);FMAK(14,k);FMAK(18,k);FMAK(22,k);FMAK(26,k);FMAK(30,k);
@@ -775,10 +778,10 @@ static void partialButterflyInverse32_neon(const int16_t *src, int16_t *orig_dst
             int16x4_t x2 = dst[k + 2];
             int16x4_t x3 = dst[k + 3];
             transpose_4x4x16(x0, x1, x2, x3);
-            *(int16x4_t *)&orig_dst[0 * 32 + k] = x0;
-            *(int16x4_t *)&orig_dst[1 * 32 + k] = x1;
-            *(int16x4_t *)&orig_dst[2 * 32 + k] = x2;
-            *(int16x4_t *)&orig_dst[3 * 32 + k] = x3;
+            vst1_s16(&orig_dst[0 * 32 + k], x0);
+            vst1_s16(&orig_dst[1 * 32 + k], x1);
+            vst1_s16(&orig_dst[2 * 32 + k], x2);
+            vst1_s16(&orig_dst[3 * 32 + k], x3);
         }
         orig_dst += 4 * 32;
         src += 4;
