@@ -110,16 +110,17 @@ void intra_pred_ang_neon(pixel *dst, intptr_t dstStride, const pixel *srcPix0, i
                     const uint8_t *ref_u8 = (const uint8_t *)ref + offset;
                     uint8_t *dst_u8 = (uint8_t *)dst;
 
-                    const int16x8_t f0 = vdupq_n_s16(32 - fraction);
-                    const int16x8_t f1 = vdupq_n_s16(fraction);
+                    // f0 and f1 are unsigned (fraction is in range [0, 31]).
+                    const uint8x8_t f0 = vdup_n_u8(32 - fraction);
+                    const uint8x8_t f1 = vdup_n_u8(fraction);
                     for (int x = 0; x < width; x += 8)
                     {
-                        uint16x8_t in0 = vmovl_u8(vld1_u8(ref_u8 + x));
-                        uint16x8_t in1 = vmovl_u8(vld1_u8(ref_u8 + x + 1));
-                        int16x8_t lo = vmlaq_s16(vdupq_n_s16(16), in0, f0);
-                        lo = vmlaq_s16(lo, in1, f1);
-                        lo = vshrq_n_s16(lo, 5);
-                        vst1_u8(dst_u8 + y * dstStride + x, vmovn_u16(lo));
+                        uint8x8_t in0 = vld1_u8(ref_u8 + x);
+                        uint8x8_t in1 = vld1_u8(ref_u8 + x + 1);
+                        uint16x8_t lo = vmlal_u8(vdupq_n_u16(16), in0, f0);
+                        lo = vmlal_u8(lo, in1, f1);
+                        uint8x8_t res = vshrn_n_u16(lo, 5);
+                        vst1_u8(dst_u8 + y * dstStride + x, res);
                     }
                 }
                 else if (width >= 4 && sizeof(pixel) == 2)
@@ -129,16 +130,17 @@ void intra_pred_ang_neon(pixel *dst, intptr_t dstStride, const pixel *srcPix0, i
                     const uint16_t *ref_u16 = (const uint16_t *)ref + offset;
                     uint16_t *dst_u16 = (uint16_t *)dst;
 
-                    const int32x4_t f0 = vdupq_n_s32(32 - fraction);
-                    const int32x4_t f1 = vdupq_n_s32(fraction);
+                    // f0 and f1 are unsigned (fraction is in range [0, 31]).
+                    const uint16x4_t f0 = vdup_n_u16(32 - fraction);
+                    const uint16x4_t f1 = vdup_n_u16(fraction);
                     for (int x = 0; x < width; x += 4)
                     {
-                        uint32x4_t in0 = vmovl_u16(vld1_u16(ref_u16 + x));
-                        uint32x4_t in1 = vmovl_u16(vld1_u16(ref_u16 + x + 1));
-                        int32x4_t lo = vmlaq_s32(vdupq_n_s32(16), in0, f0);
-                        lo = vmlaq_s32(lo, in1, f1);
-                        lo = vshrq_n_s32(lo, 5);
-                        vst1_u16(dst_u16 + y * dstStride + x, vmovn_u32(lo));
+                        uint16x4_t in0 = vld1_u16(ref_u16 + x);
+                        uint16x4_t in1 = vld1_u16(ref_u16 + x + 1);
+                        uint32x4_t lo = vmlal_u16(vdupq_n_u32(16), in0, f0);
+                        lo = vmlal_u16(lo, in1, f1);
+                        uint16x4_t res = vshrn_n_u32(lo, 5);
+                        vst1_u16(dst_u16 + y * dstStride + x, res);
                     }
                 }
                 else
