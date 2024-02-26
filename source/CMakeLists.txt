@@ -85,6 +85,8 @@ elseif(ARM64MATCH GREATER "-1")
     message(STATUS "Detected ARM64 target processor")
     set(ARM64 1)
 
+    option(AARCH64_WARNINGS_AS_ERRORS "Build with -Werror for AArch64 Intrinsics files" OFF)
+
     # Options for cross compiling AArch64 optional extensions
     option(CROSS_COMPILE_SVE "Cross Compile for SVE Target" OFF)
     option(CROSS_COMPILE_SVE2 "Cross Compile for SVE2 Target" OFF)

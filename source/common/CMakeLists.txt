@@ -136,6 +136,10 @@ if(ENABLE_ASSEMBLY AND (ARM64 OR CROSS_COMPILE_ARM64))
     endif()
 
     source_group(Assembly FILES ${ASM_PRIMITIVES})
+
+    if(AARCH64_WARNINGS_AS_ERRORS)
+        set_source_files_properties(${ASM_PRIMITIVES} PROPERTIES COMPILE_FLAGS -Werror)
+    endif()
 endif(ENABLE_ASSEMBLY AND (ARM64 OR CROSS_COMPILE_ARM64))
 
 if(POWER)
