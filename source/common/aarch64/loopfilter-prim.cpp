@@ -158,7 +158,7 @@ static void processSaoCUE2_neon(pixel *rec, int8_t *bufft, int8_t *buff1, int8_t
 {
     int x;
 
-    if (abs(buff1 - bufft) < 16)
+    if (abs(static_cast<int>(buff1 - bufft)) < 16)
     {
         for (x = 0; x < width; x++)
         {
