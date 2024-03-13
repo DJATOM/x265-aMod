@@ -35,7 +35,7 @@ ReconFile* ReconFile::open(const char *fname, int width, int height, uint32_t bi
     const char * s = strrchr(fname, '.');
 
     if (s && !strcmp(s, ".y4m"))
-        return new Y4MOutput(fname, width, height, fpsNum, fpsDenom, csp, sourceBitDepth);
+        return new Y4MOutput(fname, width, height, bitdepth, fpsNum, fpsDenom, csp, sourceBitDepth);
     else
         return new YUVOutput(fname, width, height, bitdepth, csp, sourceBitDepth);
 }
