@@ -5,6 +5,14 @@
 
 #include <arm_neon.h>
 
+#define X265_PRAGMA(text)       _Pragma(#text)
+#if defined(__clang__)
+#define X265_PRAGMA_UNROLL(n)   X265_PRAGMA(unroll(n))
+#elif defined(__GNUC__)
+#define X265_PRAGMA_UNROLL(n)   X265_PRAGMA(GCC unroll (n))
+#else
+#define X265_PRAGMA_UNROLL(n)
+#endif
 
 namespace
 {
@@ -472,12 +480,12 @@ static void partialButterflyInverse16_neon(const int16_t *src, int16_t *orig_dst
     const int add = 1 << (shift - 1);
 
 
-#pragma unroll(4)
+X265_PRAGMA_UNROLL(4)
     for (j = 0; j < line; j += 4)
     {
         /* Utilizing symmetry properties to the maximum to minimize the number of multiplications */
 
-#pragma unroll(2)
+X265_PRAGMA_UNROLL(2)
         for (k = 0; k < 2; k++)
         {
             int32x4_t s;
@@ -496,7 +504,7 @@ static void partialButterflyInverse16_neon(const int16_t *src, int16_t *orig_dst
         EE[3] = vsubq_s32(EEE[0] , EEO[0]);
 
 
-#pragma unroll(1)
+X265_PRAGMA_UNROLL(1)
         for (k = 0; k < 4; k += 4)
         {
             int32x4_t s[4];
@@ -522,14 +530,14 @@ static void partialButterflyInverse16_neon(const int16_t *src, int16_t *orig_dst
         static const int32x4_t max = vdupq_n_s32(32767);
         const int32x4_t minus_shift = vdupq_n_s32(-shift);
 
-#pragma unroll(4)
+X265_PRAGMA_UNROLL(4)
         for (k = 0; k < 4; k++)
         {
             E[k] = vaddq_s32(EE[k] , EO[k]);
             E[k + 4] = vsubq_s32(EE[3 - k] , EO[3 - k]);
         }
 
-#pragma unroll(2)
+X265_PRAGMA_UNROLL(2)
         for (k = 0; k < 8; k += 4)
         {
             int32x4_t s[4];
@@ -584,7 +592,7 @@ static void partialButterflyInverse16_neon(const int16_t *src, int16_t *orig_dst
         }
 
 
-#pragma unroll(2)
+X265_PRAGMA_UNROLL(2)
         for (k = 0; k < 8; k += 4)
         {
             int32x4_t t;
@@ -657,10 +665,10 @@ static void partialButterflyInverse32_neon(const int16_t *src, int16_t *orig_dst
     int16x4_t dst[32];
     int add = 1 << (shift - 1);
 
-#pragma unroll (8)
+X265_PRAGMA_UNROLL(8)
     for (j = 0; j < line; j += 4)
     {
-#pragma unroll (4)
+X265_PRAGMA_UNROLL(4)
         for (k = 0; k < 16; k += 4)
         {
             int32x4_t s[4];
@@ -681,7 +689,7 @@ static void partialButterflyInverse32_neon(const int16_t *src, int16_t *orig_dst
         }
 
 
-#pragma unroll (2)
+X265_PRAGMA_UNROLL(2)
         for (k = 0; k < 8; k += 4)
         {
             int32x4_t s[4];
@@ -721,7 +729,7 @@ static void partialButterflyInverse32_neon(const int16_t *src, int16_t *orig_dst
             EEO[k + 3] = s[3];
         }
 
-#pragma unroll (2)
+X265_PRAGMA_UNROLL(2)
         for (k = 0; k < 2; k++)
         {
             int32x4_t s;
@@ -736,14 +744,14 @@ static void partialButterflyInverse32_neon(const int16_t *src, int16_t *orig_dst
         EEE[1] = vaddq_s32(EEEE[1], EEEO[1]);
         EEE[2] = vsubq_s32(EEEE[1], EEEO[1]);
 
-#pragma unroll (4)
+X265_PRAGMA_UNROLL(4)
         for (k = 0; k < 4; k++)
         {
             EE[k] = vaddq_s32(EEE[k], EEO[k]);
             EE[k + 4] = vsubq_s32((EEE[3 - k]), (EEO[3 - k]));
         }
 
-#pragma unroll (8)
+X265_PRAGMA_UNROLL(8)
         for (k = 0; k < 8; k++)
         {
             E[k] = vaddq_s32(EE[k], EO[k]);
@@ -755,7 +763,7 @@ static void partialButterflyInverse32_neon(const int16_t *src, int16_t *orig_dst
 
 
 
-#pragma unroll (16)
+X265_PRAGMA_UNROLL(16)
         for (k = 0; k < 16; k++)
         {
             int32x4_t adde = vaddq_s32(vdupq_n_s32(add), E[k]);
@@ -777,7 +785,7 @@ static void partialButterflyInverse32_neon(const int16_t *src, int16_t *orig_dst
         }
 
 
-#pragma unroll (8)
+X265_PRAGMA_UNROLL(8)
         for (k = 0; k < 32; k += 4)
         {
             int16x4_t x0 = dst[k + 0];
