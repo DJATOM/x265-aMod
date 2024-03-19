@@ -1,8 +1,9 @@
 /*****************************************************************************
- * Copyright (C) 2020-2021 MulticoreWare, Inc
+ * Copyright (C) 2020-2024 MulticoreWare, Inc
  *
  * Authors: Hongbin Liu <liuhongbin1@huawei.com>
  *          Sebastian Pop <spop@amazon.com>
+            Hari Limaye <hari.limaye@arm.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -40,7 +41,7 @@
 function PFX(pixel_sad_\w\()x\h\()_neon)
     SAD_START_\w uabdl
     SAD_\w \h
-.if \w > 4
+.if \w > 8
     add             v16.8h, v16.8h, v17.8h
 .endif
     uaddlv          s0, v16.8h
@@ -49,15 +50,15 @@ function PFX(pixel_sad_\w\()x\h\()_neon)
 endfunc
 .endm
 
-// Loop unrolled 4.
+// Loop unrolled to process 4 rows per iteration.
 .macro SAD_FUNC_LOOP w, h
 function PFX(pixel_sad_\w\()x\h\()_neon)
     SAD_START_\w
 
-    mov             w9, #\h/8
+    mov             w9, #\h/4
 .Loop_\w\()x\h:
     sub             w9, w9, #1
-.rept 4
+.rept 2
     SAD_\w
 .endr
     cbnz            w9, .Loop_\w\()x\h
@@ -73,13 +74,13 @@ SAD_FUNC  8,  4
 SAD_FUNC  8,  8
 SAD_FUNC  8,  16
 SAD_FUNC  8,  32
-SAD_FUNC  16, 4
-SAD_FUNC  16, 8
-SAD_FUNC  16, 12
-SAD_FUNC  16, 16
-SAD_FUNC  16, 32
-SAD_FUNC  16, 64
 
+SAD_FUNC_LOOP  16, 4
+SAD_FUNC_LOOP  16, 8
+SAD_FUNC_LOOP  16, 12
+SAD_FUNC_LOOP  16, 16
+SAD_FUNC_LOOP  16, 32
+SAD_FUNC_LOOP  16, 64
 SAD_FUNC_LOOP  32, 8
 SAD_FUNC_LOOP  32, 16
 SAD_FUNC_LOOP  32, 24

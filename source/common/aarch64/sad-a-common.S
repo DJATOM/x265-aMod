@@ -1,7 +1,8 @@
 /*****************************************************************************
- * Copyright (C) 2022-2023 MulticoreWare, Inc
+ * Copyright (C) 2022-2024 MulticoreWare, Inc
  *
  * Authors: David Chen <david.chen@myais.com.cn>
+            Hari Limaye <hari.limaye@arm.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,9 +38,11 @@
 .align 4
 
 .macro SAD_START_4 f
-    ld1             {v0.s}[0], [x0], x1
+    ldr             s0, [x0]
+    ldr             s1, [x2]
+    add             x0, x0, x1
+    add             x2, x2, x3
     ld1             {v0.s}[1], [x0], x1
-    ld1             {v1.s}[0], [x2], x3
     ld1             {v1.s}[1], [x2], x3
     \f              v16.8h, v0.8b, v1.8b
 .endm
@@ -53,33 +56,42 @@
 .macro SAD_START_8 f
     ld1             {v0.8b}, [x0], x1
     ld1             {v1.8b}, [x2], x3
-    ld1             {v2.8b}, [x0], x1
-    ld1             {v3.8b}, [x2], x3
     \f              v16.8h, v0.8b, v1.8b
-    \f              v17.8h, v2.8b, v3.8b
 .endm
 
 .macro SAD_8 h
-.rept \h / 2 - 1
+.rept \h - 3
     SAD_START_8 uabal
 .endr
+    ldr             d0, [x0]
+    ldr             d1, [x2]
+    uabal           v16.8h, v0.8b, v1.8b
+    ldr             d0, [x0, x1]
+    ldr             d1, [x2, x3]
+    uabal           v16.8h, v0.8b, v1.8b
 .endm
 
-.macro SAD_START_16 f
+.macro SAD_START_16
+    movi            v16.16b, #0
+    movi            v17.16b, #0
+.endm
+
+.macro SAD_16
     ld1             {v0.16b}, [x0], x1
     ld1             {v1.16b}, [x2], x3
     ld1             {v2.16b}, [x0], x1
     ld1             {v3.16b}, [x2], x3
-    \f              v16.8h, v0.8b, v1.8b
-    \f\()2          v17.8h, v0.16b, v1.16b
-    uabal           v16.8h, v2.8b, v3.8b
-    uabal2          v17.8h, v2.16b, v3.16b
+    uabd            v20.16b, v0.16b, v1.16b
+    uadalp          v16.8h, v20.16b
+    uabd            v21.16b, v2.16b, v3.16b
+    uadalp          v17.8h, v21.16b
 .endm
 
-.macro SAD_16 h
-.rept \h / 2 - 1
-    SAD_START_16 uabal
-.endr
+.macro SAD_END_16
+    add             v16.8h, v16.8h, v17.8h
+    uaddlv          s0, v16.8h
+    fmov            x0, d0
+    ret
 .endm
 
 .macro SAD_START_32
@@ -94,14 +106,14 @@
     ld1             {v2.16b-v3.16b}, [x2], x3
     ld1             {v4.16b-v5.16b}, [x0], x1
     ld1             {v6.16b-v7.16b}, [x2], x3
-    uabal           v16.8h, v0.8b, v2.8b
-    uabal2          v17.8h, v0.16b, v2.16b
-    uabal           v18.8h, v1.8b, v3.8b
-    uabal2          v19.8h, v1.16b, v3.16b
-    uabal           v16.8h, v4.8b, v6.8b
-    uabal2          v17.8h, v4.16b, v6.16b
-    uabal           v18.8h, v5.8b, v7.8b
-    uabal2          v19.8h, v5.16b, v7.16b
+    uabd            v20.16b, v0.16b, v2.16b
+    uadalp          v16.8h, v20.16b
+    uabd            v21.16b, v1.16b, v3.16b
+    uadalp          v17.8h, v21.16b
+    uabd            v22.16b, v4.16b, v6.16b
+    uadalp          v18.8h, v22.16b
+    uabd            v23.16b, v5.16b, v7.16b
+    uadalp          v19.8h, v23.16b
 .endm
 
 .macro SAD_END_32
@@ -118,10 +130,6 @@
     movi            v17.16b, #0
     movi            v18.16b, #0
     movi            v19.16b, #0
-    movi            v20.16b, #0
-    movi            v21.16b, #0
-    movi            v22.16b, #0
-    movi            v23.16b, #0
 .endm
 
 .macro SAD_64
@@ -129,35 +137,29 @@
     ld1             {v4.16b-v7.16b}, [x2], x3
     ld1             {v24.16b-v27.16b}, [x0], x1
     ld1             {v28.16b-v31.16b}, [x2], x3
-    uabal           v16.8h, v0.8b, v4.8b
-    uabal2          v17.8h, v0.16b, v4.16b
-    uabal           v18.8h, v1.8b, v5.8b
-    uabal2          v19.8h, v1.16b, v5.16b
-    uabal           v20.8h, v2.8b, v6.8b
-    uabal2          v21.8h, v2.16b, v6.16b
-    uabal           v22.8h, v3.8b, v7.8b
-    uabal2          v23.8h, v3.16b, v7.16b
-
-    uabal           v16.8h, v24.8b, v28.8b
-    uabal2          v17.8h, v24.16b, v28.16b
-    uabal           v18.8h, v25.8b, v29.8b
-    uabal2          v19.8h, v25.16b, v29.16b
-    uabal           v20.8h, v26.8b, v30.8b
-    uabal2          v21.8h, v26.16b, v30.16b
-    uabal           v22.8h, v27.8b, v31.8b
-    uabal2          v23.8h, v27.16b, v31.16b
+    uabd            v20.16b, v0.16b, v4.16b
+    uadalp          v16.8h, v20.16b
+    uabd            v21.16b, v1.16b, v5.16b
+    uadalp          v17.8h, v21.16b
+    uabd            v22.16b, v2.16b, v6.16b
+    uadalp          v18.8h, v22.16b
+    uabd            v23.16b, v3.16b, v7.16b
+    uadalp          v19.8h, v23.16b
+    uabd            v20.16b, v24.16b, v28.16b
+    uadalp          v16.8h, v20.16b
+    uabd            v21.16b, v25.16b, v29.16b
+    uadalp          v17.8h, v21.16b
+    uabd            v22.16b, v26.16b, v30.16b
+    uadalp          v18.8h, v22.16b
+    uabd            v23.16b, v27.16b, v31.16b
+    uadalp          v19.8h, v23.16b
 .endm
 
 .macro SAD_END_64
-    add             v16.8h, v16.8h, v17.8h
-    add             v17.8h, v18.8h, v19.8h
-    add             v16.8h, v16.8h, v17.8h
     uaddlp          v16.4s, v16.8h
-    add             v18.8h, v20.8h, v21.8h
-    add             v19.8h, v22.8h, v23.8h
-    add             v17.8h, v18.8h, v19.8h
-    uaddlp          v17.4s, v17.8h
-    add             v16.4s, v16.4s, v17.4s
+    uadalp          v16.4s, v17.8h
+    uadalp          v16.4s, v18.8h
+    uadalp          v16.4s, v19.8h
     uaddlv          d0, v16.4s
     fmov            x0, d0
     ret
@@ -179,10 +181,10 @@
     and             v2.16b, v2.16b, v31.16b
     ld1             {v3.16b}, [x2], x3
     and             v3.16b, v3.16b, v31.16b
-    uabal           v16.8h, v0.8b, v1.8b
-    uabal2          v17.8h, v0.16b, v1.16b
-    uabal           v16.8h, v2.8b, v3.8b
-    uabal2          v17.8h, v2.16b, v3.16b
+    uabd            v20.16b, v0.16b, v1.16b
+    uadalp          v16.8h, v20.16b
+    uabd            v21.16b, v2.16b, v3.16b
+    uadalp          v17.8h, v21.16b
 .endm
 
 .macro SAD_END_12
@@ -195,7 +197,6 @@
 .macro SAD_START_24
     movi            v16.16b, #0
     movi            v17.16b, #0
-    movi            v18.16b, #0
     sub             x1, x1, #16
     sub             x3, x3, #16
 .endm
@@ -209,17 +210,16 @@
     ld1             {v5.8b}, [x0], x1
     ld1             {v6.16b}, [x2], #16
     ld1             {v7.8b}, [x2], x3
-    uabal           v16.8h, v0.8b, v2.8b
-    uabal2          v17.8h, v0.16b, v2.16b
-    uabal           v18.8h, v1.8b, v3.8b
-    uabal           v16.8h, v4.8b, v6.8b
-    uabal2          v17.8h, v4.16b, v6.16b
-    uabal           v18.8h, v5.8b, v7.8b
+    uabd            v20.16b, v0.16b, v2.16b
+    uadalp          v16.8h, v20.16b
+    uabal           v17.8h, v1.8b, v3.8b
+    uabd            v20.16b, v4.16b, v6.16b
+    uadalp          v16.8h, v20.16b
+    uabal           v17.8h, v5.8b, v7.8b
 .endm
 
 .macro SAD_END_24
     add             v16.8h, v16.8h, v17.8h
-    add             v16.8h, v16.8h, v18.8h
     uaddlv          s0, v16.8h
     fmov            w0, s0
     ret
@@ -229,9 +229,6 @@
     movi            v16.16b, #0
     movi            v17.16b, #0
     movi            v18.16b, #0
-    movi            v19.16b, #0
-    movi            v20.16b, #0
-    movi            v21.16b, #0
 .endm
 
 .macro SAD_48
@@ -239,31 +236,26 @@
     ld1             {v4.16b-v6.16b}, [x2], x3
     ld1             {v24.16b-v26.16b}, [x0], x1
     ld1             {v28.16b-v30.16b}, [x2], x3
-    uabal           v16.8h, v0.8b, v4.8b
-    uabal2          v17.8h, v0.16b, v4.16b
-    uabal           v18.8h, v1.8b, v5.8b
-    uabal2          v19.8h, v1.16b, v5.16b
-    uabal           v20.8h, v2.8b, v6.8b
-    uabal2          v21.8h, v2.16b, v6.16b
-
-    uabal           v16.8h, v24.8b, v28.8b
-    uabal2          v17.8h, v24.16b, v28.16b
-    uabal           v18.8h, v25.8b, v29.8b
-    uabal2          v19.8h, v25.16b, v29.16b
-    uabal           v20.8h, v26.8b, v30.8b
-    uabal2          v21.8h, v26.16b, v30.16b
+    uabd            v20.16b, v0.16b, v4.16b
+    uadalp          v16.8h, v20.16b
+    uabd            v21.16b, v1.16b, v5.16b
+    uadalp          v17.8h, v21.16b
+    uabd            v22.16b, v2.16b, v6.16b
+    uadalp          v18.8h, v22.16b
+    uabd            v20.16b, v24.16b, v28.16b
+    uadalp          v16.8h, v20.16b
+    uabd            v21.16b, v25.16b, v29.16b
+    uadalp          v17.8h, v21.16b
+    uabd            v22.16b, v26.16b, v30.16b
+    uadalp          v18.8h, v22.16b
 .endm
 
 .macro SAD_END_48
-    add             v16.8h, v16.8h, v17.8h
-    add             v17.8h, v18.8h, v19.8h
-    add             v16.8h, v16.8h, v17.8h
-    uaddlv          s0, v16.8h
-    fmov            w0, s0
-    add             v18.8h, v20.8h, v21.8h
-    uaddlv          s1, v18.8h
-    fmov            w1, s1
-    add             w0, w0, w1
+    uaddlp          v16.4s, v16.8h
+    uadalp          v16.4s, v17.8h
+    uadalp          v16.4s, v18.8h
+    uaddlv          d0, v16.4s
+    fmov            x0, d0
     ret
 .endm
 
