@@ -108,11 +108,6 @@ function PFX(sad_x\x\()_\w\()x\h\()_neon)
     mov             x5, x4
 .endif
 
-.if \w == 12
-    movrel          x12, sad12_mask
-    ld1             {v31.16b}, [x12]
-.endif
-
     SAD_X_START_\w \h, \x, uabdl
     SAD_X_\w \h, \x
     SAD_X_END_\w \x
@@ -128,12 +123,23 @@ function PFX(sad_x\x\()_\w\()x\h\()_neon)
     mov             x6, x5
     mov             x5, x4
 .endif
+
+.if \w == 12
+    movrel          x12, sad12_mask
+    ld1             {v31.16b}, [x12]
+.endif
+
     SAD_X_START_\w \x
     mov             w12, #\h/4
 .Loop_sad_x\x\()_\w\()x\h:
     sub             w12, w12, #1
  .rept 4
-  .if \w == 24
+  .if \w == 12
+    ld1             {v6.16b}, [x0], x9
+    and             v6.16b, v6.16b, v31.16b
+  .elseif \w == 16
+    ld1             {v6.16b}, [x0], x9
+  .elseif \w == 24
     ld1             {v6.16b}, [x0], #16
     ld1             {v7.8b}, [x0], x9
   .elseif \w == 32
@@ -163,13 +169,13 @@ SAD_X_FUNC  3, 8,  4
 SAD_X_FUNC  3, 8,  8
 SAD_X_FUNC  3, 8,  16
 SAD_X_FUNC  3, 8,  32
-SAD_X_FUNC  3, 12, 16
-SAD_X_FUNC  3, 16, 4
-SAD_X_FUNC  3, 16, 8
-SAD_X_FUNC  3, 16, 12
-SAD_X_FUNC  3, 16, 16
-SAD_X_FUNC  3, 16, 32
-SAD_X_FUNC  3, 16, 64
+SAD_X_LOOP  3, 12, 16
+SAD_X_LOOP  3, 16, 4
+SAD_X_LOOP  3, 16, 8
+SAD_X_LOOP  3, 16, 12
+SAD_X_LOOP  3, 16, 16
+SAD_X_LOOP  3, 16, 32
+SAD_X_LOOP  3, 16, 64
 SAD_X_LOOP  3, 24, 32
 SAD_X_LOOP  3, 32, 8
 SAD_X_LOOP  3, 32, 16
@@ -189,13 +195,13 @@ SAD_X_FUNC  4, 8,  4
 SAD_X_FUNC  4, 8,  8
 SAD_X_FUNC  4, 8,  16
 SAD_X_FUNC  4, 8,  32
-SAD_X_FUNC  4, 12, 16
-SAD_X_FUNC  4, 16, 4
-SAD_X_FUNC  4, 16, 8
-SAD_X_FUNC  4, 16, 12
-SAD_X_FUNC  4, 16, 16
-SAD_X_FUNC  4, 16, 32
-SAD_X_FUNC  4, 16, 64
+SAD_X_LOOP  4, 12, 16
+SAD_X_LOOP  4, 16, 4
+SAD_X_LOOP  4, 16, 8
+SAD_X_LOOP  4, 16, 12
+SAD_X_LOOP  4, 16, 16
+SAD_X_LOOP  4, 16, 32
+SAD_X_LOOP  4, 16, 64
 SAD_X_LOOP  4, 24, 32
 SAD_X_LOOP  4, 32, 8
 SAD_X_LOOP  4, 32, 16

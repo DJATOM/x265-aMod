@@ -406,7 +406,12 @@ function PFX(sad_x\x\()_\w\()x\h\()_sve2)
 .Loop_sad_sve2_x\x\()_\w\()x\h:
     sub             w12, w12, #1
  .rept 4
-  .if \w == 24
+  .if \w == 12
+    ld1             {v6.16b}, [x0], x9
+    and             v6.16b, v6.16b, v31.16b
+  .elseif \w == 16
+    ld1             {v6.16b}, [x0], x9
+  .elseif \w == 24
     ld1             {v6.16b}, [x0], #16
     ld1             {v7.8b}, [x0], x9
   .elseif \w == 32
@@ -466,13 +471,13 @@ SAD_X_FUNC_SVE2  3, 8,  4
 SAD_X_FUNC_SVE2  3, 8,  8
 SAD_X_FUNC_SVE2  3, 8,  16
 SAD_X_FUNC_SVE2  3, 8,  32
-SAD_X_FUNC_SVE2  3, 12, 16
-SAD_X_FUNC_SVE2  3, 16, 4
-SAD_X_FUNC_SVE2  3, 16, 8
-SAD_X_FUNC_SVE2  3, 16, 12
-SAD_X_FUNC_SVE2  3, 16, 16
-SAD_X_FUNC_SVE2  3, 16, 32
-SAD_X_FUNC_SVE2  3, 16, 64
+SAD_X_LOOP_SVE2  3, 12, 16
+SAD_X_LOOP_SVE2  3, 16, 4
+SAD_X_LOOP_SVE2  3, 16, 8
+SAD_X_LOOP_SVE2  3, 16, 12
+SAD_X_LOOP_SVE2  3, 16, 16
+SAD_X_LOOP_SVE2  3, 16, 32
+SAD_X_LOOP_SVE2  3, 16, 64
 SAD_X_LOOP_SVE2  3, 24, 32
 SAD_X_LOOP_SVE2  3, 32, 8
 SAD_X_LOOP_SVE2  3, 32, 16
@@ -492,13 +497,13 @@ SAD_X_FUNC_SVE2  4, 8,  4
 SAD_X_FUNC_SVE2  4, 8,  8
 SAD_X_FUNC_SVE2  4, 8,  16
 SAD_X_FUNC_SVE2  4, 8,  32
-SAD_X_FUNC_SVE2  4, 12, 16
-SAD_X_FUNC_SVE2  4, 16, 4
-SAD_X_FUNC_SVE2  4, 16, 8
-SAD_X_FUNC_SVE2  4, 16, 12
-SAD_X_FUNC_SVE2  4, 16, 16
-SAD_X_FUNC_SVE2  4, 16, 32
-SAD_X_FUNC_SVE2  4, 16, 64
+SAD_X_LOOP_SVE2  4, 12, 16
+SAD_X_LOOP_SVE2  4, 16, 4
+SAD_X_LOOP_SVE2  4, 16, 8
+SAD_X_LOOP_SVE2  4, 16, 12
+SAD_X_LOOP_SVE2  4, 16, 16
+SAD_X_LOOP_SVE2  4, 16, 32
+SAD_X_LOOP_SVE2  4, 16, 64
 SAD_X_LOOP_SVE2  4, 24, 32
 SAD_X_LOOP_SVE2  4, 32, 8
 SAD_X_LOOP_SVE2  4, 32, 16
