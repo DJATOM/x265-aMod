@@ -27,12 +27,28 @@
 
 static inline int8x16_t signOf_neon(const pixel *a, const pixel *b)
 {
+#if HIGH_BIT_DEPTH
+    uint16x8_t s0_lo = vld1q_u16(a);
+    uint16x8_t s0_hi = vld1q_u16(a + 8);
+    uint16x8_t s1_lo = vld1q_u16(b);
+    uint16x8_t s1_hi = vld1q_u16(b + 8);
+
+    // signOf(a - b) = -(a > b ? -1 : 0) | (a < b ? -1 : 0)
+    int16x8_t cmp0_lo = vreinterpretq_s16_u16(vcgtq_u16(s0_lo, s1_lo));
+    int16x8_t cmp0_hi = vreinterpretq_s16_u16(vcgtq_u16(s0_hi, s1_hi));
+    int16x8_t cmp1_lo = vreinterpretq_s16_u16(vcgtq_u16(s1_lo, s0_lo));
+    int16x8_t cmp1_hi = vreinterpretq_s16_u16(vcgtq_u16(s1_hi, s0_hi));
+
+    int8x16_t cmp0 = vcombine_s8(vmovn_s16(cmp0_lo), vmovn_s16(cmp0_hi));
+    int8x16_t cmp1 = vcombine_s8(vmovn_s16(cmp1_lo), vmovn_s16(cmp1_hi));
+#else // HIGH_BIT_DEPTH
     uint8x16_t s0 = vld1q_u8(a);
     uint8x16_t s1 = vld1q_u8(b);
 
     // signOf(a - b) = -(a > b ? -1 : 0) | (a < b ? -1 : 0)
     int8x16_t cmp0 = vreinterpretq_s8_u8(vcgtq_u8(s0, s1));
     int8x16_t cmp1 = vreinterpretq_s8_u8(vcgtq_u8(s1, s0));
+#endif // HIGH_BIT_DEPTH
     return vorrq_s8(vnegq_s8(cmp0), cmp1);
 }
 
@@ -138,6 +154,14 @@ namespace X265_NS {
 void saoCuStatsBO_neon(const int16_t *diff, const pixel *rec, intptr_t stride,
                        int endX, int endY, int32_t *stats, int32_t *count)
 {
+#if HIGH_BIT_DEPTH
+    const int n_elem = 4;
+    const int elem_width = 16;
+#else
+    const int n_elem = 8;
+    const int elem_width = 8;
+#endif
+
     // Additional temporary buffer for accumulation.
     int32_t stats_tmp[32] = { 0 };
     int32_t count_tmp[32] = { 0 };
@@ -163,15 +187,15 @@ void saoCuStatsBO_neon(const int16_t *diff, const pixel *rec, intptr_t stride,
     for (int y = 0; y < endY; y++)
     {
         int x = 0;
-        for (; x + 8 < endX; x += 8)
+        for (; x + n_elem < endX; x += n_elem)
         {
             uint64_t class_idx_64 =
                 *reinterpret_cast<const uint64_t *>(rec + x) >> shift;
 
-            for (int i = 0; i < 8; ++i)
+            for (int i = 0; i < n_elem; ++i)
             {
                 const int idx = i & 1;
-                const int off  = (class_idx_64 >> (i * 8)) & mask;
+                const int off  = (class_idx_64 >> (i * elem_width)) & mask;
                 *reinterpret_cast<uint32_t*>(stats_b[idx] + off) += diff[x + i];
                 *reinterpret_cast<uint32_t*>(count_b[idx] + off) += 1;
             }
@@ -185,7 +209,7 @@ void saoCuStatsBO_neon(const int16_t *diff, const pixel *rec, intptr_t stride,
             for (int i = 0; (i + x) < endX; ++i)
             {
                 const int idx = i & 1;
-                const int off  = (class_idx_64 >> (i * 8)) & mask;
+                const int off  = (class_idx_64 >> (i * elem_width)) & mask;
                 *reinterpret_cast<uint32_t*>(stats_b[idx] + off) += diff[x + i];
                 *reinterpret_cast<uint32_t*>(count_b[idx] + off) += 1;
             }

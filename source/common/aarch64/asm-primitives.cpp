@@ -1950,9 +1950,7 @@ void setupIntrinsicPrimitives(EncoderPrimitives &p, int cpuMask)
         setupDCTPrimitives_neon(p);
         setupLoopFilterPrimitives_neon(p);
         setupIntraPrimitives_neon(p);
-#if !HIGH_BIT_DEPTH
         setupSaoPrimitives_neon(p);
-#endif
     }
 }
 

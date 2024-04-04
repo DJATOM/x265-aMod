@@ -103,12 +103,7 @@ if(ENABLE_ASSEMBLY AND (ARM64 OR CROSS_COMPILE_ARM64))
         add_definitions(-DAUTO_VECTORIZE=1)
     endif()
 
-    set(C_SRCS asm-primitives.cpp pixel-prim.h pixel-prim.cpp filter-prim.h filter-prim.cpp dct-prim.h dct-prim.cpp loopfilter-prim.cpp loopfilter-prim.h intrapred-prim.cpp arm64-utils.cpp arm64-utils.h fun-decls.h)
-
-    if(NOT HIGH_BIT_DEPTH)
-        list(APPEND C_SRCS sao-prim.cpp)
-    endif()
-
+    set(C_SRCS asm-primitives.cpp pixel-prim.h pixel-prim.cpp filter-prim.h filter-prim.cpp dct-prim.h dct-prim.cpp loopfilter-prim.cpp loopfilter-prim.h intrapred-prim.cpp arm64-utils.cpp arm64-utils.h fun-decls.h sao-prim.cpp)
     enable_language(ASM)
 
     # add ARM assembly/intrinsic files here
