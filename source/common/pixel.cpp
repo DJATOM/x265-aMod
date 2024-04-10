@@ -266,10 +266,6 @@ int satd4(const pixel* pix1, intptr_t stride_pix1, const pixel* pix2, intptr_t s
 {
     int satd = 0;
 
-#if ENABLE_ASSEMBLY && X265_ARCH_ARM64 && !HIGH_BIT_DEPTH
-    pixelcmp_t satd_4x4 = x265_pixel_satd_4x4_neon;
-#endif
-
     for (int row = 0; row < h; row += 4)
         for (int col = 0; col < w; col += 4)
             satd += satd_4x4(pix1 + row * stride_pix1 + col, stride_pix1,
@@ -283,10 +279,6 @@ template<int w, int h>
 int satd8(const pixel* pix1, intptr_t stride_pix1, const pixel* pix2, intptr_t stride_pix2)
 {
     int satd = 0;
-
-#if ENABLE_ASSEMBLY && X265_ARCH_ARM64 && !HIGH_BIT_DEPTH
-    pixelcmp_t satd_8x4 = x265_pixel_satd_8x4_neon;
-#endif
 
     for (int row = 0; row < h; row += 4)
         for (int col = 0; col < w; col += 8)
