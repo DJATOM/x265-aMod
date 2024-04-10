@@ -51,7 +51,7 @@
 // ***** luma_vpp *****
 // void interp_vert_pp_c(const pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int coeffIdx)
 .macro LUMA_VPP_4xN h
-function x265_interp_8tap_vert_pp_4x\h\()_neon
+function PFX(interp_8tap_vert_pp_4x\h\()_neon)
     movrel          x10, g_luma_s16
     sub             x0, x0, x1
     sub             x0, x0, x1, lsl #1         // src -= 3 * srcStride
@@ -135,7 +135,7 @@ LUMA_VPP_4xN 16
 
 // void interp_vert_pp_c(const pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int coeffIdx)
 .macro LUMA_VPP w, h
-function x265_interp_8tap_vert_pp_\w\()x\h\()_neon
+function PFX(interp_8tap_vert_pp_\w\()x\h\()_neon)
     cmp             x4, #0
     b.eq            0f
     cmp             x4, #1
@@ -181,7 +181,7 @@ LUMA_VPP 64, 48
 // ***** luma_vps *****
 // void interp_vert_ps_c(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride, int coeffIdx)
 .macro LUMA_VPS_4xN h
-function x265_interp_8tap_vert_ps_4x\h\()_neon
+function PFX(interp_8tap_vert_ps_4x\h\()_neon)
     lsl             x3, x3, #1
     lsl             x5, x4, #6
     lsl             x4, x1, #2
@@ -263,7 +263,7 @@ LUMA_VPS_4xN 16
 
 // void interp_vert_ps_c(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride, int coeffIdx)
 .macro LUMA_VPS w, h
-function x265_interp_8tap_vert_ps_\w\()x\h\()_neon
+function PFX(interp_8tap_vert_ps_\w\()x\h\()_neon)
     cmp             x4, #0
     beq             0f
     cmp             x4, #1
@@ -309,7 +309,7 @@ LUMA_VPS 64, 48
 // ***** luma_vsp *****
 // void interp_vert_sp_c(const int16_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int coeffIdx)
 .macro LUMA_VSP_4xN h
-function x265_interp_8tap_vert_sp_4x\h\()_neon
+function PFX(interp_8tap_vert_sp_4x\h\()_neon)
     lsl             x5, x4, #6
     lsl             x1, x1, #1
     lsl             x4, x1, #2
@@ -379,7 +379,7 @@ LUMA_VSP_4xN 16
 
 // void interp_vert_sp_c(const int16_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int coeffIdx)
 .macro LUMA_VSP w, h
-function x265_interp_8tap_vert_sp_\w\()x\h\()_neon
+function PFX(interp_8tap_vert_sp_\w\()x\h\()_neon)
     cmp             x4, #0
     beq             0f
     cmp             x4, #1
@@ -425,7 +425,7 @@ LUMA_VSP 48, 64
 // ***** luma_vss *****
 // void interp_vert_ss_c(const int16_t* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride, int coeffIdx)
 .macro LUMA_VSS w, h
-function x265_interp_8tap_vert_ss_\w\()x\h\()_neon
+function PFX(interp_8tap_vert_ss_\w\()x\h\()_neon)
     cmp             x4, #0
     beq             0f
     cmp             x4, #1
@@ -474,7 +474,7 @@ LUMA_VSS 48, 64
 // ***** luma_hpp *****
 // void interp_horiz_pp_c(const pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int coeffIdx)
 .macro LUMA_HPP w, h
-function x265_interp_horiz_pp_\w\()x\h\()_neon
+function PFX(interp_horiz_pp_\w\()x\h\()_neon)
     cmp             x4, #0
     beq             0f
     cmp             x4, #1
@@ -523,7 +523,7 @@ LUMA_HPP 64, 64
 // ***** luma_hps *****
 // void interp_horiz_ps_c(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride, int coeffIdx, int isRowExt)
 .macro LUMA_HPS w, h
-function x265_interp_horiz_ps_\w\()x\h\()_neon
+function PFX(interp_horiz_ps_\w\()x\h\()_neon)
     mov             w10, #\h
     cmp             w5, #0
     b.eq            6f
@@ -580,7 +580,7 @@ LUMA_HPS 64, 64
 // ***** chroma_vpp *****
 // void interp_vert_pp_c(const pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int coeffIdx)
 .macro CHROMA_VPP w, h
-function x265_interp_4tap_vert_pp_\w\()x\h\()_neon
+function PFX(interp_4tap_vert_pp_\w\()x\h\()_neon)
     cmp             x4, #0
     beq             0f
     cmp             x4, #1
@@ -660,7 +660,7 @@ CHROMA_VPP 48, 64
 // ***** chroma_vps *****
 // void interp_vert_ps_c(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride, int coeffIdx)
 .macro CHROMA_VPS w, h
-function x265_interp_4tap_vert_ps_\w\()x\h\()_neon
+function PFX(interp_4tap_vert_ps_\w\()x\h\()_neon)
     cmp             x4, #0
     beq             0f
     cmp             x4, #1
@@ -740,7 +740,7 @@ CHROMA_VPS 48, 64
 // ***** chroma_vsp *****
 // void interp_vert_sp_c(const int16_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int coeffIdx)
 .macro CHROMA_VSP w, h
-function x265_interp_4tap_vert_sp_\w\()x\h\()_neon
+function PFX(interp_4tap_vert_sp_\w\()x\h\()_neon)
     cmp             x4, #0
     beq             0f
     cmp             x4, #1
@@ -814,7 +814,7 @@ CHROMA_VSP 48, 64
 // ***** chroma_vss *****
 // void interp_vert_ss_c(const int16_t* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride, int coeffIdx)
 .macro CHROMA_VSS w, h
-function x265_interp_4tap_vert_ss_\w\()x\h\()_neon
+function PFX(interp_4tap_vert_ss_\w\()x\h\()_neon)
     cmp             x4, #0
     beq             0f
     cmp             x4, #1
@@ -888,7 +888,7 @@ CHROMA_VSS 48, 64
 // ***** chroma_hpp *****
 // void interp_horiz_pp_c(const pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int coeffIdx)
 .macro CHROMA_HPP w, h
-function x265_interp_4tap_horiz_pp_\w\()x\h\()_neon
+function PFX(interp_4tap_horiz_pp_\w\()x\h\()_neon)
     cmp             x4, #0
     beq             0f
     cmp             x4, #1
@@ -968,7 +968,7 @@ CHROMA_HPP 64, 64
 // ***** chroma_hps *****
 // void interp_horiz_ps_c(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride, int coeffIdx, int isRowExt)
 .macro CHROMA_HPS w, h
-function x265_interp_4tap_horiz_ps_\w\()x\h\()_neon
+function PFX(interp_4tap_horiz_ps_\w\()x\h\()_neon)
     cmp             x4, #0
     beq             0f
     cmp             x4, #1

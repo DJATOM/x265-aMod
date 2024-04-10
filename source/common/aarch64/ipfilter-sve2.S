@@ -456,7 +456,7 @@
 
 // void interp_vert_pp_c(const pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int coeffIdx)
 .macro LUMA_VPP_SVE2 w, h
-function x265_interp_8tap_vert_pp_\w\()x\h\()_sve2
+function PFX(interp_8tap_vert_pp_\w\()x\h\()_sve2)
     cmp             x4, #0
     b.eq            0f
     cmp             x4, #1
@@ -501,7 +501,7 @@ LUMA_VPP_SVE2 64, 48
 
 // void interp_vert_ps_c(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride, int coeffIdx)
 .macro LUMA_VPS_4xN_SVE2 h
-function x265_interp_8tap_vert_ps_4x\h\()_sve2
+function PFX(interp_8tap_vert_ps_4x\h\()_sve2)
     lsl             x3, x3, #1
     lsl             x5, x4, #6
     lsl             x4, x1, #2
@@ -568,7 +568,7 @@ LUMA_VPS_4xN_SVE2 16
 
 // void interp_vert_sp_c(const int16_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int coeffIdx)
 .macro LUMA_VSP_4xN_SVE2 h
-function x265_interp_8tap_vert_sp_4x\h\()_sve2
+function PFX(interp_8tap_vert_sp_4x\h\()_sve2)
     lsl             x5, x4, #6
     lsl             x1, x1, #1
     lsl             x4, x1, #2
@@ -736,7 +736,7 @@ LUMA_VSP_4xN_SVE2 16
 
 // void interp_vert_ps_c(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride, int coeffIdx)
 .macro LUMA_VPS_SVE2 w, h
-function x265_interp_8tap_vert_ps_\w\()x\h\()_sve2
+function PFX(interp_8tap_vert_ps_\w\()x\h\()_sve2)
     cmp             x4, #0
     beq             0f
     cmp             x4, #1
@@ -830,7 +830,7 @@ LUMA_VPS_SVE2 64, 48
 
 // void interp_vert_ss_c(const int16_t* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride, int coeffIdx)
 .macro LUMA_VSS_SVE2 w, h
-function x265_interp_8tap_vert_ss_\w\()x\h\()_sve2
+function PFX(interp_8tap_vert_ss_\w\()x\h\()_sve2)
     cmp             x4, #0
     beq             0f
     cmp             x4, #1
@@ -924,7 +924,7 @@ LUMA_VSS_SVE2 48, 64
 
 // void interp_vert_pp_c(const pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int coeffIdx)
 .macro CHROMA_VPP_SVE2 w, h
-function x265_interp_4tap_vert_pp_\w\()x\h\()_sve2
+function PFX(interp_4tap_vert_pp_\w\()x\h\()_sve2)
     cmp             x4, #0
     beq             0f
     cmp             x4, #1
@@ -1047,7 +1047,7 @@ CHROMA_VPP_SVE2 48, 64
 
 // void interp_vert_ps_c(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride, int coeffIdx)
 .macro CHROMA_VPS_SVE2 w, h
-function x265_interp_4tap_vert_ps_\w\()x\h\()_sve2
+function PFX(interp_4tap_vert_ps_\w\()x\h\()_sve2)
     cmp             x4, #0
     beq             0f
     cmp             x4, #1
@@ -1210,7 +1210,7 @@ CHROMA_VPS_SVE2 48, 64
 
 // void interp_vert_ss_c(const int16_t* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride, int coeffIdx)
 .macro CHROMA_VSS_SVE2 w, h
-function x265_interp_4tap_vert_ss_\w\()x\h\()_sve2
+function PFX(interp_4tap_vert_ss_\w\()x\h\()_sve2)
     cmp             x4, #0
     beq             0f
     cmp             x4, #1
