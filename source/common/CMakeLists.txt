@@ -103,7 +103,8 @@ if(ENABLE_ASSEMBLY AND (ARM64 OR CROSS_COMPILE_ARM64))
         add_definitions(-DAUTO_VECTORIZE=1)
     endif()
 
-    set(C_SRCS asm-primitives.cpp pixel-prim.h pixel-prim.cpp filter-prim.h filter-prim.cpp dct-prim.h dct-prim.cpp loopfilter-prim.cpp loopfilter-prim.h intrapred-prim.cpp arm64-utils.cpp arm64-utils.h fun-decls.h sao-prim.cpp)
+    set(C_SRCS_NEON asm-primitives.cpp pixel-prim.h pixel-prim.cpp filter-prim.h filter-prim.cpp dct-prim.h dct-prim.cpp loopfilter-prim.cpp loopfilter-prim.h intrapred-prim.cpp arm64-utils.cpp arm64-utils.h fun-decls.h sao-prim.cpp)
+    set(C_SRCS_SVE sao-prim-sve.cpp)
     enable_language(ASM)
 
     # add ARM assembly/intrinsic files here
@@ -115,9 +116,16 @@ if(ENABLE_ASSEMBLY AND (ARM64 OR CROSS_COMPILE_ARM64))
     set(ARM_ASMS "${A_SRCS}" CACHE INTERNAL "ARM Assembly Sources")
     set(ARM_ASMS_SVE "${A_SRCS_SVE}" CACHE INTERNAL "ARM Assembly Sources that use SVE instruction set")
     set(ARM_ASMS_SVE2 "${A_SRCS_SVE2}" CACHE INTERNAL "ARM Assembly Sources that use SVE2 instruction set")
-    foreach(SRC ${C_SRCS})
+    foreach(SRC ${C_SRCS_NEON})
         set(ASM_PRIMITIVES ${ASM_PRIMITIVES} aarch64/${SRC})
     endforeach()
+
+    if(CPU_HAS_SVE AND HAVE_SVE_BRIDGE)
+        foreach(SRC ${C_SRCS_SVE})
+            set(ASM_PRIMITIVES ${ASM_PRIMITIVES} aarch64/${SRC})
+        endforeach()
+    endif()
+
     source_group(Assembly FILES ${ASM_PRIMITIVES})
 endif(ENABLE_ASSEMBLY AND (ARM64 OR CROSS_COMPILE_ARM64))
 

@@ -1952,6 +1952,12 @@ void setupIntrinsicPrimitives(EncoderPrimitives &p, int cpuMask)
         setupIntraPrimitives_neon(p);
         setupSaoPrimitives_neon(p);
     }
+#if defined(HAVE_SVE) && HAVE_SVE_BRIDGE
+    if (cpuMask & X265_CPU_SVE)
+    {
+        setupSaoPrimitives_sve(p);
+    }
+#endif
 }
 
 } // namespace X265_NS
