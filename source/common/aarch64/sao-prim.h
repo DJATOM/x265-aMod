@@ -27,6 +27,37 @@
 #include "primitives.h"
 #include <arm_neon.h>
 
+#if defined(HAVE_SVE) && HAVE_SVE_BRIDGE
+#include <arm_neon_sve_bridge.h>
+
+/* We can access instructions that are exclusive to the SVE or SVE2 instruction
+ * sets from a predominantly Neon context by making use of the Neon-SVE bridge
+ * intrinsics to reinterpret Neon vectors as SVE vectors - with the high part of
+ * the SVE vector (if it's longer than 128 bits) being "don't care".
+ *
+ * While sub-optimal on machines that have SVE vector length > 128-bit - as the
+ * remainder of the vector is unused - this approach is still beneficial when
+ * compared to a Neon-only implementation. */
+
+static inline int8x16_t x265_sve_mask(const int x, const int endX,
+                                      const int8x16_t in)
+{
+    // Use predicate to shift "unused lanes" outside of range [-2, 2]
+    svbool_t svpred = svwhilelt_b8(x, endX);
+    svint8_t edge_type = svsel_s8(svpred, svset_neonq_s8(svundef_s8(), in),
+                                  svdup_n_s8(-3));
+    return svget_neonq_s8(edge_type);
+}
+
+static inline int64x2_t x265_sdotq_s16(int64x2_t acc, int16x8_t x, int16x8_t y)
+{
+    return svget_neonq_s64(svdot_s64(svset_neonq_s64(svundef_s64(), acc),
+                                     svset_neonq_s16(svundef_s16(), x),
+                                     svset_neonq_s16(svundef_s16(), y)));
+}
+
+#endif // defined(HAVE_SVE) && HAVE_SVE_BRIDGE
+
 static inline int8x16_t signOf_neon(const pixel *a, const pixel *b)
 {
 #if HIGH_BIT_DEPTH
@@ -59,6 +90,10 @@ void setupSaoPrimitives_neon(EncoderPrimitives &p);
 
 #if defined(HAVE_SVE) && HAVE_SVE_BRIDGE
 void setupSaoPrimitives_sve(EncoderPrimitives &p);
+#endif
+
+#if defined(HAVE_SVE2) && HAVE_SVE_BRIDGE
+void setupSaoPrimitives_sve2(EncoderPrimitives &p);
 #endif
 }
 
