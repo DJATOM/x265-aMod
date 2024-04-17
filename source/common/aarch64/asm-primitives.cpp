@@ -1673,9 +1673,9 @@ void setupSve2Primitives(EncoderPrimitives &p)
     CHROMA_422_PU_CAN_USE_SVE2(addAvg[ALIGNED], addAvg);
 
     // sad
-    ALL_LUMA_PU(sad, pixel_sad, sve2);
-    ALL_LUMA_PU(sad_x3, sad_x3, sve2);
-    ALL_LUMA_PU(sad_x4, sad_x4, sve2);
+    ALL_LUMA_PU(sad, pixel_sad, neon);
+    ALL_LUMA_PU(sad_x3, sad_x3, neon);
+    ALL_LUMA_PU(sad_x4, sad_x4, neon);
 
     // sse_pp
     p.cu[BLOCK_4x4].sse_pp   = PFX(pixel_sse_pp_4x4_sve);
