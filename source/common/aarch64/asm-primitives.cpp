@@ -1010,12 +1010,6 @@ void setupSvePrimitives(EncoderPrimitives &p)
     p.cu[BLOCK_64x64].cpy1Dto2D_shr = PFX(cpy1Dto2D_shr_64x64_sve);
 
 #if !HIGH_BIT_DEPTH
-    // sse_pp
-    p.cu[BLOCK_4x4].sse_pp   = PFX(pixel_sse_pp_4x4_sve);
-
-    p.chroma[X265_CSP_I420].cu[BLOCK_420_4x4].sse_pp   = PFX(pixel_sse_pp_4x4_sve);
-    p.chroma[X265_CSP_I422].cu[BLOCK_422_4x8].sse_pp   = PFX(pixel_sse_pp_4x8_sve);
-
     p.chroma[X265_CSP_I422].cu[BLOCK_422_8x16].sub_ps  = PFX(pixel_sub_ps_8x16_sve);
 
     // satd
@@ -1068,13 +1062,6 @@ void setupSve2Primitives(EncoderPrimitives &p)
     CHROMA_420_PU_MULTIPLE_ARCHS(addAvg[ALIGNED], addAvg, sve2);
     CHROMA_422_PU_CAN_USE_SVE2(addAvg[NONALIGNED], addAvg);
     CHROMA_422_PU_CAN_USE_SVE2(addAvg[ALIGNED], addAvg);
-
-    // sse_pp
-    p.cu[BLOCK_32x32].sse_pp = PFX(pixel_sse_pp_32x32_sve2);
-    p.cu[BLOCK_64x64].sse_pp = PFX(pixel_sse_pp_64x64_sve2);
-
-    p.chroma[X265_CSP_I420].cu[BLOCK_420_32x32].sse_pp = PFX(pixel_sse_pp_32x32_sve2);
-    p.chroma[X265_CSP_I422].cu[BLOCK_422_32x64].sse_pp = PFX(pixel_sse_pp_32x64_sve2);
 
     // sse_ss
     p.cu[BLOCK_4x4].sse_ss   = PFX(pixel_sse_ss_4x4_sve2);
