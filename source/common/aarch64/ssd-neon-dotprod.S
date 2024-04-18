@@ -110,13 +110,11 @@ SSE_PP_16xN 16
 SSE_PP_16xN 32
 
 // Loop unrolled to process 4 rows per iteration.
-.macro SSE_PP_32xN h
-function PFX(pixel_sse_pp_32x\h\()_neon_dotprod)
-    mov             w12, #(\h / 4)
+function PFX(pixel_sse_pp_32xh_neon_dotprod), export=0
     movi            v0.4s, #0
     movi            v1.4s, #0
-.Loop_sse_pp_32_x\h:
-    sub             w12, w12, #1
+.Loop_sse_pp_32xh:
+    sub             w4, w4, #1
 .rept 4
     ld1             {v16.16b,v17.16b}, [x0], x1
     ld1             {v18.16b,v19.16b}, [x2], x3
@@ -126,11 +124,17 @@ function PFX(pixel_sse_pp_32x\h\()_neon_dotprod)
     uabd            v3.16b, v17.16b, v19.16b
     udot            v1.4s, v3.16b, v3.16b
 .endr
-    cbnz            w12, .Loop_sse_pp_32_x\h
+    cbnz            w4, .Loop_sse_pp_32xh
     add             v0.4s, v0.4s, v1.4s
     addv            s0, v0.4s
     fmov            w0, s0
     ret
+endfunc
+
+.macro SSE_PP_32xN h
+function PFX(pixel_sse_pp_32x\h\()_neon_dotprod)
+    mov             w4, \h / 4
+    b               PFX(pixel_sse_pp_32xh_neon_dotprod)
 endfunc
 .endm
 
