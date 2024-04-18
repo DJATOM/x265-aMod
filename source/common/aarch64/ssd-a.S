@@ -2,6 +2,7 @@
  * Copyright (C) 2021 MulticoreWare, Inc
  *
  * Authors: Sebastian Pop <spop@amazon.com>
+ *          Hari Limaye <hari.limaye@arm.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,183 +35,110 @@
 
 .text
 
-function PFX(pixel_sse_pp_4x4_neon)
-    ld1             {v16.s}[0], [x0], x1
-    ld1             {v17.s}[0], [x2], x3
-    ld1             {v18.s}[0], [x0], x1
-    ld1             {v19.s}[0], [x2], x3
-    ld1             {v20.s}[0], [x0], x1
-    ld1             {v21.s}[0], [x2], x3
-    ld1             {v22.s}[0], [x0], x1
-    ld1             {v23.s}[0], [x2], x3
+// Fully unrolled.
+.macro SSE_PP_4xN h
+function PFX(pixel_sse_pp_4x\h\()_neon)
+    movi            v0.4s, #0
+.rept \h / 2
+    ldr             s16, [x0]
+    ldr             s17, [x2]
+    add             x0, x0, x1
+    add             x2, x2, x3
+    ld1             {v16.s}[1], [x0], x1
+    ld1             {v17.s}[1], [x2], x3
 
-    usubl           v1.8h, v16.8b, v17.8b
-    usubl           v2.8h, v18.8b, v19.8b
-    usubl           v3.8h, v20.8b, v21.8b
-    usubl           v4.8h, v22.8b, v23.8b
-
-    smull           v0.4s, v1.4h, v1.4h
-    smlal           v0.4s, v2.4h, v2.4h
-    smlal           v0.4s, v3.4h, v3.4h
-    smlal           v0.4s, v4.4h, v4.4h
-    ret_v0_w0
-endfunc
-
-function PFX(pixel_sse_pp_4x8_neon)
-    ld1             {v16.s}[0], [x0], x1
-    ld1             {v17.s}[0], [x2], x3
-    usubl           v1.8h, v16.8b, v17.8b
-    ld1             {v16.s}[0], [x0], x1
-    ld1             {v17.s}[0], [x2], x3
-    smull           v0.4s, v1.4h, v1.4h
-.rept 6
-    usubl           v1.8h, v16.8b, v17.8b
-    ld1             {v16.s}[0], [x0], x1
-    smlal           v0.4s, v1.4h, v1.4h
-    ld1             {v17.s}[0], [x2], x3
+    uabd            v1.8b, v16.8b, v17.8b
+    umull           v20.8h, v1.8b, v1.8b
+    uadalp          v0.4s, v20.8h
 .endr
-    usubl           v1.8h, v16.8b, v17.8b
-    smlal           v0.4s, v1.4h, v1.4h
-    ret_v0_w0
-endfunc
-
-function PFX(pixel_sse_pp_8x8_neon)
-    ld1             {v16.8b}, [x0], x1
-    ld1             {v17.8b}, [x2], x3
-    usubl           v1.8h, v16.8b, v17.8b
-    ld1             {v16.8b}, [x0], x1
-    smull           v0.4s, v1.4h, v1.4h
-    smlal2          v0.4s, v1.8h, v1.8h
-    ld1             {v17.8b}, [x2], x3
-
-.rept 6
-    usubl           v1.8h, v16.8b, v17.8b
-    ld1             {v16.8b}, [x0], x1
-    smlal           v0.4s, v1.4h, v1.4h
-    smlal2          v0.4s, v1.8h, v1.8h
-    ld1             {v17.8b}, [x2], x3
-.endr
-    usubl           v1.8h, v16.8b, v17.8b
-    smlal           v0.4s, v1.4h, v1.4h
-    smlal2          v0.4s, v1.8h, v1.8h
-    ret_v0_w0
-endfunc
-
-function PFX(pixel_sse_pp_8x16_neon)
-    ld1             {v16.8b}, [x0], x1
-    ld1             {v17.8b}, [x2], x3
-    usubl           v1.8h, v16.8b, v17.8b
-    ld1             {v16.8b}, [x0], x1
-    smull           v0.4s, v1.4h, v1.4h
-    smlal2          v0.4s, v1.8h, v1.8h
-    ld1             {v17.8b}, [x2], x3
-
-.rept 14
-    usubl           v1.8h, v16.8b, v17.8b
-    ld1             {v16.8b}, [x0], x1
-    smlal           v0.4s, v1.4h, v1.4h
-    smlal2          v0.4s, v1.8h, v1.8h
-    ld1             {v17.8b}, [x2], x3
-.endr
-    usubl           v1.8h, v16.8b, v17.8b
-    smlal           v0.4s, v1.4h, v1.4h
-    smlal2          v0.4s, v1.8h, v1.8h
-    ret_v0_w0
-endfunc
-
-.macro sse_pp_16xN h
-function PFX(pixel_sse_pp_16x\h\()_neon)
-    ld1             {v16.16b}, [x0], x1
-    ld1             {v17.16b}, [x2], x3
-    usubl           v1.8h, v16.8b, v17.8b
-    usubl2          v2.8h, v16.16b, v17.16b
-    ld1             {v16.16b}, [x0], x1
-    ld1             {v17.16b}, [x2], x3
-    smull           v0.4s, v1.4h, v1.4h
-    smlal2          v0.4s, v1.8h, v1.8h
-    smlal           v0.4s, v2.4h, v2.4h
-    smlal2          v0.4s, v2.8h, v2.8h
-.rept \h - 2
-    usubl           v1.8h, v16.8b, v17.8b
-    usubl2          v2.8h, v16.16b, v17.16b
-    ld1             {v16.16b}, [x0], x1
-    smlal           v0.4s, v1.4h, v1.4h
-    smlal2          v0.4s, v1.8h, v1.8h
-    ld1             {v17.16b}, [x2], x3
-    smlal           v0.4s, v2.4h, v2.4h
-    smlal2          v0.4s, v2.8h, v2.8h
-.endr
-    usubl           v1.8h, v16.8b, v17.8b
-    usubl2          v2.8h, v16.16b, v17.16b
-    smlal           v0.4s, v1.4h, v1.4h
-    smlal2          v0.4s, v1.8h, v1.8h
-    smlal           v0.4s, v2.4h, v2.4h
-    smlal2          v0.4s, v2.8h, v2.8h
     ret_v0_w0
 endfunc
 .endm
 
-sse_pp_16xN 16
-sse_pp_16xN 32
+SSE_PP_4xN 4
+SSE_PP_4xN 8
 
-function PFX(pixel_sse_pp_32x32_neon)
-    mov             w12, #8
-    movi            v0.16b, #0
-    movi            v1.16b, #0
-.Loop_sse_pp_32:
+// Fully unrolled.
+.macro SSE_PP_8xN h
+function PFX(pixel_sse_pp_8x\h\()_neon)
+    movi            v0.4s, #0
+.rept \h
+    ld1             {v16.8b}, [x0], x1
+    ld1             {v17.8b}, [x2], x3
+
+    uabd            v1.8b, v16.8b, v17.8b
+    umull           v20.8h, v1.8b, v1.8b
+    uadalp          v0.4s, v20.8h
+.endr
+    ret_v0_w0
+endfunc
+.endm
+
+SSE_PP_8xN 8
+SSE_PP_8xN 16
+
+// Fully unrolled.
+.macro SSE_PP_16xN h
+function PFX(pixel_sse_pp_16x\h\()_neon)
+    movi            v0.4s, #0
+    movi            v1.4s, #0
+.rept \h
+    ld1             {v16.16b}, [x0], x1
+    ld1             {v17.16b}, [x2], x3
+
+    uabd            v2.16b, v16.16b, v17.16b
+    umull           v20.8h, v2.8b, v2.8b
+    uadalp          v0.4s, v20.8h
+    umull2          v21.8h, v2.16b, v2.16b
+    uadalp          v1.4s, v21.8h
+.endr
+    add             v0.4s, v0.4s, v1.4s
+    ret_v0_w0
+endfunc
+.endm
+
+SSE_PP_16xN 16
+SSE_PP_16xN 32
+
+// Loop unrolled to process 4 rows per iteration.
+.macro SSE_PP_32xN h
+function PFX(pixel_sse_pp_32x\h\()_neon)
+    mov             w12, #(\h / 4)
+    movi            v0.4s, #0
+    movi            v1.4s, #0
+.Loop_sse_pp_32_x\h:
     sub             w12, w12, #1
 .rept 4
     ld1             {v16.16b,v17.16b}, [x0], x1
     ld1             {v18.16b,v19.16b}, [x2], x3
-    usubl           v2.8h, v16.8b, v18.8b
-    usubl2          v3.8h, v16.16b, v18.16b
-    usubl           v4.8h, v17.8b, v19.8b
-    usubl2          v5.8h, v17.16b, v19.16b
-    smlal           v0.4s, v2.4h, v2.4h
-    smlal2          v1.4s, v2.8h, v2.8h
-    smlal           v0.4s, v3.4h, v3.4h
-    smlal2          v1.4s, v3.8h, v3.8h
-    smlal           v0.4s, v4.4h, v4.4h
-    smlal2          v1.4s, v4.8h, v4.8h
-    smlal           v0.4s, v5.4h, v5.4h
-    smlal2          v1.4s, v5.8h, v5.8h
+
+    uabd            v2.16b, v16.16b, v18.16b
+    uabd            v3.16b, v17.16b, v19.16b
+
+    umull           v20.8h, v2.8b, v2.8b
+    umull           v22.8h, v3.8b, v3.8b
+    umull2          v21.8h, v2.16b, v2.16b
+    umull2          v23.8h, v3.16b, v3.16b
+
+    uadalp          v0.4s, v20.8h
+    uadalp          v1.4s, v21.8h
+    uadalp          v0.4s, v22.8h
+    uadalp          v1.4s, v23.8h
 .endr
-    cbnz            w12, .Loop_sse_pp_32
+    cbnz            w12, .Loop_sse_pp_32_x\h
     add             v0.4s, v0.4s, v1.4s
     ret_v0_w0
 endfunc
+.endm
 
-function PFX(pixel_sse_pp_32x64_neon)
-    mov             w12, #16
-    movi            v0.16b, #0
-    movi            v1.16b, #0
-.Loop_sse_pp_32x64:
-    sub             w12, w12, #1
-.rept 4
-    ld1             {v16.16b,v17.16b}, [x0], x1
-    ld1             {v18.16b,v19.16b}, [x2], x3
-    usubl           v2.8h, v16.8b, v18.8b
-    usubl2          v3.8h, v16.16b, v18.16b
-    usubl           v4.8h, v17.8b, v19.8b
-    usubl2          v5.8h, v17.16b, v19.16b
-    smlal           v0.4s, v2.4h, v2.4h
-    smlal2          v1.4s, v2.8h, v2.8h
-    smlal           v0.4s, v3.4h, v3.4h
-    smlal2          v1.4s, v3.8h, v3.8h
-    smlal           v0.4s, v4.4h, v4.4h
-    smlal2          v1.4s, v4.8h, v4.8h
-    smlal           v0.4s, v5.4h, v5.4h
-    smlal2          v1.4s, v5.8h, v5.8h
-.endr
-    cbnz            w12, .Loop_sse_pp_32x64
-    add             v0.4s, v0.4s, v1.4s
-    ret_v0_w0
-endfunc
+SSE_PP_32xN 32
+SSE_PP_32xN 64
 
+// Loop unrolled to process 4 rows per iteration.
 function PFX(pixel_sse_pp_64x64_neon)
     mov             w12, #16
-    movi            v0.16b, #0
-    movi            v1.16b, #0
+    movi            v0.4s, #0
+    movi            v1.4s, #0
 
 .Loop_sse_pp_64:
     sub             w12, w12, #1
@@ -218,31 +146,28 @@ function PFX(pixel_sse_pp_64x64_neon)
     ld1             {v16.16b-v19.16b}, [x0], x1
     ld1             {v20.16b-v23.16b}, [x2], x3
 
-    usubl           v2.8h, v16.8b, v20.8b
-    usubl2          v3.8h, v16.16b, v20.16b
-    usubl           v4.8h, v17.8b, v21.8b
-    usubl2          v5.8h, v17.16b, v21.16b
-    smlal           v0.4s, v2.4h, v2.4h
-    smlal2          v1.4s, v2.8h, v2.8h
-    smlal           v0.4s, v3.4h, v3.4h
-    smlal2          v1.4s, v3.8h, v3.8h
-    smlal           v0.4s, v4.4h, v4.4h
-    smlal2          v1.4s, v4.8h, v4.8h
-    smlal           v0.4s, v5.4h, v5.4h
-    smlal2          v1.4s, v5.8h, v5.8h
+    uabd            v2.16b, v16.16b, v20.16b
+    uabd            v3.16b, v17.16b, v21.16b
+    uabd            v4.16b, v18.16b, v22.16b
+    uabd            v5.16b, v19.16b, v23.16b
 
-    usubl           v2.8h, v18.8b, v22.8b
-    usubl2          v3.8h, v18.16b, v22.16b
-    usubl           v4.8h, v19.8b, v23.8b
-    usubl2          v5.8h, v19.16b, v23.16b
-    smlal           v0.4s, v2.4h, v2.4h
-    smlal2          v1.4s, v2.8h, v2.8h
-    smlal           v0.4s, v3.4h, v3.4h
-    smlal2          v1.4s, v3.8h, v3.8h
-    smlal           v0.4s, v4.4h, v4.4h
-    smlal2          v1.4s, v4.8h, v4.8h
-    smlal           v0.4s, v5.4h, v5.4h
-    smlal2          v1.4s, v5.8h, v5.8h
+    umull           v24.8h, v2.8b, v2.8b
+    umull           v28.8h, v4.8b, v4.8b
+    umull           v26.8h, v3.8b, v3.8b
+    umull           v30.8h, v5.8b, v5.8b
+    umull2          v25.8h, v2.16b, v2.16b
+    umull2          v27.8h, v3.16b, v3.16b
+    umull2          v29.8h, v4.16b, v4.16b
+    umull2          v31.8h, v5.16b, v5.16b
+
+    uadalp          v0.4s, v24.8h
+    uadalp          v1.4s, v25.8h
+    uadalp          v0.4s, v26.8h
+    uadalp          v1.4s, v27.8h
+    uadalp          v0.4s, v28.8h
+    uadalp          v1.4s, v29.8h
+    uadalp          v0.4s, v30.8h
+    uadalp          v1.4s, v31.8h
 .endr
     cbnz            w12, .Loop_sse_pp_64
     add             v0.4s, v0.4s, v1.4s

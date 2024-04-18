@@ -29,9 +29,7 @@
 .arch           armv8-a
 
 .macro ret_v0_w0
-    trn2            v1.2d, v0.2d, v0.2d
-    add             v0.2s, v0.2s, v1.2s
-    addp            v0.2s, v0.2s, v0.2s
+    addv            s0, v0.4s
     fmov            w0, s0
     ret
 .endm
