@@ -22,6 +22,8 @@ include(CheckIncludeFiles)
 include(CheckFunctionExists)
 include(CheckSymbolExists)
 include(CheckCXXCompilerFlag)
+include(CheckCSourceCompiles)
+include(CheckCXXSourceCompiles)
 
 option(FPROFILE_GENERATE "Compile executable to generate usage data" OFF)
 option(FPROFILE_USE "Compile executable using generated usage data" OFF)
@@ -270,14 +272,21 @@ if(GCC)
         if(CPU_HAS_SVE2 OR CROSS_COMPILE_SVE2)
             message(STATUS "Found SVE2")
 	        set(ARM_ARGS -O3 -march=armv8-a+sve2 -fPIC -flax-vector-conversions)
+            set(CPU_HAS_SVE2 1)
+            # SVE2 implies Neon and SVE.
+            set(CPU_HAS_SVE 1)
+            set(CPU_HAS_NEON 1)
             add_definitions(-DHAVE_SVE2)
             add_definitions(-DHAVE_SVE)
-            add_definitions(-DHAVE_NEON) # for NEON c/c++ primitives, as currently there is no implementation that use SVE2
+            add_definitions(-DHAVE_NEON)
         elseif(CPU_HAS_SVE OR CROSS_COMPILE_SVE)
             message(STATUS "Found SVE")
+            set(CPU_HAS_SVE 1)
+            # SVE implies Neon.
+            set(CPU_HAS_NEON 1)
 	        set(ARM_ARGS -O3 -march=armv8-a+sve -fPIC -flax-vector-conversions)
             add_definitions(-DHAVE_SVE)
-            add_definitions(-DHAVE_NEON) # for NEON c/c++ primitives, as currently there is no implementation that use SVE
+            add_definitions(-DHAVE_NEON)
         elseif(CPU_HAS_NEON)
             message(STATUS "Found NEON")
             set(ARM_ARGS -fPIC -flax-vector-conversions)
@@ -285,6 +294,28 @@ if(GCC)
         else()
             set(ARM_ARGS -fPIC -flax-vector-conversions)
         endif()        
+        if(CPU_HAS_SVE)
+            set(SVE_HEADER_TEST "
+#ifndef __ARM_NEON_SVE_BRIDGE
+#error 1
+#endif
+#include <arm_sve.h>
+#include <arm_neon_sve_bridge.h>
+int main() { return 0; }")
+            set(OLD_CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS})
+            # CMAKE_REQUIRED_FLAGS requires a space-delimited string, whereas
+            # ARM_ARGS is defined and used elsewhere as a ;-list.
+            foreach(ARM_ARG ${ARM_ARGS})
+                string(APPEND CMAKE_REQUIRED_FLAGS " ${ARM_ARG}")
+            endforeach()
+            check_c_source_compiles("${SVE_HEADER_TEST}" SVE_HEADER_C_TEST_COMPILED)
+            check_cxx_source_compiles("${SVE_HEADER_TEST}" SVE_HEADER_CXX_TEST_COMPILED)
+            set(CMAKE_REQUIRED_FLAGS ${OLD_CMAKE_REQUIRED_FLAGS})
+            if(SVE_HEADER_C_TEST_COMPILED AND SVE_HEADER_CXX_TEST_COMPILED)
+                add_definitions(-DHAVE_SVE_BRIDGE=1)
+                set(HAVE_SVE_BRIDGE 1)
+            endif()
+        endif()
     endif()
 	if(ENABLE_PIC)
 	list(APPEND ARM_ARGS -DPIC)
