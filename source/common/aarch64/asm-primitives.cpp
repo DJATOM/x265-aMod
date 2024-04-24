@@ -154,6 +154,23 @@ extern "C" {
     p.pu[LUMA_64x48].prim = fncdef PFX(filterPixelToShort ## _64x48_ ## sve); \
     p.pu[LUMA_64x16].prim = fncdef PFX(filterPixelToShort ## _64x16_ ## sve); \
     p.pu[LUMA_48x64].prim = fncdef PFX(filterPixelToShort ## _48x64_ ## sve)
+#define LUMA_PU_TYPED_MULTIPLE_16(prim, fncdef, fname, cpu)      \
+    p.pu[LUMA_16x16].prim = fncdef PFX(fname ## _16x16_ ## cpu); \
+    p.pu[LUMA_32x32].prim = fncdef PFX(fname ## _32x32_ ## cpu); \
+    p.pu[LUMA_64x64].prim = fncdef PFX(fname ## _64x64_ ## cpu); \
+    p.pu[LUMA_16x8].prim  = fncdef PFX(fname ## _16x8_ ## cpu);  \
+    p.pu[LUMA_16x32].prim = fncdef PFX(fname ## _16x32_ ## cpu); \
+    p.pu[LUMA_32x16].prim = fncdef PFX(fname ## _32x16_ ## cpu); \
+    p.pu[LUMA_64x32].prim = fncdef PFX(fname ## _64x32_ ## cpu); \
+    p.pu[LUMA_32x64].prim = fncdef PFX(fname ## _32x64_ ## cpu); \
+    p.pu[LUMA_16x12].prim = fncdef PFX(fname ## _16x12_ ## cpu); \
+    p.pu[LUMA_16x4].prim  = fncdef PFX(fname ## _16x4_ ## cpu);  \
+    p.pu[LUMA_32x24].prim = fncdef PFX(fname ## _32x24_ ## cpu); \
+    p.pu[LUMA_32x8].prim  = fncdef PFX(fname ## _32x8_ ## cpu);  \
+    p.pu[LUMA_64x48].prim = fncdef PFX(fname ## _64x48_ ## cpu); \
+    p.pu[LUMA_48x64].prim = fncdef PFX(fname ## _48x64_ ## cpu); \
+    p.pu[LUMA_64x16].prim = fncdef PFX(fname ## _64x16_ ## cpu); \
+    p.pu[LUMA_16x64].prim = fncdef PFX(fname ## _16x64_ ## cpu)
 #define ALL_LUMA_PU(prim, fname, cpu) ALL_LUMA_PU_TYPED(prim, , fname, cpu)
 #define LUMA_PU_MULTIPLE_ARCHS_1(prim, fname, cpu) LUMA_PU_TYPED_MULTIPLE_ARCHS_1(prim, , fname, cpu)
 #define LUMA_PU_MULTIPLE_ARCHS_2(prim, fname, cpu) LUMA_PU_TYPED_MULTIPLE_ARCHS_2(prim, , fname, cpu)
@@ -161,6 +178,7 @@ extern "C" {
 #define LUMA_PU_MULTIPLE_ARCHS_3(prim, fname, cpu) LUMA_PU_TYPED_MULTIPLE_ARCHS_3(prim, , fname, cpu)
 #define LUMA_PU_CAN_USE_SVE2(prim, fname) LUMA_PU_TYPED_CAN_USE_SVE2(prim, , fname)
 #define LUMA_PU_SVE_FILTER_PIXEL_TO_SHORT(prim) LUMA_PU_TYPED_SVE_FILTER_PIXEL_TO_SHORT(prim, )
+#define LUMA_PU_MULTIPLE_16(prim, fname, cpu) LUMA_PU_TYPED_MULTIPLE_16(prim, , fname, cpu)
 
 
 #define ALL_LUMA_PU_T(prim, fname) \
@@ -1160,12 +1178,31 @@ void setupSve2Primitives(EncoderPrimitives &)
 #endif // !HIGH_BIT_DEPTH
 #endif // defined(HAVE_SVE2)
 
+#ifdef HAVE_NEON_DOTPROD
+#if !HIGH_BIT_DEPTH
+void setupNeonDotProdPrimitives(EncoderPrimitives &p)
+{
+    LUMA_PU_MULTIPLE_16(sad, pixel_sad, neon_dotprod);
+}
+#else // !HIGH_BIT_DEPTH
+void setupNeonDotProdPrimitives(EncoderPrimitives &)
+{
+}
+#endif // !HIGH_BIT_DEPTH
+#endif // HAVE_NEON_DOTPROD
+
 void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
 {
     if (cpuMask & X265_CPU_NEON)
     {
         setupNeonPrimitives(p);
     }
+#ifdef HAVE_NEON_DOTPROD
+    if (cpuMask & X265_CPU_NEON_DOTPROD)
+    {
+        setupNeonDotProdPrimitives(p);
+    }
+#endif
 #ifdef HAVE_SVE
     if (cpuMask & X265_CPU_SVE)
     {

@@ -69,6 +69,24 @@
     ret PFX(name ## _64x16_ ## cpu)(__VA_ARGS__); \
     ret PFX(name ## _16x64_ ## cpu)(__VA_ARGS__)
 
+#define FUNCDEF_PU_MULT_16(ret, name, cpu, ...) \
+    ret PFX(name ## _16x16_ ## cpu)(__VA_ARGS__); \
+    ret PFX(name ## _32x32_ ## cpu)(__VA_ARGS__); \
+    ret PFX(name ## _64x64_ ## cpu)(__VA_ARGS__); \
+    ret PFX(name ## _16x8_  ## cpu)(__VA_ARGS__); \
+    ret PFX(name ## _16x32_ ## cpu)(__VA_ARGS__); \
+    ret PFX(name ## _32x16_ ## cpu)(__VA_ARGS__); \
+    ret PFX(name ## _64x32_ ## cpu)(__VA_ARGS__); \
+    ret PFX(name ## _32x64_ ## cpu)(__VA_ARGS__); \
+    ret PFX(name ## _16x12_ ## cpu)(__VA_ARGS__); \
+    ret PFX(name ## _16x4_  ## cpu)(__VA_ARGS__); \
+    ret PFX(name ## _32x24_ ## cpu)(__VA_ARGS__); \
+    ret PFX(name ## _32x8_  ## cpu)(__VA_ARGS__); \
+    ret PFX(name ## _64x48_ ## cpu)(__VA_ARGS__); \
+    ret PFX(name ## _48x64_ ## cpu)(__VA_ARGS__); \
+    ret PFX(name ## _64x16_ ## cpu)(__VA_ARGS__); \
+    ret PFX(name ## _16x64_ ## cpu)(__VA_ARGS__)
+
 #define FUNCDEF_CHROMA_PU(ret, name, cpu, ...) \
     FUNCDEF_PU(ret, name, cpu, __VA_ARGS__); \
     ret PFX(name ## _4x2_ ## cpu)(__VA_ARGS__); \
@@ -154,6 +172,7 @@ DECLS(neon);
 DECLS(sve);
 DECLS(sve2);
 
+FUNCDEF_PU_MULT_16(int, pixel_sad, neon_dotprod, const pixel*, intptr_t, const pixel*, intptr_t);
 
 void PFX(pixel_planecopy_cp_neon(const uint8_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int height, int shift));
 
