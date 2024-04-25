@@ -1183,6 +1183,8 @@ void setupSve2Primitives(EncoderPrimitives &)
 void setupNeonDotProdPrimitives(EncoderPrimitives &p)
 {
     LUMA_PU_MULTIPLE_16(sad, pixel_sad, neon_dotprod);
+    LUMA_PU_MULTIPLE_16(sad_x3, sad_x3, neon_dotprod);
+    LUMA_PU_MULTIPLE_16(sad_x4, sad_x4, neon_dotprod);
 }
 #else // !HIGH_BIT_DEPTH
 void setupNeonDotProdPrimitives(EncoderPrimitives &)
