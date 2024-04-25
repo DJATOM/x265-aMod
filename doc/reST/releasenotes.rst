@@ -23,17 +23,17 @@ Enhancements to existing features
 
 API changes
 -----------
-1. Add Segment based Ratecontrol(SBRC) feature: `--[no-]sbrc`.
-2. Add command line parameter for mcstf feature :option:`--[no-]mctf`:.
-3. Add command line parameters for the scene cut aware qp feature: "--scenecut-aware-qp" and "--masking-strength".
-4. Add command line parameters for Histogram-Based Scene Change Detection: "--hist-scenecut".
-5. Add film grain characteristics as a SEI message to the bitstream: "--film-grain <filename>"
-6. cli: add new option --cra-nal (Force nal type to CRA to all frames expect for the first frame, works only with keyint 1)
+1. Add command line parameter for SBRC feature :option:`--[no-]sbrc`.
+2. Add command line parameter for mcstf feature :option:`--[no-]mctf`.
+3. Add command line parameters for the scene cut aware qp feature :option:`--scenecut-aware-qp` and :option:`--masking-strength`.
+4. Add command line parameters for Histogram-Based Scene Change Detection :option:`--hist-scenecut`.
+5. Add command line parameters for film grain characteristics as a SEI message to the bitstream :option:`--film-grain <filename>`.
+6. cli: add new option :option:`--cra-nal` (Force nal type to CRA to all frames expect for the first frame, works only with keyint 1).
 
 Optimizations
 ---------------------
-ARM64 NEON optimizations:- Several time-consuming C functions have been optimized for the targeted platform - aarch64. The overall performance increased by around 20%.
-SVE/SVE2 optimizations
+1. ARM64 NEON optimizations:- Several time-consuming C functions have been optimized for the targeted platform - aarch64. The overall performance increased by around 20%.
+2. SVE/SVE2 optimizations
 
 
 Bug fixes
@@ -44,7 +44,7 @@ Bug fixes
 4. bugs in zonefile feature (Reflect Zonefile Parameters inside Lookahead, extra IDR issue, Avg I Slice QP value issue etc..)
 5. Add x86 ASM implementation for subsampling luma 
 6. Fix for abrladder segfault with load reuse level 1 
-7. Reorder miniGOP based on temporal layer hierarchy and add support for more B frame 
+7. Reorder miniGOP based on temporal layer hierarchy and add support for more B frames 
 8. Add MacOS aarch64 build support 
 9. Fix boundary condition issue for Gaussian filter
 
