@@ -9,22 +9,22 @@ Release date - 4th April, 2024.
 
 New feature
 -----------
-1. Segment based Ratecontrol (SBRC) feature
-2. Motion-Compensated Spatio-Temporal Filtering
-3. Scene-cut aware qp - BBAQ (Bidirectional Boundary Aware Quantization)
-4. Histogram-Based Scene Change Detection
-5. Film-Grain characteristics as a SEI message to support Film Grain Synthesis(FGS)
-6. Add temporal layer implementation(Hierarchical B-frame implementation)
+1. Segment based Ratecontrol (SBRC) feature.
+2. Motion-Compensated Spatio-Temporal Filtering.
+3. Scene-cut aware qp - BBAQ (Bidirectional Boundary Aware Quantization).
+4. Histogram-Based Scene Change Detection.
+5. Film-Grain characteristics as a SEI message to support Film Grain Synthesis (FGS).
+6. Add temporal layer implementation (Hierarchical B-frame implementation).
  
 Enhancements to existing features
 ---------------------------------
-1. Added Dolby Vision 8.4 Profile Support
+1. Added Dolby Vision 8.4 Profile Support.
 
 
 API changes
 -----------
 1. Add command line parameter for SBRC feature :option:`--[no-]sbrc`.
-2. Add command line parameter for mcstf feature :option:`--[no-]mctf`.
+2. Add command line parameter for mcstf feature :option:`--[no-]mcstf`.
 3. Add command line parameters for the scene cut aware qp feature :option:`--scenecut-aware-qp` and :option:`--masking-strength`.
 4. Add command line parameters for Histogram-Based Scene Change Detection :option:`--hist-scenecut`.
 5. Add command line parameters for film grain characteristics as a SEI message to the bitstream :option:`--film-grain <filename>`.
@@ -33,20 +33,20 @@ API changes
 Optimizations
 ---------------------
 1. ARM64 NEON optimizations:- Several time-consuming C functions have been optimized for the targeted platform - aarch64. The overall performance increased by around 20%.
-2. SVE/SVE2 optimizations
+2. SVE/SVE2 optimizations.
 
 
 Bug fixes
 ---------
-1. Linux bug to utilize all the cores
-2. Crash with hist-scenecut build when source resolution is not multiple of minCuSize
-3. 32bit and 64bit builds generation for ARM
-4. bugs in zonefile feature (Reflect Zonefile Parameters inside Lookahead, extra IDR issue, Avg I Slice QP value issue etc..)
-5. Add x86 ASM implementation for subsampling luma 
-6. Fix for abrladder segfault with load reuse level 1 
-7. Reorder miniGOP based on temporal layer hierarchy and add support for more B frames 
-8. Add MacOS aarch64 build support 
-9. Fix boundary condition issue for Gaussian filter
+1. Linux bug to utilize all the cores.
+2. Crash with hist-scenecut build when source resolution is not multiple of minCuSize.
+3. 32bit and 64bit builds generation for ARM.
+4. bugs in zonefile feature (Reflect Zonefile Parameters inside Lookahead, extra IDR issue, Avg I Slice QP value issue etc..).
+5. Add x86 ASM implementation for subsampling luma.
+6. Fix for abrladder segfault with load reuse level 1.
+7. Reorder miniGOP based on temporal layer hierarchy and add support for more B frames. 
+8. Add MacOS aarch64 build support.
+9. Fix boundary condition issue for Gaussian filter.
 
 
 Version 3.5
