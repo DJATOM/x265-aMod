@@ -24,7 +24,7 @@ Enhancements to existing features
 API changes
 -----------
 1. Add Segment based Ratecontrol(SBRC) feature: `--[no-]sbrc`.
-2. Add command line parameter for mcstf feature option:`--[no-]mctf`:.
+2. Add command line parameter for mcstf feature :option:`--[no-]mctf`:.
 3. Add command line parameters for the scene cut aware qp feature: "--scenecut-aware-qp" and "--masking-strength".
 4. Add command line parameters for Histogram-Based Scene Change Detection: "--hist-scenecut".
 5. Add film grain characteristics as a SEI message to the bitstream: "--film-grain <filename>"
