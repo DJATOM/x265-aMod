@@ -175,6 +175,7 @@ DECLS(sve2);
 FUNCDEF_PU_MULT_16(int, pixel_sad, neon_dotprod, const pixel*, intptr_t, const pixel*, intptr_t);
 FUNCDEF_PU_MULT_16(void, sad_x3, neon_dotprod, const pixel*, const pixel*, const pixel*, const pixel*, intptr_t, int32_t*);
 FUNCDEF_PU_MULT_16(void, sad_x4, neon_dotprod, const pixel*, const pixel*, const pixel*, const pixel*, const pixel*, intptr_t, int32_t*);
+FUNCDEF_PU(sse_t, pixel_sse_pp, neon_dotprod, const pixel*, intptr_t, const pixel*, intptr_t);
 
 void PFX(pixel_planecopy_cp_neon(const uint8_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int height, int shift));
 
