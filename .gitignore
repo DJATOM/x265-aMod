@@ -31,6 +31,20 @@
 *.out
 *.app
 
+# Patchwork and intermadiates
+*.rej
+*.orig
+*.hevc
+*.yuv
+*.y4m
+*.vpy
+
 # Build directory
 build/
 
+*.swp
+.DS_Store
+
+# Idea and vscode
+/.vscode/settings.json
+/.idea/*
