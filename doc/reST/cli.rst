@@ -1331,7 +1331,14 @@ Temporal / motion search options
 	
 .. option:: --mcstf, --no-mcstf
 
-    Enable Motion-Compensated Spatio-Temporal Filtering.
+	Motion-compensated spatio-temporal filtering (MCSTF) improves the compression
+	efficiency of videos that contain a high level of noise. It introduces a
+	temporal filter before encoding and this filter is applied only to the I- and P-frames.
+	It utilizes previously generated motion vectors across different video content
+	resolutions to find the best temporal correspondence for low-pass filtering. Here,
+	motion estimation is applied between the central picture and each future or past
+	picture, thereby generating multiple motion-compensated predictions, which are then
+	combined by using adaptive filtering to produce a final noise-reduced picture.
 	Default: disabled
 
 Spatial/intra options
@@ -1765,9 +1772,11 @@ Quality, rate control and rate distortion options
 
 .. option:: --sbrc, --no-sbrc
 
-	To enable and disable segment based rate control. Segment duration depends on the
-	keyframe interval specified. If unspecified,default keyframe interval will be used.
-	Default: disabled. **Experimental Feature**
+	To enable and disable segment-based rate control. SBRC controls the overflow with
+	segment sizes, and it is based on the Capped CRF mode. Segment duration depends on
+	the keyframe interval specified. If unspecified, the default keyframe interval will
+	be used. Default: disabled. **Experimental Feature**
+
 
 .. option:: --hevc-aq
 
