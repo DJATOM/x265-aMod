@@ -79,15 +79,15 @@ public:
 
 protected:
 
-    void computeRPS(int curPoc,int tempId, bool isRAP, RPS * rps, unsigned int maxDecPicBuffer);
+    void computeRPS(int curPoc,int tempId, bool isRAP, RPS * rps, unsigned int maxDecPicBuffer, int viewId);
 
-    void applyReferencePictureSet(RPS *rps, int curPoc, int tempId, bool isTSAPicture);
-    bool getTemporalLayerNonReferenceFlag();
-    void decodingRefreshMarking(int pocCurr, NalUnitType nalUnitType);
-    bool isTemporalLayerSwitchingPoint(int curPoc, int tempId);
-    bool isStepwiseTemporalLayerSwitchingPoint(RPS *rps, int curPoc, int tempId);
+    void applyReferencePictureSet(RPS *rps, int curPoc, int tempId, bool isTSAPicture, int viewId);
+    bool getTemporalLayerNonReferenceFlag(int viewId);
+    void decodingRefreshMarking(int pocCurr, NalUnitType nalUnitType, int viewId);
+    bool isTemporalLayerSwitchingPoint(int curPoc, int tempId, int viewId);
+    bool isStepwiseTemporalLayerSwitchingPoint(RPS *rps, int curPoc, int tempId, int viewId);
 
-    NalUnitType getNalUnitType(int curPoc, bool bIsKeyFrame);
+    NalUnitType getNalUnitType(int curPoc, bool bIsKeyFrame, int viewId);
 };
 }
 
