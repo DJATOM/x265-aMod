@@ -384,7 +384,7 @@ public:
 
     void disableWeights();
 
-    void setRefPicList(PicList& picList);
+    void setRefPicList(PicList& picList, int sLayerId);
 
     bool getRapPicFlag() const
     {

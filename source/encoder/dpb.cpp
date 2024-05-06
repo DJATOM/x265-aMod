@@ -175,9 +175,7 @@ void DPB::prepareEncode(Frame *newFrame)
         newFrame->m_encData->m_bHasReferences = true;
     }
 
-    //Non base view pictures are already present in the list
-    if(newFrame->m_sLayerId == 0)
-        m_picList.pushFront(*newFrame);
+    m_picList.pushFront(*newFrame);
 
     if (m_bTemporalSublayer && getTemporalLayerNonReferenceFlag(newFrame->m_sLayerId))
     {
@@ -212,9 +210,9 @@ void DPB::prepareEncode(Frame *newFrame)
             || slice->m_nalUnitType == NAL_UNIT_CODED_SLICE_RASL_R)
         )
     {
-        if (isTemporalLayerSwitchingPoint(pocCurr, newFrame->m_tempLayer) || (slice->m_sps->maxTempSubLayers == 1))
+        if (isTemporalLayerSwitchingPoint(pocCurr, newFrame->m_tempLayer, newFrame->m_sLayerId) || (slice->m_sps->maxTempSubLayers == 1))
         {
-            if (getTemporalLayerNonReferenceFlag())
+            if (getTemporalLayerNonReferenceFlag(newFrame->m_sLayerId))
             {
                 slice->m_nalUnitType = NAL_UNIT_CODED_SLICE_TSA_N;
             }
@@ -273,7 +271,7 @@ void DPB::prepareEncode(Frame *newFrame)
     else
         slice->m_numRefIdx[0] = X265_MIN(newFrame->m_param->maxNumReferences, slice->m_rps.numberOfNegativePictures); // Ensuring L0 contains just the -ve POC
     slice->m_numRefIdx[1] = X265_MIN(newFrame->m_param->bBPyramid ? 2 : 1, slice->m_rps.numberOfPositivePictures);
-    slice->setRefPicList(m_picList);
+    slice->setRefPicList(m_picList, newFrame->m_sLayerId);
 
     X265_CHECK(slice->m_sliceType != B_SLICE || slice->m_numRefIdx[1], "B slice without L1 references (non-fatal)\n");
 
@@ -486,7 +484,7 @@ bool DPB::isStepwiseTemporalLayerSwitchingPoint(RPS *rps, int curPoc, int tempId
 }
 
 /* deciding the nal_unit_type */
-NalUnitType DPB::getNalUnitType(int curPOC, bool bIsKeyFrame, int viewId)
+NalUnitType DPB::getNalUnitType(int curPOC, bool bIsKeyFrame)
 {
     if (!curPOC)
         return NAL_UNIT_CODED_SLICE_IDR_N_LP;

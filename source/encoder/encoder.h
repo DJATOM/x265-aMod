@@ -308,7 +308,7 @@ public:
 
     void copyCtuInfo(x265_ctu_info_t** frameCtuInfo, int poc);
 
-    int copySlicetypePocAndSceneCut(int *slicetype, int *poc, int *sceneCut);
+    int copySlicetypePocAndSceneCut(int *slicetype, int *poc, int *sceneCut, int sLayer);
 
     int getRefFrameList(PicYuv** l0, PicYuv** l1, int sliceType, int poc, int* pocL0, int* pocL1);
 

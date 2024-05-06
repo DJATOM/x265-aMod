@@ -597,9 +597,9 @@ void Encoder::stopJobs()
     }
 }
 
-int Encoder::copySlicetypePocAndSceneCut(int *slicetype, int *poc, int *sceneCut)
+int Encoder::copySlicetypePocAndSceneCut(int *slicetype, int *poc, int *sceneCut, int sLayer)
 {
-    Frame *FramePtr = m_dpb->m_picList.getCurFrame();
+    Frame *FramePtr = m_dpb->m_picList.getCurFrame(sLayer);
     if (FramePtr != NULL)
     {
         *slicetype = FramePtr->m_lowres.sliceType;
@@ -618,7 +618,7 @@ int Encoder::getRefFrameList(PicYuv** l0, PicYuv** l1, int sliceType, int poc, i
 {
     if (!(IS_X265_TYPE_I(sliceType)))
     {
-        Frame *framePtr = m_dpb->m_picList.getPOC(poc);
+        Frame *framePtr = m_dpb->m_picList.getPOC(poc, 0);
         if (framePtr != NULL)
         {
             for (int j = 0; j < framePtr->m_encData->m_slice->m_numRefIdx[0]; j++)    // check only for --ref=n number of frames.
@@ -627,7 +627,7 @@ int Encoder::getRefFrameList(PicYuv** l0, PicYuv** l1, int sliceType, int poc, i
                 {
                     int l0POC = framePtr->m_encData->m_slice->m_refFrameList[0][j]->m_poc;
                     pocL0[j] = l0POC;
-                    Frame* l0Fp = m_dpb->m_picList.getPOC(l0POC);
+                    Frame* l0Fp = m_dpb->m_picList.getPOC(l0POC, 0);
                     while (l0Fp->m_reconRowFlag[l0Fp->m_numRows - 1].get() == 0)
                         l0Fp->m_reconRowFlag[l0Fp->m_numRows - 1].waitForChange(0); /* If recon is not ready, current frame encoder has to wait. */
                     l0[j] = l0Fp->m_reconPic;
@@ -639,7 +639,7 @@ int Encoder::getRefFrameList(PicYuv** l0, PicYuv** l1, int sliceType, int poc, i
                 {
                     int l1POC = framePtr->m_encData->m_slice->m_refFrameList[1][j]->m_poc;
                     pocL1[j] = l1POC;
-                    Frame* l1Fp = m_dpb->m_picList.getPOC(l1POC);
+                    Frame* l1Fp = m_dpb->m_picList.getPOC(l1POC, 0);
                     while (l1Fp->m_reconRowFlag[l1Fp->m_numRows - 1].get() == 0)
                         l1Fp->m_reconRowFlag[l1Fp->m_numRows - 1].waitForChange(0); /* If recon is not ready, current frame encoder has to wait. */
                     l1[j] = l1Fp->m_reconPic;
@@ -762,7 +762,7 @@ int Encoder::setAnalysisData(x265_analysis_data *analysis_data, int poc, uint32_
     uint32_t widthInCU = (m_param->sourceWidth + m_param->maxCUSize - 1) >> m_param->maxLog2CUSize;
     uint32_t heightInCU = (m_param->sourceHeight + m_param->maxCUSize - 1) >> m_param->maxLog2CUSize;
 
-    Frame* curFrame = m_dpb->m_picList.getPOC(poc);
+    Frame* curFrame = m_dpb->m_picList.getPOC(poc, 0);
     if (curFrame != NULL)
     {
         curFrame->m_analysisData = (*analysis_data);
@@ -1667,7 +1667,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                     for (int i = 1; i <= backwardWindow; i++)
                     {
                         int frameNum = inFrame[layer]->m_poc - i;
-                        Frame* frame = m_lookahead->m_inputQueue.getPOC(frameNum);
+                        Frame* frame = m_lookahead->m_inputQueue.getPOC(frameNum, 0);
                         if (frame)
                             frame->m_isInsideWindow = BACKWARD_WINDOW;
                     }
@@ -2142,7 +2142,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         if (frameEnc[0] && !pass && (!m_param->chunkEnd || (m_encodedFrameNum < m_param->chunkEnd)))
         {
             //Pop non base view pictures from DPB piclist
-            frameEnc[1] = m_dpb->m_picList.getPOC(frameEnc[0]->m_poc);
+            frameEnc[1] = m_dpb->m_picList.getPOC(frameEnc[0]->m_poc, 1);
             m_dpb->m_picList.remove(*frameEnc[1]);
             frameEnc[1]->m_lowres.sliceType = frameEnc[0]->m_lowres.sliceType;
 
@@ -2441,7 +2441,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                 {
                     TemporalFilterRefPicInfo *ref = &curEncoder->m_mcstfRefList[i];
                     ref->slicetype = m_lookahead->findSliceType(frameEnc[0]->m_poc + ref->origOffset);
-                    Frame* dpbframePtr = m_dpb->m_picList.getPOC(frameEnc[0]->m_poc + ref->origOffset);
+                    Frame* dpbframePtr = m_dpb->m_picList.getPOC(frameEnc[0]->m_poc + ref->origOffset, 0);
                     if (dpbframePtr != NULL)
                     {
                         if (dpbframePtr->m_encData->m_slice->m_sliceType == B_SLICE)
@@ -2561,15 +2561,15 @@ void Encoder::copyCtuInfo(x265_ctu_info_t** frameCtuInfo, int poc)
     bool copied = false;
     do
     {
-        curFrame = m_lookahead->m_inputQueue.getPOC(poc);
+        curFrame = m_lookahead->m_inputQueue.getPOC(poc, 0);
         if (!curFrame)
-            curFrame = m_lookahead->m_outputQueue.getPOC(poc);
+            curFrame = m_lookahead->m_outputQueue.getPOC(poc, 0);
 
         if (poc > 0)
         {
-            prevFrame = m_lookahead->m_inputQueue.getPOC(poc - 1);
+            prevFrame = m_lookahead->m_inputQueue.getPOC(poc - 1, 0);
             if (!prevFrame)
-                prevFrame = m_lookahead->m_outputQueue.getPOC(poc - 1);
+                prevFrame = m_lookahead->m_outputQueue.getPOC(poc - 1, 0);
             if (!prevFrame)
             {
                 FrameEncoder* prevEncoder;

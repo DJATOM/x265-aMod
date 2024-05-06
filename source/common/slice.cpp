@@ -29,7 +29,7 @@
 
 using namespace X265_NS;
 
-void Slice::setRefPicList(PicList& picList)
+void Slice::setRefPicList(PicList& picList, int sLayerId)
 {
     if (m_sliceType == I_SLICE)
     {
@@ -53,7 +53,7 @@ void Slice::setRefPicList(PicList& picList)
     {
         if (m_rps.bUsed[i])
         {
-            refPic = picList.getPOC(m_poc + m_rps.deltaPOC[i]);
+            refPic = picList.getPOC(m_poc + m_rps.deltaPOC[i], m_rps.deltaPOC[i] ? sLayerId : 0);
             refPicSetStCurr0[numPocStCurr0] = refPic;
             numPocStCurr0++;
         }
@@ -63,7 +63,7 @@ void Slice::setRefPicList(PicList& picList)
     {
         if (m_rps.bUsed[i])
         {
-            refPic = picList.getPOC(m_poc + m_rps.deltaPOC[i]);
+            refPic = picList.getPOC(m_poc + m_rps.deltaPOC[i], m_rps.deltaPOC[i] ? sLayerId : 0);
             refPicSetStCurr1[numPocStCurr1] = refPic;
             numPocStCurr1++;
         }

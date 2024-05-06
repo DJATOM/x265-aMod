@@ -63,15 +63,18 @@ public:
     Frame* popFront();
 
     /** Find frame with specified POC */
-    Frame* getPOC(int poc);
+    Frame* getPOC(int poc, int sLayerId);
     /* Find next MCSTF frame with specified POC */
     Frame* getPOCMCSTF(int poc);
 
     /** Get the current Frame from the list **/
-    Frame* getCurFrame(void);
+    Frame* getCurFrame(int sLayer);
 
     /** Remove picture from list */
     void remove(Frame& pic);
+
+    /** Remove picture from list */
+    Frame* removeFrame(Frame& pic);
     /* Remove MCSTF picture from list */
     void removeMCSTF(Frame& pic);
 

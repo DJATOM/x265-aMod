@@ -744,7 +744,7 @@ int x265_get_slicetype_poc_and_scenecut(x265_encoder *enc, int *slicetype, int *
     if (!enc)
         return -1;
     Encoder *encoder = static_cast<Encoder*>(enc);
-    if (!encoder->copySlicetypePocAndSceneCut(slicetype, poc, sceneCut))
+    if (!encoder->copySlicetypePocAndSceneCut(slicetype, poc, sceneCut, 0))
         return 0;
     return -1;
 }

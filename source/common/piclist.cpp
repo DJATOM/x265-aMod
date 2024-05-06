@@ -123,10 +123,10 @@ Frame *PicList::popFront()
         return NULL;
 }
 
-Frame* PicList::getPOC(int poc)
+Frame* PicList::getPOC(int poc, int sLayerId)
 {
     Frame *curFrame = m_start;
-    while (curFrame && curFrame->m_poc != poc)
+    while (curFrame && (curFrame->m_poc != poc || curFrame->m_sLayerId != sLayerId))
         curFrame = curFrame->m_next;
     return curFrame;
 }
@@ -185,10 +185,10 @@ Frame *PicList::popBackMCSTF()
         return NULL;
 }
 
-Frame* PicList::getCurFrame(void)
+Frame* PicList::getCurFrame(int sLayer)
 {
     Frame *curFrame = m_start;
-    if (curFrame != NULL)
+    if (curFrame->m_sLayerId == sLayer && curFrame != NULL)
         return curFrame;
     else
         return NULL;
@@ -225,6 +225,41 @@ void PicList::remove(Frame& curFrame)
     }
 
     curFrame.m_next = curFrame.m_prev = NULL;
+}
+
+
+Frame* PicList::removeFrame(Frame& curFrame)
+{
+#if _DEBUG
+    Frame* tmp = m_start;
+    while (tmp && tmp != &curFrame)
+    {
+        tmp = tmp->m_next;
+    }
+
+    X265_CHECK(tmp == &curFrame, "piclist: pic being removed was not in list\n"); // verify pic is in this list
+#endif
+
+    m_count--;
+    if (m_count)
+    {
+        if (m_start == &curFrame)
+            m_start = curFrame.m_next;
+        if (m_end == &curFrame)
+            m_end = curFrame.m_prev;
+
+        if (curFrame.m_next)
+            curFrame.m_next->m_prev = curFrame.m_prev;
+        if (curFrame.m_prev)
+            curFrame.m_prev->m_next = curFrame.m_next;
+    }
+    else
+    {
+        m_start = m_end = NULL;
+    }
+
+    curFrame.m_next = curFrame.m_prev = NULL;
+    return tmp;
 }
 
 void PicList::removeMCSTF(Frame& curFrame)
