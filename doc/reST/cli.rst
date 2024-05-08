@@ -822,7 +822,7 @@ the prediction quad-tree.
 	metrics from the 4 sub-CUs. When multiple inter modes like :option:`--rect`
 	and/or :option:`--amp` are enabled, this feature will use motion cost 
 	heuristics from the 4 sub-CUs to bypass modes that are unlikely to be the 
-	best choice. This can significantly improve performance when :option:`rect`
+	best choice. This can significantly improve performance when :option:`--rect`
 	and/or :option:`--amp` are enabled at minimal compression efficiency loss.
 
 .. option:: --rect, --no-rect
@@ -983,7 +983,7 @@ will not reuse analysis if slice type parameters do not match.
     Store/normalize ctu distortion in analysis-save/load.
     0 - Disabled.
     1 - Save ctu distortion to the analysis file specified during :option:`--analysis-save`.
-        Load CTU distortion from the analysis file and normalize it across every frame during :option:`--analysis-load`.
+    - Load CTU distortion from the analysis file and normalize it across every frame during :option:`--analysis-load`.
     Default 0.
 
 .. option:: --scale-factor
@@ -1056,27 +1056,13 @@ as the residual quad-tree (RQT).
 
 .. option:: --rdoq-level <0|1|2>, --no-rdoq-level
 
-	Specify the amount of rate-distortion analysis to use within
-	quantization::
+	Specify the amount of rate-distortion analysis to use within quantization::
 
-	At level 0 rate-distortion cost is not considered in quant
-	
-	At level 1 rate-distortion cost is used to find optimal rounding
-	values for each level (and allows psy-rdoq to be effective). It
-	trades-off the signaling cost of the coefficient vs its post-inverse
-	quant distortion from the pre-quant coefficient. When
-	:option:`--psy-rdoq` is enabled, this formula is biased in favor of
-	more energy in the residual (larger coefficient absolute levels)
-	
-	At level 2 rate-distortion cost is used to make decimate decisions
-	on each 4x4 coding group, including the cost of signaling the group
-	within the group bitmap. If the total distortion of not signaling
-	the entire coding group is less than the rate cost, the block is
-	decimated. Next, it applies rate-distortion cost analysis to the
-	last non-zero coefficient, which can result in many (or all) of the
-	coding groups being decimated. Psy-rdoq is less effective at
-	preserving energy when RDOQ is at level 2, since it only has
-	influence over the level distortion costs.
+			At level 0 rate-distortion cost is not considered in quant.
+
+			At level 1 rate-distortion cost is used to find optimal rounding values for each level (and allows psy-rdoq to be effective). It trades-off the signaling cost of the coefficient vs its post-inverse quant distortion from the pre-quant coefficient. When :option:`--psy-rdoq` is enabled, this formula is biased in favor of more energy in the residual (larger coefficient absolute levels).
+
+			At level 2 rate-distortion cost is used to make decimate decisions on each 4x4 coding group, including the cost of signaling the group within the group bitmap. If the total distortion of not signaling the entire coding group is less than the rate cost, the block is decimated. Next, it applies rate-distortion cost analysis to the last non-zero coefficient, which can result in many (or all) of the coding groups being decimated. Psy-rdoq is less effective at preserving energy when RDOQ is at level 2, since it only has influence over the level distortion costs.
 
 .. option:: --tu-intra-depth <1..4>
 
@@ -1221,19 +1207,16 @@ Temporal / motion search options
 
 .. option:: --me <integer|string>
 
-	Motion search method. Generally, the higher the number the harder
-	the ME method will try to find an optimal match. Diamond search is
-	the simplest. Hexagon search is a little better. Uneven
-	Multi-Hexagon is an adaption of the search method used by x264 for
-	slower presets. Star is a three-step search adapted from the HM
-	encoder: a star-pattern search followed by an optional radix scan
-	followed by an optional star-search refinement. Full is an
-	exhaustive search; an order of magnitude slower than all other
-	searches but not much better than umh or star. SEA is similar to
-	x264's ESA implementation and a speed optimization of full search.
-    It is a three-step motion search where the DC calculation is
-    followed by ADS calculation followed by SAD of the passed motion
-    vector candidates.
+	Motion search method. Generally, the higher the number the harder the ME method
+	will try to find an optimal match. Diamond search is the simplest. Hexagon search
+	is a little better. Uneven Multi-Hexagon is an adaption of the search method used
+	by x264 for slower presets. Star is a three-step search adapted from the HM encoder: a
+	star-pattern search followed by an optional radix scan followed by an optional
+	star-search refinement. Full is an exhaustive search; an order of magnitude slower
+	than all other searches but not much better than umh or star. SEA is similar to x264's
+	ESA implementation and a speed optimization of full search. It is a three-step motion
+	search where the DC calculation is followed by ADS calculation followed by SAD of the
+	passed motion vector candidates.
 
 	0. dia
 	1. hex **(default)**
@@ -1493,7 +1476,7 @@ Slice decision options
 	whereas for the :option:`--scenecut`, inserts RADL at every scenecut.
 	Recommended value is 2-3. Default 0 (disabled).
 	
-	**Range of values: Between 0 and `--bframes`
+	**Range of values:** Between 0 and `--bframes`
 
 .. option:: --ctu-info <0, 1, 2, 4, 6>
 
@@ -1557,9 +1540,7 @@ Slice decision options
 	as *lslices*
 
 	**Values:** 0 - disabled. 1 is the same as 0. Max 16.
-	Default: 8 for ultrafast, superfast, faster, fast, medium
-			 4 for slow, slower
-			 disabled for veryslow, slower
+	Default: 8 for ultrafast, superfast, faster, fast, medium; 4 for slow, slower; disabled for veryslow, slower.
 
 .. option:: --lookahead-threads <integer>
 
@@ -1609,8 +1590,7 @@ Slice decision options
 
 	Values:
 	0 - flush the encoder only when all the input pictures are over.
-	1 - flush all the frames even when the input is not over. 
-	    slicetype decision may change with this option.
+	1 - flush all the frames even when the input is not over. Slicetype decision may change with this option.
 	2 - flush the slicetype decided frames only.   
 
 .. option:: --fades, --no-fades
@@ -1755,9 +1735,7 @@ Quality, rate control and rate distortion options
 	0. disabled
 	1. AQ enabled 
 	2. AQ enabled with auto-variance **(default)**
-	3. AQ enabled with auto-variance and bias to dark scenes. This is 
-	recommended for 8-bit encodes or low-bitrate 10-bit encodes, to 
-	prevent color banding/blocking. 
+	3. AQ enabled with auto-variance and bias to dark scenes. This is recommended for 8-bit encodes or low-bitrate 10-bit encodes, to prevent color banding/blocking.
 	4. AQ enabled with auto-variance and edge information.
 
 .. option:: --aq-strength <float>
@@ -1862,7 +1840,7 @@ Quality, rate control and rate distortion options
 	and also redundant steps are skipped.
 	In pass 1 analysis information like motion vector, depth, reference and prediction
 	modes of the final best CTU partition is stored for each CTU.
-	Multipass analysis refinement cannot be enabled when :option:`--analysis-save`/:option:`analysis-load`
+	Multipass analysis refinement cannot be enabled when :option:`--analysis-save`/:option:`--analysis-load`
 	is enabled and both will be disabled when enabled together. This feature requires :option:`--pmode`/:option:`--pme`
 	to be disabled and hence pmode/pme will be disabled when enabled at the same time.
 
@@ -2027,26 +2005,29 @@ Quality, rate control and rate distortion options
 	When :option:`--scenecut-aware-qp` is:
 
 	* 1 (Forward masking):
-	--masking-strength <fwdMaxWindow,fwdRefQPDelta,fwdNonRefQPDelta>
-	or 
-	--masking-strength <fwdWindow1,fwdRefQPDelta1,fwdNonRefQPDelta1,fwdWindow2,fwdRefQPDelta2,fwdNonRefQPDelta2,
-						fwdWindow3,fwdRefQPDelta3,fwdNonRefQPDelta3,fwdWindow4,fwdRefQPDelta4,fwdNonRefQPDelta4,
-						fwdWindow5,fwdRefQPDelta5,fwdNonRefQPDelta5,fwdWindow6,fwdRefQPDelta6,fwdNonRefQPDelta6>
+
+			--masking-strength <fwdMaxWindow,fwdRefQPDelta,fwdNonRefQPDelta>
+
+			or
+
+			--masking-strength <fwdWindow1,fwdRefQPDelta1,fwdNonRefQPDelta1,fwdWindow2,fwdRefQPDelta2,fwdNonRefQPDelta2,fwdWindow3,fwdRefQPDelta3,fwdNonRefQPDelta3,fwdWindow4,fwdRefQPDelta4,fwdNonRefQPDelta4,fwdWindow5,fwdRefQPDelta5,fwdNonRefQPDelta5,fwdWindow6,fwdRefQPDelta6,fwdNonRefQPDelta6>
+
 	* 2 (Backward masking):
-	--masking-strength <bwdMaxWindow,bwdRefQPDelta,bwdNonRefQPDelta>
-	or 
-	--masking-strength <bwdWindow1,bwdRefQPDelta1,bwdNonRefQPDelta1,bwdWindow2,bwdRefQPDelta2,bwdNonRefQPDelta2,
-						bwdWindow3,bwdRefQPDelta3,bwdNonRefQPDelta3,bwdWindow4,bwdRefQPDelta4,bwdNonRefQPDelta4,
-						bwdWindow5,bwdRefQPDelta5,bwdNonRefQPDelta5,bwdWindow6,bwdRefQPDelta6,bwdNonRefQPDelta6>
+
+			--masking-strength <bwdMaxWindow,bwdRefQPDelta,bwdNonRefQPDelta>
+
+			or
+
+			--masking-strength <bwdWindow1,bwdRefQPDelta1,bwdNonRefQPDelta1,bwdWindow2,bwdRefQPDelta2,bwdNonRefQPDelta2,bwdWindow3,bwdRefQPDelta3,bwdNonRefQPDelta3,bwdWindow4,bwdRefQPDelta4,bwdNonRefQPDelta4,bwdWindow5,bwdRefQPDelta5,bwdNonRefQPDelta5,bwdWindow6,bwdRefQPDelta6,bwdNonRefQPDelta6>
+
 	* 3 (Bi-directional masking):
-	--masking-strength <fwdMaxWindow,fwdRefQPDelta,fwdNonRefQPDelta,bwdMaxWindow,bwdRefQPDelta,bwdNonRefQPDelta>
-	or 
-	--masking-strength <fwdWindow1,fwdRefQPDelta1,fwdNonRefQPDelta1,fwdWindow2,fwdRefQPDelta2,fwdNonRefQPDelta2,
-						fwdWindow3,fwdRefQPDelta3,fwdNonRefQPDelta3,fwdWindow4,fwdRefQPDelta4,fwdNonRefQPDelta4,
-						fwdWindow5,fwdRefQPDelta5,fwdNonRefQPDelta5,fwdWindow6,fwdRefQPDelta6,fwdNonRefQPDelta6,
-						bwdWindow1,bwdRefQPDelta1,bwdNonRefQPDelta1,bwdWindow2,bwdRefQPDelta2,bwdNonRefQPDelta2,
-						bwdWindow3,bwdRefQPDelta3,bwdNonRefQPDelta3,bwdWindow4,bwdRefQPDelta4,bwdNonRefQPDelta4,
-						bwdWindow5,bwdRefQPDelta5,bwdNonRefQPDelta5,bwdWindow6,bwdRefQPDelta6,bwdNonRefQPDelta6>
+
+			--masking-strength <fwdMaxWindow,fwdRefQPDelta,fwdNonRefQPDelta,bwdMaxWindow,bwdRefQPDelta,bwdNonRefQPDelta>
+
+			or
+
+			--masking-strength <fwdWindow1,fwdRefQPDelta1,fwdNonRefQPDelta1,fwdWindow2,fwdRefQPDelta2,fwdNonRefQPDelta2,fwdWindow3,fwdRefQPDelta3,fwdNonRefQPDelta3,fwdWindow4,fwdRefQPDelta4,fwdNonRefQPDelta4,fwdWindow5,fwdRefQPDelta5,fwdNonRefQPDelta5,fwdWindow6,fwdRefQPDelta6,fwdNonRefQPDelta6,bwdWindow1,bwdRefQPDelta1,bwdNonRefQPDelta1,bwdWindow2,bwdRefQPDelta2,bwdNonRefQPDelta2,bwdWindow3,bwdRefQPDelta3,bwdNonRefQPDelta3,bwdWindow4,bwdRefQPDelta4,bwdNonRefQPDelta4,bwdWindow5,bwdRefQPDelta5,bwdNonRefQPDelta5,bwdWindow6,bwdRefQPDelta6,bwdNonRefQPDelta6>
+
 
 	+-----------------+---------------------------------------------------------------+
 	| Parameter       | Description                                                   |
@@ -2100,7 +2081,7 @@ Quality, rate control and rate distortion options
 
 	--scenecut-aware-qp 1 --masking-strength 1000,8,12
 	
-	The above sample config file is available in `the downloads page <https://bitbucket.org/multicoreware/x265_git/downloads/scenecut_qp_config.txt>`_
+	The above sample config file is available in `the downloads page <https://bitbucket.org/multicoreware/x265_git/downloads/scenecut_qp_config.txt>`__
 
 .. option:: --vbv-live-multi-pass, --no-vbv-live-multi-pass
 
@@ -2165,7 +2146,7 @@ other levels.
 	All other strings indicate a filename containing custom scaling
 	lists in the HM format. The encode will abort if the file is not
 	parsed correctly. Custom lists must be signaled in the SPS. A sample
-	scaling list file is available in `the downloads page <https://bitbucket.org/multicoreware/x265_git/downloads/reference_scalinglist.txt>`_
+	scaling list file is available in `the downloads page <https://bitbucket.org/multicoreware/x265_git/downloads/reference_scalinglist.txt>`__
 
 .. option:: --lambda-file <filename>
 
@@ -2427,7 +2408,7 @@ VUI fields must be manually specified.
 .. option:: --cll, --no-cll
 
     Emit content light level SEI. Enabled automatically when :option:`--dolby-vision-profile` 8.1
-    is specified. When enabled, signals max-cll and max-fall as 0 if :option:`max-cll` is unspecified.
+    is specified. When enabled, signals max-cll and max-fall as 0 if :option:`--max-cll` is unspecified.
     Default enabled.
 
 .. option:: --hdr10, --no-hdr10
@@ -2440,7 +2421,7 @@ VUI fields must be manually specified.
 .. option:: --hdr10-opt, --no-hdr10-opt
 
 	Enable block-level luma and chroma QP optimization for HDR10 content
-	as suggested in ITU-T H-series Recommendations – Supplement 15.
+	as suggested in ITU-T H-series Recommendations ï¿½ Supplement 15.
 	Source video should have HDR10 characteristics such as 10-bit depth 4:2:0
 	with Bt.2020 color primaries and SMPTE ST.2084 transfer characteristics.
 	It is recommended that AQ-mode be enabled along with this feature. Default disabled.
@@ -2451,8 +2432,8 @@ VUI fields must be manually specified.
 	the path to the JSON file containing the Creative Intent Metadata 
 	to be encoded as Dynamic Tone Mapping into the bitstream. 
 	
-	Click `here <https://www.sra.samsung.com/assets/User-data-registered-itu-t-t35-SEI-message-for-ST-2094-40-v1.1.pdf>`_
-	for the syntax of the metadata file. A sample JSON file is available in `the downloads page <https://bitbucket.org/multicoreware/x265_git/downloads/DCIP3_4K_to_400_dynamic.json>`_
+	Click `here <https://www.sra.samsung.com/assets/User-data-registered-itu-t-t35-SEI-message-for-ST-2094-40-v1.1.pdf>`__
+	for the syntax of the metadata file. A sample JSON file is available in `the downloads page <https://bitbucket.org/multicoreware/x265_git/downloads/DCIP3_4K_to_400_dynamic.json>`__
 	
 .. option:: --dhdr10-opt, --no-dhdr10-opt
 
@@ -2662,23 +2643,21 @@ Bitstream options
 	and only decode and display the base layer slices.Allowed number of temporal sub-layers
 	are 2 to 5.(2 and 5 inclusive)
 
-	When enabled,temporal layers 3 through 5 configures a fixed miniGOP with the number of bframes as shown below
-	unless miniGOP size is modified due to lookahead decisions.Temporal layer 2 is a special case that has
-	all reference frames in base layer and non-reference frames in enhancement layer without any constraint on the
-	number of bframes.Default disabled.
+	When enabled, temporal layers 3 through 5 configure a fixed miniGOP with the number of B-frames as shown below, unless the miniGOP size is modified due to lookahead decisions. Temporal layer 2 is a special case that has all reference frames in the base layer and non-reference frames in the enhancement layer without any constraint on the number of B-frames. By default, this feature is disabled.
+
 	+----------------+--------+
-	| temporal layer | bframes|
+	| temporal Layer | bframes|
 	+================+========+
 	| 3              | 3      |
 	+----------------+--------+
 	| 4              | 7      |
-    +----------------+--------+
+	+----------------+--------+
 	| 5              | 15     |
 	+----------------+--------+
 
 .. option:: --log2-max-poc-lsb <integer>
 
-	Maximum of the picture order count. Default 8
+	Maximum of the picture order count. Default 8.
 
 .. option:: --vui-timing-info, --no-vui-timing-info
 
@@ -2726,7 +2705,7 @@ Bitstream options
     **CLI_ONLY**
 
 DCT Approximations
-=================
+==================
 
 .. option:: --lowpass-dct
 
@@ -2797,7 +2776,7 @@ ABR-ladder Options
 	[1080p:10:540p] --input 1080pSource.y4m --ctu 32 --bitrate 5800 --vbv-maxrate 8700 --vbv-bufsize 17400 -o 1080p.hevc --preset veryslow --scale-factor 2
 	[2160p:10:1080p] --input 2160pSource.y4m --bitrate 16800 --vbv-maxrate 25200  --vbv-bufsize 50400 -o 2160p.hevc --preset veryslow  --scale-factor 2
 
-	The above sample config file is available in `the downloads page <https://bitbucket.org/multicoreware/x265_git/downloads/Sample_ABR_ladder_config.txt>`_
+	The above sample config file is available in `the downloads page <https://bitbucket.org/multicoreware/x265_git/downloads/Sample_ABR_ladder_config.txt>`__
 
 	Default: Disabled ( Conventional single encode generation ). Experimental feature.
 	**CLI ONLY**
@@ -2835,11 +2814,7 @@ See section :ref:`svthevc <SvtHevc>` for more details.
 
 .. option:: --svt-compressed-ten-bit-format, --no-svt-compressed-ten-bit-format
 
-    In order to reduce the size of input YUV and to increase channel density,
-    SVT-HEVC accepts inputs in compressed-ten-bit-format. The conversion between
-    yuv420p10le and compressed ten-bit format is a lossless operation. For more
-    details about the conversion refer
-    `here<https://github.com/intel/SVT-HEVC/blob/master/Docs/SVT-HEVC_Encoder_User_Guide.pdf>'_.
+    In order to reduce the size of input YUV and to increase channel density, SVT-HEVC accepts inputs in compressed-ten-bit-format. The conversion between yuv420p10le and compressed ten-bit format is a lossless operation. For more details about the conversion, refer to `here <https://github.com/intel/SVT-HEVC/blob/master/Docs/SVT-HEVC_Encoder_User_Guide.pdf>`__.
 
     **CLI_ONLY**
 
