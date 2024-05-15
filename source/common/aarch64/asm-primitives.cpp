@@ -1030,9 +1030,6 @@ void setupSvePrimitives(EncoderPrimitives &p)
     p.cu[BLOCK_4x4].sa8d   = PFX(pixel_satd_4x4_sve);
     p.chroma[X265_CSP_I420].cu[BLOCK_8x8].sa8d = PFX(pixel_satd_4x4_sve);
 #endif
-
-    // quant
-    p.quant = PFX(quant_sve);
 }
 #endif
 
