@@ -183,6 +183,7 @@ void x265_param_default(x265_param* param)
     param->bEnableSceneCutAwareQp = 0;
     param->fwdMaxScenecutWindow = 1200;
     param->bwdMaxScenecutWindow = 600;
+    param->mcstfFrameRange = 2;
     for (int i = 0; i < 6; i++)
     {
         int deltas[6] = { 5, 4, 3, 2, 1, 0 };
@@ -417,6 +418,7 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
 
         if (!strcmp(preset, "ultrafast"))
         {
+            param->mcstfFrameRange = 1;
             param->maxNumMergeCand = 2;
             param->bIntraInBFrames = 0;
             param->lookaheadDepth = 5;
@@ -441,6 +443,7 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
         }
         else if (!strcmp(preset, "superfast"))
         {
+            param->mcstfFrameRange = 1;
             param->maxNumMergeCand = 2;
             param->bIntraInBFrames = 0;
             param->lookaheadDepth = 10;
@@ -461,6 +464,7 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
         }
         else if (!strcmp(preset, "veryfast"))
         {
+            param->mcstfFrameRange = 1;
             param->maxNumMergeCand = 2;
             param->limitReferences = 3;
             param->bIntraInBFrames = 0;
@@ -474,6 +478,7 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
         }
         else if (!strcmp(preset, "faster"))
         {
+            param->mcstfFrameRange = 1;
             param->maxNumMergeCand = 2;
             param->limitReferences = 3;
             param->bIntraInBFrames = 0;
@@ -485,6 +490,7 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
         }
         else if (!strcmp(preset, "fast"))
         {
+            param->mcstfFrameRange = 1;
             param->maxNumMergeCand = 2;
             param->limitReferences = 3;
             param->bEnableEarlySkip = 0;
@@ -497,6 +503,7 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
         }
         else if (!strcmp(preset, "medium"))
         {
+            param->mcstfFrameRange = 1;
             /* defaults */
         }
         else if (!strcmp(preset, "slow"))
@@ -1674,7 +1681,7 @@ int x265_check_params(x265_param* param)
         CHECK(param->edgeVarThreshold < 0.0f || param->edgeVarThreshold > 1.0f,
               "Minimum edge density percentage for a CU should be an integer between 0 to 100");
     }
-    CHECK(param->bframes && param->bframes >= param->lookaheadDepth && !param->rc.bStatRead,
+    CHECK(param->bframes && (param->bEnableTemporalFilter ? (param->bframes > param->lookaheadDepth) : (param->bframes >= param->lookaheadDepth)) && !param->rc.bStatRead,
           "Lookahead depth must be greater than the max consecutive bframe count");
     CHECK(param->bframes < 0,
           "bframe count should be greater than zero");
@@ -2558,6 +2565,7 @@ bool parseMaskingStrength(x265_param* p, const char* value)
 
 void x265_copy_params(x265_param* dst, x265_param* src)
 {
+    dst->mcstfFrameRange = src->mcstfFrameRange;
     dst->cpuid = src->cpuid;
     dst->frameNumThreads = src->frameNumThreads;
     if (src->numaPools) dst->numaPools = strdup(src->numaPools);
