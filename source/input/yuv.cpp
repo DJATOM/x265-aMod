@@ -212,11 +212,13 @@ bool YUVInput::readPicture(x265_picture& pic)
         pic.planes[0] = buf[read % QUEUE_SIZE];
         pic.planes[1] = (char*)pic.planes[0] + pic.stride[0] * height;
         pic.planes[2] = (char*)pic.planes[1] + pic.stride[1] * (height >> x265_cli_csps[colorSpace].height[1]);
+#if ENABLE_ALPHA
         if (alphaAvailable)
         {
             pic.stride[3] = pic.stride[0] >> x265_cli_csps[colorSpace].width[3];
             pic.planes[3] = (char*)pic.planes[2] + pic.stride[2] * (height >> x265_cli_csps[colorSpace].height[2]);
         }
+#endif
         readCount.incr();
         return true;
     }

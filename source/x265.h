@@ -623,7 +623,11 @@ typedef enum
 #define X265_MAX_GOP_LENGTH 16
 #define MAX_T_LAYERS 7
 
+#if ENABLE_ALPHA
 #define MAX_SCALABLE_LAYERS     2
+#else
+#define MAX_SCALABLE_LAYERS     1
+#endif
 
 #define X265_IPRATIO_STRENGTH   1.43
 

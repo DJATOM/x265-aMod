@@ -1098,12 +1098,12 @@ ret:
                 memcpy(dest->planes[0], src->planes[0], src->framesize * sizeof(char));
                 dest->planes[1] = (char*)dest->planes[0] + src->stride[0] * src->height;
                 dest->planes[2] = (char*)dest->planes[1] + src->stride[1] * (src->height >> x265_cli_csps[src->colorSpace].height[1]);
-
+#if ENABLE_ALPHA
                 if (m_parentEnc->m_param->bEnableAlpha)
                 {
                     dest->planes[3] = (char*)dest->planes[2] + src->stride[2] * (src->height >> x265_cli_csps[src->colorSpace].height[2]);
                 }
-
+#endif
                 m_parentEnc->m_parent->m_picWriteCnt[m_id].incr();
             }
             else

@@ -358,7 +358,9 @@ static const struct option long_options[] =
     { "dup-threshold", required_argument, NULL, 0 },
     { "mcstf",                 no_argument, NULL, 0 },
     { "no-mcstf",              no_argument, NULL, 0 },
+#if ENABLE_ALPHA
     { "alpha",                 no_argument, NULL, 0 },
+#endif
 #ifdef SVT_HEVC
     { "svt",     no_argument, NULL, 0 },
     { "no-svt",  no_argument, NULL, 0 },

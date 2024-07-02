@@ -374,7 +374,9 @@ namespace X265_NS {
         H0("   --[no-]frame-dup              Enable Frame duplication. Default %s\n", OPT(param->bEnableFrameDuplication));
         H0("   --dup-threshold <integer>     PSNR threshold for Frame duplication. Default %d\n", param->dupThreshold);
         H0("   --[no-]mcstf                  Enable GOP based temporal filter. Default %d\n", param->bEnableTemporalFilter);
+#if ENABLE_ALPHA
         H0("   --alpha                       Enable alpha channel support. Default %d\n", param->bEnableAlpha);
+#endif
 #ifdef SVT_HEVC
         H0("   --[no]svt                     Enable SVT HEVC encoder %s\n", OPT(param->bEnableSvtHevc));
         H0("   --[no-]svt-hme                Enable Hierarchial motion estimation(HME) in SVT HEVC encoder \n");

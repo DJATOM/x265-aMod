@@ -595,6 +595,11 @@ if(DETAILED_CU_STATS)
     add_definitions(-DDETAILED_CU_STATS)
 endif(DETAILED_CU_STATS)
 
+option(ENABLE_ALPHA "Enable alpha encoding in x265" OFF)
+if(ENABLE_ALPHA)
+    add_definitions(-DENABLE_ALPHA)
+endif()
+
 add_subdirectory(encoder)
 add_subdirectory(common)
 

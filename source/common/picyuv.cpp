@@ -354,6 +354,7 @@ void PicYuv::copyFromPicture(const x265_picture& pic, const x265_param& param, i
                     }
                 }
             }
+#if ENABLE_ALPHA
             if (!isBase && param.bEnableAlpha)
             {
                 pixel* aPixel = m_picOrg[0];
@@ -379,48 +380,91 @@ void PicYuv::copyFromPicture(const x265_picture& pic, const x265_param& param, i
                     vPixel += m_strideC;
                 }
             }
+#endif
         }
 #endif /* (X265_DEPTH > 8) */
         }
         else /* pic.bitDepth > 8 */
         {
             /* defensive programming, mask off bits that are supposed to be zero */
-            uint16_t mask = (1 << X265_DEPTH) - 1;
-            int shift = abs(pic.bitDepth - X265_DEPTH);
-            pixel *yPixel = m_picOrg[0];
-
-            uint16_t *yShort = (uint16_t*)pic.planes[0];
-
-            if (pic.bitDepth > X265_DEPTH)
+            if (isBase)
             {
-                /* shift right and mask pixels to final size */
-                primitives.planecopy_sp(yShort, pic.stride[0] / sizeof(*yShort), yPixel, m_stride, width, height, shift, mask);
-            }
-            else /* Case for (pic.bitDepth <= X265_DEPTH) */
-            {
-                /* shift left and mask pixels to final size */
-                primitives.planecopy_sp_shl(yShort, pic.stride[0] / sizeof(*yShort), yPixel, m_stride, width, height, shift, mask);
-            }
+                uint16_t mask = (1 << X265_DEPTH) - 1;
+                int shift = abs(pic.bitDepth - X265_DEPTH);
+                pixel* yPixel = m_picOrg[0];
 
-            if (param.internalCsp != X265_CSP_I400)
-            {
-                pixel *uPixel = m_picOrg[1];
-                pixel *vPixel = m_picOrg[2];
-
-                uint16_t *uShort = (uint16_t*)pic.planes[1];
-                uint16_t *vShort = (uint16_t*)pic.planes[2];
+                uint16_t* yShort = (uint16_t*)pic.planes[0];
 
                 if (pic.bitDepth > X265_DEPTH)
                 {
-                    primitives.planecopy_sp(uShort, pic.stride[1] / sizeof(*uShort), uPixel, m_strideC, width >> m_hChromaShift, height >> m_vChromaShift, shift, mask);
-                    primitives.planecopy_sp(vShort, pic.stride[2] / sizeof(*vShort), vPixel, m_strideC, width >> m_hChromaShift, height >> m_vChromaShift, shift, mask);
+                    /* shift right and mask pixels to final size */
+                    primitives.planecopy_sp(yShort, pic.stride[0] / sizeof(*yShort), yPixel, m_stride, width, height, shift, mask);
                 }
                 else /* Case for (pic.bitDepth <= X265_DEPTH) */
                 {
-                    primitives.planecopy_sp_shl(uShort, pic.stride[1] / sizeof(*uShort), uPixel, m_strideC, width >> m_hChromaShift, height >> m_vChromaShift, shift, mask);
-                    primitives.planecopy_sp_shl(vShort, pic.stride[2] / sizeof(*vShort), vPixel, m_strideC, width >> m_hChromaShift, height >> m_vChromaShift, shift, mask);
+                    /* shift left and mask pixels to final size */
+                    primitives.planecopy_sp_shl(yShort, pic.stride[0] / sizeof(*yShort), yPixel, m_stride, width, height, shift, mask);
+                }
+
+                if (param.internalCsp != X265_CSP_I400)
+                {
+                    pixel* uPixel = m_picOrg[1];
+                    pixel* vPixel = m_picOrg[2];
+
+                    uint16_t* uShort = (uint16_t*)pic.planes[1];
+                    uint16_t* vShort = (uint16_t*)pic.planes[2];
+
+                    if (pic.bitDepth > X265_DEPTH)
+                    {
+                        primitives.planecopy_sp(uShort, pic.stride[1] / sizeof(*uShort), uPixel, m_strideC, width >> m_hChromaShift, height >> m_vChromaShift, shift, mask);
+                        primitives.planecopy_sp(vShort, pic.stride[2] / sizeof(*vShort), vPixel, m_strideC, width >> m_hChromaShift, height >> m_vChromaShift, shift, mask);
+                    }
+                    else /* Case for (pic.bitDepth <= X265_DEPTH) */
+                    {
+                        primitives.planecopy_sp_shl(uShort, pic.stride[1] / sizeof(*uShort), uPixel, m_strideC, width >> m_hChromaShift, height >> m_vChromaShift, shift, mask);
+                        primitives.planecopy_sp_shl(vShort, pic.stride[2] / sizeof(*vShort), vPixel, m_strideC, width >> m_hChromaShift, height >> m_vChromaShift, shift, mask);
+                    }
                 }
             }
+#if ENABLE_ALPHA
+            if (!isBase && param.bEnableAlpha)
+            {
+                /* defensive programming, mask off bits that are supposed to be zero */
+                uint16_t mask = (1 << X265_DEPTH) - 1;
+                int shift = abs(pic.bitDepth - X265_DEPTH);
+                pixel* yPixel = m_picOrg[0];
+
+                uint16_t* yShort = (uint16_t*)pic.planes[3];
+
+                if (pic.bitDepth > X265_DEPTH)
+                {
+                    /* shift right and mask pixels to final size */
+                    primitives.planecopy_sp(yShort, pic.stride[0] / sizeof(*yShort), yPixel, m_stride, width, height, shift, mask);
+                }
+                else /* Case for (pic.bitDepth <= X265_DEPTH) */
+                {
+                    /* shift left and mask pixels to final size */
+                    primitives.planecopy_sp_shl(yShort, pic.stride[0] / sizeof(*yShort), yPixel, m_stride, width, height, shift, mask);
+                }
+
+                if (param.internalCsp != X265_CSP_I400)
+                {
+                    pixel* uPixel = m_picOrg[1];
+                    pixel* vPixel = m_picOrg[2];
+
+                    for (int r = 0; r < height >> m_vChromaShift; r++)
+                    {
+                        for (int c = 0; c < (width >> m_hChromaShift); c++)
+                        {
+                            uPixel[c] = ((1 << X265_DEPTH) >> 1);
+                            vPixel[c] = ((1 << X265_DEPTH) >> 1);
+                        }
+                        uPixel += m_strideC;
+                        vPixel += m_strideC;
+                    }
+                }
+            }
+#endif
         }
     }
     else
