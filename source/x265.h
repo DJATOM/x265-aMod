@@ -410,10 +410,10 @@ typedef struct x265_picture
 
     /* Must be specified on input pictures, the number of planes is determined
      * by the colorSpace value */
-    void*   planes[3];
+    void*   planes[4];
 
     /* Stride is the number of bytes between row starts */
-    int     stride[3];
+    int     stride[4];
 
     /* Must be specified on input pictures. x265_picture_init() will set it to
      * the encoder's internal bit depth, but this field must describe the depth
@@ -623,13 +623,15 @@ typedef enum
 #define X265_MAX_GOP_LENGTH 16
 #define MAX_T_LAYERS 7
 
+#define MAX_SCALABLE_LAYERS     2
+
 #define X265_IPRATIO_STRENGTH   1.43
 
 typedef struct x265_cli_csp
 {
     int planes;
-    int width[3];
-    int height[3];
+    int width[4];
+    int height[4];
 } x265_cli_csp;
 
 static const x265_cli_csp x265_cli_csps[] =

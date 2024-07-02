@@ -40,13 +40,14 @@
 using namespace X265_NS;
 using namespace std;
 static const char header[] = {'F','R','A','M','E'};
-Y4MInput::Y4MInput(InputFileInfo& info)
+Y4MInput::Y4MInput(InputFileInfo& info, bool alpha)
 {
     for (int i = 0; i < QUEUE_SIZE; i++)
         buf[i] = NULL;
 
     threadActive = false;
     colorSpace = info.csp;
+    alphaAvailable = alpha;
     sarWidth = info.sarWidth;
     sarHeight = info.sarHeight;
     width = info.width;
@@ -69,7 +70,7 @@ Y4MInput::Y4MInput(InputFileInfo& info)
     if (ifs && !ferror(ifs) && parseHeader())
     {
         int pixelbytes = depth > 8 ? 2 : 1;
-        for (int i = 0; i < x265_cli_csps[colorSpace].planes; i++)
+        for (int i = 0; i < x265_cli_csps[colorSpace].planes + alphaAvailable; i++)
         {
             int stride = (width >> x265_cli_csps[colorSpace].width[i]) * pixelbytes;
             framesize += (stride * (height >> x265_cli_csps[colorSpace].height[i]));
@@ -396,6 +397,11 @@ bool Y4MInput::readPicture(x265_picture& pic)
         pic.planes[0] = buf[read % QUEUE_SIZE];
         pic.planes[1] = (char*)pic.planes[0] + pic.stride[0] * height;
         pic.planes[2] = (char*)pic.planes[1] + pic.stride[1] * (height >> x265_cli_csps[colorSpace].height[1]);
+        if (alphaAvailable)
+        {
+            pic.stride[3] = pic.stride[0] >> x265_cli_csps[colorSpace].width[3];
+            pic.planes[3] = (char*)pic.planes[2] + pic.stride[2] * (height >> x265_cli_csps[colorSpace].height[2]);
+        }
         readCount.incr();
         return true;
     }

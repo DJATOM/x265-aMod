@@ -832,8 +832,7 @@ namespace X265_NS {
         info.frameCount = 0;
         getParamAspectRatio(param, info.sarWidth, info.sarHeight);
 
-
-        this->input = InputFile::open(info, this->bForceY4m);
+        this->input = InputFile::open(info, this->bForceY4m, param->bEnableAlpha);
         if (!this->input || this->input->isFail())
         {
             x265_log_file(param, X265_LOG_ERROR, "unable to open input file <%s>\n", inputfn);

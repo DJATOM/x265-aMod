@@ -499,6 +499,7 @@ ret:
             pic->planes[0] = srcPic->planes[0];
             pic->planes[1] = srcPic->planes[1];
             pic->planes[2] = srcPic->planes[2];
+            pic->planes[3] = srcPic->planes[3];
             if (isAbrLoad)
                 pic->analysisData = *analysisData;
             return true;
@@ -1097,6 +1098,12 @@ ret:
                 memcpy(dest->planes[0], src->planes[0], src->framesize * sizeof(char));
                 dest->planes[1] = (char*)dest->planes[0] + src->stride[0] * src->height;
                 dest->planes[2] = (char*)dest->planes[1] + src->stride[1] * (src->height >> x265_cli_csps[src->colorSpace].height[1]);
+
+                if (m_parentEnc->m_param->bEnableAlpha)
+                {
+                    dest->planes[3] = (char*)dest->planes[2] + src->stride[2] * (src->height >> x265_cli_csps[src->colorSpace].height[2]);
+                }
+
                 m_parentEnc->m_parent->m_picWriteCnt[m_id].incr();
             }
             else

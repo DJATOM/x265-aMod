@@ -47,6 +47,8 @@ protected:
 
     uint32_t framesize;
 
+    bool alphaAvailable;
+
     bool threadActive;
 
     ThreadSafeInteger readCount;
@@ -61,7 +63,7 @@ protected:
 
 public:
 
-    YUVInput(InputFileInfo& info);
+    YUVInput(InputFileInfo& info, bool alpha);
 
     virtual ~YUVInput();
     void release();

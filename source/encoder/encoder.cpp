@@ -1359,6 +1359,8 @@ void Encoder::copyPicture(x265_picture *dest, const x265_picture *src)
     memcpy(dest->planes[0], src->planes[0], src->framesize * sizeof(char));
     dest->planes[1] = (char*)dest->planes[0] + src->stride[0] * src->height;
     dest->planes[2] = (char*)dest->planes[1] + src->stride[1] * (src->height >> x265_cli_csps[src->colorSpace].height[1]);
+    if(m_param->bEnableAlpha)
+        dest->planes[3] = (char*)dest->planes[2] + src->stride[2] * (src->height >> x265_cli_csps[src->colorSpace].height[2]);
 }
 
 bool Encoder::isFilterThisframe(uint8_t sliceTypeConfig, int curSliceType)
@@ -1642,7 +1644,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         }
 
         /* Copy input picture into a Frame and PicYuv, send to lookahead */
-        inFrame->m_fencPic->copyFromPicture(*inputPic, *m_param, m_sps.conformanceWindow.rightOffset, m_sps.conformanceWindow.bottomOffset);
+        inFrame->m_fencPic->copyFromPicture(*inputPic, *m_param, m_sps.conformanceWindow.rightOffset, m_sps.conformanceWindow.bottomOffset, true);
 
         inFrame->m_poc       = ++m_pocLast;
         inFrame->m_userData  = inputPic->userData;

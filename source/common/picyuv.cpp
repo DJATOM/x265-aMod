@@ -258,7 +258,7 @@ void PicYuv::destroy()
 
 /* Copy pixels from an x265_picture into internal PicYuv instance.
  * Shift pixels as necessary, mask off bits above X265_DEPTH for safety. */
-void PicYuv::copyFromPicture(const x265_picture& pic, const x265_param& param, int padx, int pady)
+void PicYuv::copyFromPicture(const x265_picture& pic, const x265_param& param, int padx, int pady, bool isBase)
 {
     /* m_picWidth is the width that is being encoded, padx indicates how many
      * of those pixels are padding to reach multiple of MinCU(4) size.
@@ -321,34 +321,62 @@ void PicYuv::copyFromPicture(const x265_picture& pic, const x265_param& param, i
 #else /* Case for (X265_DEPTH == 8) */
             // TODO: Does we need this path? may merge into above in future
         {
-            pixel *yPixel = m_picOrg[0];
-            uint8_t *yChar = (uint8_t*)pic.planes[0];
-
-            for (int r = 0; r < height; r++)
+            if (isBase)
             {
-                memcpy(yPixel, yChar, width * sizeof(pixel));
+                pixel *yPixel = m_picOrg[0];
+                uint8_t *yChar = (uint8_t*)pic.planes[0];
 
-                yPixel += m_stride;
-                yChar += pic.stride[0] / sizeof(*yChar);
+                for (int r = 0; r < height; r++)
+                {
+                    memcpy(yPixel, yChar, width * sizeof(pixel));
+
+                    yPixel += m_stride;
+                    yChar += pic.stride[0] / sizeof(*yChar);
+                }
+
+                if (param.internalCsp != X265_CSP_I400)
+                {
+                    pixel *uPixel = m_picOrg[1];
+                    pixel *vPixel = m_picOrg[2];
+
+                    uint8_t *uChar = (uint8_t*)pic.planes[1];
+                    uint8_t *vChar = (uint8_t*)pic.planes[2];
+
+                    for (int r = 0; r < height >> m_vChromaShift; r++)
+                    {
+                        memcpy(uPixel, uChar, (width >> m_hChromaShift) * sizeof(pixel));
+                        memcpy(vPixel, vChar, (width >> m_hChromaShift) * sizeof(pixel));
+
+                        uPixel += m_strideC;
+                        vPixel += m_strideC;
+                        uChar += pic.stride[1] / sizeof(*uChar);
+                        vChar += pic.stride[2] / sizeof(*vChar);
+                    }
+                }
             }
-
-            if (param.internalCsp != X265_CSP_I400)
+            if (!isBase && param.bEnableAlpha)
             {
-                pixel *uPixel = m_picOrg[1];
-                pixel *vPixel = m_picOrg[2];
+                pixel* aPixel = m_picOrg[0];
+                uint8_t* aChar = (uint8_t*)pic.planes[3];
 
-                uint8_t *uChar = (uint8_t*)pic.planes[1];
-                uint8_t *vChar = (uint8_t*)pic.planes[2];
+                for (int r = 0; r < height; r++)
+                {
+                    memcpy(aPixel, aChar, width * sizeof(pixel));
+
+                    aPixel += m_stride;
+                    aChar += pic.stride[0] / sizeof(*aChar);
+                }
+
+                pixel* uPixel = m_picOrg[1];
+                pixel* vPixel = m_picOrg[2];
 
                 for (int r = 0; r < height >> m_vChromaShift; r++)
                 {
-                    memcpy(uPixel, uChar, (width >> m_hChromaShift) * sizeof(pixel));
-                    memcpy(vPixel, vChar, (width >> m_hChromaShift) * sizeof(pixel));
+                    memset(uPixel, 128, (width >> m_hChromaShift) * sizeof(pixel));
+                    memset(vPixel, 128, (width >> m_hChromaShift) * sizeof(pixel));
 
                     uPixel += m_strideC;
                     vPixel += m_strideC;
-                    uChar += pic.stride[1] / sizeof(*uChar);
-                    vChar += pic.stride[2] / sizeof(*vChar);
                 }
             }
         }
