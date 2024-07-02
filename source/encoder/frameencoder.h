@@ -156,12 +156,12 @@ public:
     void destroy();
 
     /* triggers encode of a new frame by the worker thread */
-    bool startCompressFrame(Frame* curFrame);
+    bool startCompressFrame(Frame* curFrame[MAX_SCALABLE_LAYERS]);
 
     /* blocks until worker thread is done, returns access unit */
     Frame *getEncodedPicture(NALList& list);
 
-    void initDecodedPictureHashSEI(int row, int cuAddr, int height);
+    void initDecodedPictureHashSEI(int row, int cuAddr, int height, int layer);
 
     Event                    m_enable;
     Event                    m_done;
@@ -217,7 +217,7 @@ public:
 
     Encoder*                 m_top;
     x265_param*              m_param;
-    Frame*                   m_frame;
+    Frame*                   m_frame[MAX_SCALABLE_LAYERS];
     NoiseReduction*          m_nr;
     ThreadLocalData*         m_tld; /* for --no-wpp */
     Bitstream*               m_outStreams;
@@ -237,6 +237,8 @@ public:
     // initialization for mcstf
     TemporalFilter*          m_frameEncTF;
     TemporalFilterRefPicInfo m_mcstfRefList[MAX_MCSTF_TEMPORAL_WINDOW_LENGTH];
+
+    int                      m_sLayerId;
 
     class WeightAnalysis : public BondedTaskGroup
     {
@@ -258,20 +260,20 @@ protected:
     bool initializeGeoms();
 
     /* analyze / compress frame, can be run in parallel within reference constraints */
-    void compressFrame();
+    void compressFrame(int layer);
 
     /* called by compressFrame to generate final per-row bitstreams */
-    void encodeSlice(uint32_t sliceAddr);
+    void encodeSlice(uint32_t sliceAddr, int layer);
 
     void threadMain();
     int  collectCTUStatistics(const CUData& ctu, FrameStats* frameLog);
     void noiseReductionUpdate();
-    void writeTrailingSEIMessages();
+    void writeTrailingSEIMessages(int layer);
     bool writeToneMapInfo(x265_sei_payload *payload);
 
     /* Called by WaveFront::findJob() */
-    virtual void processRow(int row, int threadId);
-    virtual void processRowEncoder(int row, ThreadLocalData& tld);
+    virtual void processRow(int row, int threadId, int layer);
+    virtual void processRowEncoder(int row, ThreadLocalData& tld, int layer);
 
     void enqueueRowEncoder(int row) { WaveFront::enqueueRow(row * 2 + 0); }
     void enqueueRowFilter(int row)  { WaveFront::enqueueRow(row * 2 + 1); }
@@ -280,8 +282,8 @@ protected:
 #if ENABLE_LIBVMAF
     void vmafFrameLevelScore();
 #endif
-    void collectDynDataFrame();
-    void computeAvgTrainingData();
+    void collectDynDataFrame(int layer);
+    void computeAvgTrainingData(int layer);
     void collectDynDataRow(CUData& ctu, FrameStats* rowStats);    
     void readModel(FilmGrainCharacteristics* m_filmGrain, FILE* filmgrain);
 };

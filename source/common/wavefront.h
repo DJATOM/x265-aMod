@@ -52,6 +52,8 @@ private:
 
     int m_numRows;
 
+    int m_sLayerId;
+
 protected:
     uint32_t *m_row_to_idx;
     uint32_t *m_idx_to_row;
@@ -95,7 +97,9 @@ public:
 
     // Start or resume encode processing of this row, must be implemented by
     // derived classes.
-    virtual void processRow(int row, int threadId) = 0;
+    virtual void processRow(int row, int threadId, int layer) = 0;
+
+    void setLayerId(int layer);
 };
 } // end namespace X265_NS
 

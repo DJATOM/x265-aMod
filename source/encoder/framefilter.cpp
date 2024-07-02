@@ -561,7 +561,7 @@ void FrameFilter::ParallelFilter::processTasks(int /*workerThreadId*/)
     }
 }
 
-void FrameFilter::processRow(int row)
+void FrameFilter::processRow(int row, int layer)
 {
     ProfileScopeEvent(filterCTURow);
 
@@ -572,7 +572,7 @@ void FrameFilter::processRow(int row)
 
     if (!m_param->bEnableLoopFilter && !m_useSao)
     {
-        processPostRow(row);
+        processPostRow(row, layer);
         return;
     }
     FrameData& encData = *m_frame->m_encData;
@@ -616,7 +616,7 @@ void FrameFilter::processRow(int row)
 
     // this row of CTUs has been encoded
     if (!ctu->m_bFirstRowInSlice)
-        processPostRow(row - 1);
+        processPostRow(row - 1, layer);
 
     // NOTE: slices parallelism will be execute out-of-order
     int numRowFinished = 0;
@@ -648,10 +648,10 @@ void FrameFilter::processRow(int row)
     }
 
     if (ctu->m_bLastRowInSlice)
-        processPostRow(row);
+        processPostRow(row, layer);
 }
 
-void FrameFilter::processPostRow(int row)
+void FrameFilter::processPostRow(int row, int layer)
 {
     PicYuv *reconPic = m_frame->m_reconPic;
     const uint32_t numCols = m_frame->m_encData->m_slice->m_sps->numCuInWidth;
@@ -713,7 +713,7 @@ void FrameFilter::processPostRow(int row)
     if (m_param->maxSlices == 1)
     {
         uint32_t height = m_parallelFilter[row].getCUHeight();
-        m_frameEncoder->initDecodedPictureHashSEI(row, cuAddr, height);
+        m_frameEncoder->initDecodedPictureHashSEI(row, cuAddr, height, layer);
     } // end of (m_param->maxSlices == 1)
 
     if (ATOMIC_INC(&m_frameEncoder->m_completionCount) == 2 * (int)m_frameEncoder->m_numRows)

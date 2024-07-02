@@ -58,6 +58,11 @@ WaveFront::~WaveFront()
     x265_free((void*)m_externalDependencyBitmap);
 }
 
+void WaveFront::setLayerId(int layer)
+{
+    m_sLayerId = layer;
+}
+
 void WaveFront::clearEnabledRowMask()
 {
     memset((void*)m_externalDependencyBitmap, 0, sizeof(uint32_t) * m_numWords);
@@ -103,7 +108,7 @@ void WaveFront::findJob(int threadId)
             if (ATOMIC_AND(&m_internalDependencyBitmap[w], ~bit) & bit)
             {
                 /* we cleared the bit, we get to process the row */
-                processRow(w * 32 + id, threadId);
+                processRow(w * 32 + id, threadId, m_sLayerId);
                 m_helpWanted = true;
                 return; /* check for a higher priority task */
             }
