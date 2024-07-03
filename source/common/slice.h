@@ -161,6 +161,7 @@ struct VPS
     uint32_t         numReorderPics[MAX_T_LAYERS];
     uint32_t         maxDecPicBuffering[MAX_T_LAYERS];
     uint32_t         maxLatencyIncrease[MAX_T_LAYERS];
+    int              m_numLayers;
 
 #if ENABLE_ALPHA
     bool             splitting_flag;
@@ -172,7 +173,6 @@ struct VPS
     uint8_t          m_layerIdInNuh[MAX_VPS_LAYER_ID_PLUS1];
     uint8_t          m_layerIdInVps[MAX_VPS_LAYER_ID_PLUS1];
     int              m_viewIdLen;
-    int              m_numLayers;
     int              m_vpsNumLayerSetsMinus1;
     bool             vps_extension_flag;
 #endif

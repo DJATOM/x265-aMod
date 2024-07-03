@@ -41,11 +41,9 @@ void weightAnalyse(Slice& slice, Frame& frame, x265_param& param);
 
 FrameEncoder::FrameEncoder()
 {
-    m_prevOutputTime = x265_mdate();
     m_reconfigure = false;
     m_isFrameEncoder = true;
     m_threadActive = true;
-    m_slicetypeWaitTime = 0;
     m_activeWorkerCount = 0;
     m_completionCount = 0;
     m_outStreams = NULL;
@@ -60,9 +58,12 @@ FrameEncoder::FrameEncoder()
     m_ctuGeomMap = NULL;
     m_localTldIdx = 0;
     memset(&m_rce, 0, sizeof(RateControlEntry));
-    for(int layer = 0; layer < MAX_SCALABLE_LAYERS; layer++)
+    for (int layer = 0; layer < MAX_SCALABLE_LAYERS; layer++)
+    {
+        m_prevOutputTime[layer] = x265_mdate();
+        m_slicetypeWaitTime[layer] = 0;
         m_frame[layer] = NULL;
-    m_retFrameBuffer = { NULL };
+    }
 }
 
 void FrameEncoder::destroy()
@@ -290,9 +291,9 @@ bool FrameEncoder::initializeGeoms()
 
 bool FrameEncoder::startCompressFrame(Frame* curFrame[MAX_SCALABLE_LAYERS])
 {
-    m_slicetypeWaitTime = x265_mdate() - m_prevOutputTime;
     for (int layer = 0; layer < m_param->numScalableLayers; layer++)
     {
+        m_slicetypeWaitTime[layer] = x265_mdate() - m_prevOutputTime[layer];
         m_frame[layer] = curFrame[layer];
         curFrame[layer]->m_encData->m_frameEncoderID = m_jpId;
         curFrame[layer]->m_encData->m_jobProvider = this;
@@ -462,14 +463,14 @@ void FrameEncoder::compressFrame(int layer)
 {
     ProfileScopeEvent(frameThread);
 
-    m_startCompressTime = x265_mdate();
+    m_startCompressTime[layer] = x265_mdate();
     m_totalActiveWorkerCount = 0;
     m_activeWorkerCountSamples = 0;
-    m_totalWorkerElapsedTime = 0;
-    m_totalNoWorkerTime = 0;
+    m_totalWorkerElapsedTime[layer] = 0;
+    m_totalNoWorkerTime[layer] = 0;
     m_countRowBlocks = 0;
-    m_allRowsAvailableTime = 0;
-    m_stallStartTime = 0;
+    m_allRowsAvailableTime[layer] = 0;
+    m_stallStartTime[layer] = 0;
 
     m_completionCount = 0;
     memset((void*)m_bAllRowsStop, 0, sizeof(bool) * m_param->maxSlices);
@@ -477,9 +478,9 @@ void FrameEncoder::compressFrame(int layer)
     m_rowSliceTotalBits[0] = 0;
     m_rowSliceTotalBits[1] = 0;
 
-    m_SSDY = m_SSDU = m_SSDV = 0;
-    m_ssim = 0;
-    m_ssimCnt = 0;
+    m_SSDY[layer] = m_SSDU[layer] = m_SSDV[layer] = 0;
+    m_ssim[layer] = 0;
+    m_ssimCnt[layer] = 0;
     memset(&(m_frame[layer]->m_encData->m_frameStats), 0, sizeof(m_frame[layer]->m_encData->m_frameStats));
     m_sLayerId = layer;
 
@@ -924,14 +925,14 @@ void FrameEncoder::compressFrame(int layer)
                 enableRowEncoder(m_row_to_idx[row]); /* clear external dependency for this row */
                 if (!rowInSlice)
                 {
-                    m_row0WaitTime = x265_mdate();
+                    m_row0WaitTime[layer] = x265_mdate();
                     enqueueRowEncoder(m_row_to_idx[row]); /* clear internal dependency, start wavefront */
                 }
                 tryWakeOne();
             } // end of loop rowInSlice
         } // end of loop sliceId
 
-        m_allRowsAvailableTime = x265_mdate();
+        m_allRowsAvailableTime[layer] = x265_mdate();
         tryWakeOne(); /* ensure one thread is active or help-wanted flag is set prior to blocking */
         static const int block_ms = 250;
         while (m_completionEvent.timedWait(block_ms))
@@ -962,9 +963,9 @@ void FrameEncoder::compressFrame(int layer)
                 }
 
                 if (!i)
-                    m_row0WaitTime = x265_mdate();
+                    m_row0WaitTime[layer] = x265_mdate();
                 else if (i == m_numRows - 1)
-                    m_allRowsAvailableTime = x265_mdate();
+                    m_allRowsAvailableTime[layer] = x265_mdate();
                 processRowEncoder(i, m_tld[m_localTldIdx], layer);
             }
 
@@ -1152,12 +1153,14 @@ void FrameEncoder::compressFrame(int layer)
             bytes -= (!i || type == NAL_UNIT_SPS || type == NAL_UNIT_PPS) ? 4 : 3;
         }
     }
-    m_accessUnitBits = bytes << 3;
+    m_accessUnitBits[layer] = (layer) ? (bytes - (m_accessUnitBits[0] >> 3)) << 3 : bytes << 3;
 
     int filler = 0;
     /* rateControlEnd may also block for earlier frames to call rateControlUpdateStats */
-    if (!layer && m_top->m_rateControl->rateControlEnd(m_frame[layer], m_accessUnitBits, &m_rce, &filler) < 0)
+    if (!layer && m_top->m_rateControl->rateControlEnd(m_frame[layer], m_accessUnitBits[layer], &m_rce, &filler) < 0)
         m_top->m_aborted = true;
+    if (layer)
+        m_frame[layer]->m_encData->m_avgQpAq = m_frame[0]->m_encData->m_avgQpAq;
 
     if (filler > 0)
     {
@@ -1172,7 +1175,7 @@ void FrameEncoder::compressFrame(int layer)
         m_nalList.serialize(NAL_UNIT_FILLER_DATA, m_bs);
         bytes += m_nalList.m_nal[m_nalList.m_numNal - 1].sizeBytes;
         bytes -= 3; //exclude start code prefix
-        m_accessUnitBits = bytes << 3;
+        m_accessUnitBits[layer] = bytes << 3;
     }
 
     if (m_frame[layer]->m_rpu.payloadSize)
@@ -1183,7 +1186,7 @@ void FrameEncoder::compressFrame(int layer)
         m_nalList.serialize(NAL_UNIT_UNSPECIFIED, m_bs);
     }
 
-    m_endCompressTime = x265_mdate();
+    m_endCompressTime[layer] = x265_mdate();
 
     /* Decrement referenced frame reference counts, allow them to be recycled */
     for (int l = 0; l < numPredDir; l++)
@@ -1234,7 +1237,7 @@ void FrameEncoder::compressFrame(int layer)
         m_cuStats.accumulate(m_tld[i].analysis.m_stats[m_jpId], *m_param);
 #endif
 
-    m_endFrameTime = x265_mdate();  
+    m_endFrameTime[layer] = x265_mdate();
 }
 
 void FrameEncoder::initDecodedPictureHashSEI(int row, int cuAddr, int height, int layer)
@@ -1387,7 +1390,7 @@ void FrameEncoder::processRow(int row, int threadId, int layer)
 {
     int64_t startTime = x265_mdate();
     if (ATOMIC_INC(&m_activeWorkerCount) == 1 && m_stallStartTime)
-        m_totalNoWorkerTime += x265_mdate() - m_stallStartTime;
+        m_totalNoWorkerTime[layer] += x265_mdate() - m_stallStartTime[layer];
 
     const uint32_t realRow = m_idx_to_row[row >> 1];
     const uint32_t typeNum = m_idx_to_row[row & 1];
@@ -1404,9 +1407,9 @@ void FrameEncoder::processRow(int row, int threadId, int layer)
     }
 
     if (ATOMIC_DEC(&m_activeWorkerCount) == 0)
-        m_stallStartTime = x265_mdate();
+        m_stallStartTime[layer] = x265_mdate();
 
-    m_totalWorkerElapsedTime += x265_mdate() - startTime; // not thread safe, but good enough
+    m_totalWorkerElapsedTime[layer] += x265_mdate() - startTime; // not thread safe, but good enough
 }
 
 // Called by worker threads
@@ -2283,9 +2286,9 @@ Frame** FrameEncoder::getEncodedPicture(NALList& output)
         {
             m_retFrameBuffer[i] = m_frame[i];
             m_frame[i] = NULL;
+            m_prevOutputTime[i] = x265_mdate();
         }
         output.takeContents(m_nalList);
-        m_prevOutputTime = x265_mdate();
         return m_retFrameBuffer;
     }
 

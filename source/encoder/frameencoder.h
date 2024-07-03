@@ -190,27 +190,27 @@ public:
     RateControlEntry         m_rce;
     SEIDecodedPictureHash    m_seiReconPictureDigest;
 
-    uint64_t                 m_SSDY;
-    uint64_t                 m_SSDU;
-    uint64_t                 m_SSDV;
-    double                   m_ssim;
-    uint64_t                 m_accessUnitBits;
-    uint32_t                 m_ssimCnt;
+    uint64_t                 m_SSDY[MAX_SCALABLE_LAYERS];
+    uint64_t                 m_SSDU[MAX_SCALABLE_LAYERS];
+    uint64_t                 m_SSDV[MAX_SCALABLE_LAYERS];
+    double                   m_ssim[MAX_SCALABLE_LAYERS];
+    uint64_t                 m_accessUnitBits[MAX_SCALABLE_LAYERS];
+    uint32_t                 m_ssimCnt[MAX_SCALABLE_LAYERS];
 
     volatile int             m_activeWorkerCount;        // count of workers currently encoding or filtering CTUs
     volatile int             m_totalActiveWorkerCount;   // sum of m_activeWorkerCount sampled at end of each CTU
     volatile int             m_activeWorkerCountSamples; // count of times m_activeWorkerCount was sampled (think vbv restarts)
     volatile int             m_countRowBlocks;           // count of workers forced to abandon a row because of top dependency
-    int64_t                  m_startCompressTime;        // timestamp when frame encoder is given a frame
-    int64_t                  m_row0WaitTime;             // timestamp when row 0 is allowed to start
-    int64_t                  m_allRowsAvailableTime;     // timestamp when all reference dependencies are resolved
-    int64_t                  m_endCompressTime;          // timestamp after all CTUs are compressed
-    int64_t                  m_endFrameTime;             // timestamp after RCEnd, NR updates, etc
-    int64_t                  m_stallStartTime;           // timestamp when worker count becomes 0
-    int64_t                  m_prevOutputTime;           // timestamp when prev frame was retrieved by API thread
-    int64_t                  m_slicetypeWaitTime;        // total elapsed time waiting for decided frame
-    int64_t                  m_totalWorkerElapsedTime;   // total elapsed time spent by worker threads processing CTUs
-    int64_t                  m_totalNoWorkerTime;        // total elapsed time without any active worker threads
+    int64_t                  m_startCompressTime[MAX_SCALABLE_LAYERS];        // timestamp when frame encoder is given a frame
+    int64_t                  m_row0WaitTime[MAX_SCALABLE_LAYERS];             // timestamp when row 0 is allowed to start
+    int64_t                  m_allRowsAvailableTime[MAX_SCALABLE_LAYERS];     // timestamp when all reference dependencies are resolved
+    int64_t                  m_endCompressTime[MAX_SCALABLE_LAYERS];          // timestamp after all CTUs are compressed
+    int64_t                  m_endFrameTime[MAX_SCALABLE_LAYERS];             // timestamp after RCEnd, NR updates, etc
+    int64_t                  m_stallStartTime[MAX_SCALABLE_LAYERS];           // timestamp when worker count becomes 0
+    int64_t                  m_prevOutputTime[MAX_SCALABLE_LAYERS];           // timestamp when prev frame was retrieved by API thread
+    int64_t                  m_slicetypeWaitTime[MAX_SCALABLE_LAYERS];        // total elapsed time waiting for decided frame
+    int64_t                  m_totalWorkerElapsedTime[MAX_SCALABLE_LAYERS];   // total elapsed time spent by worker threads processing CTUs
+    int64_t                  m_totalNoWorkerTime[MAX_SCALABLE_LAYERS];        // total elapsed time without any active worker threads
 #if DETAILED_CU_STATS
     CUStats                  m_cuStats;
 #endif

@@ -602,7 +602,10 @@ fail:
         *pi_nal = 0;
 
     if (numEncoded && encoder->m_param->csvLogLevel && encoder->m_outputCount >= encoder->m_latestParam->chunkStart)
-        x265_csvlog_frame(encoder->m_param, pic_out[0]);
+    {
+        for (int layer = 0; layer < encoder->m_param->numScalableLayers; layer++)
+            x265_csvlog_frame(encoder->m_param, pic_out[layer]);
+    }
 
     if (numEncoded < 0)
         encoder->m_aborted = true;
@@ -653,11 +656,14 @@ void x265_encoder_log(x265_encoder* enc, int argc, char **argv)
     if (enc)
     {
         Encoder *encoder = static_cast<Encoder*>(enc);
-        x265_stats stats;       
-        encoder->fetchStats(&stats, sizeof(stats));
+        x265_stats stats[MAX_SCALABLE_LAYERS];
         int padx = encoder->m_sps.conformanceWindow.rightOffset;
         int pady = encoder->m_sps.conformanceWindow.bottomOffset;
-        x265_csvlog_encode(encoder->m_param, &stats, padx, pady, argc, argv);
+        for (int layer = 0; layer < encoder->m_param->numScalableLayers; layer++)
+        {
+            encoder->fetchStats(stats, sizeof(stats[layer]), layer);
+            x265_csvlog_encode(encoder->m_param, &stats[0], padx, pady, argc, argv);
+        }
     }
 }
 
@@ -1295,7 +1301,7 @@ FILE* x265_csvlog_open(const x265_param* param)
         {
             if (param->csvLogLevel)
             {
-                fprintf(csvfp, "Encode Order, Type, POC, QP, Bits, Scenecut, ");
+                fprintf(csvfp, "Layer , Encode Order, Type, POC, QP, Bits, Scenecut, ");
                 if (!!param->bEnableTemporalSubLayers)
                     fprintf(csvfp, "Temporal Sub Layer ID, ");
                 if (param->csvLogLevel >= 2)
@@ -1409,7 +1415,7 @@ void x265_csvlog_frame(const x265_param* param, const x265_picture* pic)
         return;
 
     const x265_frame_stats* frameStats = &pic->frameData;
-    fprintf(param->csvfpt, "%d, %c-SLICE, %4d, %2.2lf, %10d, %d,", frameStats->encoderOrder, frameStats->sliceType, frameStats->poc,
+    fprintf(param->csvfpt, "%d, %d, %c-SLICE, %4d, %2.2lf, %10d, %d,", pic->layerID, frameStats->encoderOrder, frameStats->sliceType, frameStats->poc,
                                                                    frameStats->qp, (int)frameStats->bits, frameStats->bScenecut);
     if (!!param->bEnableTemporalSubLayers)
         fprintf(param->csvfpt, "%d,", frameStats->tLayer);

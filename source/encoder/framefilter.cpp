@@ -673,7 +673,7 @@ void FrameFilter::processPostRow(int row, int layer)
         uint32_t height = m_parallelFilter[row].getCUHeight();
 
         uint64_t ssdY = m_frameEncoder->m_top->computeSSD(fencPic->getLumaAddr(cuAddr), reconPic->getLumaAddr(cuAddr), stride, width, height, m_param);
-        m_frameEncoder->m_SSDY += ssdY;
+        m_frameEncoder->m_SSDY[layer] += ssdY;
 
         if (m_param->internalCsp != X265_CSP_I400)
         {
@@ -684,8 +684,8 @@ void FrameFilter::processPostRow(int row, int layer)
             uint64_t ssdU = m_frameEncoder->m_top->computeSSD(fencPic->getCbAddr(cuAddr), reconPic->getCbAddr(cuAddr), stride, width, height, m_param);
             uint64_t ssdV = m_frameEncoder->m_top->computeSSD(fencPic->getCrAddr(cuAddr), reconPic->getCrAddr(cuAddr), stride, width, height, m_param);
 
-            m_frameEncoder->m_SSDU += ssdU;
-            m_frameEncoder->m_SSDV += ssdV;
+            m_frameEncoder->m_SSDU[layer] += ssdU;
+            m_frameEncoder->m_SSDV[layer] += ssdV;
         }
     }
 
@@ -705,9 +705,9 @@ void FrameFilter::processPostRow(int row, int layer)
         /* SSIM is done for each row in blocks of 4x4 . The First blocks are offset by 2 pixels to the right
         * to avoid alignment of ssim blocks with DCT blocks. */
         minPixY += bStart ? 2 : -6;
-        m_frameEncoder->m_ssim += calculateSSIM(rec + 2 + minPixY * stride1, stride1, fenc + 2 + minPixY * stride2, stride2,
+        m_frameEncoder->m_ssim[layer] += calculateSSIM(rec + 2 + minPixY * stride1, stride1, fenc + 2 + minPixY * stride2, stride2,
                                                 m_param->sourceWidth - 2, maxPixY - minPixY, m_ssimBuf, ssim_cnt);
-        m_frameEncoder->m_ssimCnt += ssim_cnt;
+        m_frameEncoder->m_ssimCnt[layer] += ssim_cnt;
     }
 
     if (m_param->maxSlices == 1)

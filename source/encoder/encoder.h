@@ -217,10 +217,10 @@ public:
 
     bool               m_externalFlush;
     /* Collect statistics globally */
-    EncStats           m_analyzeAll;
-    EncStats           m_analyzeI;
-    EncStats           m_analyzeP;
-    EncStats           m_analyzeB;
+    EncStats           m_analyzeAll[MAX_SCALABLE_LAYERS];
+    EncStats           m_analyzeI[MAX_SCALABLE_LAYERS];
+    EncStats           m_analyzeP[MAX_SCALABLE_LAYERS];
+    EncStats           m_analyzeB[MAX_SCALABLE_LAYERS];
     VPS                m_vps;
     SPS                m_sps;
     PPS                m_pps;
@@ -320,7 +320,7 @@ public:
 
     void getEndNalUnits(NALList& list, Bitstream& bs);
 
-    void fetchStats(x265_stats* stats, size_t statsSizeBytes);
+    void fetchStats(x265_stats* stats, size_t statsSizeBytes, int layer = 0);
 
     void printSummary();
 
@@ -352,7 +352,7 @@ public:
 
     void copyDistortionData(x265_analysis_data* analysis, FrameData &curEncData);
 
-    void finishFrameStats(Frame* pic, FrameEncoder *curEncoder, x265_frame_stats* frameStats, int inPoc);
+    void finishFrameStats(Frame* pic, FrameEncoder *curEncoder, x265_frame_stats* frameStats, int inPoc, int layer);
 
     int validateAnalysisData(x265_analysis_validate* param, int readWriteFlag);
 

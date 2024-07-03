@@ -488,6 +488,8 @@ typedef struct x265_picture
     uint32_t picStruct;
 
     int    width;
+
+    int   layerID;
 } x265_picture;
 
 typedef enum

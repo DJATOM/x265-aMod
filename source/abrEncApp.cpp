@@ -206,6 +206,7 @@ namespace X265_NS {
         {
             x265_log(NULL, X265_LOG_ERROR, "x265_encoder_open() failed for Enc, \n");
             m_ret = 2;
+            m_reader = NULL;
             return -1;
         }
 
@@ -867,7 +868,7 @@ ret:
             m_reader->stop();
             delete m_reader;
         }
-        else
+        else if (m_scaler != NULL)
         {
             m_scaler->stop();
             m_scaler->destroy();
