@@ -1095,7 +1095,7 @@ void FrameEncoder::compressFrame(int layer)
                 ScopedLock refIdxLock(m_top->m_sliceRefIdxLock);
                 m_top->analyseRefIdx(slice->m_numRefIdx);
             }
-            m_entropyCoder.codeSliceHeader(*slice, *m_frame[layer]->m_encData, sliceAddr, m_sliceAddrBits, slice->m_sliceQp);
+            m_entropyCoder.codeSliceHeader(*slice, *m_frame[layer]->m_encData, sliceAddr, m_sliceAddrBits, slice->m_sliceQp, layer);
 
             // Find rows of current slice
             const uint32_t prevSliceRow = nextSliceRow;
@@ -1122,7 +1122,7 @@ void FrameEncoder::compressFrame(int layer)
             ScopedLock refIdxLock(m_top->m_sliceRefIdxLock);
             m_top->analyseRefIdx(slice->m_numRefIdx);
         }
-        m_entropyCoder.codeSliceHeader(*slice, *m_frame[layer]->m_encData, 0, 0, slice->m_sliceQp);
+        m_entropyCoder.codeSliceHeader(*slice, *m_frame[layer]->m_encData, 0, 0, slice->m_sliceQp, layer);
 
         // serialize each row, record final lengths in slice header
         uint32_t maxStreamSize = m_nalList.serializeSubstreams(m_substreamSizes, numSubstreams, m_outStreams);

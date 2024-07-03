@@ -185,7 +185,7 @@ x265_encoder *x265_encoder_open(x265_param *p)
     // will detect and set profile/tier/level in VPS
     determineLevel(*param, encoder->m_vps);
 
-    if (!param->bAllowNonConformance && encoder->m_vps.ptl.profileIdc == Profile::NONE)
+    if (!param->bAllowNonConformance && encoder->m_vps.ptl.profileIdc[0] == Profile::NONE)
     {
         x265_log(param, X265_LOG_INFO, "non-conformant bitstreams not allowed (--allow-non-conformance)\n");
         goto fail;
@@ -357,11 +357,11 @@ int x265_encoder_reconfig(x265_encoder* enc, x265_param* param_in)
             VPS saveVPS;
             memcpy(&saveVPS.ptl, &encoder->m_vps.ptl, sizeof(saveVPS.ptl));
             determineLevel(*encoder->m_latestParam, encoder->m_vps);
-            if (saveVPS.ptl.profileIdc != encoder->m_vps.ptl.profileIdc || saveVPS.ptl.levelIdc != encoder->m_vps.ptl.levelIdc
+            if (saveVPS.ptl.profileIdc[0] != encoder->m_vps.ptl.profileIdc[0] || saveVPS.ptl.levelIdc != encoder->m_vps.ptl.levelIdc
                 || saveVPS.ptl.tierFlag != encoder->m_vps.ptl.tierFlag)
             {
                 x265_log(encoder->m_param, X265_LOG_WARNING, "Profile/Level/Tier has changed from %d/%d/%s to %d/%d/%s.Cannot reconfigure rate-control.\n",
-                         saveVPS.ptl.profileIdc, saveVPS.ptl.levelIdc, saveVPS.ptl.tierFlag ? "High" : "Main", encoder->m_vps.ptl.profileIdc,
+                         saveVPS.ptl.profileIdc[0], saveVPS.ptl.levelIdc, saveVPS.ptl.tierFlag ? "High" : "Main", encoder->m_vps.ptl.profileIdc[0],
                          encoder->m_vps.ptl.levelIdc, encoder->m_vps.ptl.tierFlag ? "High" : "Main");
                 x265_copy_params(encoder->m_latestParam, &save);
                 memcpy(&encoder->m_vps.ptl, &saveVPS.ptl, sizeof(saveVPS.ptl));

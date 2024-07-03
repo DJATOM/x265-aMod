@@ -3277,19 +3277,34 @@ void Encoder::getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs)
     
     /* headers for start of bitstream */
     bs.resetBits();
-    sbacCoder.codeVPS(m_vps);
+    sbacCoder.codeVPS(m_vps, m_sps);
     bs.writeByteAlignment();
     list.serialize(NAL_UNIT_VPS, bs);
 
-    bs.resetBits();
-    sbacCoder.codeSPS(m_sps, m_scalingList, m_vps.ptl);
-    bs.writeByteAlignment();
-    list.serialize(NAL_UNIT_SPS, bs);
+    for (int layer = 0; layer < m_param->numScalableLayers; layer++)
+    {
+        bs.resetBits();
+        sbacCoder.codeSPS(m_sps, m_scalingList, m_vps.ptl, layer);
+        bs.writeByteAlignment();
+        list.serialize(NAL_UNIT_SPS, bs, layer);
+    }
 
-    bs.resetBits();
-    sbacCoder.codePPS(m_pps, (m_param->maxSlices <= 1), m_iPPSQpMinus26);
-    bs.writeByteAlignment();
-    list.serialize(NAL_UNIT_PPS, bs);
+    for (int layer = 0; layer < m_param->numScalableLayers; layer++)
+    {
+        bs.resetBits();
+        sbacCoder.codePPS(m_pps, (m_param->maxSlices <= 1), m_iPPSQpMinus26, layer);
+        bs.writeByteAlignment();
+        list.serialize(NAL_UNIT_PPS, bs, layer);
+    }
+
+#if ENABLE_ALPHA
+    if (m_param->numScalableLayers > 1)
+    {
+        SEIAlphaChannelInfo m_alpha;
+        m_alpha.alpha_channel_cancel_flag = !m_param->numScalableLayers;
+        m_alpha.writeSEImessages(bs, m_sps, NAL_UNIT_PREFIX_SEI, list, m_param->bSingleSeiNal);
+    }
+#endif
 
     if (m_param->bSingleSeiNal)
         bs.resetBits();
@@ -3370,6 +3385,54 @@ void Encoder::initVPS(VPS *vps)
     vps->ptl.interlacedSourceFlag = !!m_param->interlaceMode;
     vps->ptl.nonPackedConstraintFlag = false;
     vps->ptl.frameOnlyConstraintFlag = !m_param->interlaceMode;
+
+#if ENABLE_ALPHA
+    vps->vps_extension_flag = false;
+
+    if (m_param->numScalableLayers > 1)
+    {
+        vps->vps_extension_flag = true;
+        int dimIdLen = 0, auxDimIdLen = 0, maxAuxId = 1, auxId[2] = { 0,1 };
+        vps->splitting_flag = false;
+        memset(vps->m_scalabilityMask, 0, sizeof(vps->m_scalabilityMask));
+        memset(vps->m_layerIdInNuh, 0, sizeof(vps->m_layerIdInNuh));
+        memset(vps->m_layerIdInVps, 0, sizeof(vps->m_layerIdInVps));
+        memset(vps->m_dimensionIdLen, 0, sizeof(vps->m_dimensionIdLen));
+        vps->scalabilityTypes = 0;
+
+        vps->m_scalabilityMask[3] = 1;
+        vps->m_scalabilityMask[2] = 1;
+        for (int i = 0; i < MAX_VPS_NUM_SCALABILITY_TYPES; i++)
+        {
+            vps->scalabilityTypes += vps->m_scalabilityMask[i];
+        }
+
+        while ((1 << dimIdLen) < m_param->numScalableLayers)
+        {
+            dimIdLen++;
+        }
+        vps->m_dimensionIdLen[0] = dimIdLen;
+
+        for (int i = 1; i < m_param->numScalableLayers; i++)
+        {
+            vps->m_layerIdInNuh[i] = i;
+            vps->m_dimensionId[i][0] = i;
+            vps->m_layerIdInVps[vps->m_layerIdInNuh[i]] = i;
+            vps->m_dimensionId[i][1] = auxId[i];
+        }
+
+        while ((1 << auxDimIdLen) < (maxAuxId + 1))
+        {
+            auxDimIdLen++;
+        }
+        vps->m_dimensionIdLen[1] = auxDimIdLen;
+
+        vps->m_nuhLayerIdPresentFlag = 1;
+        vps->m_viewIdLen = 0;
+        vps->m_vpsNumLayerSetsMinus1 = 1;
+        vps->m_numLayers = m_param->numScalableLayers;
+    }
+#endif
 }
 
 void Encoder::initSPS(SPS *sps)

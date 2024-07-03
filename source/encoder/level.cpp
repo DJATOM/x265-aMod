@@ -80,38 +80,48 @@ void determineLevel(const x265_param &param, VPS& vps)
         if (param.internalBitDepth <= 8)
         {
             if (vps.ptl.onePictureOnlyConstraintFlag)
-                vps.ptl.profileIdc = Profile::MAINSTILLPICTURE;
+                vps.ptl.profileIdc[0] = Profile::MAINSTILLPICTURE;
             else if (vps.ptl.intraConstraintFlag)
-                vps.ptl.profileIdc = Profile::MAINREXT; /* Main Intra */
+                vps.ptl.profileIdc[0] = Profile::MAINREXT; /* Main Intra */
             else 
-                vps.ptl.profileIdc = Profile::MAIN;
+                vps.ptl.profileIdc[0] = Profile::MAIN;
+
+#if ENABLE_ALPHA
+            if (param.numScalableLayers == 2)
+                vps.ptl.profileIdc[1] = Profile::SCALABLEMAIN;
+#endif
         }
         else if (param.internalBitDepth <= 10)
         {
             /* note there is no 10bit still picture profile */
             if (vps.ptl.intraConstraintFlag)
-                vps.ptl.profileIdc = Profile::MAINREXT; /* Main10 Intra */
+                vps.ptl.profileIdc[0] = Profile::MAINREXT; /* Main10 Intra */
             else
-                vps.ptl.profileIdc = Profile::MAIN10;
+                vps.ptl.profileIdc[0] = Profile::MAIN10;
+
+#if ENABLE_ALPHA
+            if (param.numScalableLayers == 2)
+                vps.ptl.profileIdc[1] = Profile::SCALABLEMAIN10;
+#endif
         }
     }
     else
-        vps.ptl.profileIdc = Profile::MAINREXT;
+        vps.ptl.profileIdc[0] = Profile::MAINREXT;
 
     /* determine which profiles are compatible with this stream */
 
     memset(vps.ptl.profileCompatibilityFlag, 0, sizeof(vps.ptl.profileCompatibilityFlag));
-    vps.ptl.profileCompatibilityFlag[vps.ptl.profileIdc] = true;
-    if (vps.ptl.profileIdc == Profile::MAIN10 && param.internalBitDepth == 8)
+    vps.ptl.profileCompatibilityFlag[vps.ptl.profileIdc[0]] = true;
+    if (vps.ptl.profileIdc[0] == Profile::MAIN10 && param.internalBitDepth == 8)
         vps.ptl.profileCompatibilityFlag[Profile::MAIN] = true;
-    else if (vps.ptl.profileIdc == Profile::MAIN)
+    else if (vps.ptl.profileIdc[0] == Profile::MAIN)
         vps.ptl.profileCompatibilityFlag[Profile::MAIN10] = true;
-    else if (vps.ptl.profileIdc == Profile::MAINSTILLPICTURE)
+    else if (vps.ptl.profileIdc[0] == Profile::MAINSTILLPICTURE)
     {
         vps.ptl.profileCompatibilityFlag[Profile::MAIN] = true;
         vps.ptl.profileCompatibilityFlag[Profile::MAIN10] = true;
     }
-    else if (vps.ptl.profileIdc == Profile::MAINREXT)
+    else if (vps.ptl.profileIdc[0] == Profile::MAINREXT)
         vps.ptl.profileCompatibilityFlag[Profile::MAINREXT] = true;
 
     uint32_t lumaSamples = param.sourceWidth * param.sourceHeight;
@@ -174,7 +184,7 @@ void determineLevel(const x265_param &param, VPS& vps)
         if (levels[i].levelEnum >= Level::LEVEL5 && param.maxCUSize < 32)
         {
             x265_log(&param, X265_LOG_WARNING, "level %s detected, but CTU size 16 is non-compliant\n", levels[i].name);
-            vps.ptl.profileIdc = Profile::NONE;
+            vps.ptl.profileIdc[0] = Profile::NONE;
             vps.ptl.levelIdc = Level::NONE;
             vps.ptl.tierFlag = Level::MAIN;
             x265_log(&param, X265_LOG_INFO, "NONE profile, Level-NONE (Main tier)\n");
@@ -186,7 +196,7 @@ void determineLevel(const x265_param &param, VPS& vps)
         if (numPocTotalCurr > 10)
         {
             x265_log(&param, X265_LOG_WARNING, "level %s detected, but NumPocTotalCurr (total references) is non-compliant\n", levels[i].name);
-            vps.ptl.profileIdc = Profile::NONE;
+            vps.ptl.profileIdc[0] = Profile::NONE;
             vps.ptl.levelIdc = Level::NONE;
             vps.ptl.tierFlag = Level::MAIN;
             x265_log(&param, X265_LOG_INFO, "NONE profile, Level-NONE (Main tier)\n");
@@ -221,10 +231,10 @@ void determineLevel(const x265_param &param, VPS& vps)
     static const char *tiers[]    = { "Main", "High" };
 
     char profbuf[64];
-    strcpy(profbuf, profiles[vps.ptl.profileIdc]);
+    strcpy(profbuf, profiles[vps.ptl.profileIdc[0]]);
 
     bool bStillPicture = false;
-    if (vps.ptl.profileIdc == Profile::MAINREXT)
+    if (vps.ptl.profileIdc[0] == Profile::MAINREXT)
     {
         if (vps.ptl.bitDepthConstraint > 12 && vps.ptl.intraConstraintFlag)
         {

@@ -73,7 +73,9 @@ namespace Profile {
         MAIN10 = 2,
         MAINSTILLPICTURE = 3,
         MAINREXT = 4,
-        HIGHTHROUGHPUTREXT = 5
+        HIGHTHROUGHPUTREXT = 5,
+        SCALABLEMAIN = 7,
+        SCALABLEMAIN10 = 8
     };
 }
 
@@ -106,7 +108,7 @@ namespace Level {
 
 struct ProfileTierLevel
 {
-    int      profileIdc;
+    int      profileIdc[MAX_SCALABLE_LAYERS];
     int      levelIdc;
     uint32_t minCrForLevel;
     uint32_t maxLumaSrForLevel;
@@ -159,6 +161,21 @@ struct VPS
     uint32_t         numReorderPics[MAX_T_LAYERS];
     uint32_t         maxDecPicBuffering[MAX_T_LAYERS];
     uint32_t         maxLatencyIncrease[MAX_T_LAYERS];
+
+#if ENABLE_ALPHA
+    bool             splitting_flag;
+    int              m_scalabilityMask[MAX_VPS_NUM_SCALABILITY_TYPES];
+    int              scalabilityTypes;
+    uint8_t          m_dimensionIdLen[MAX_VPS_NUM_SCALABILITY_TYPES];
+    uint8_t          m_dimensionId[MAX_VPS_LAYER_ID_PLUS1][MAX_VPS_NUM_SCALABILITY_TYPES];
+    bool              m_nuhLayerIdPresentFlag;
+    uint8_t          m_layerIdInNuh[MAX_VPS_LAYER_ID_PLUS1];
+    uint8_t          m_layerIdInVps[MAX_VPS_LAYER_ID_PLUS1];
+    int              m_viewIdLen;
+    int              m_numLayers;
+    int              m_vpsNumLayerSetsMinus1;
+    bool             vps_extension_flag;
+#endif
 };
 
 struct Window

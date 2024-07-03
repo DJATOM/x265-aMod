@@ -1466,7 +1466,7 @@ int RateControl::rateControlStart(Frame* curFrame, RateControlEntry* rce, Encode
 
         int mincr = enc->m_vps.ptl.minCrForLevel;
         /* Profiles above Main10 don't require maxAU size check, so just set the maximum to a large value. */
-        if (enc->m_vps.ptl.profileIdc > Profile::MAIN10 || enc->m_vps.ptl.levelIdc == Level::NONE)
+        if (enc->m_vps.ptl.profileIdc[0] > Profile::MAIN10 || enc->m_vps.ptl.levelIdc == Level::NONE)
             rce->frameSizeMaximum = 1e9;
         else
         {

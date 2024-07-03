@@ -371,6 +371,7 @@ typedef enum
     MASTERING_DISPLAY_INFO               = 137,
     CONTENT_LIGHT_LEVEL_INFO             = 144,
     ALTERNATIVE_TRANSFER_CHARACTERISTICS = 147,
+    ALPHA_CHANNEL_INFO                   = 165,
 } SEIPayloadType;
 
 typedef struct x265_sei_payload
@@ -625,6 +626,8 @@ typedef enum
 
 #if ENABLE_ALPHA
 #define MAX_SCALABLE_LAYERS     2
+#define MAX_VPS_NUM_SCALABILITY_TYPES     16
+#define MAX_VPS_LAYER_ID_PLUS1            MAX_SCALABLE_LAYERS
 #else
 #define MAX_SCALABLE_LAYERS     1
 #endif
