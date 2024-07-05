@@ -62,6 +62,7 @@ FrameEncoder::FrameEncoder()
     memset(&m_rce, 0, sizeof(RateControlEntry));
     for(int layer = 0; layer < MAX_SCALABLE_LAYERS; layer++)
         m_frame[layer] = NULL;
+    m_retFrameBuffer = { NULL };
 }
 
 void FrameEncoder::destroy()
@@ -95,6 +96,7 @@ void FrameEncoder::destroy()
     X265_FREE(m_ctuGeomMap);
     X265_FREE(m_substreamSizes);
     X265_FREE(m_nr);
+    X265_FREE(m_retFrameBuffer);
 
     m_frameFilter.destroy();
 
@@ -217,6 +219,9 @@ bool FrameEncoder::init(Encoder *top, int numRows, int numCols)
             ok &= !!m_frameEncTF->createRefPicInfo(&m_mcstfRefList[i], m_param);
     }
 
+    m_retFrameBuffer = X265_MALLOC(Frame*, m_param->numScalableLayers);
+    for (int layer = 0; layer < m_param->numScalableLayers; layer++)
+        m_retFrameBuffer[layer] = NULL;
     return ok;
 }
 
@@ -286,7 +291,7 @@ bool FrameEncoder::initializeGeoms()
 bool FrameEncoder::startCompressFrame(Frame* curFrame[MAX_SCALABLE_LAYERS])
 {
     m_slicetypeWaitTime = x265_mdate() - m_prevOutputTime;
-    for (int layer = 0; layer < MAX_SCALABLE_LAYERS; layer++)
+    for (int layer = 0; layer < m_param->numScalableLayers; layer++)
     {
         m_frame[layer] = curFrame[layer];
         curFrame[layer]->m_encData->m_frameEncoderID = m_jpId;
@@ -368,7 +373,7 @@ void FrameEncoder::threadMain()
                 m_frame[0]->m_copyMVType.wait();
         }
 
-        for(int layer = 0; layer < MAX_SCALABLE_LAYERS; layer ++)
+        for(int layer = 0; layer < m_param->numScalableLayers; layer ++)
             compressFrame(layer);
         m_done.trigger(); /* FrameEncoder::getEncodedPicture() blocks for this event */
         m_enable.wait();
@@ -604,7 +609,7 @@ void FrameEncoder::compressFrame(int layer)
 
     /* Get the QP for this frame from rate control. This call may block until
      * frames ahead of it in encode order have called rateControlEnd() */
-    int qp = (layer == 0) ? m_top->m_rateControl->rateControlStart(m_frame[layer], &m_rce, m_top) : m_rce.newQp;
+    int qp = (layer == 0) ? m_top->m_rateControl->rateControlStart(m_frame[layer], &m_rce, m_top) : (int)m_rce.newQp;
 
     m_rce.newQp = qp;
 
@@ -2267,18 +2272,21 @@ void FrameEncoder::vmafFrameLevelScore()
 }
 #endif
 
-Frame *FrameEncoder::getEncodedPicture(NALList& output)
+Frame** FrameEncoder::getEncodedPicture(NALList& output)
 {
-    if (m_frame[0])
+    if (m_frame && m_frame[0])
     {
         /* block here until worker thread completes */
         m_done.wait();
 
-        Frame *ret = m_frame[0];
-        m_frame[0] = NULL;
+        for (int i = 0; i < m_param->numScalableLayers; i++)
+        {
+            m_retFrameBuffer[i] = m_frame[i];
+            m_frame[i] = NULL;
+        }
         output.takeContents(m_nalList);
         m_prevOutputTime = x265_mdate();
-        return ret;
+        return m_retFrameBuffer;
     }
 
     return NULL;

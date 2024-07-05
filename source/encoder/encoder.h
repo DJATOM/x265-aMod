@@ -202,7 +202,7 @@ public:
     ThreadPool*        m_threadPool;
     FrameEncoder*      m_frameEncoder[X265_MAX_FRAME_THREADS];
     DPB*               m_dpb;
-    Frame*             m_exportedPic;
+    Frame*             m_exportedPic[MAX_SCALABLE_LAYERS];
     FILE*              m_analysisFileIn;
     FILE*              m_analysisFileOut;
     FILE*              m_naluFile;
@@ -300,7 +300,7 @@ public:
     void stopJobs();
     void destroy();
 
-    int encode(const x265_picture* pic, x265_picture *pic_out);
+    int encode(const x265_picture* pic, x265_picture **pic_out);
 
     int reconfigureParam(x265_param* encParam, x265_param* param);
 

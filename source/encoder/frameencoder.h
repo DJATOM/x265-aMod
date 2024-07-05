@@ -159,7 +159,7 @@ public:
     bool startCompressFrame(Frame* curFrame[MAX_SCALABLE_LAYERS]);
 
     /* blocks until worker thread is done, returns access unit */
-    Frame *getEncodedPicture(NALList& list);
+    Frame **getEncodedPicture(NALList& list);
 
     void initDecodedPictureHashSEI(int row, int cuAddr, int height, int layer);
 
@@ -218,6 +218,7 @@ public:
     Encoder*                 m_top;
     x265_param*              m_param;
     Frame*                   m_frame[MAX_SCALABLE_LAYERS];
+    Frame**                  m_retFrameBuffer;
     NoiseReduction*          m_nr;
     ThreadLocalData*         m_tld; /* for --no-wpp */
     Bitstream*               m_outStreams;

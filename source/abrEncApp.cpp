@@ -530,11 +530,13 @@ ret:
                 x265_log(m_param, X265_LOG_ERROR, "Unable to register CTRL+C handler: %s in %s\n",
                     strerror(errno), profileName);
 
-            x265_picture pic_orig, pic_out;
+            x265_picture pic_orig, pic_out[MAX_SCALABLE_LAYERS];
             x265_picture *pic_in = &pic_orig;
             /* Allocate recon picture if analysis save/load is enabled */
             std::priority_queue<int64_t>* pts_queue = m_cliopt.output->needPTS() ? new std::priority_queue<int64_t>() : NULL;
-            x265_picture *pic_recon = (m_cliopt.recon || m_param->analysisSave || m_param->analysisLoad || pts_queue || reconPlay || m_param->csvLogLevel) ? &pic_out : NULL;
+            x265_picture *pic_recon[MAX_SCALABLE_LAYERS];
+            for(int i = 0; i < m_param->numScalableLayers; i++)
+                pic_recon[i] = (m_cliopt.recon[i] || m_param->analysisSave || m_param->analysisLoad || pts_queue || reconPlay || m_param->csvLogLevel) ? &pic_out[i] : NULL;
             uint32_t inFrameCount = 0;
             uint32_t outFrameCount = 0;
             x265_nal *p_nal;
@@ -545,7 +547,7 @@ ret:
             uint8_t *rpuPayload = NULL;
             int inputPicNum = 1;
             x265_picture picField1, picField2;
-            x265_analysis_data* analysisInfo = (x265_analysis_data*)(&pic_out.analysisData);
+            x265_analysis_data* analysisInfo = (x265_analysis_data*)(&pic_out[0].analysisData);
             bool isAbrSave = m_cliopt.saveLevel && (m_parent->m_numEncodes > 1);
 
             if (!m_param->bRepeatHeaders && !m_param->bEnableSvtHevc)
@@ -735,7 +737,7 @@ ret:
                     }
 
                     if (reconPlay && numEncoded)
-                        reconPlay->writePicture(*pic_recon);
+                        reconPlay->writePicture(*pic_recon[0]);
 
                     outFrameCount += numEncoded;
 
@@ -744,14 +746,17 @@ ret:
                         copyInfo(analysisInfo);
                     }
 
-                    if (numEncoded && pic_recon && m_cliopt.recon)
-                        m_cliopt.recon->writePicture(pic_out);
+                    for (int i = 0; i < m_param->numScalableLayers; i++)
+                    {
+                        if (numEncoded && pic_recon[i] && m_cliopt.recon[i])
+                            m_cliopt.recon[i]->writePicture(pic_out[i]);
+                    }
                     if (nal)
                     {
-                        m_cliopt.totalbytes += m_cliopt.output->writeFrame(p_nal, nal, pic_out);
+                        m_cliopt.totalbytes += m_cliopt.output->writeFrame(p_nal, nal, pic_out[0]);
                         if (pts_queue)
                         {
-                            pts_queue->push(-pic_out.pts);
+                            pts_queue->push(-pic_out[0].pts);
                             if (pts_queue->size() > 2)
                                 pts_queue->pop();
                         }
@@ -771,7 +776,7 @@ ret:
                 }
 
                 if (reconPlay && numEncoded)
-                    reconPlay->writePicture(*pic_recon);
+                    reconPlay->writePicture(*pic_recon[0]);
 
                 outFrameCount += numEncoded;
                 if (isAbrSave && numEncoded)
@@ -779,14 +784,17 @@ ret:
                     copyInfo(analysisInfo);
                 }
 
-                if (numEncoded && pic_recon && m_cliopt.recon)
-                    m_cliopt.recon->writePicture(pic_out);
+                for (int i = 0; i < m_param->numScalableLayers; i++)
+                {
+                    if (numEncoded && pic_recon[i] && m_cliopt.recon[i])
+                        m_cliopt.recon[i]->writePicture(pic_out[i]);
+                }
                 if (nal)
                 {
-                    m_cliopt.totalbytes += m_cliopt.output->writeFrame(p_nal, nal, pic_out);
+                    m_cliopt.totalbytes += m_cliopt.output->writeFrame(p_nal, nal, pic_out[0]);
                     if (pts_queue)
                     {
-                        pts_queue->push(-pic_out.pts);
+                        pts_queue->push(-pic_out[0].pts);
                         if (pts_queue->size() > 2)
                             pts_queue->pop();
                     }

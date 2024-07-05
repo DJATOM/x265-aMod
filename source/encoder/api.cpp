@@ -406,7 +406,7 @@ int x265_encoder_reconfig_zone(x265_encoder* enc, x265_zone* zone_in)
     return 0;
 }
 
-int x265_encoder_encode(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal, x265_picture *pic_in, x265_picture *pic_out)
+int x265_encoder_encode(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal, x265_picture *pic_in, x265_picture **pic_out)
 {
     if (!enc)
         return -1;
@@ -602,7 +602,7 @@ fail:
         *pi_nal = 0;
 
     if (numEncoded && encoder->m_param->csvLogLevel && encoder->m_outputCount >= encoder->m_latestParam->chunkStart)
-        x265_csvlog_frame(encoder->m_param, pic_out);
+        x265_csvlog_frame(encoder->m_param, pic_out[0]);
 
     if (numEncoded < 0)
         encoder->m_aborted = true;

@@ -2441,7 +2441,7 @@ int x265_encoder_headers(x265_encoder *, x265_nal **pp_nal, uint32_t *pi_nal);
  *      the payloads of all output NALs are guaranteed to be sequential in memory.
  *      To flush the encoder and retrieve delayed output pictures, pass pic_in as NULL.
  *      Once flushing has begun, all subsequent calls must pass pic_in as NULL. */
-int x265_encoder_encode(x265_encoder *encoder, x265_nal **pp_nal, uint32_t *pi_nal, x265_picture *pic_in, x265_picture *pic_out);
+int x265_encoder_encode(x265_encoder *encoder, x265_nal **pp_nal, uint32_t *pi_nal, x265_picture *pic_in, x265_picture **pic_out);
 
 /* x265_encoder_reconfig:
  *      various parameters from x265_param are copied.
@@ -2595,7 +2595,7 @@ typedef struct x265_api
     int           (*encoder_reconfig)(x265_encoder*, x265_param*);
     int           (*encoder_reconfig_zone)(x265_encoder*, x265_zone*);
     int           (*encoder_headers)(x265_encoder*, x265_nal**, uint32_t*);
-    int           (*encoder_encode)(x265_encoder*, x265_nal**, uint32_t*, x265_picture*, x265_picture*);
+    int           (*encoder_encode)(x265_encoder*, x265_nal**, uint32_t*, x265_picture*, x265_picture**);
     void          (*encoder_get_stats)(x265_encoder*, x265_stats*, uint32_t);
     void          (*encoder_log)(x265_encoder*, int, char**);
     void          (*encoder_close)(x265_encoder*);
