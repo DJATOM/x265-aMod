@@ -2882,4 +2882,15 @@ See section :ref:`svthevc <SvtHevc>` for more details.
 
     **CLI_ONLY**
 
+Alpha Encode Options
+===================
+
+.. option:: --alpha
+
+	Enable alpha layer encoding support in x265.This option can be enabled
+	only when ENABLE_ALPHA is set during the make of x265.When enabled
+	--alpha always expects an input file in YUVA420 format.
+
+**CLI_ONLY**
+
 .. vim: noet

@@ -2269,6 +2269,10 @@ typedef struct x265_param
     /*SBRC*/
     int      bEnableSBRC;
     int mcstfFrameRange;
+
+    /*Alpha channel encoding*/
+    int      bEnableAlpha;
+    int      numScalableLayers;
 } x265_param;
 
 /* x265_param_alloc:

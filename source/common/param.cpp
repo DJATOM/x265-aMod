@@ -392,6 +392,10 @@ void x265_param_default(x265_param* param)
     param->bEnableTemporalFilter = 0;
     param->temporalFilterStrength = 0.95;
 
+    /*Alpha Channel Encoding*/
+    param->bEnableAlpha = 0;
+    param->numScalableLayers = 1;
+
 #ifdef SVT_HEVC
     param->svtHevcParam = svtParam;
     svt_param_default(param);
@@ -1444,6 +1448,14 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         OPT("film-grain") p->filmGrain = (char* )value;
         OPT("mcstf") p->bEnableTemporalFilter = atobool(value);
         OPT("sbrc") p->bEnableSBRC = atobool(value);
+        OPT("alpha")
+        {
+            if (atobool(value))
+            {
+                p->bEnableAlpha = 1;
+                p->numScalableLayers = 2;
+            }
+        }
         else
             return X265_PARAM_BAD_NAME;
     }
@@ -2079,6 +2091,7 @@ void x265_print_params(x265_param* param)
     TOOLOPT(param->rc.bStatWrite, "stats-write");
     TOOLOPT(param->rc.bStatRead,  "stats-read");
     TOOLOPT(param->bSingleSeiNal, "single-sei");
+    TOOLOPT(param->numScalableLayers > 1, "alpha");
 #if ENABLE_HDR10_PLUS
     TOOLOPT(param->toneMapFile != NULL, "dhdr10-info");
 #endif
@@ -2343,6 +2356,7 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     if (p->filmGrain)
         s += sprintf(s, " film-grain=%s", p->filmGrain); // Film grain characteristics model filename
     BOOL(p->bEnableTemporalFilter, "mcstf");
+    BOOL(p->bEnableAlpha, "alpha");
     BOOL(p->bEnableSBRC, "sbrc");
 #undef BOOL
     return buf;
@@ -2864,6 +2878,8 @@ void x265_copy_params(x265_param* dst, x265_param* src)
     dst->confWinRightOffset = src->confWinRightOffset;
     dst->confWinBottomOffset = src->confWinBottomOffset;
     dst->bliveVBV2pass = src->bliveVBV2pass;
+    dst->bEnableAlpha = src->bEnableAlpha;
+    dst->numScalableLayers = src->numScalableLayers;
 
     if (src->videoSignalTypePreset) dst->videoSignalTypePreset = strdup(src->videoSignalTypePreset);
     else dst->videoSignalTypePreset = NULL;
