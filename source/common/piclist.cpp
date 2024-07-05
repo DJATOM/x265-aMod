@@ -230,8 +230,9 @@ void PicList::remove(Frame& curFrame)
 
 Frame* PicList::removeFrame(Frame& curFrame)
 {
+    Frame* tmp = &curFrame;
 #if _DEBUG
-    Frame* tmp = m_start;
+    tmp = m_start;
     while (tmp && tmp != &curFrame)
     {
         tmp = tmp->m_next;

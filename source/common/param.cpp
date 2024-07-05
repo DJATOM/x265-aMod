@@ -1929,6 +1929,13 @@ int x265_check_params(x265_param* param)
         }
     }
     CHECK(param->rc.dataShareMode != X265_SHARE_MODE_FILE && param->rc.dataShareMode != X265_SHARE_MODE_SHAREDMEM, "Invalid data share mode. It must be one of the X265_DATA_SHARE_MODES enum values\n" );
+#if ENABLE_ALPHA
+    if (param->bEnableAlpha)
+    {
+        CHECK((param->internalCsp != X265_CSP_I420), "Alpha encode supported only with i420a colorspace");
+        CHECK((param->rc.rateControlMode != X265_RC_CQP), "Alpha encode supported only with CQP mode");
+    }
+#endif
     return check_failed;
 }
 

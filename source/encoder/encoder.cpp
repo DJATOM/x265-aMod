@@ -1647,6 +1647,8 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture** pic_out)
                 inFrame[layer]->m_encodeStartTime = x265_mdate();
                 /* Set lowres scencut and satdCost here to aovid overwriting ANALYSIS_READ
                    decision by lowres init*/
+                int cuCount = inFrame[layer]->m_lowres.maxBlocksInRow * inFrame[layer]->m_lowres.maxBlocksInCol;
+                memset(inFrame[layer]->m_lowres.intraCost, 0, sizeof(int32_t) * cuCount);
                 inFrame[layer]->m_lowres.bScenecut = false;
                 inFrame[layer]->m_lowres.satdCost = (int64_t)-1;
                 inFrame[layer]->m_lowresInit = false;
@@ -2156,6 +2158,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture** pic_out)
             frameEnc[0] = m_lookahead->getDecidedPicture();
         if (frameEnc[0] && !pass && (!m_param->chunkEnd || (m_encodedFrameNum < m_param->chunkEnd)))
         {
+#if ENABLE_ALPHA
             //Pop non base view pictures from DPB piclist
             for (int layer = 1; layer < m_param->numScalableLayers; layer++)
             {
@@ -2163,6 +2166,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture** pic_out)
                 frameEnc[layer] = m_dpb->m_picList.removeFrame(*currentFrame);
                 frameEnc[layer]->m_lowres.sliceType = frameEnc[0]->m_lowres.sliceType;
             }
+#endif
 
             if ((m_param->bEnableSceneCutAwareQp & FORWARD) && m_param->rc.bStatRead)
             {

@@ -422,7 +422,7 @@ namespace X265_NS {
         if (input)
             input->release();
         input = NULL;
-        for (int i = 0; i < param->numScalableLayers; i++)
+        for (int i = 0; i < MAX_SCALABLE_LAYERS; i++)
         {
             if (recon[i])
                 recon[i]->release();

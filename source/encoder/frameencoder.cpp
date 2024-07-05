@@ -542,8 +542,8 @@ void FrameEncoder::compressFrame(int layer)
         m_frame[layer]->m_encData->m_slice->m_rpsIdx = (m_top->m_rateControl->m_rce2Pass + m_frame[layer]->m_encodeOrder)->rpsIdx;
 
     // Weighted Prediction parameters estimation.
-    bool bUseWeightP = slice->m_sliceType == P_SLICE && slice->m_pps->bUseWeightPred;
-    bool bUseWeightB = slice->m_sliceType == B_SLICE && slice->m_pps->bUseWeightedBiPred;
+    bool bUseWeightP = slice->m_sliceType == P_SLICE && slice->m_pps->bUseWeightPred && !layer;
+    bool bUseWeightB = slice->m_sliceType == B_SLICE && slice->m_pps->bUseWeightedBiPred && !layer;
 
     WeightParam* reuseWP = NULL;
     if (m_param->analysisLoad && (bUseWeightP || bUseWeightB))

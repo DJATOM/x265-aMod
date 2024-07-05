@@ -475,7 +475,7 @@ void Entropy::codePPS( const PPS& pps, bool filerAcross, int iPPSInitQpMinus26, 
     WRITE_SVLC(pps.chromaQpOffset[1],      "pps_cr_qp_offset");
     WRITE_FLAG(pps.pps_slice_chroma_qp_offsets_present_flag, "pps_slice_chroma_qp_offsets_present_flag");
 
-    WRITE_FLAG(pps.bUseWeightPred,            "weighted_pred_flag");
+    WRITE_FLAG(layer ? 0 : pps.bUseWeightPred,            "weighted_pred_flag");
     WRITE_FLAG(pps.bUseWeightedBiPred,        "weighted_bipred_flag");
     WRITE_FLAG(pps.bTransquantBypassEnabled,  "transquant_bypass_enable_flag");
     WRITE_FLAG(0,                             "tiles_enabled_flag");
@@ -829,7 +829,7 @@ void Entropy::codeSliceHeader(const Slice& slice, FrameData& encData, uint32_t s
             WRITE_UVLC(slice.m_colRefIdx, "collocated_ref_idx");
         }
     }
-    if ((slice.m_pps->bUseWeightPred && slice.m_sliceType == P_SLICE) || (slice.m_pps->bUseWeightedBiPred && slice.m_sliceType == B_SLICE))
+    if (((slice.m_pps->bUseWeightPred && slice.m_sliceType == P_SLICE) || (slice.m_pps->bUseWeightedBiPred && slice.m_sliceType == B_SLICE)) && !layer)
         codePredWeightTable(slice);
 
     X265_CHECK(slice.m_maxNumMergeCand <= MRG_MAX_NUM_CANDS, "too many merge candidates\n");
