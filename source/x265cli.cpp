@@ -423,9 +423,12 @@ namespace X265_NS {
             free(argString);
         }
 
-        if (input)
-            input->release();
-        input = NULL;
+        for (int i = 0; i < MAX_VIEWS; i++)
+        {
+            if (input[i])
+                input[i]->release();
+            input[i] = NULL;
+        }
         for (int i = 0; i < MAX_SCALABLE_LAYERS; i++)
         {
             if (recon[i])
@@ -828,9 +831,17 @@ namespace X265_NS {
             }
         }
 #endif
-        if (!inputfn[0] || !outputfn)
+        if (!outputfn)
         {
             x265_log(param, X265_LOG_ERROR, "input or output file not specified, try --help for help\n");
+            for (int view = 0; view < param->numViews; view++)
+            {
+                if (!inputfn[view])
+                {
+                    x265_log(param, X265_LOG_ERROR, "input or output file not specified, try --help for help\n");
+                    return true;
+                }
+            }
             return true;
         }
 
@@ -851,50 +862,53 @@ namespace X265_NS {
             svtParam->encoderBitDepth = inputBitDepth;
         }
 #endif
-
-        InputFileInfo info;
-        info.filename = inputfn[0];
-        info.depth = inputBitDepth;
-        info.csp = param->internalCsp;
-        info.width = param->sourceWidth;
-        info.height = param->sourceHeight;
-        info.fpsNum = param->fpsNum;
-        info.fpsDenom = param->fpsDenom;
-        info.sarWidth = param->vui.sarWidth;
-        info.sarHeight = param->vui.sarHeight;
-        info.skipFrames = seek;
-        info.frameCount = 0;
-        getParamAspectRatio(param, info.sarWidth, info.sarHeight);
-
-        this->input = InputFile::open(info, this->bForceY4m, param->bEnableAlpha);
-        if (!this->input || this->input->isFail())
+        InputFileInfo info[MAX_VIEWS];
+        for (int i = 0; i < param->numViews; i++)
         {
-            x265_log_file(param, X265_LOG_ERROR, "unable to open input file <%s>\n", inputfn);
-            return true;
+            info[i].filename = inputfn[i];
+            info[i].depth = inputBitDepth;
+            info[i].csp = param->internalCsp;
+            info[i].width = param->sourceWidth;
+            info[i].height = param->sourceHeight;
+            info[i].fpsNum = param->fpsNum;
+            info[i].fpsDenom = param->fpsDenom;
+            info[i].sarWidth = param->vui.sarWidth;
+            info[i].sarHeight = param->vui.sarHeight;
+            info[i].skipFrames = seek;
+            info[i].frameCount = 0;
+            getParamAspectRatio(param, info[i].sarWidth, info[i].sarHeight);
+
+            this->input[i] = InputFile::open(info[i], this->bForceY4m, param->numScalableLayers > 1);
+            if (!this->input[i] || this->input[i]->isFail())
+            {
+                x265_log_file(param, X265_LOG_ERROR, "unable to open input file <%s>\n", inputfn[i]);
+                return true;
+            }
+
+            if (info[i].depth < 8 || info[i].depth > 16)
+            {
+                x265_log(param, X265_LOG_ERROR, "Input bit depth (%d) must be between 8 and 16\n", inputBitDepth);
+                return true;
+            }
         }
 
-        if (info.depth < 8 || info.depth > 16)
-        {
-            x265_log(param, X265_LOG_ERROR, "Input bit depth (%d) must be between 8 and 16\n", inputBitDepth);
-            return true;
-        }
-
+            //TODO:Validate info params of both the views to equal values
         /* Unconditionally accept height/width/csp/bitDepth from file info */
-        param->sourceWidth = info.width;
-        param->sourceHeight = info.height;
-        param->internalCsp = info.csp;
-        param->sourceBitDepth = info.depth;
+            param->sourceWidth = info[0].width;
+            param->sourceHeight = info[0].height;
+            param->internalCsp = info[0].csp;
+            param->sourceBitDepth = info[0].depth;
 
         /* Accept fps and sar from file info if not specified by user */
         if (param->fpsDenom == 0 || param->fpsNum == 0)
         {
-            param->fpsDenom = info.fpsDenom;
-            param->fpsNum = info.fpsNum;
+            param->fpsDenom = info[0].fpsDenom;
+            param->fpsNum = info[0].fpsNum;
         }
-        if (!param->vui.aspectRatioIdc && info.sarWidth && info.sarHeight)
-            setParamAspectRatio(param, info.sarWidth, info.sarHeight);
-        if (this->framesToBeEncoded == 0 && info.frameCount > (int)seek)
-            this->framesToBeEncoded = info.frameCount - seek;
+        if (!param->vui.aspectRatioIdc && info[0].sarWidth && info[0].sarHeight)
+            setParamAspectRatio(param, info[0].sarWidth, info[0].sarHeight);
+        if (this->framesToBeEncoded == 0 && info[0].frameCount > (int)seek)
+            this->framesToBeEncoded = info[0].frameCount - seek;
         param->totalFrames = this->framesToBeEncoded;
 
 #ifdef SVT_HEVC
@@ -911,8 +925,8 @@ namespace X265_NS {
 #endif
 
         /* Force CFR until we have support for VFR */
-        info.timebaseNum = param->fpsDenom;
-        info.timebaseDenom = param->fpsNum;
+        info[0].timebaseNum = param->fpsDenom;
+        info[0].timebaseDenom = param->fpsNum;
 
         if (param->bField && param->interlaceMode)
         {   // Field FPS
@@ -930,22 +944,24 @@ namespace X265_NS {
         {
             char buf[128];
             int p = sprintf(buf, "%dx%d fps %d/%d %sp%d", param->sourceWidth, param->sourceHeight,
-                param->fpsNum, param->fpsDenom, x265_source_csp_names[param->internalCsp], info.depth);
+                param->fpsNum, param->fpsDenom, x265_source_csp_names[param->internalCsp], info[0].depth);
 
             int width, height;
             getParamAspectRatio(param, width, height);
             if (width && height)
                 p += sprintf(buf + p, " sar %d:%d", width, height);
 
-            if (framesToBeEncoded <= 0 || info.frameCount <= 0)
+            if (framesToBeEncoded <= 0 || info[0].frameCount <= 0)
                 strcpy(buf + p, " unknown frame count");
             else
-                sprintf(buf + p, " frames %u - %d of %d", this->seek, this->seek + this->framesToBeEncoded - 1, info.frameCount);
+                sprintf(buf + p, " frames %u - %d of %d", this->seek, this->seek + this->framesToBeEncoded - 1, info[0].frameCount);
 
-            general_log(param, input->getName(), X265_LOG_INFO, "%s\n", buf);
+            for (int view = 0; view < param->numViews; view++)
+                general_log(param, input[view]->getName(), X265_LOG_INFO, "%s\n", buf);
         }
 
-        this->input->startReader();
+        for (int view = 0; view < param->numViews; view++)
+            this->input[view]->startReader();
 
         if (reconfn[0])
         {
@@ -1006,7 +1022,7 @@ namespace X265_NS {
             return true;
         }
 #endif
-        this->output = OutputFile::open(outputfn, info);
+        this->output = OutputFile::open(outputfn, info[0]);
         if (this->output->isFail())
         {
             x265_log_file(param, X265_LOG_ERROR, "failed to open output file <%s> for writing\n", outputfn);
