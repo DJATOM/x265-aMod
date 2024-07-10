@@ -377,6 +377,10 @@ namespace X265_NS {
 #if ENABLE_ALPHA
         H0("   --alpha                       Enable alpha channel support. Default %d\n", param->bEnableAlpha);
 #endif
+#if ENABLE_MULTIVIEW
+        H0("   --num-views                   Number of Views for Multiview Encoding. Default %d\n", param->numViews);
+        H0("   --multiview-config            Configuration file for Multiview Encoding\n");
+#endif
 #ifdef SVT_HEVC
         H0("   --[no]svt                     Enable SVT HEVC encoder %s\n", OPT(param->bEnableSvtHevc));
         H0("   --[no-]svt-hme                Enable Hierarchial motion estimation(HME) in SVT HEVC encoder \n");
@@ -583,7 +587,11 @@ namespace X265_NS {
         int inputBitDepth = 8;
         int outputBitDepth = 0;
         int reconFileBitDepth = 0;
-        const char *inputfn = NULL;
+        char* inputfn[MAX_VIEWS] = { NULL };
+        for (int view = 0; view < MAX_VIEWS; view++)
+        {
+            inputfn[view] = X265_MALLOC(char, sizeof(char) * 1024);
+        }
         const char* reconfn[MAX_SCALABLE_LAYERS] = { NULL };
         const char *outputfn = NULL;
         const char *preset = NULL;
@@ -723,7 +731,7 @@ namespace X265_NS {
                 OPT("frames") this->framesToBeEncoded = (uint32_t)x265_atoi(optarg, bError);
                 OPT("no-progress") this->bProgress = false;
                 OPT("output") outputfn = optarg;
-                OPT("input") inputfn = optarg;
+                OPT("input") inputfn[0] = optarg;
                 OPT("recon") reconfn[0] = optarg;
                 OPT("input-depth") inputBitDepth = (uint32_t)x265_atoi(optarg, bError);
                 OPT("dither") this->bDither = true;
@@ -756,6 +764,14 @@ namespace X265_NS {
                     if (!this->scenecutAwareQpConfig)
                         x265_log_file(param, X265_LOG_ERROR, "%s scenecut aware qp config file not found or error in opening config file\n", optarg);
                 }
+#if ENABLE_MULTIVIEW
+                OPT("multiview-config")
+                {
+                    this->multiViewConfig = x265_fopen(optarg, "rb");
+                    if (!this->multiViewConfig)
+                        x265_log_file(param, X265_LOG_ERROR, "%s Multiview config file not found or error in opening config file\n", optarg);
+                }
+#endif
                 OPT("zonefile")
                 {
                     this->zoneFile = x265_fopen(optarg, "rb");
@@ -782,8 +798,10 @@ namespace X265_NS {
             }
         }
 
-        if (optind < argc && !inputfn)
-            inputfn = argv[optind++];
+#if !ENABLE_MULTIVIEW
+        if (optind < argc && !inputfn[0])
+            inputfn[0] = argv[optind++];
+#endif
         if (optind < argc && !outputfn)
             outputfn = argv[optind++];
         if (optind < argc)
@@ -799,7 +817,18 @@ namespace X265_NS {
             showHelp(param);
         }
 
-        if (!inputfn || !outputfn)
+#if ENABLE_MULTIVIEW
+        if (this->multiViewConfig)
+        {
+            if (!this->parseMultiViewConfig(inputfn))
+            {
+                x265_log(NULL, X265_LOG_ERROR, "Unable to parse multiview config file \n");
+                fclose(this->multiViewConfig);
+                this->multiViewConfig = NULL;
+            }
+        }
+#endif
+        if (!inputfn[0] || !outputfn)
         {
             x265_log(param, X265_LOG_ERROR, "input or output file not specified, try --help for help\n");
             return true;
@@ -824,7 +853,7 @@ namespace X265_NS {
 #endif
 
         InputFileInfo info;
-        info.filename = inputfn;
+        info.filename = inputfn[0];
         info.depth = inputBitDepth;
         info.csp = param->internalCsp;
         info.width = param->sourceWidth;
@@ -1249,6 +1278,141 @@ namespace X265_NS {
         }
         return false;
     }
+
+#if ENABLE_MULTIVIEW
+    bool CLIOptions::parseMultiViewConfig(char** fn)
+    {
+        char line[256];
+        char* argLine;
+        rewind(multiViewConfig);
+        int linenum = 0;
+        int numInput = 0;
+        while (fgets(line, sizeof(line), multiViewConfig))
+        {
+            if (*line == '#' || (strcmp(line, "\r\n") == 0))
+                continue;
+            int index = (int)strcspn(line, "\r\n");
+            line[index] = '\0';
+            argLine = line;
+            while (isspace((unsigned char)*argLine)) argLine++;
+            char* start = strchr(argLine, '-');
+            int argCount = 0;
+            char** args = (char**)malloc(256 * sizeof(char*));
+            //Adding a dummy string to avoid file parsing error
+            args[argCount++] = (char*)"x265";
+            char* token = strtok(start, " ");
+            while (token)
+            {
+                args[argCount++] = token;
+                token = strtok(NULL, " ");
+                while (token && strchr(token, '"'))
+                {
+                    token = strchr(token, '"');
+                    token = strtok(token, "\"");
+                }
+            }
+            args[argCount] = NULL;
+            bool bError = false;
+            bool bInvalid = false;
+            for (optind = 0;;)
+            {
+                int long_options_index = -1;
+                int c = getopt_long(argCount, args, short_options, long_options, &long_options_index);
+                if (c == -1)
+                    break;
+                if (long_options_index < 0 && c > 0)
+                {
+                    for (size_t i = 0; i < sizeof(long_options) / sizeof(long_options[0]); i++)
+                    {
+                        if (long_options[i].val == c)
+                        {
+                            long_options_index = (int)i;
+                            break;
+                        }
+                    }
+                    if (long_options_index < 0)
+                    {
+                        /* getopt_long might have already printed an error message */
+                        if (c != 63)
+                            x265_log(NULL, X265_LOG_WARNING, "internal error: short option '%c' has no long option\n", c);
+                        bInvalid = true;
+                        break;
+                    }
+                }
+                if (long_options_index < 0)
+                {
+                    x265_log(NULL, X265_LOG_WARNING, "short option '%c' unrecognized\n", c);
+                    bInvalid = true;
+                    break;
+                }
+                char nameBuf[64];
+                const char* name = long_options[long_options_index].name;
+                if (!name)
+                    bError = true;
+                else
+                {
+                    // skip -- prefix if provided
+                    if (name[0] == '-' && name[1] == '-')
+                        name += 2;
+                    // s/_/-/g
+                    if (strlen(name) + 1 < sizeof(nameBuf) && strchr(name, '_'))
+                    {
+                        char* ch;
+                        strcpy(nameBuf, name);
+                        while ((ch = strchr(nameBuf, '_')) != 0)
+                            *ch = '-';
+                        name = nameBuf;
+                    }
+                    if (!optarg)
+                        optarg = "true";
+                    else if (optarg[0] == '=')
+                        optarg++;
+#define OPT(STR) else if (!strcmp(name, STR))
+                    if (0);
+                    OPT("num-views") param->numViews = x265_atoi(optarg, bError);
+                    if (param->numViews > 1)
+                    {
+                        if (0);
+                        OPT("input")
+                        {
+                            strcpy(fn[numInput++], optarg);
+                        }
+
+                    }
+#undef OPT
+                }
+                if (bError)
+                {
+                    const char* optname = long_options_index > 0 ? long_options[long_options_index].name : args[optind - 2];
+                    x265_log(NULL, X265_LOG_ERROR, "invalid argument: %s = %s\n", optname, optarg);
+                    bInvalid = true;
+                    break;
+                }
+            }
+            if (optind < argCount)
+            {
+                x265_log(param, X265_LOG_WARNING, "extra unused command arguments given <%s>\n", args[optind]);
+                bInvalid = true;
+            }
+            if (bInvalid)
+            {
+                if (api)
+                    api->param_free(param);
+                exit(1);
+            }
+            linenum++;
+        }
+        if (numInput != param->numViews)
+        {
+            x265_log(NULL, X265_LOG_WARNING, "Input file missing for given number of views<%d>\n", param->numViews);
+            if (api)
+                api->param_free(param);
+            exit(1);
+        }
+        return 1;
+    }
+
+#endif
 
 #ifdef __cplusplus
 }

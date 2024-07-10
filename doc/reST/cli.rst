@@ -2893,4 +2893,34 @@ Alpha Encode Options
 
 **CLI_ONLY**
 
+Multiview Encode Options
+===================
+
+	Enable multiview encoding support in x265.This option can be enabled
+	only when ENABLE_MULTIVIEW is set during the make of x265.
+
+.. option:: --num-views <integer>
+	Specify the number of views in the multiview input video.
+
+.. option:: --format <integer>
+	Specify the format of the input video
+	 0 : Two separate input videos
+	 1 : One input video with both views in left and right format
+	 2 : One input video with both views in top and bottom format
+
+.. option:: --multiview-config <filename>
+	File containing the configurations to enable multiview encoding.
+
+	Sample config file::
+
+		--num-views 2
+		--format    0
+		--input     multiview-input-01.yuv
+		--input     multiview-input-02.yuv
+
+	Other input parameters such as input-csp/input-depth/input-res/fps must be configured through
+	normal CLI and is expected to be same for all views
+
+**CLI_ONLY**
+
 .. vim: noet

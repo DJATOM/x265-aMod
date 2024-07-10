@@ -626,6 +626,12 @@ typedef enum
 #define X265_MAX_GOP_LENGTH 16
 #define MAX_T_LAYERS 7
 
+#if ENABLE_MULTIVIEW
+#define MAX_VIEWS 2
+#else
+#define MAX_VIEWS 1
+#endif
+
 #if ENABLE_ALPHA
 #define MAX_SCALABLE_LAYERS     2
 #define MAX_VPS_NUM_SCALABILITY_TYPES     16
@@ -2284,6 +2290,9 @@ typedef struct x265_param
     /*Alpha channel encoding*/
     int      bEnableAlpha;
     int      numScalableLayers;
+
+    /*Multi View Encoding*/
+    int      numViews;
 } x265_param;
 
 /* x265_param_alloc:
