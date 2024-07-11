@@ -108,6 +108,11 @@ void determineLevel(const x265_param &param, VPS& vps)
     else
         vps.ptl.profileIdc[0] = Profile::MAINREXT;
 
+#if ENABLE_MULTIVIEW
+    if (param.numViews == 2)
+        vps.ptl.profileIdc[1] = Profile::MULTIVIEWMAIN;
+#endif
+
     /* determine which profiles are compatible with this stream */
 
     memset(vps.ptl.profileCompatibilityFlag, 0, sizeof(vps.ptl.profileCompatibilityFlag));

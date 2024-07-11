@@ -3300,7 +3300,11 @@ void Encoder::getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs)
     bs.writeByteAlignment();
     list.serialize(NAL_UNIT_VPS, bs);
 
+#if ENABLE_MULTIVIEW
+    for (int layer = 0; layer < m_param->numViews; layer++)
+#else
     for (int layer = 0; layer < m_param->numScalableLayers; layer++)
+#endif
     {
         bs.resetBits();
         sbacCoder.codeSPS(m_sps, m_scalingList, m_vps.ptl, layer);
@@ -3308,7 +3312,11 @@ void Encoder::getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs)
         list.serialize(NAL_UNIT_SPS, bs, layer);
     }
 
+#if ENABLE_MULTIVIEW
+    for (int layer = 0; layer < m_param->numViews; layer++)
+#else
     for (int layer = 0; layer < m_param->numScalableLayers; layer++)
+#endif
     {
         bs.resetBits();
         sbacCoder.codePPS(m_pps, (m_param->maxSlices <= 1), m_iPPSQpMinus26, layer);
@@ -3405,10 +3413,10 @@ void Encoder::initVPS(VPS *vps)
     vps->ptl.nonPackedConstraintFlag = false;
     vps->ptl.frameOnlyConstraintFlag = !m_param->interlaceMode;
     vps->m_numLayers = m_param->numScalableLayers;
-
-#if ENABLE_ALPHA
+    vps->m_numViews = m_param->numViews;
     vps->vps_extension_flag = false;
 
+#if ENABLE_ALPHA
     if (m_param->numScalableLayers > 1)
     {
         vps->vps_extension_flag = true;
@@ -3449,6 +3457,53 @@ void Encoder::initVPS(VPS *vps)
 
         vps->m_nuhLayerIdPresentFlag = 1;
         vps->m_viewIdLen = 0;
+        vps->m_vpsNumLayerSetsMinus1 = 1;
+    }
+#endif
+
+#if ENABLE_MULTIVIEW
+    if (m_param->numViews > 1)
+    {
+        vps->vps_extension_flag = true;
+        uint8_t dimIdLen = 0, auxDimIdLen = 0, maxAuxId = 1, auxId[2] = { 0,1 };
+        vps->splitting_flag = false;
+        memset(vps->m_scalabilityMask, 0, sizeof(vps->m_scalabilityMask));
+        memset(vps->m_layerIdInNuh, 0, sizeof(vps->m_layerIdInNuh));
+        memset(vps->m_layerIdInVps, 0, sizeof(vps->m_layerIdInVps));
+        memset(vps->m_dimensionIdLen, 0, sizeof(vps->m_dimensionIdLen));
+        vps->scalabilityTypes = 0;
+
+        vps->m_scalabilityMask[MULTIVIEW_SCALABILITY_IDX] = 1;
+        for (int i = 0; i < MAX_VPS_NUM_SCALABILITY_TYPES; i++)
+        {
+            vps->scalabilityTypes += vps->m_scalabilityMask[i];
+        }
+        while ((1 << dimIdLen) <= m_param->numViews)
+        {
+            dimIdLen++;
+        }
+        vps->m_dimensionIdLen[0] = dimIdLen;
+
+        for (uint8_t i = 1; i < m_param->numViews; i++)
+        {
+            vps->m_layerIdInNuh[i] = i;
+            vps->m_dimensionId[i][0] = i;
+            vps->m_layerIdInVps[vps->m_layerIdInNuh[i]] = i;
+            vps->m_dimensionId[i][1] = auxId[i];
+        }
+
+        while ((1 << auxDimIdLen) < (maxAuxId + 1))
+        {
+            auxDimIdLen++;
+        }
+        vps->m_dimensionIdLen[1] = auxDimIdLen;
+
+        vps->m_nuhLayerIdPresentFlag = 0;
+        vps->m_viewIdLen = 1;
+
+        vps->m_viewId[0] = 1;
+        vps->m_viewId[1] = 0;
+
         vps->m_vpsNumLayerSetsMinus1 = 1;
     }
 #endif
@@ -3535,6 +3590,16 @@ void Encoder::initSPS(SPS *sps)
 
     vui.timingInfo.numUnitsInTick = m_param->fpsDenom;
     vui.timingInfo.timeScale = m_param->fpsNum;
+
+#if ENABLE_MULTIVIEW
+    if (m_param->numViews > 1)
+    {
+        sps->sps_extension_flag = true;
+        sps->setSpsExtOrMaxSubLayersMinus1 = 7;
+        sps->maxViews = m_param->numViews;
+    }
+#endif
+
 }
 
 void Encoder::initPPS(PPS *pps)
@@ -3579,6 +3644,14 @@ void Encoder::initPPS(PPS *pps)
 
     pps->numRefIdxDefault[0] = 1;
     pps->numRefIdxDefault[1] = 1;
+
+#if ENABLE_MULTIVIEW
+    if (m_param->numViews > 1)
+    {
+        pps->pps_extension_flag = true;
+        pps->maxViews = m_param->numViews;
+    }
+#endif
 }
 
 void Encoder::configureZone(x265_param *p, x265_param *zone)

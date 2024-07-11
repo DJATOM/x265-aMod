@@ -74,6 +74,7 @@ namespace Profile {
         MAINSTILLPICTURE = 3,
         MAINREXT = 4,
         HIGHTHROUGHPUTREXT = 5,
+        MULTIVIEWMAIN = 6,
         SCALABLEMAIN = 7,
         SCALABLEMAIN10 = 8
     };
@@ -108,7 +109,11 @@ namespace Level {
 
 struct ProfileTierLevel
 {
+#if ENABLE_MULTIVIEW
+    int      profileIdc[MAX_VIEWS];
+#else
     int      profileIdc[MAX_SCALABLE_LAYERS];
+#endif
     int      levelIdc;
     uint32_t minCrForLevel;
     uint32_t maxLumaSrForLevel;
@@ -162,8 +167,9 @@ struct VPS
     uint32_t         maxDecPicBuffering[MAX_T_LAYERS];
     uint32_t         maxLatencyIncrease[MAX_T_LAYERS];
     int              m_numLayers;
+    int              m_numViews;
 
-#if ENABLE_ALPHA
+#if (ENABLE_ALPHA || ENABLE_MULTIVIEW)
     bool             splitting_flag;
     int              m_scalabilityMask[MAX_VPS_NUM_SCALABILITY_TYPES];
     int              scalabilityTypes;
@@ -175,6 +181,11 @@ struct VPS
     int              m_viewIdLen;
     int              m_vpsNumLayerSetsMinus1;
     bool             vps_extension_flag;
+#endif
+
+#if ENABLE_MULTIVIEW
+    int              m_viewId[MAX_VIEWS];
+    int              m_layerIdIncludedFlag;
 #endif
 };
 
@@ -270,6 +281,13 @@ struct SPS
     Window   conformanceWindow;
     VUI      vuiParameters;
 
+#if ENABLE_MULTIVIEW
+    bool     sps_extension_flag;
+    int      setSpsExtOrMaxSubLayersMinus1;
+    int      maxViews;
+    bool     vui_parameters_present_flag;
+#endif
+
     SPS()
     {
         memset(this, 0, sizeof(*this));
@@ -307,6 +325,12 @@ struct PPS
 
     int      numRefIdxDefault[2];
     bool     pps_slice_chroma_qp_offsets_present_flag;
+
+#if ENABLE_MULTIVIEW
+    bool     pps_extension_flag;
+    int      maxViews;
+#endif
+
 };
 
 struct WeightParam
