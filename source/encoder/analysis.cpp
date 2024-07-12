@@ -2501,7 +2501,7 @@ void Analysis::recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t q
                                 continue;
                             MV mvp;
 
-                            int numMvc = mode.cu.getPMV(mode.interNeighbours, list, ref, mode.amvpCand[list][ref], mvc);
+                            int numMvc = mode.cu.getPMV(mode.interNeighbours, list, ref, mode.amvpCand[list][ref], mvc, part, pu.puAbsPartIdx);
                             mvp = mode.amvpCand[list][ref][mode.cu.m_mvpIdx[list][pu.puAbsPartIdx]];
                             if (m_param->interRefine == 1)
                             {

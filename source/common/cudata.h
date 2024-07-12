@@ -107,6 +107,8 @@ struct InterNeighbourMV
     // Collocated right bottom CU addr.
     uint32_t cuAddr[2];
 
+    bool isAvailable;
+
     // For spatial prediction, this field contains the reference index
     // in each list (-1 if not available).
     //
@@ -272,7 +274,7 @@ public:
     int8_t   getRefQP(uint32_t currAbsIdxInCTU) const;
     uint32_t getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MVField (*candMvField)[2], uint8_t* candDir) const;
     void     clipMv(MV& outMV) const;
-    int      getPMV(InterNeighbourMV *neighbours, uint32_t reference_list, uint32_t refIdx, MV* amvpCand, MV* pmv) const;
+    int      getPMV(InterNeighbourMV* neighbours, uint32_t reference_list, uint32_t refIdx, MV* amvpCand, MV* pmv, uint32_t puIdx = 0, uint32_t absPartIdx = 0) const;
     void     getNeighbourMV(uint32_t puIdx, uint32_t absPartIdx, InterNeighbourMV* neighbours) const;
     void     getIntraTUQtDepthRange(uint32_t tuDepthRange[2], uint32_t absPartIdx) const;
     void     getInterTUQtDepthRange(uint32_t tuDepthRange[2], uint32_t absPartIdx) const;

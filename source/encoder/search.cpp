@@ -2092,7 +2092,7 @@ void Search::singleMotionEstimation(Search& master, Mode& interMode, const Predi
 
     // 12 mv candidates including lowresMV
     MV  mvc[(MD_ABOVE_LEFT + 1) * 2 + 2];
-    int numMvc = interMode.cu.getPMV(interMode.interNeighbours, list, ref, interMode.amvpCand[list][ref], mvc);
+    int numMvc = interMode.cu.getPMV(interMode.interNeighbours, list, ref, interMode.amvpCand[list][ref], mvc, 0, pu.puAbsPartIdx);
 
     const MV* amvp = interMode.amvpCand[list][ref];
     int mvpIdx = selectMVP(interMode.cu, pu, amvp, list, ref);
@@ -2246,7 +2246,7 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
                 uint32_t bits = m_listSelBits[list] + MVP_IDX_BITS;
                 bits += getTUBits(ref, numRefIdx[list]);
 
-                int numMvc = cu.getPMV(interMode.interNeighbours, list, ref, interMode.amvpCand[list][ref], mvc);
+                int numMvc = cu.getPMV(interMode.interNeighbours, list, ref, interMode.amvpCand[list][ref], mvc, puIdx, pu.puAbsPartIdx);
                 const MV* amvp = interMode.amvpCand[list][ref];
                 int mvpIdx = selectMVP(cu, pu, amvp, list, ref);
                 MV mvmin, mvmax, outmv, mvp;
@@ -2404,7 +2404,7 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
                     uint32_t bits = m_listSelBits[list] + MVP_IDX_BITS;
                     bits += getTUBits(ref, numRefIdx[list]);
 
-                    int numMvc = cu.getPMV(interMode.interNeighbours, list, ref, interMode.amvpCand[list][ref], mvc);
+                    int numMvc = cu.getPMV(interMode.interNeighbours, list, ref, interMode.amvpCand[list][ref], mvc, puIdx, pu.puAbsPartIdx);
 
                     const MV* amvp = interMode.amvpCand[list][ref];
                     int mvpIdx = selectMVP(cu, pu, amvp, list, ref);

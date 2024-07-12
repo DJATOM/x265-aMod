@@ -287,9 +287,29 @@ void DPB::prepareEncode(Frame *newFrame)
         /* TODO: the lookahead should be able to tell which reference picture
          * had the least motion residual.  We should be able to use that here to
          * select a colocation reference list and index */
-        slice->m_colFromL0Flag = false;
+
+        bool bLowDelay = true;
+        int  iCurrPOC = slice->m_poc;
+        int iRefIdx = 0;
+
+        for (iRefIdx = 0; iRefIdx < slice->m_numRefIdx[0] && bLowDelay; iRefIdx++)
+        {
+            if (slice->m_refPOCList[0][iRefIdx] > iCurrPOC)
+            {
+                bLowDelay = false;
+            }
+        }
+        for (iRefIdx = 0; iRefIdx < slice->m_numRefIdx[1] && bLowDelay; iRefIdx++)
+        {
+            if (slice->m_refPOCList[1][iRefIdx] > iCurrPOC)
+            {
+                bLowDelay = false;
+            }
+        }
+
+        slice->m_bCheckLDC = bLowDelay;
+        slice->m_colFromL0Flag = bLowDelay;
         slice->m_colRefIdx = 0;
-        slice->m_bCheckLDC = false;
     }
     else
     {
