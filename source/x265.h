@@ -643,6 +643,10 @@ typedef enum
 #define MAX_SCALABLE_LAYERS     1
 #endif
 
+#if ENABLE_ALPHA || ENABLE_MULTIVIEW
+#define MAX_LAYERS              2
+#endif
+
 #define X265_IPRATIO_STRENGTH   1.43
 
 typedef struct x265_cli_csp
@@ -2296,6 +2300,8 @@ typedef struct x265_param
 
     /*Multi View Encoding*/
     int      numViews;
+
+    int      numLayers;
 } x265_param;
 
 /* x265_param_alloc:

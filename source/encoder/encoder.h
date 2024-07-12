@@ -202,7 +202,7 @@ public:
     ThreadPool*        m_threadPool;
     FrameEncoder*      m_frameEncoder[X265_MAX_FRAME_THREADS];
     DPB*               m_dpb;
-    Frame*             m_exportedPic[MAX_SCALABLE_LAYERS];
+    Frame*             m_exportedPic[MAX_LAYERS];
     FILE*              m_analysisFileIn;
     FILE*              m_analysisFileOut;
     FILE*              m_naluFile;
@@ -217,10 +217,10 @@ public:
 
     bool               m_externalFlush;
     /* Collect statistics globally */
-    EncStats           m_analyzeAll[MAX_SCALABLE_LAYERS];
-    EncStats           m_analyzeI[MAX_SCALABLE_LAYERS];
-    EncStats           m_analyzeP[MAX_SCALABLE_LAYERS];
-    EncStats           m_analyzeB[MAX_SCALABLE_LAYERS];
+    EncStats           m_analyzeAll[MAX_LAYERS];
+    EncStats           m_analyzeI[MAX_LAYERS];
+    EncStats           m_analyzeP[MAX_LAYERS];
+    EncStats           m_analyzeB[MAX_LAYERS];
     VPS                m_vps;
     SPS                m_sps;
     PPS                m_pps;

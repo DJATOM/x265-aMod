@@ -83,7 +83,7 @@ public:
     void  destroy();
     int   getLumaBufLen(uint32_t picWidth, uint32_t picHeight, uint32_t picCsp);
 
-    void  copyFromPicture(const x265_picture&, const x265_param& param, int padx, int pady, bool isBase);
+    void  copyFromPicture(const x265_picture&, const x265_param& param, int padx, int pady, bool isBase = true);
     void  copyFromFrame(PicYuv* source);
 
     intptr_t getChromaAddrOffset(uint32_t ctuAddr, uint32_t absPartIdx) const { return m_cuOffsetC[ctuAddr] + m_buOffsetC[absPartIdx]; }

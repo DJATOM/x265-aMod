@@ -149,7 +149,7 @@ Encoder::Encoder()
     m_rpsInSpsCount = 0;
     m_cB = 1.0;
     m_cR = 1.0;
-    for (int i = 0; i < MAX_SCALABLE_LAYERS; i++)
+    for (int i = 0; i < MAX_LAYERS; i++)
         m_exportedPic[i] = NULL;
     for (int i = 0; i < X265_MAX_FRAME_THREADS; i++)
         m_frameEncoder[i] = NULL;
@@ -862,7 +862,7 @@ void Encoder::destroy()
         X265_FREE(m_rdCost);
         X265_FREE(m_trainingCount);
     }
-    for (int layer = 0; layer < m_param->numScalableLayers; layer++)
+    for (int layer = 0; layer < m_param->numLayers; layer++)
     {
         if (m_exportedPic[layer])
         {
@@ -1488,7 +1488,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture** pic_out)
         if (!m_param->bUseAnalysisFile && m_param->analysisSave)
             x265_free_analysis_data(m_param, &m_exportedPic[0]->m_analysisData);
 
-        for (int i = 0; i < m_param->numScalableLayers; i++)
+        for (int i = 0; i < m_param->numLayers; i++)
         {
             ATOMIC_DEC(&m_exportedPic[i]->m_countRefEncoders);
             m_exportedPic[i] = NULL;
@@ -1587,19 +1587,18 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture** pic_out)
         }
 
         x265_param* p = (m_reconfigure || m_reconfigureRc) ? m_latestParam : m_param;
-#if ENABLE_MULTIVIEW
-        Frame* inFrame[MAX_VIEWS];
-        for (int layer = 0; layer < m_param->numViews; layer++)
-#else
-        Frame* inFrame[MAX_SCALABLE_LAYERS];
-        for (int layer = 0; layer < m_param->numScalableLayers; layer++)
-#endif
+        Frame* inFrame[MAX_LAYERS];
+        for (int layer = 0; layer < m_param->numLayers; layer++)
         {
             if (m_dpb->m_freeList.empty())
             {
                 inFrame[layer] = new Frame;
                 inFrame[layer]->m_encodeStartTime = x265_mdate();
+#if ENABLE_MULTIVIEW
+                inFrame[layer]->m_viewId = layer;
+#else
                 inFrame[layer]->m_sLayerId = layer;
+#endif
                 inFrame[layer]->m_valid = false;
                 if (inFrame[layer]->create(p, inputPic[layer]->quantOffsets))
                 {
@@ -1670,10 +1669,43 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture** pic_out)
 #endif
                 inFrame[layer]->m_valid = false;
                 inFrame[layer]->m_lowres.bKeyframe = false;
+#if ENABLE_MULTIVIEW
+                //Destroy interlayer References
+                //TODO Move this to end(after compress frame)
+                if (inFrame[layer]->refPicSetInterLayer0.size())
+                {
+                    Frame* iterFrame = inFrame[layer]->refPicSetInterLayer0.first();
+
+                    while (iterFrame)
+                    {
+                        Frame* curFrame = iterFrame;
+                        iterFrame = iterFrame->m_nextSubDPB;
+                        inFrame[layer]->refPicSetInterLayer0.removeSubDPB(*curFrame);
+                        iterFrame = inFrame[layer]->refPicSetInterLayer0.first();
+                    }
+                }
+
+                if (inFrame[layer]->refPicSetInterLayer1.size())
+                {
+                    Frame* iterFrame = inFrame[layer]->refPicSetInterLayer1.first();
+
+                    while (iterFrame)
+                    {
+                        Frame* curFrame = iterFrame;
+                        iterFrame = iterFrame->m_nextSubDPB;
+                        inFrame[layer]->refPicSetInterLayer1.removeSubDPB(*curFrame);
+                        iterFrame = inFrame[layer]->refPicSetInterLayer1.first();
+                    }
+                }
+#endif
             }
 
             /* Copy input picture into a Frame and PicYuv, send to lookahead */
+#if ENABLE_ALPHA
             inFrame[layer]->m_fencPic->copyFromPicture(*inputPic[layer], *m_param, m_sps.conformanceWindow.rightOffset, m_sps.conformanceWindow.bottomOffset, !layer);
+#else
+            inFrame[layer]->m_fencPic->copyFromPicture(*inputPic[layer], *m_param, m_sps.conformanceWindow.rightOffset, m_sps.conformanceWindow.bottomOffset);
+#endif
 
             inFrame[layer]->m_poc = (!layer) ? (++m_pocLast) : m_pocLast;
             inFrame[layer]->m_userData = inputPic[0]->userData;
@@ -1919,7 +1951,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture** pic_out)
      * input picture before returning so the order must be reversed. This do/while() loop allows
      * us to alternate the order of the calls without ugly code replication */
     Frame** outFrames = { NULL };
-    Frame* frameEnc[MAX_SCALABLE_LAYERS] = { NULL };
+    Frame* frameEnc[MAX_LAYERS] = { NULL };
     int pass = 0;
     do
     {
@@ -1930,7 +1962,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture** pic_out)
             outFrames = curEncoder->getEncodedPicture(m_nalList);
         if (outFrames)
         {
-            for (int sLayer = 0; sLayer < m_param->numScalableLayers; sLayer++)
+            for (int sLayer = 0; sLayer < m_param->numLayers; sLayer++)
             {
                 Frame* outFrame = *(outFrames + sLayer);
                 Slice* slice = outFrame->m_encData->m_slice;
@@ -2163,7 +2195,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture** pic_out)
                 m_outputCount++;
                 if (m_param->chunkEnd == m_outputCount)
                     m_numDelayedPic = 0;
-                else if (outFrame->m_sLayerId == m_param->bEnableAlpha)
+                else if (sLayer == m_param->numLayers -1)
                     m_numDelayedPic--;
 
                 ret = 1;
@@ -2176,10 +2208,10 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture** pic_out)
             frameEnc[0] = m_lookahead->getDecidedPicture();
         if (frameEnc[0] && !pass && (!m_param->chunkEnd || (m_encodedFrameNum < m_param->chunkEnd)))
         {
+
 #if ENABLE_ALPHA || ENABLE_MULTIVIEW
             //Pop non base view pictures from DPB piclist
-            int numLayers = m_param->numViews > 1 ? m_param->numViews : (m_param->numScalableLayers > 1) ? m_param->numScalableLayers : 1;
-            for (int layer = 1; layer < numLayers; layer++)
+            for (int layer = 1; layer < m_param->numLayers; layer++)
             {
                 Frame* currentFrame = m_dpb->m_picList.getPOC(frameEnc[0]->m_poc, layer);
                 frameEnc[layer] = m_dpb->m_picList.removeFrame(*currentFrame);
@@ -2254,7 +2286,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture** pic_out)
             curEncoder->m_reconfigure = m_reconfigure;
 
             /* give this frame a FrameData instance before encoding */
-            for (int layer = 0; layer < m_param->numScalableLayers; layer++)
+            for (int layer = 0; layer < m_param->numLayers; layer++)
             {
                 if (m_dpb->m_frameDataFreeList)
                 {
@@ -2385,7 +2417,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture** pic_out)
                 }
             }
             /* determine references, setup RPS, etc */
-            for (int layer = 0; layer < m_param->numScalableLayers; layer++)
+            for (int layer = 0; layer < m_param->numLayers; layer++)
                 m_dpb->prepareEncode(frameEnc[layer]);
 
             if (m_param->bEnableTemporalFilter)
@@ -2407,7 +2439,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture** pic_out)
                 m_origPicBuffer->setOrigPicList(frameEnc[0], m_pocLast);
             }
 
-            for (int layer = 0; layer < m_param->numScalableLayers; layer++)
+            for (int layer = 0; layer < m_param->numLayers; layer++)
             {
                 if (!!m_param->selectiveSAO)
                 {
@@ -2762,7 +2794,7 @@ void Encoder::printSummary()
     if (m_param->logLevel < X265_LOG_INFO)
         return;
 
-    for (int layer = 0; layer < m_param->numScalableLayers; layer++)
+    for (int layer = 0; layer < m_param->numLayers; layer++)
     {
         char buffer[200];
         if (m_analyzeI[layer].m_numPics)
@@ -3316,11 +3348,7 @@ void Encoder::getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs)
     bs.writeByteAlignment();
     list.serialize(NAL_UNIT_VPS, bs);
 
-#if ENABLE_MULTIVIEW
-    for (int layer = 0; layer < m_param->numViews; layer++)
-#else
-    for (int layer = 0; layer < m_param->numScalableLayers; layer++)
-#endif
+    for (int layer = 0; layer < m_param->numLayers; layer++)
     {
         bs.resetBits();
         sbacCoder.codeSPS(m_sps, m_scalingList, m_vps.ptl, layer);
@@ -3328,11 +3356,7 @@ void Encoder::getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs)
         list.serialize(NAL_UNIT_SPS, bs, layer);
     }
 
-#if ENABLE_MULTIVIEW
-    for (int layer = 0; layer < m_param->numViews; layer++)
-#else
-    for (int layer = 0; layer < m_param->numScalableLayers; layer++)
-#endif
+    for (int layer = 0; layer < m_param->numLayers; layer++)
     {
         bs.resetBits();
         sbacCoder.codePPS(m_pps, (m_param->maxSlices <= 1), m_iPPSQpMinus26, layer);

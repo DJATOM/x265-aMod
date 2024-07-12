@@ -594,15 +594,10 @@ ret:
                 pic_in[view] = &pic_orig[view];
             /* Allocate recon picture if analysis save/load is enabled */
             std::priority_queue<int64_t>* pts_queue = m_cliopt.output->needPTS() ? new std::priority_queue<int64_t>() : NULL;
-#if ENABLE_MULTIVIEW
-            x265_picture* pic_recon[MAX_VIEWS];
-            x265_picture pic_out[MAX_VIEWS];
-            for (int i = 0; i < m_param->numViews; i++)
-#else
-            x265_picture* pic_recon[MAX_SCALABLE_LAYERS];
-            x265_picture pic_out[MAX_SCALABLE_LAYERS];
-            for (int i = 0; i < m_param->numScalableLayers; i++)
-#endif
+            x265_picture* pic_recon[MAX_LAYERS];
+            x265_picture pic_out[MAX_LAYERS];
+
+            for (int i = 0; i < m_param->numLayers; i++)
                 pic_recon[i] = (m_cliopt.recon[i] || m_param->analysisSave || m_param->analysisLoad || pts_queue || reconPlay || m_param->csvLogLevel) ? &pic_out[i] : NULL;
             uint32_t inFrameCount = 0;
             uint32_t outFrameCount = 0;
@@ -818,10 +813,10 @@ ret:
                         copyInfo(analysisInfo);
                     }
 
-                    for (int i = 0; i < m_param->numScalableLayers; i++)
+                    for (int layer = 0; layer < m_param->numLayers; layer++)
                     {
-                        if (numEncoded && pic_recon[i] && m_cliopt.recon[i])
-                            m_cliopt.recon[i]->writePicture(pic_out[i]);
+                        if (numEncoded && pic_recon[layer] && m_cliopt.recon[layer])
+                            m_cliopt.recon[layer]->writePicture(pic_out[layer]);
                     }
                     if (nal)
                     {
@@ -856,10 +851,10 @@ ret:
                     copyInfo(analysisInfo);
                 }
 
-                for (int i = 0; i < m_param->numScalableLayers; i++)
+                for (int layer = 0; layer < m_param->numLayers; layer++)
                 {
-                    if (numEncoded && pic_recon[i] && m_cliopt.recon[i])
-                        m_cliopt.recon[i]->writePicture(pic_out[i]);
+                    if (numEncoded && pic_recon[layer] && m_cliopt.recon[layer])
+                        m_cliopt.recon[layer]->writePicture(pic_out[layer]);
                 }
                 if (nal)
                 {

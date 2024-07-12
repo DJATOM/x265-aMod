@@ -603,7 +603,7 @@ fail:
 
     if (numEncoded && encoder->m_param->csvLogLevel && encoder->m_outputCount >= encoder->m_latestParam->chunkStart)
     {
-        for (int layer = 0; layer < encoder->m_param->numScalableLayers; layer++)
+        for (int layer = 0; layer < encoder->m_param->numLayers; layer++)
             x265_csvlog_frame(encoder->m_param, pic_out[layer]);
     }
 
@@ -656,10 +656,10 @@ void x265_encoder_log(x265_encoder* enc, int argc, char **argv)
     if (enc)
     {
         Encoder *encoder = static_cast<Encoder*>(enc);
-        x265_stats stats[MAX_SCALABLE_LAYERS];
+        x265_stats stats[MAX_LAYERS];
         int padx = encoder->m_sps.conformanceWindow.rightOffset;
         int pady = encoder->m_sps.conformanceWindow.bottomOffset;
-        for (int layer = 0; layer < encoder->m_param->numScalableLayers; layer++)
+        for (int layer = 0; layer < encoder->m_param->numLayers; layer++)
         {
             encoder->fetchStats(stats, sizeof(stats[layer]), layer);
             x265_csvlog_encode(encoder->m_param, &stats[0], padx, pady, argc, argv);

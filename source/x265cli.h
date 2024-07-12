@@ -401,7 +401,7 @@ static const struct option long_options[] =
     struct CLIOptions
     {
         InputFile* input[MAX_VIEWS];
-        ReconFile* recon[MAX_SCALABLE_LAYERS];
+        ReconFile* recon[MAX_LAYERS];
         OutputFile* output;
         FILE*       qpfile;
         FILE*       zoneFile;
@@ -443,7 +443,7 @@ static const struct option long_options[] =
         {
             for (int i = 0; i < MAX_VIEWS; i++)
                 input[i] = NULL;
-            for (int i = 0; i < MAX_SCALABLE_LAYERS; i++)
+            for (int i = 0; i < MAX_LAYERS; i++)
                 recon[i] = NULL;
             output = NULL;
             qpfile = NULL;

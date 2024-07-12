@@ -406,6 +406,8 @@ void x265_param_default(x265_param* param)
 
     /* Multi-View Encoding*/
     param->numViews = 1;
+
+    param->numLayers = 1;
 }
 
 int x265_param_default_preset(x265_param* param, const char* preset, const char* tune)
@@ -2916,6 +2918,7 @@ void x265_copy_params(x265_param* dst, x265_param* src)
 #if ENABLE_MULTIVIEW
     dst->numViews = src->numViews;
 #endif
+    dst->numLayers = src->numLayers;
 
     if (src->videoSignalTypePreset) dst->videoSignalTypePreset = strdup(src->videoSignalTypePreset);
     else dst->videoSignalTypePreset = NULL;

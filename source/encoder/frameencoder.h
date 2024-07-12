@@ -156,7 +156,7 @@ public:
     void destroy();
 
     /* triggers encode of a new frame by the worker thread */
-    bool startCompressFrame(Frame* curFrame[MAX_SCALABLE_LAYERS]);
+    bool startCompressFrame(Frame* curFrame[MAX_LAYERS]);
 
     /* blocks until worker thread is done, returns access unit */
     Frame **getEncodedPicture(NALList& list);
@@ -190,34 +190,34 @@ public:
     RateControlEntry         m_rce;
     SEIDecodedPictureHash    m_seiReconPictureDigest;
 
-    uint64_t                 m_SSDY[MAX_SCALABLE_LAYERS];
-    uint64_t                 m_SSDU[MAX_SCALABLE_LAYERS];
-    uint64_t                 m_SSDV[MAX_SCALABLE_LAYERS];
-    double                   m_ssim[MAX_SCALABLE_LAYERS];
-    uint64_t                 m_accessUnitBits[MAX_SCALABLE_LAYERS];
-    uint32_t                 m_ssimCnt[MAX_SCALABLE_LAYERS];
+    uint64_t                 m_SSDY[MAX_LAYERS];
+    uint64_t                 m_SSDU[MAX_LAYERS];
+    uint64_t                 m_SSDV[MAX_LAYERS];
+    double                   m_ssim[MAX_LAYERS];
+    uint64_t                 m_accessUnitBits[MAX_LAYERS];
+    uint32_t                 m_ssimCnt[MAX_LAYERS];
 
     volatile int             m_activeWorkerCount;        // count of workers currently encoding or filtering CTUs
     volatile int             m_totalActiveWorkerCount;   // sum of m_activeWorkerCount sampled at end of each CTU
     volatile int             m_activeWorkerCountSamples; // count of times m_activeWorkerCount was sampled (think vbv restarts)
     volatile int             m_countRowBlocks;           // count of workers forced to abandon a row because of top dependency
-    int64_t                  m_startCompressTime[MAX_SCALABLE_LAYERS];        // timestamp when frame encoder is given a frame
-    int64_t                  m_row0WaitTime[MAX_SCALABLE_LAYERS];             // timestamp when row 0 is allowed to start
-    int64_t                  m_allRowsAvailableTime[MAX_SCALABLE_LAYERS];     // timestamp when all reference dependencies are resolved
-    int64_t                  m_endCompressTime[MAX_SCALABLE_LAYERS];          // timestamp after all CTUs are compressed
-    int64_t                  m_endFrameTime[MAX_SCALABLE_LAYERS];             // timestamp after RCEnd, NR updates, etc
-    int64_t                  m_stallStartTime[MAX_SCALABLE_LAYERS];           // timestamp when worker count becomes 0
-    int64_t                  m_prevOutputTime[MAX_SCALABLE_LAYERS];           // timestamp when prev frame was retrieved by API thread
-    int64_t                  m_slicetypeWaitTime[MAX_SCALABLE_LAYERS];        // total elapsed time waiting for decided frame
-    int64_t                  m_totalWorkerElapsedTime[MAX_SCALABLE_LAYERS];   // total elapsed time spent by worker threads processing CTUs
-    int64_t                  m_totalNoWorkerTime[MAX_SCALABLE_LAYERS];        // total elapsed time without any active worker threads
+    int64_t                  m_startCompressTime[MAX_LAYERS];        // timestamp when frame encoder is given a frame
+    int64_t                  m_row0WaitTime[MAX_LAYERS];             // timestamp when row 0 is allowed to start
+    int64_t                  m_allRowsAvailableTime[MAX_LAYERS];     // timestamp when all reference dependencies are resolved
+    int64_t                  m_endCompressTime[MAX_LAYERS];          // timestamp after all CTUs are compressed
+    int64_t                  m_endFrameTime[MAX_LAYERS];             // timestamp after RCEnd, NR updates, etc
+    int64_t                  m_stallStartTime[MAX_LAYERS];           // timestamp when worker count becomes 0
+    int64_t                  m_prevOutputTime[MAX_LAYERS];           // timestamp when prev frame was retrieved by API thread
+    int64_t                  m_slicetypeWaitTime[MAX_LAYERS];        // total elapsed time waiting for decided frame
+    int64_t                  m_totalWorkerElapsedTime[MAX_LAYERS];   // total elapsed time spent by worker threads processing CTUs
+    int64_t                  m_totalNoWorkerTime[MAX_LAYERS];        // total elapsed time without any active worker threads
 #if DETAILED_CU_STATS
     CUStats                  m_cuStats;
 #endif
 
     Encoder*                 m_top;
     x265_param*              m_param;
-    Frame*                   m_frame[MAX_SCALABLE_LAYERS];
+    Frame*                   m_frame[MAX_LAYERS];
     Frame**                  m_retFrameBuffer;
     NoiseReduction*          m_nr;
     ThreadLocalData*         m_tld; /* for --no-wpp */

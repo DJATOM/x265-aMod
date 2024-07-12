@@ -328,6 +328,13 @@ void DPB::computeRPS(int curPoc, int tempId, bool isRAP, RPS * rps, unsigned int
         {
             if ((!m_bTemporalSublayer || (iterPic->m_tempLayer <= tempId)) && ((m_lastIDR >= curPoc) || (m_lastIDR <= iterPic->m_poc)))
             {
+#if ENABLE_MULTIVIEW
+                    if (layer && numNeg == iterPic->m_param->maxNumReferences - 1 && (iterPic->m_poc - curPoc) < 0)
+                    {
+                        iterPic = iterPic->m_next;
+                        continue;
+                    }
+#endif
                     rps->poc[poci] = iterPic->m_poc;
                     rps->deltaPOC[poci] = rps->poc[poci] - curPoc;
                     (rps->deltaPOC[poci] < 0) ? numNeg++ : numPos++;

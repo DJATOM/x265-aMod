@@ -58,7 +58,7 @@ FrameEncoder::FrameEncoder()
     m_ctuGeomMap = NULL;
     m_localTldIdx = 0;
     memset(&m_rce, 0, sizeof(RateControlEntry));
-    for (int layer = 0; layer < MAX_SCALABLE_LAYERS; layer++)
+    for (int layer = 0; layer < MAX_LAYERS; layer++)
     {
         m_prevOutputTime[layer] = x265_mdate();
         m_slicetypeWaitTime[layer] = 0;
@@ -220,8 +220,8 @@ bool FrameEncoder::init(Encoder *top, int numRows, int numCols)
             ok &= !!m_frameEncTF->createRefPicInfo(&m_mcstfRefList[i], m_param);
     }
 
-    m_retFrameBuffer = X265_MALLOC(Frame*, m_param->numScalableLayers);
-    for (int layer = 0; layer < m_param->numScalableLayers; layer++)
+    m_retFrameBuffer = X265_MALLOC(Frame*, m_param->numLayers);
+    for (int layer = 0; layer < m_param->numLayers; layer++)
         m_retFrameBuffer[layer] = NULL;
     return ok;
 }
@@ -289,9 +289,9 @@ bool FrameEncoder::initializeGeoms()
     return true;
 }
 
-bool FrameEncoder::startCompressFrame(Frame* curFrame[MAX_SCALABLE_LAYERS])
+bool FrameEncoder::startCompressFrame(Frame* curFrame[MAX_LAYERS])
 {
-    for (int layer = 0; layer < m_param->numScalableLayers; layer++)
+    for (int layer = 0; layer < m_param->numLayers; layer++)
     {
         m_slicetypeWaitTime[layer] = x265_mdate() - m_prevOutputTime[layer];
         m_frame[layer] = curFrame[layer];
@@ -374,7 +374,7 @@ void FrameEncoder::threadMain()
                 m_frame[0]->m_copyMVType.wait();
         }
 
-        for(int layer = 0; layer < m_param->numScalableLayers; layer ++)
+        for (int layer = 0; layer < m_param->numLayers; layer++)
             compressFrame(layer);
         m_done.trigger(); /* FrameEncoder::getEncodedPicture() blocks for this event */
         m_enable.wait();
@@ -2282,7 +2282,7 @@ Frame** FrameEncoder::getEncodedPicture(NALList& output)
         /* block here until worker thread completes */
         m_done.wait();
 
-        for (int i = 0; i < m_param->numScalableLayers; i++)
+        for (int i = 0; i < m_param->numLayers; i++)
         {
             m_retFrameBuffer[i] = m_frame[i];
             m_frame[i] = NULL;

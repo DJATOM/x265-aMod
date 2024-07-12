@@ -29,7 +29,31 @@
 
 using namespace X265_NS;
 
-void Slice::setRefPicList(PicList& picList, int sLayerId)
+#if ENABLE_MULTIVIEW
+void Slice::createInterLayerReferencePictureSet(PicList& picList, PicList& refPicSetInterLayer0, PicList& refPicSetInterLayer1)
+{
+
+    for (int i = 0; i < 1; i++)
+    {
+        int layerIdRef = 0;// getRefPicLayerId(i);
+        Frame* refPic = picList.getPOC(m_poc, 0);
+        int viewIdCur = 0;
+        int viewIdZero = 1;
+        int viewIdRef = 1;
+
+        if ((viewIdCur <= viewIdZero && viewIdCur <= viewIdRef) || (viewIdCur >= viewIdZero && viewIdCur >= viewIdRef))
+        {
+            refPicSetInterLayer0.pushBackSubDPB(*refPic);
+        }
+        else
+        {
+            refPicSetInterLayer1.pushBackSubDPB(*refPic);
+        }
+    }
+}
+#endif
+
+void Slice::setRefPicList(PicList& picList, PicList& refPicSetInterLayer0, PicList& refPicSetInterLayer1, int sLayerId)
 {
     if (m_sliceType == I_SLICE)
     {
@@ -75,17 +99,33 @@ void Slice::setRefPicList(PicList& picList, int sLayerId)
     // ref_pic_list_init
     Frame* rpsCurrList0[MAX_NUM_REF + 1];
     Frame* rpsCurrList1[MAX_NUM_REF + 1];
+#if ENABLE_MULTIVIEW
+    int numPocTotalCurr = numPocStCurr0 + numPocStCurr1 + numPocLtCurr + refPicSetInterLayer0.size() + refPicSetInterLayer1.size();
+#else
     int numPocTotalCurr = numPocStCurr0 + numPocStCurr1 + numPocLtCurr;
+#endif
 
     int cIdx = 0;
     for (i = 0; i < numPocStCurr0; i++, cIdx++)
         rpsCurrList0[cIdx] = refPicSetStCurr0[i];
+
+#if ENABLE_MULTIVIEW
+    if (m_param->numViews > 1)
+        for (i = 0; i < refPicSetInterLayer0.size(); i++, cIdx++)
+            rpsCurrList0[cIdx] = refPicSetInterLayer0.getPOC(m_poc, 0);
+#endif
 
     for (i = 0; i < numPocStCurr1; i++, cIdx++)
         rpsCurrList0[cIdx] = refPicSetStCurr1[i];
 
     for (i = 0; i < numPocLtCurr; i++, cIdx++)
         rpsCurrList0[cIdx] = refPicSetLtCurr[i];
+
+#if ENABLE_MULTIVIEW
+    if (m_param->numViews > 1)
+        for (i = 0; i < refPicSetInterLayer1.size(); i++, cIdx++)
+            rpsCurrList0[cIdx] = refPicSetInterLayer1.getPOC(m_poc, 0);
+#endif
 
     X265_CHECK(cIdx == numPocTotalCurr, "RPS index check fail\n");
 
@@ -95,11 +135,23 @@ void Slice::setRefPicList(PicList& picList, int sLayerId)
         for (i = 0; i < numPocStCurr1; i++, cIdx++)
             rpsCurrList1[cIdx] = refPicSetStCurr1[i];
 
+#if ENABLE_MULTIVIEW
+        if (m_param->numViews > 1)
+            for (i = 0; i < refPicSetInterLayer1.size(); i++, cIdx++)
+                rpsCurrList1[cIdx] = refPicSetInterLayer1.getPOC(m_poc, 0);
+#endif
+
         for (i = 0; i < numPocStCurr0; i++, cIdx++)
             rpsCurrList1[cIdx] = refPicSetStCurr0[i];
 
         for (i = 0; i < numPocLtCurr; i++, cIdx++)
             rpsCurrList1[cIdx] = refPicSetLtCurr[i];
+
+#if ENABLE_MULTIVIEW
+        if (m_param->numViews > 1)
+            for (i = 0; i < refPicSetInterLayer0.size(); i++, cIdx++)
+                rpsCurrList1[cIdx] = refPicSetInterLayer0.getPOC(m_poc, 0);
+#endif
 
         X265_CHECK(cIdx == numPocTotalCurr, "RPS index check fail\n");
     }
@@ -109,6 +161,9 @@ void Slice::setRefPicList(PicList& picList, int sLayerId)
         cIdx = rIdx % numPocTotalCurr;
         X265_CHECK(cIdx >= 0 && cIdx < numPocTotalCurr, "RPS index check fail\n");
         m_refFrameList[0][rIdx] = rpsCurrList0[cIdx];
+#if ENABLE_MULTIVIEW
+        m_refFrameList[0][rIdx] = rpsCurrList0[cIdx];
+#endif
     }
 
     if (m_sliceType != B_SLICE)
@@ -123,6 +178,9 @@ void Slice::setRefPicList(PicList& picList, int sLayerId)
             cIdx = rIdx % numPocTotalCurr;
             X265_CHECK(cIdx >= 0 && cIdx < numPocTotalCurr, "RPS index check fail\n");
             m_refFrameList[1][rIdx] = rpsCurrList1[cIdx];
+#if ENABLE_MULTIVIEW
+            m_refFrameList[1][rIdx] = rpsCurrList1[cIdx];
+#endif
         }
     }
 

@@ -109,11 +109,7 @@ namespace Level {
 
 struct ProfileTierLevel
 {
-#if ENABLE_MULTIVIEW
-    int      profileIdc[MAX_VIEWS];
-#else
-    int      profileIdc[MAX_SCALABLE_LAYERS];
-#endif
+    int      profileIdc[MAX_LAYERS];
     int      levelIdc;
     uint32_t minCrForLevel;
     uint32_t maxLumaSrForLevel;
@@ -425,7 +421,10 @@ public:
 
     void disableWeights();
 
-    void setRefPicList(PicList& picList, int sLayerId);
+    void setRefPicList(PicList& picList, PicList& refPicSetInterLayer0, PicList& refPicSetInterLayer1, int viewId);
+#if ENABLE_MULTIVIEW
+    void createInterLayerReferencePictureSet(PicList& picList, PicList& refPicSetInterLayer0, PicList& refPicSetInterLayer1);
+#endif
 
     bool getRapPicFlag() const
     {

@@ -429,7 +429,7 @@ namespace X265_NS {
                 input[i]->release();
             input[i] = NULL;
         }
-        for (int i = 0; i < MAX_SCALABLE_LAYERS; i++)
+        for (int i = 0; i < MAX_LAYERS; i++)
         {
             if (recon[i])
                 recon[i]->release();
@@ -595,7 +595,7 @@ namespace X265_NS {
         {
             inputfn[view] = X265_MALLOC(char, sizeof(char) * 1024);
         }
-        const char* reconfn[MAX_SCALABLE_LAYERS] = { NULL };
+        const char* reconfn[MAX_LAYERS] = { NULL };
         const char *outputfn = NULL;
         const char *preset = NULL;
         const char *tune = NULL;
@@ -831,6 +831,7 @@ namespace X265_NS {
             }
         }
 #endif
+        param->numLayers = param->numViews > 1 ? param->numViews : (param->numScalableLayers > 1) ? param->numScalableLayers : 1;
         if (!outputfn)
         {
             x265_log(param, X265_LOG_ERROR, "input or output file not specified, try --help for help\n");
@@ -967,13 +968,13 @@ namespace X265_NS {
         {
             if (reconFileBitDepth == 0)
                 reconFileBitDepth = param->internalBitDepth;
-#if ENABLE_ALPHA
-            if (param->bEnableAlpha)
+#if ENABLE_ALPHA || ENABLE_MULTIVIEW
+            if (param->bEnableAlpha || param->numViews > 1)
             {
                 char* temp = new char[strlen(reconfn[0])];
                 strcpy(temp, reconfn[0]);
                 const char* token = strtok(temp, ".");
-                for (int view = 0; view < param->numScalableLayers; view++)
+                for (int view = 0; view < param->numLayers; view++)
                 {
                     char* buf = new char[strlen(temp) + 7];
                     sprintf(buf, "%s-%d.yuv", token, view);
@@ -981,7 +982,7 @@ namespace X265_NS {
                 }
             }
 #endif
-            for (int i = 0; i < param->numScalableLayers; i++)
+            for (int i = 0; i < param->numLayers; i++)
             {
                 this->recon[i] = ReconFile::open(reconfn[i], param->sourceWidth, param->sourceHeight, reconFileBitDepth,
                     param->fpsNum, param->fpsDenom, param->internalCsp, param->sourceBitDepth);

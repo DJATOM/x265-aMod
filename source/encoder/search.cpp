@@ -2102,7 +2102,8 @@ void Search::singleMotionEstimation(Search& master, Mode& interMode, const Predi
     if (!m_param->analysisSave && !m_param->analysisLoad) /* Prevents load/save outputs from diverging if lowresMV is not available */
     {
         MV lmv = getLowresMV(interMode.cu, pu, list, ref);
-        if (lmv.notZero() && !m_frame->m_sLayerId)
+        int layer = m_param->numViews > 1 ? m_frame->m_viewId : (m_param->numScalableLayers > 1) ? m_frame->m_sLayerId : 0;
+        if (lmv.notZero() && !layer)
             mvc[numMvc++] = lmv;
         if (m_param->bEnableHME)
             mvp_lowres = lmv;
@@ -2413,7 +2414,8 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
                     if (!m_param->analysisSave && !m_param->analysisLoad) /* Prevents load/save outputs from diverging when lowresMV is not available */
                     {
                         MV lmv = getLowresMV(cu, pu, list, ref);
-                        if (lmv.notZero() && !m_frame->m_sLayerId)
+                        int layer = m_param->numViews > 1 ? m_frame->m_viewId : (m_param->numScalableLayers > 1) ? m_frame->m_sLayerId : 0;
+                        if (lmv.notZero() && !layer)
                             mvc[numMvc++] = lmv;
                         if (m_param->bEnableHME)
                             mvp_lowres = lmv;
