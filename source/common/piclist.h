@@ -50,10 +50,16 @@ public:
     /** Push picture to end of the list */
     void pushBack(Frame& pic);
     void pushBackMCSTF(Frame& pic);
+#if ENABLE_MULTIVIEW
+    void pushBackSubDPB(Frame& pic);
+#endif
 
     /** Push picture to beginning of the list */
     void pushFront(Frame& pic);
     void pushFrontMCSTF(Frame& pic);
+#if ENABLE_MULTIVIEW
+    Frame* popFrontSubDPB();
+#endif
 
     /** Pop picture from end of the list */
     Frame* popBack();
@@ -77,6 +83,10 @@ public:
     Frame* removeFrame(Frame& pic);
     /* Remove MCSTF picture from list */
     void removeMCSTF(Frame& pic);
+#if ENABLE_MULTIVIEW
+    /** Remove picture from Sub list */
+    void removeSubDPB(Frame& pic);
+#endif
 
     Frame* first()        { return m_start;   }
 

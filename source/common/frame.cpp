@@ -75,6 +75,11 @@ Frame::Frame()
 
     m_tempLayer = 0;
     m_sameLayerRefPic = false;
+
+    m_viewId = 0;
+    m_valid = 0;
+    m_nextSubDPB = NULL;
+    m_prevSubDPB = NULL;
 }
 
 bool Frame::create(x265_param *param, float* quantOffsets)
@@ -243,6 +248,35 @@ void Frame::destroy()
         delete m_encData;
         m_encData = NULL;
     }
+
+#if ENABLE_MULTIVIEW
+    //Destroy interlayer References
+    if (refPicSetInterLayer0.size())
+    {
+        Frame* iterFrame = refPicSetInterLayer0.first();
+
+        while (iterFrame)
+        {
+            Frame* curFrame = iterFrame;
+            iterFrame = iterFrame->m_nextSubDPB;
+            refPicSetInterLayer0.removeSubDPB(*curFrame);
+            iterFrame = refPicSetInterLayer0.first();
+        }
+    }
+
+    if (refPicSetInterLayer1.size())
+    {
+        Frame* iterFrame = refPicSetInterLayer1.first();
+
+        while (iterFrame)
+        {
+            Frame* curFrame = iterFrame;
+            iterFrame = iterFrame->m_nextSubDPB;
+            refPicSetInterLayer1.removeSubDPB(*curFrame);
+            iterFrame = refPicSetInterLayer1.first();
+        }
+    }
+#endif
 
     if (m_fencPic)
     {

@@ -1663,7 +1663,11 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture** pic_out)
                 inFrame[layer]->m_isInsideWindow = 0;
                 inFrame[layer]->m_tempLayer = 0;
                 inFrame[layer]->m_sameLayerRefPic = 0;
+#if ENABLE_MULTIVIEW
+                inFrame[layer]->m_viewId = layer;
+#else
                 inFrame[layer]->m_sLayerId = layer;
+#endif
                 inFrame[layer]->m_valid = false;
                 inFrame[layer]->m_lowres.bKeyframe = false;
             }
@@ -1893,6 +1897,12 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture** pic_out)
         if(m_param->numScalableLayers > 1)
             m_dpb->m_picList.pushBack(*inFrame[1]); /* Add enhancement layer to DPB to be used later in frameencoder*/
 #endif
+
+#if ENABLE_MULTIVIEW
+        for (int view = 1; view < m_param->numViews; view++)
+            m_dpb->m_picList.pushBack(*inFrame[view]);
+#endif
+
         m_numDelayedPic++;
     }
     else if (m_latestParam->forceFlush == 2)
@@ -2166,13 +2176,19 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture** pic_out)
             frameEnc[0] = m_lookahead->getDecidedPicture();
         if (frameEnc[0] && !pass && (!m_param->chunkEnd || (m_encodedFrameNum < m_param->chunkEnd)))
         {
-#if ENABLE_ALPHA
+#if ENABLE_ALPHA || ENABLE_MULTIVIEW
             //Pop non base view pictures from DPB piclist
-            for (int layer = 1; layer < m_param->numScalableLayers; layer++)
+            int numLayers = m_param->numViews > 1 ? m_param->numViews : (m_param->numScalableLayers > 1) ? m_param->numScalableLayers : 1;
+            for (int layer = 1; layer < numLayers; layer++)
             {
                 Frame* currentFrame = m_dpb->m_picList.getPOC(frameEnc[0]->m_poc, layer);
                 frameEnc[layer] = m_dpb->m_picList.removeFrame(*currentFrame);
+#if ENABLE_ALPHA
                 frameEnc[layer]->m_lowres.sliceType = frameEnc[0]->m_lowres.sliceType;
+#else
+                int baseViewType = frameEnc[0]->m_lowres.sliceType;
+                frameEnc[layer]->m_lowres.sliceType = IS_X265_TYPE_I(baseViewType) ? X265_TYPE_P : baseViewType;
+#endif
             }
 #endif
 

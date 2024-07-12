@@ -88,6 +88,9 @@ public:
     PicYuv*                m_fencPicSubsampled2;
     PicYuv*                m_fencPicSubsampled4;
 
+    PicList                refPicSetInterLayer0;
+    PicList                refPicSetInterLayer1;
+
     int                    m_poc;
     int                    m_encodeOrder;
     int                    m_gopOffset;
@@ -163,6 +166,10 @@ public:
 
     int                    m_sLayerId;
     bool                   m_valid;
+
+    int                    m_viewId;
+    Frame*                 m_nextSubDPB;           // PicList doubly linked list pointers
+    Frame*                 m_prevSubDPB;
 
     Frame();
 
