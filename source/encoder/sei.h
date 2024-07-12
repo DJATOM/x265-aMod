@@ -224,6 +224,193 @@ public:
 };
 #endif
 
+#if ENABLE_MULTIVIEW
+class SEIThreeDimensionalReferenceDisplaysInfo : public SEI
+{
+public:
+    SEIThreeDimensionalReferenceDisplaysInfo()
+    {
+        m_payloadType = THREE_DIMENSIONAL_REFERENCE_DISPLAYS_INFO;
+        m_payloadSize = 0;
+    }
+
+    int  m_numRefDisplaysMinus1 = 0;
+    bool m_refViewingDistanceFlag = false;
+    bool m_additionalShiftPresentFlag = false;
+    void writeSEI(const SPS&)
+    {
+        WRITE_UVLC(31, "prec_ref_display_width");
+        WRITE_FLAG(m_refViewingDistanceFlag, "ref_viewing_distance_flag");
+        if (m_refViewingDistanceFlag)
+        {
+            WRITE_UVLC(0, "prec_ref_viewing_dist");
+        }
+        WRITE_UVLC(0, "num_ref_displays_minus1");
+        for (int i = 0; i <= m_numRefDisplaysMinus1; i++)
+        {
+            WRITE_UVLC(0, "left_view_id");
+            WRITE_UVLC(1, "right_view_id");
+            WRITE_CODE(0, 6, "exponent_ref_display_width");
+            WRITE_CODE(0, 2, "mantissa_ref_display_width");
+            if (m_refViewingDistanceFlag)
+            {
+                WRITE_CODE(0, 6, "exponent_ref_viewing_distance");
+                WRITE_CODE(0, 1, "mantissa_ref_viewing_distance");
+            }
+            WRITE_FLAG(m_additionalShiftPresentFlag, "additional_shift_present_flag");
+            if (m_additionalShiftPresentFlag)
+            {
+                WRITE_CODE(0, 10, "num_sample_shift_plus512");
+            }
+        }
+        WRITE_FLAG(0, "three_dimensional_reference_displays_extension_flag");
+
+        if (m_bitIf->getNumberOfWrittenBits() % X265_BYTE != 0)
+        {
+            WRITE_FLAG(1, "payload_bit_equal_to_one");
+            while (m_bitIf->getNumberOfWrittenBits() % X265_BYTE != 0)
+            {
+                WRITE_FLAG(0, "payload_bit_equal_to_zero");
+            }
+        }
+    }
+
+};
+
+class SEIMultiviewSceneInfo : public SEI
+{
+public:
+    SEIMultiviewSceneInfo()
+    {
+        m_payloadType = MULTIVIEW_SCENE_INFO;
+        m_payloadSize = 0;
+    }
+    void writeSEI(const SPS&)
+    {
+        WRITE_SVLC(-333, "min_disparity");
+        WRITE_UVLC(2047, "max_disparity_range");
+
+        if (m_bitIf->getNumberOfWrittenBits() % X265_BYTE != 0)
+        {
+            WRITE_FLAG(1, "payload_bit_equal_to_one");
+            while (m_bitIf->getNumberOfWrittenBits() % X265_BYTE != 0)
+            {
+                WRITE_FLAG(0, "payload_bit_equal_to_zero");
+            }
+        }
+    }
+};
+
+class SEIMultiviewAcquisitionInfo : public SEI
+{
+public:
+    SEIMultiviewAcquisitionInfo()
+    {
+        m_payloadType = MULTIVIEW_ACQUISITION_INFO;
+        m_payloadSize = 0;
+    }
+
+    int sign_r[3][3] = { {0,1,0},{1,0,0},{0,1,1} };
+    int exponent_r[3][3] = { {10,20,11},{10,5,11},{2,20,11} };
+    int mantissa_r[3][3] = { {4,9,1},{0,3,4},{3,3,7} };
+    int sign_t[1][3] = { 0,1,0 };
+    int exponent_t[1][3] = { 0,10,5 };
+    int mantissa_t[1][3] = { 1,8,9 };
+    int lenght_mantissa_r[3][3] = { {10,20,11},{10,5,11},{2,20,11} };
+    int length_mantissa_t[1][3] = { 1,10,5 };
+    bool m_intrinsicParamFlag = true;
+    bool m_extrinsicParamFlag = true;
+    bool m_intrinsicParamsEqualFlag = true;
+    void writeSEI(const SPS& sps)
+    {
+        WRITE_FLAG(m_intrinsicParamFlag, "intrinsic_param_flag");
+        WRITE_FLAG(m_extrinsicParamFlag, "extrinsic_param_flag");
+        if (m_intrinsicParamFlag)
+        {
+            WRITE_FLAG(m_intrinsicParamsEqualFlag, "intrinsic_params_equal_flag");
+            WRITE_UVLC(31, "prec_focal_length");
+            WRITE_UVLC(31, "prec_principal_point");
+            WRITE_UVLC(31, "prec_skew_factor");
+
+            for (int i = 0; i <= (m_intrinsicParamsEqualFlag ? 0 : sps.maxViews - 1); i++)
+            {
+                WRITE_FLAG(0, "sign_focal_length_x");
+                WRITE_CODE(0, 6, "exponent_focal_length_x");
+                WRITE_CODE(0, 1, "mantissa_focal_length_x");
+                WRITE_FLAG(0, "sign_focal_length_y");
+                WRITE_CODE(0, 6, "exponent_focal_length_y");
+                WRITE_CODE(0, 1, "mantissa_focal_length_y");
+                WRITE_FLAG(0, "sign_principal_point_x");
+                WRITE_CODE(0, 6, "exponent_principal_point_x");
+                WRITE_CODE(0, 1, "mantissa_principal_point_x");
+                WRITE_FLAG(0, "sign_principal_point_y");
+                WRITE_CODE(0, 6, "exponent_principal_point_y");
+                WRITE_CODE(0, 1, "mantissa_principal_point_y");
+                WRITE_FLAG(0, "sign_skew_factor");
+                WRITE_CODE(0, 6, "exponent_skew_factor");
+                WRITE_CODE(0, 1, "mantissa_skew_factor");
+            }
+        }
+
+        if (m_extrinsicParamFlag)
+        {
+            WRITE_UVLC(31, "prec_rotation_param");
+            WRITE_UVLC(31, "prec_translation_param");
+            for (int i = 0; i <= 0; i++)
+            {
+                for (int j = 0; j <= 2; j++)  /* row */
+                {
+                    for (int k = 0; k <= 2; k++)  /* column */
+                    {
+                        WRITE_FLAG(sign_r[j][k], "sign_r");
+                        WRITE_CODE(exponent_r[j][k], 6, "exponent_r");
+                        WRITE_CODE(mantissa_r[j][k], lenght_mantissa_r[j][k], "mantissa_r");
+                    }
+                    WRITE_FLAG(sign_t[i][j], "sign_t");
+                    WRITE_CODE(exponent_t[i][j], 6, "exponent_t");
+                    WRITE_CODE(mantissa_t[i][j], length_mantissa_t[i][j], "mantissa_t");
+                }
+            }
+        }
+        if (m_bitIf->getNumberOfWrittenBits() % X265_BYTE != 0)
+        {
+            WRITE_FLAG(1, "payload_bit_equal_to_one");
+            while (m_bitIf->getNumberOfWrittenBits() % X265_BYTE != 0)
+            {
+                WRITE_FLAG(0, "payload_bit_equal_to_zero");
+            }
+        }
+    }
+};
+
+class SEIMultiviewViewPosition : public SEI
+{
+public:
+    SEIMultiviewViewPosition()
+    {
+        m_payloadType = MULTIVIEW_VIEW_POSITION;
+        m_payloadSize = 0;
+    }
+    void writeSEI(const SPS& sps)
+    {
+        WRITE_UVLC(sps.maxViews - 1, "num_views_minus1");
+        for (int i = 0; i <= sps.maxViews - 1; i++)
+        {
+            WRITE_UVLC(!i, "view_position");
+        }
+
+        if (m_bitIf->getNumberOfWrittenBits() % X265_BYTE != 0)
+        {
+            WRITE_FLAG(1, "payload_bit_equal_to_one");
+            while (m_bitIf->getNumberOfWrittenBits() % X265_BYTE != 0)
+            {
+                WRITE_FLAG(0, "payload_bit_equal_to_zero");
+            }
+        }
+    }
+};
+#endif
+
 class SEIMasteringDisplayColorVolume : public SEI
 {
 public:

@@ -372,6 +372,10 @@ typedef enum
     CONTENT_LIGHT_LEVEL_INFO             = 144,
     ALTERNATIVE_TRANSFER_CHARACTERISTICS = 147,
     ALPHA_CHANNEL_INFO                   = 165,
+    THREE_DIMENSIONAL_REFERENCE_DISPLAYS_INFO = 176,
+    MULTIVIEW_SCENE_INFO                 = 178,
+    MULTIVIEW_ACQUISITION_INFO           = 179,
+    MULTIVIEW_VIEW_POSITION              = 180
 } SEIPayloadType;
 
 typedef struct x265_sei_payload

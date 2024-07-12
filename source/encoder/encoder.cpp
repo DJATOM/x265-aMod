@@ -3373,6 +3373,24 @@ void Encoder::getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs)
     }
 #endif
 
+
+#if ENABLE_MULTIVIEW
+    if (m_param->numViews > 1)
+    {
+        SEIThreeDimensionalReferenceDisplaysInfo m_multiview_1;
+        m_multiview_1.writeSEImessages(bs, m_sps, NAL_UNIT_PREFIX_SEI, list, m_param->bSingleSeiNal, 0);
+
+        SEIMultiviewSceneInfo m_multiview_2;
+        m_multiview_2.writeSEImessages(bs, m_sps, NAL_UNIT_PREFIX_SEI, list, m_param->bSingleSeiNal, 0);
+
+        SEIMultiviewAcquisitionInfo m_multiview_3;
+        m_multiview_3.writeSEImessages(bs, m_sps, NAL_UNIT_PREFIX_SEI, list, m_param->bSingleSeiNal, 0);
+
+        SEIMultiviewViewPosition m_multiview_4;
+        m_multiview_4.writeSEImessages(bs, m_sps, NAL_UNIT_PREFIX_SEI, list, m_param->bSingleSeiNal, 0);
+    }
+#endif
+
     if (m_param->bSingleSeiNal)
         bs.resetBits();
 
