@@ -2109,16 +2109,17 @@ void Search::singleMotionEstimation(Search& master, Mode& interMode, const Predi
             mvp_lowres = lmv;
     }
 
+    m_vertRestriction = interMode.cu.m_slice->m_refPOCList[list][ref] == interMode.cu.m_slice->m_poc;
     setSearchRange(interMode.cu, mvp, m_param->searchRange, mvmin, mvmax);
 
-    int satdCost = m_me.motionEstimate(&m_slice->m_mref[list][ref], mvmin, mvmax, mvp, numMvc, mvc, m_param->searchRange, outmv, m_param->maxSlices, 
+    int satdCost = m_me.motionEstimate(&m_slice->m_mref[list][ref], mvmin, mvmax, mvp, numMvc, mvc, m_param->searchRange, outmv, m_param->maxSlices, m_vertRestriction,
       m_param->bSourceReferenceEstimation ? m_slice->m_refFrameList[list][ref]->m_fencPic->getLumaAddr(0) : 0);
 
     if (m_param->bEnableHME && mvp_lowres.notZero() && mvp_lowres != mvp)
     {
         MV outmv_lowres;
         setSearchRange(interMode.cu, mvp_lowres, m_param->searchRange, mvmin, mvmax);
-        int lowresMvCost = m_me.motionEstimate(&m_slice->m_mref[list][ref], mvmin, mvmax, mvp_lowres, numMvc, mvc, m_param->searchRange, outmv_lowres, m_param->maxSlices,
+        int lowresMvCost = m_me.motionEstimate(&m_slice->m_mref[list][ref], mvmin, mvmax, mvp_lowres, numMvc, mvc, m_param->searchRange, outmv_lowres, m_param->maxSlices, m_vertRestriction,
             m_param->bSourceReferenceEstimation ? m_slice->m_refFrameList[list][ref]->m_fencPic->getLumaAddr(0) : 0);
         if (lowresMvCost < satdCost)
         {
@@ -2168,8 +2169,9 @@ void Search::searchMV(Mode& interMode, int list, int ref, MV& outmv, MV mvp[3], 
         MV bestMV;
         mv = mvp[cand++];
         cu.clipMv(mv);
+        m_vertRestriction = cu.m_slice->m_refPOCList[list][ref] == cu.m_slice->m_poc;
         setSearchRange(cu, mv, m_param->searchRange, mvmin, mvmax);
-        int cost = m_me.motionEstimate(&m_slice->m_mref[list][ref], mvmin, mvmax, mv, numMvc, mvc, m_param->searchRange, bestMV, m_param->maxSlices,
+        int cost = m_me.motionEstimate(&m_slice->m_mref[list][ref], mvmin, mvmax, mv, numMvc, mvc, m_param->searchRange, bestMV, m_param->maxSlices, m_vertRestriction,
         m_param->bSourceReferenceEstimation ? m_slice->m_refFrameList[list][ref]->m_fencPic->getLumaAddr(0) : 0);
         if (bestcost > cost)
         {
@@ -2289,7 +2291,7 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
                         if (cand && (mvpSel[cand] == mvpSel[cand - 1] || (cand == 2 && mvpSel[cand] == mvpSel[cand - 2])))
                             continue;
                         setSearchRange(cu, mvpSel[cand], m_param->searchRange, mvmin, mvmax);
-                        int bcost = m_me.motionEstimate(&m_slice->m_mref[list][ref], mvmin, mvmax, mvpSel[cand], numMvc, mvc, m_param->searchRange, bestmv, m_param->maxSlices,
+                        int bcost = m_me.motionEstimate(&m_slice->m_mref[list][ref], mvmin, mvmax, mvpSel[cand], numMvc, mvc, m_param->searchRange, bestmv, m_param->maxSlices, m_vertRestriction,
                             m_param->bSourceReferenceEstimation ? m_slice->m_refFrameList[list][ref]->m_fencPic->getLumaAddr(0) : 0);
                         if (satdCost > bcost)
                         {
@@ -2303,7 +2305,7 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
                 }
                 else
                 {
-                    satdCost = m_me.motionEstimate(&slice->m_mref[list][ref], mvmin, mvmax, mvpIn, numMvc, mvc, m_param->searchRange, outmv, m_param->maxSlices,
+                    satdCost = m_me.motionEstimate(&slice->m_mref[list][ref], mvmin, mvmax, mvpIn, numMvc, mvc, m_param->searchRange, outmv, m_param->maxSlices, m_vertRestriction,
                         m_param->bSourceReferenceEstimation ? m_slice->m_refFrameList[list][ref]->m_fencPic->getLumaAddr(0) : 0);
                 }
 
@@ -2427,15 +2429,16 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
                         for (int planes = 0; planes < INTEGRAL_PLANE_NUM; planes++)
                             m_me.integral[planes] = interMode.fencYuv->m_integral[list][ref][planes] + puX * pu.width + puY * pu.height * m_slice->m_refFrameList[list][ref]->m_reconPic->m_stride;
                     }
+                    m_vertRestriction = cu.m_slice->m_refPOCList[list][ref] == cu.m_slice->m_poc;
                     setSearchRange(cu, mvp, m_param->searchRange, mvmin, mvmax);
-                    int satdCost = m_me.motionEstimate(&slice->m_mref[list][ref], mvmin, mvmax, mvp, numMvc, mvc, m_param->searchRange, outmv, m_param->maxSlices, 
+                    int satdCost = m_me.motionEstimate(&slice->m_mref[list][ref], mvmin, mvmax, mvp, numMvc, mvc, m_param->searchRange, outmv, m_param->maxSlices, m_vertRestriction,
                       m_param->bSourceReferenceEstimation ? m_slice->m_refFrameList[list][ref]->m_fencPic->getLumaAddr(0) : 0);
 
                     if (m_param->bEnableHME && mvp_lowres.notZero() && mvp_lowres != mvp)
                     {
                         MV outmv_lowres;
                         setSearchRange(cu, mvp_lowres, m_param->searchRange, mvmin, mvmax);
-                        int lowresMvCost = m_me.motionEstimate(&slice->m_mref[list][ref], mvmin, mvmax, mvp_lowres, numMvc, mvc, m_param->searchRange, outmv_lowres, m_param->maxSlices,
+                        int lowresMvCost = m_me.motionEstimate(&slice->m_mref[list][ref], mvmin, mvmax, mvp_lowres, numMvc, mvc, m_param->searchRange, outmv_lowres, m_param->maxSlices, m_vertRestriction,
                             m_param->bSourceReferenceEstimation ? m_slice->m_refFrameList[list][ref]->m_fencPic->getLumaAddr(0) : 0);
                         if (lowresMvCost < satdCost)
                         {
@@ -2728,6 +2731,15 @@ void Search::setSearchRange(const CUData& cu, const MV& mvp, int merange, MV& mv
     MV dist((int32_t)merange << 2, (int32_t)merange << 2);
     mvmin = mvp - dist;
     mvmax = mvp + dist;
+
+    if (m_vertRestriction)
+    {
+        int mvRestricted = (56 - 1) << 2; // -1 to consider subpel search
+        if (mvmax.y >= mvRestricted)
+        {
+            mvmax.y = mvRestricted; //only positive side is restricted
+        }
+    }
 
     cu.clipMv(mvmin);
     cu.clipMv(mvmax);

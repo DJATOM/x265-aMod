@@ -286,6 +286,8 @@ public:
     int32_t         m_sliceMaxY;
     int32_t         m_sliceMinY;
 
+    bool            m_vertRestriction;
+
 #if DETAILED_CU_STATS
     /* Accumulate CU statistics separately for each frame encoder */
     CUStats         m_stats[X265_MAX_FRAME_THREADS];
