@@ -983,7 +983,7 @@ namespace X265_NS {
                 }
             }
 #endif
-            for (int i = 0; i < param->numLayers - !!param->format; i++)
+            for (int i = 0; i < param->numLayers; i++)
             {
                 this->recon[i] = ReconFile::open(reconfn[i], param->sourceWidth, param->sourceHeight, reconFileBitDepth,
                     param->fpsNum, param->fpsDenom, param->internalCsp, param->sourceBitDepth);

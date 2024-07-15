@@ -406,7 +406,7 @@ void x265_param_default(x265_param* param)
 
     /* Multi-View Encoding*/
     param->numViews = 1;
-    param->format = 1;
+    param->format = 0;
 
     param->numLayers = 1;
 }
@@ -1461,6 +1461,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
             {
                 p->bEnableAlpha = 1;
                 p->numScalableLayers = 2;
+                p->numLayers = 2;
             }
         }
 #endif
@@ -1952,6 +1953,8 @@ int x265_check_params(x265_param* param)
 #endif
 #if ENABLE_MULTIVIEW
     CHECK((param->numViews > 2), "Multi-View Encoding currently support only 2 views");
+    CHECK((param->numViews > 1) && (param->internalBitDepth != 8), "BitDepthConstraint must be 8 for Multiview main profile");
+    CHECK((param->numViews > 1 && param->rc.rateControlMode != X265_RC_CQP), "Multiview encode supported only with CQP mode");
 #endif
     return check_failed;
 }

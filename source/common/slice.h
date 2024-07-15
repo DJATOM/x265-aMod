@@ -164,6 +164,7 @@ struct VPS
     uint32_t         maxLatencyIncrease[MAX_T_LAYERS];
     int              m_numLayers;
     int              m_numViews;
+    bool             vps_extension_flag;
 
 #if (ENABLE_ALPHA || ENABLE_MULTIVIEW)
     bool             splitting_flag;
@@ -176,7 +177,6 @@ struct VPS
     uint8_t          m_layerIdInVps[MAX_VPS_LAYER_ID_PLUS1];
     int              m_viewIdLen;
     int              m_vpsNumLayerSetsMinus1;
-    bool             vps_extension_flag;
 #endif
 
 #if ENABLE_MULTIVIEW
@@ -276,9 +276,9 @@ struct SPS
 
     Window   conformanceWindow;
     VUI      vuiParameters;
+    bool     sps_extension_flag;
 
 #if ENABLE_MULTIVIEW
-    bool     sps_extension_flag;
     int      setSpsExtOrMaxSubLayersMinus1;
     int      maxViews;
     bool     vui_parameters_present_flag;
@@ -322,11 +322,8 @@ struct PPS
     int      numRefIdxDefault[2];
     bool     pps_slice_chroma_qp_offsets_present_flag;
 
-#if ENABLE_MULTIVIEW
     bool     pps_extension_flag;
     int      maxViews;
-#endif
-
 };
 
 struct WeightParam

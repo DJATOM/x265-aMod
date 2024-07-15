@@ -487,11 +487,13 @@ void Entropy::codeVPS(const VPS& vps, const SPS& sps)
 void Entropy::codeSPS(const SPS& sps, const ScalingList& scalingList, const ProfileTierLevel& ptl, int layer)
 {
     WRITE_CODE(0, 4, "sps_video_parameter_set_id");
-    WRITE_CODE(!layer ? sps.maxTempSubLayers - 1 : sps.setSpsExtOrMaxSubLayersMinus1, 3, "sps_ext_or_max_sub_layers_minus1");
 #if ENABLE_MULTIVIEW
+    if(layer != 0 && sps.setSpsExtOrMaxSubLayersMinus1 == 7)
+        WRITE_CODE(sps.setSpsExtOrMaxSubLayersMinus1, 3, "sps_ext_or_max_sub_layers_minus1");
     if (!(layer != 0 && sps.setSpsExtOrMaxSubLayersMinus1 == 7))
 #endif
     {
+        WRITE_CODE(sps.maxTempSubLayers - 1, 3, "sps_max_sub_layers_minus1");
         WRITE_FLAG(sps.maxTempSubLayers == 1, "sps_temporal_id_nesting_flag");
         codeProfileTier(ptl, sps.maxTempSubLayers, layer);
     }
@@ -924,21 +926,13 @@ void Entropy::codeSliceHeader(const Slice& slice, FrameData& encData, uint32_t s
 
     WRITE_UVLC(slice.m_sliceType, "slice_type");
 
-    if (layer > 0 || !slice.getIdrPicFlag())
+    if ((slice.m_param->numViews > 1 && layer > 0) || !slice.getIdrPicFlag())
     {
         int picOrderCntLSB = (slice.m_poc - slice.m_lastIDR + (1 << slice.m_sps->log2MaxPocLsb)) % (1 << slice.m_sps->log2MaxPocLsb);
         WRITE_CODE(picOrderCntLSB, slice.m_sps->log2MaxPocLsb, "pic_order_cnt_lsb");
     }
     if (!slice.getIdrPicFlag())
     {
-#if ENABLE_MULTIVIEW
-        if (!(slice.m_param->numViews > 1))
-#endif
-        {
-            int picOrderCntLSB = (slice.m_poc - slice.m_lastIDR + (1 << slice.m_sps->log2MaxPocLsb)) % (1 << slice.m_sps->log2MaxPocLsb);
-            WRITE_CODE(picOrderCntLSB, slice.m_sps->log2MaxPocLsb, "pic_order_cnt_lsb");
-        }
-
 #if _DEBUG || CHECKED_BUILD
         // check for bitstream restriction stating that:
         // If the current picture is a BLA or CRA picture, the value of NumPocTotalCurr shall be equal to 0.

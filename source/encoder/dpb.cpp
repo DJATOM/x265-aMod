@@ -95,10 +95,12 @@ void DPB::recycleUnreferenced()
 
             // iterator is invalidated by remove, restart scan
             m_picList.remove(*curFrame);
-            if (!curFrame->m_viewId && m_picList.getPOC(curFrame->m_poc, 1) && curFrame == m_picList.getPOC(curFrame->m_poc, 1)->refPicSetInterLayer0.getPOC(curFrame->m_poc, curFrame->m_viewId))
+#if ENABLE_MULTIVIEW
+            if (curFrame->m_param->numViews > 1 && !curFrame->m_viewId && m_picList.getPOC(curFrame->m_poc, 1) && curFrame == m_picList.getPOC(curFrame->m_poc, 1)->refPicSetInterLayer0.getPOC(curFrame->m_poc, curFrame->m_viewId))
             {
                 m_picList.getPOC(curFrame->m_poc, 1)->refPicSetInterLayer0.removeSubDPB(*curFrame);
             }
+#endif
             iterFrame = m_picList.first();
 
             m_freeList.pushBack(*curFrame);
@@ -271,8 +273,10 @@ void DPB::prepareEncode(Frame *newFrame)
         }
     }
 
+#if ENABLE_MULTIVIEW
     if (newFrame->m_viewId)
         slice->createInterLayerReferencePictureSet(m_picList, newFrame->refPicSetInterLayer0, newFrame->refPicSetInterLayer1);
+#endif
     if (slice->m_sliceType != I_SLICE)
         slice->m_numRefIdx[0] = x265_clip3(1, newFrame->m_param->maxNumReferences, slice->m_rps.numberOfNegativePictures + newFrame->refPicSetInterLayer0.size() + newFrame->refPicSetInterLayer1.size());
     else
@@ -349,7 +353,7 @@ void DPB::computeRPS(int curPoc, int tempId, bool isRAP, RPS * rps, unsigned int
             if ((!m_bTemporalSublayer || (iterPic->m_tempLayer <= tempId)) && ((m_lastIDR >= curPoc) || (m_lastIDR <= iterPic->m_poc)))
             {
 #if ENABLE_MULTIVIEW
-                    if (layer && numNeg == iterPic->m_param->maxNumReferences - 1 && (iterPic->m_poc - curPoc) < 0)
+                    if (iterPic->m_param->numViews > 1 && layer && numNeg == iterPic->m_param->maxNumReferences - 1 && (iterPic->m_poc - curPoc) < 0)
                     {
                         iterPic = iterPic->m_next;
                         continue;

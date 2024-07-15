@@ -1159,8 +1159,10 @@ void FrameEncoder::compressFrame(int layer)
     /* rateControlEnd may also block for earlier frames to call rateControlUpdateStats */
     if (!layer && m_top->m_rateControl->rateControlEnd(m_frame[layer], m_accessUnitBits[layer], &m_rce, &filler) < 0)
         m_top->m_aborted = true;
-    if (!layer)
+#if ENABLE_ALPHA || ENABLE_MULTIVIEW
+    if (!layer && m_frame[layer+1])
         m_frame[1]->m_encData->m_avgQpAq = m_frame[layer]->m_encData->m_avgQpAq;
+#endif
 
     if (filler > 0)
     {

@@ -2053,11 +2053,12 @@ bool CUData::getIndirectPMV(MV& outMV, InterNeighbourMV *neighbours, uint32_t pi
                     outMV = mvp;
                 if (!(curRefPOC == curPOC))
                     outMV = scaleMvByPOCDist(mvp, curPOC, curRefPOC, neibPOC, neibRefPOC);
+                return true;
+            }
 #else
             outMV = scaleMvByPOCDist(mvp, curPOC, curRefPOC, neibPOC, neibRefPOC);
-#endif
             return true;
-            }
+#endif
         }
     }
     return false;

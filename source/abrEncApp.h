@@ -42,6 +42,7 @@ namespace X265_NS {
     {
     public:
         uint8_t           m_numEncodes;
+        uint8_t           m_numInputViews; // Number of inputs for multiview-extension
         PassEncoder        **m_passEnc;
         uint32_t           m_queueSize;
         ThreadSafeInteger  m_numActiveEncodes;

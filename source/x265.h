@@ -650,6 +650,8 @@ typedef enum
 
 #if ENABLE_ALPHA || ENABLE_MULTIVIEW
 #define MAX_LAYERS              2
+#else
+#define MAX_LAYERS              1
 #endif
 
 #define X265_IPRATIO_STRENGTH   1.43

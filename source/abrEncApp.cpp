@@ -63,6 +63,7 @@ namespace X265_NS {
             m_passEnc[i]->init(ret);
         }
 
+        m_numInputViews = m_passEnc[0]->m_param->numViews;
         if (!allocBuffers())
         {
             x265_log(NULL, X265_LOG_ERROR, "Unable to allocate memory for buffers\n");
@@ -96,7 +97,7 @@ namespace X265_NS {
 #if ENABLE_MULTIVIEW
         if (m_passEnc[0]->m_param->numViews > 1)
         {
-            for (uint8_t pass = 0; pass < m_passEnc[0]->m_param->numViews; pass++)
+            for (uint8_t pass = 0; pass < m_numInputViews; pass++)
             {
                 m_inputPicBuffer[pass] = X265_MALLOC(x265_picture*, m_queueSize);
                 for (uint32_t idx = 0; idx < m_queueSize; idx++)
@@ -144,7 +145,7 @@ namespace X265_NS {
     {
         x265_cleanup(); /* Free library singletons */
 #if ENABLE_MULTIVIEW
-        for (uint8_t pass = 0; pass < MAX_VIEWS; pass++)
+        for (uint8_t pass = 0; pass < m_numInputViews; pass++)
         {
             for (uint32_t index = 0; index < m_queueSize; index++)
             {

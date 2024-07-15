@@ -1595,12 +1595,13 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture** pic_out)
                 inFrame[layer] = new Frame;
                 inFrame[layer]->m_encodeStartTime = x265_mdate();
 #if ENABLE_MULTIVIEW
-                inFrame[layer]->m_viewId = layer;
-#else
-                inFrame[layer]->m_sLayerId = layer;
+                inFrame[layer]->m_viewId = m_param->numViews > 1 ? layer : 0;
+#endif
+#if ENABLE_ALPHA
+                inFrame[layer]->m_sLayerId = m_param->numScalableLayers > 1 ? layer : 0;
 #endif
                 inFrame[layer]->m_valid = false;
-                if (inFrame[layer]->create(p, inputPic[layer]->quantOffsets))
+                if (inFrame[layer]->create(p, inputPic[!m_param->format ? (m_param->numScalableLayers > 1) ? 0 : layer : 0]->quantOffsets))
                 {
                     /* the first PicYuv created is asked to generate the CU and block unit offset
                      * arrays which are then shared with all subsequent PicYuv (orig and recon)
@@ -1663,9 +1664,10 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture** pic_out)
                 inFrame[layer]->m_tempLayer = 0;
                 inFrame[layer]->m_sameLayerRefPic = 0;
 #if ENABLE_MULTIVIEW
-                inFrame[layer]->m_viewId = layer;
-#else
-                inFrame[layer]->m_sLayerId = layer;
+                inFrame[layer]->m_viewId = m_param->numViews > 1 ? layer : 0;
+#endif
+#if ENABLE_ALPHA
+                inFrame[layer]->m_sLayerId = m_param->numScalableLayers > 1 ? layer : 0;
 #endif
                 inFrame[layer]->m_valid = false;
                 inFrame[layer]->m_lowres.bKeyframe = false;
@@ -1701,7 +1703,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture** pic_out)
             }
 
             /* Copy input picture into a Frame and PicYuv, send to lookahead */
-            inFrame[layer]->m_fencPic->copyFromPicture(*inputPic[!m_param->format ? layer : 0], *m_param, m_sps.conformanceWindow.rightOffset, m_sps.conformanceWindow.bottomOffset, !layer);
+            inFrame[layer]->m_fencPic->copyFromPicture(*inputPic[!m_param->format ? (m_param->numScalableLayers > 1) ? 0 : layer : 0], *m_param, m_sps.conformanceWindow.rightOffset, m_sps.conformanceWindow.bottomOffset, !layer);
 
             inFrame[layer]->m_poc = (!layer) ? (++m_pocLast) : m_pocLast;
             inFrame[layer]->m_userData = inputPic[0]->userData;
@@ -2211,12 +2213,11 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture** pic_out)
             {
                 Frame* currentFrame = m_dpb->m_picList.getPOC(frameEnc[0]->m_poc, layer);
                 frameEnc[layer] = m_dpb->m_picList.removeFrame(*currentFrame);
-#if ENABLE_ALPHA
-                frameEnc[layer]->m_lowres.sliceType = frameEnc[0]->m_lowres.sliceType;
-#else
                 int baseViewType = frameEnc[0]->m_lowres.sliceType;
-                frameEnc[layer]->m_lowres.sliceType = IS_X265_TYPE_I(baseViewType) ? X265_TYPE_P : baseViewType;
-#endif
+                if (m_param->numScalableLayers > 1)
+                    frameEnc[layer]->m_lowres.sliceType = baseViewType;
+                else if(m_param->numViews > 1)
+                    frameEnc[layer]->m_lowres.sliceType = IS_X265_TYPE_I(baseViewType) ? X265_TYPE_P : baseViewType;
             }
 #endif
 
@@ -3644,6 +3645,7 @@ void Encoder::initSPS(SPS *sps)
 
     vui.timingInfo.numUnitsInTick = m_param->fpsDenom;
     vui.timingInfo.timeScale = m_param->fpsNum;
+    sps->sps_extension_flag = false;
 
 #if ENABLE_MULTIVIEW
     if (m_param->numViews > 1)
@@ -3698,6 +3700,8 @@ void Encoder::initPPS(PPS *pps)
 
     pps->numRefIdxDefault[0] = 1;
     pps->numRefIdxDefault[1] = 1;
+    pps->pps_extension_flag = false;
+    pps->maxViews = 1;
 
 #if ENABLE_MULTIVIEW
     if (m_param->numViews > 1)
