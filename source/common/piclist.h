@@ -69,7 +69,7 @@ public:
     Frame* popFront();
 
     /** Find frame with specified POC */
-    Frame* getPOC(int poc, int sLayerId);
+    Frame* getPOC(int poc, int sLayerId = 0);
     /* Find next MCSTF frame with specified POC */
     Frame* getPOCMCSTF(int poc);
 

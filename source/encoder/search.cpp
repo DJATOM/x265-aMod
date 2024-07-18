@@ -76,6 +76,7 @@ bool Search::initSearch(const x265_param& param, ScalingList& scalingList)
     m_param = &param;
     m_bFrameParallel = param.frameNumThreads > 1;
     m_numLayers = g_log2Size[param.maxCUSize] - 2;
+    m_ibcEnabled = param.bEnableSCC;
 
     m_rdCost.setPsyRdScale(param.psyRd);
     m_rdCost.setSsimRd(param.bSsimRd);
@@ -2086,7 +2087,10 @@ void Search::processPME(PME& pme, Search& slave)
 void Search::singleMotionEstimation(Search& master, Mode& interMode, const PredictionUnit& pu, int part, int list, int ref)
 {
     uint32_t bits = master.m_listSelBits[list] + MVP_IDX_BITS;
-    bits += getTUBits(ref, m_slice->m_numRefIdx[list]);
+    int numIdx = m_slice->m_numRefIdx[list];
+    if (!list && m_ibcEnabled)
+        numIdx--;
+    bits += getTUBits(ref, numIdx);
 
     MotionData* bestME = interMode.bestME[part];
 
@@ -2246,7 +2250,10 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
                     continue;
                 }
                 uint32_t bits = m_listSelBits[list] + MVP_IDX_BITS;
-                bits += getTUBits(ref, numRefIdx[list]);
+                int numIdx = m_slice->m_numRefIdx[list];
+                if (!list && m_ibcEnabled)
+                    numIdx--;
+                bits += getTUBits(ref, numIdx);
 
                 int numMvc = cu.getPMV(interMode.interNeighbours, list, ref, interMode.amvpCand[list][ref], mvc, puIdx, pu.puAbsPartIdx);
                 const MV* amvp = interMode.amvpCand[list][ref];
@@ -2354,7 +2361,10 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
             for (int list = 0; list < numPredDir; list++)
             {
                 int idx = 0;
-                for (int ref = 0; ref < numRefIdx[list]; ref++)
+                int numIdx = numRefIdx[list];
+                if (!list && m_ibcEnabled)
+                    numIdx--;
+                for (int ref = 0; ref < numIdx; ref++)
                 {
                     if (!(refMask & (1 << ref)))
                         continue;
@@ -2393,7 +2403,10 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
 
             for (int list = 0; list < numPredDir; list++)
             {
-                for (int ref = 0; ref < numRefIdx[list]; ref++)
+                int numIdx = numRefIdx[list];
+                if (!list && m_ibcEnabled)
+                    numIdx--;
+                for (int ref = 0; ref < numIdx; ref++)
                 {
                     ProfileCounter(interMode.cu, totalMotionReferences[cuGeom.depth]);
 
@@ -2404,7 +2417,7 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
                     }
 
                     uint32_t bits = m_listSelBits[list] + MVP_IDX_BITS;
-                    bits += getTUBits(ref, numRefIdx[list]);
+                    bits += getTUBits(ref, numIdx);
 
                     int numMvc = cu.getPMV(interMode.interNeighbours, list, ref, interMode.amvpCand[list][ref], mvc, puIdx, pu.puAbsPartIdx);
 

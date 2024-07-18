@@ -1681,10 +1681,13 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MV
             }
         }
     }
-    int numRefIdx = (isInterB) ? X265_MIN(m_slice->m_numRefIdx[0], m_slice->m_numRefIdx[1]) : m_slice->m_numRefIdx[0];
+    int numRefIdx0 = m_slice->m_numRefIdx[0];
+    if (m_slice->m_param->bEnableSCC)
+        numRefIdx0--;
+    int numRefIdx = (isInterB) ? X265_MIN(numRefIdx0, m_slice->m_numRefIdx[1]) : numRefIdx0;
     int r = 0;
     int refcnt = 0;
-    while (count < maxNumMergeCand)
+    while (numRefIdx && (count < maxNumMergeCand))
     {
         candDir[count] = 1;
         candMvField[count][0].mv.word = 0;

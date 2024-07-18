@@ -223,7 +223,7 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
     }
     ProfileCUScope(ctu, totalCTUTime, totalCTUs);
 
-    if (m_slice->m_sliceType == I_SLICE)
+    if (m_slice->m_sliceType == I_SLICE || (m_param->bEnableSCC && (m_slice->m_numRefIdx[0] == 1) && m_slice->m_refPOCList[0][0] == m_slice->m_poc))
     {
         x265_analysis_intra_data* intraDataCTU = m_frame->m_analysisData.intraData;
         if (m_param->analysisLoadReuseLevel > 1)
@@ -3434,7 +3434,8 @@ uint32_t Analysis::topSkipMinDepth(const CUData& parentCTU, const CUGeom& cuGeom
     uint32_t minDepth0 = 4, minDepth1 = 4;
     uint32_t sum = 0;
     int numRefs = 0;
-    if (m_slice->m_numRefIdx[0])
+    int refPresent = (!m_slice->m_param->bEnableSCC && m_slice->m_numRefIdx[0]) || ((!m_slice->m_param->bEnableSCC && (m_slice->m_numRefIdx[0] - 1)));
+    if (refPresent)
     {
         numRefs++;
         const CUData& cu = *m_slice->m_refFrameList[0][0]->m_encData->getPicCTU(parentCTU.m_cuAddr);
@@ -3781,6 +3782,8 @@ int Analysis::findSameContentRefCount(const CUData& parentCTU, const CUGeom& cuG
         for (int i = 0; i < m_frame->m_encData->m_slice->m_numRefIdx[list]; i++)
         {
             int refPoc = m_frame->m_encData->m_slice->m_refFrameList[list][i]->m_poc;
+            if (refPoc == m_curPoc)
+                continue;
             int refPrevChange = m_frame->m_encData->m_slice->m_refFrameList[list][i]->m_addOnPrevChange[parentCTU.m_cuAddr][cuGeom.absPartIdx];
             if ((refPoc < prevChange && refPoc < m_curPoc) || (refPoc > m_curPoc && prevChange < m_curPoc && refPrevChange > m_curPoc) || ((refPoc == prevChange) && (m_additionalCtuInfo[cuGeom.absPartIdx] == CTU_INFO_CHANGE)))
                 sameContentRef++;    /* Content changed */

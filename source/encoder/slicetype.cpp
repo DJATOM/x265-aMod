@@ -1324,7 +1324,7 @@ void Lookahead::getEstimatedPictureCost(Frame *curFrame)
     int l0poc = slice->m_rps.numberOfNegativePictures ? slice->m_refPOCList[0][0] : -1;
     int l1poc = slice->m_refPOCList[1][0];
 
-    switch (slice->m_sliceType)
+    switch (slice->m_origSliceType)
     {
     case I_SLICE:
         frames[p0] = &curFrame->m_lowres;

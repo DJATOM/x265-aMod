@@ -376,6 +376,7 @@ public:
 
     NalUnitType m_nalUnitType;
     SliceType   m_sliceType;
+    SliceType   m_origSliceType;
     int         m_sliceQp;
     int         m_chromaQpOffset[2];
     int         m_poc;

@@ -288,6 +288,8 @@ public:
 
     bool            m_vertRestriction;
 
+    int             m_ibcEnabled;
+
 #if DETAILED_CU_STATS
     /* Accumulate CU statistics separately for each frame encoder */
     CUStats         m_stats[X265_MAX_FRAME_THREADS];

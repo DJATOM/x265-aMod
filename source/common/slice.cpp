@@ -64,6 +64,15 @@ void Slice::setRefPicList(PicList& picList, PicList& refPicSetInterLayer0, PicLi
         return;
     }
 
+    /*Reset the number of references for I-slice marked as P-slice*/
+    if (m_param->bEnableSCC && m_sliceType != m_origSliceType)
+    {
+        memset(m_refFrameList, 0, sizeof(m_refFrameList));
+        memset(m_refReconPicList, 0, sizeof(m_refReconPicList));
+        memset(m_refPOCList, 0, sizeof(m_refPOCList));
+        m_numRefIdx[0] = 1;
+    }
+
     Frame* refPic = NULL;
     Frame* refPicSetStCurr0[MAX_NUM_REF];
     Frame* refPicSetStCurr1[MAX_NUM_REF];
@@ -75,7 +84,7 @@ void Slice::setRefPicList(PicList& picList, PicList& refPicSetInterLayer0, PicLi
 
     for (i = 0; i < m_rps.numberOfNegativePictures; i++)
     {
-        if (m_rps.bUsed[i])
+        if (m_rps.bUsed[i] && m_origSliceType != I_SLICE)
         {
             refPic = picList.getPOC(m_poc + m_rps.deltaPOC[i], m_rps.deltaPOC[i] ? sLayerId : 0);
             refPicSetStCurr0[numPocStCurr0] = refPic;
@@ -85,7 +94,7 @@ void Slice::setRefPicList(PicList& picList, PicList& refPicSetInterLayer0, PicLi
 
     for (; i < m_rps.numberOfNegativePictures + m_rps.numberOfPositivePictures; i++)
     {
-        if (m_rps.bUsed[i])
+        if (m_rps.bUsed[i] && m_origSliceType != I_SLICE)
         {
             refPic = picList.getPOC(m_poc + m_rps.deltaPOC[i], m_rps.deltaPOC[i] ? sLayerId : 0);
             refPicSetStCurr1[numPocStCurr1] = refPic;
@@ -104,6 +113,9 @@ void Slice::setRefPicList(PicList& picList, PicList& refPicSetInterLayer0, PicLi
 #else
     int numPocTotalCurr = numPocStCurr0 + numPocStCurr1 + numPocLtCurr;
 #endif
+
+    if (m_param->bEnableSCC)
+        numPocTotalCurr++;
 
     int cIdx = 0;
     for (i = 0; i < numPocStCurr0; i++, cIdx++)
@@ -126,6 +138,9 @@ void Slice::setRefPicList(PicList& picList, PicList& refPicSetInterLayer0, PicLi
         for (i = 0; i < refPicSetInterLayer1.size(); i++, cIdx++)
             rpsCurrList0[cIdx] = refPicSetInterLayer1.getPOC(m_poc, 0);
 #endif
+
+    if (m_param->bEnableSCC)
+        rpsCurrList0[cIdx++] = picList.getPOC(m_poc);
 
     X265_CHECK(cIdx == numPocTotalCurr, "RPS index check fail\n");
 
@@ -153,6 +168,9 @@ void Slice::setRefPicList(PicList& picList, PicList& refPicSetInterLayer0, PicLi
                 rpsCurrList1[cIdx] = refPicSetInterLayer0.getPOC(m_poc, 0);
 #endif
 
+        if (m_param->bEnableSCC)
+            rpsCurrList1[cIdx++] = picList.getPOC(m_poc);
+
         X265_CHECK(cIdx == numPocTotalCurr, "RPS index check fail\n");
     }
 
@@ -164,6 +182,11 @@ void Slice::setRefPicList(PicList& picList, PicList& refPicSetInterLayer0, PicLi
 #if ENABLE_MULTIVIEW
         m_refFrameList[0][rIdx] = rpsCurrList0[cIdx];
 #endif
+    }
+
+    if (m_param->bEnableSCC && numPocTotalCurr > m_numRefIdx[0])
+    {
+        m_refFrameList[0][m_numRefIdx[0] - 1] = picList.getPOC(m_poc);
     }
 
     if (m_sliceType != B_SLICE)

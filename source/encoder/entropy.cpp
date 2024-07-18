@@ -1726,6 +1726,8 @@ void Entropy::codePredWeightTable(const Slice& slice)
         {
             for (int ref = 0; ref < slice.m_numRefIdx[list]; ref++)
             {
+                if (slice.m_poc == slice.m_refPOCList[list][ref])
+                    continue;
                 wp = slice.m_weightPredTable[list][ref];
                 if (!bDenomCoded)
                 {
@@ -1746,6 +1748,8 @@ void Entropy::codePredWeightTable(const Slice& slice)
             {
                 for (int ref = 0; ref < slice.m_numRefIdx[list]; ref++)
                 {
+                    if (slice.m_poc == slice.m_refPOCList[list][ref])
+                        continue;
                     wp = slice.m_weightPredTable[list][ref];
                     WRITE_FLAG(!!wp[1].wtPresent, "chroma_weight_lX_flag");
                     totalSignalledWeightFlags += 2 * wp[1].wtPresent;
@@ -1754,6 +1758,8 @@ void Entropy::codePredWeightTable(const Slice& slice)
 
             for (int ref = 0; ref < slice.m_numRefIdx[list]; ref++)
             {
+                if (slice.m_poc == slice.m_refPOCList[list][ref])
+                    continue;
                 wp = slice.m_weightPredTable[list][ref];
                 if (wp[0].wtPresent)
                 {

@@ -911,6 +911,10 @@ void FrameEncoder::compressFrame(int layer)
                     {
                         Frame *refpic = slice->m_refFrameList[l][ref];
 
+                        /*Exempt the current pic as reference*/
+                        if (m_param->bEnableSCC && refpic->m_poc == m_frame[layer]->m_poc)
+                            continue;
+
                         // NOTE: we unnecessary wait row that beyond current slice boundary
                         const int rowIdx = X265_MIN(sliceEndRow, (row + m_refLagRows));
 
@@ -952,6 +956,10 @@ void FrameEncoder::compressFrame(int layer)
                     for (int ref = 0; ref < slice->m_numRefIdx[list]; ref++)
                     {
                         Frame *refpic = slice->m_refFrameList[list][ref];
+
+                        /*Exempt the current pic as reference*/
+                        if (m_param->bEnableSCC && refpic->m_poc == m_frame[layer]->m_poc)
+                            continue;
 
                         const int rowIdx = X265_MIN(m_numRows - 1, (i + m_refLagRows));
                         while (refpic->m_reconRowFlag[rowIdx].get() == 0)
