@@ -3656,6 +3656,8 @@ void Encoder::initSPS(SPS *sps)
     }
 #endif
 
+    sps->sps_extension_flag = m_param->bEnableSCC ? true : false;
+
 }
 
 void Encoder::initPPS(PPS *pps)
@@ -3710,6 +3712,12 @@ void Encoder::initPPS(PPS *pps)
         pps->maxViews = m_param->numViews;
     }
 #endif
+
+    if (m_param->bEnableSCC)
+    {
+        pps->profileIdc = Profile::MAINSCC;
+        pps->pps_extension_flag = true;
+    }
 }
 
 void Encoder::configureZone(x265_param *p, x265_param *zone)

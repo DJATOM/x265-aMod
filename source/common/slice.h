@@ -76,7 +76,8 @@ namespace Profile {
         HIGHTHROUGHPUTREXT = 5,
         MULTIVIEWMAIN = 6,
         SCALABLEMAIN = 7,
-        SCALABLEMAIN10 = 8
+        SCALABLEMAIN10 = 8,
+        MAINSCC = 9
     };
 }
 
@@ -324,6 +325,8 @@ struct PPS
 
     bool     pps_extension_flag;
     int      maxViews;
+
+    int      profileIdc;
 };
 
 struct WeightParam

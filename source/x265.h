@@ -654,6 +654,10 @@ typedef enum
 #define MAX_LAYERS              1
 #endif
 
+/* SCC Extension Options */
+#define SCC_EXT_IDX               3
+#define NUM_EXTENSION_FLAGS       8
+
 #define X265_IPRATIO_STRENGTH   1.43
 
 typedef struct x265_cli_csp
@@ -2365,6 +2369,8 @@ static const char * const x265_profile_names[] = {
     "main444-12", "main444-12-intra",
 
     "main444-16-intra", "main444-16-stillpicture", /* Not Supported! */
+
+    "main-scc", "main10-scc", "main444-scc", "main444-10-scc", /* Screen content coding */
     0
 };
 

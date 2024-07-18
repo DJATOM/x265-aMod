@@ -60,6 +60,40 @@ LevelSpec levels[] =
     { MAX_UINT, MAX_UINT, MAX_UINT, MAX_UINT, MAX_UINT, MAX_UINT, 1, Level::LEVEL8_5, "8.5", 85 },
 };
 
+enum SCCProfileName
+{
+    NONE = 0,
+    // The following are SCC profiles, which would map to the MAINSCC profile idc.
+    // The enumeration indicates the bit-depth constraint in the bottom 2 digits
+    //                           the chroma format in the next digit
+    //                           the intra constraint in the next digit
+    //                           If it is a SCC profile there is a '2' for the next digit.
+    //                           If it is a highthroughput , there is a '2' for the top digit else '1' for the top digit
+    SCC_MAIN = 121108,
+    SCC_MAIN_10 = 121110,
+    SCC_MAIN_444 = 121308,
+    SCC_MAIN_444_10 = 121310,
+};
+
+static const SCCProfileName validSCCProfileNames[1][4/* bit depth constraint 8=0, 10=1, 12=2, 14=3*/][4/*chroma format*/] =
+{
+   {
+        { NONE,         SCC_MAIN,      NONE,      SCC_MAIN_444                     }, // 8-bit  intra for 400, 420, 422 and 444
+        { NONE,         SCC_MAIN_10,   NONE,      SCC_MAIN_444_10                  }, // 10-bit intra for 400, 420, 422 and 444
+        { NONE,         NONE,          NONE,      NONE                             }, // 12-bit intra for 400, 420, 422 and 444
+        { NONE,         NONE,          NONE,      NONE                             }  // 16-bit intra for 400, 420, 422 and 444
+    },
+};
+
+static inline int _confirm(x265_param* param, bool bflag, const char* message)
+{
+    if (!bflag)
+        return 0;
+
+    x265_log(param, X265_LOG_ERROR, "%s\n", message);
+    return 1;
+}
+
 /* determine minimum decoder level required to decode the described video */
 void determineLevel(const x265_param &param, VPS& vps)
 {
@@ -79,7 +113,9 @@ void determineLevel(const x265_param &param, VPS& vps)
         /* Probably an HEVC v1 profile, but must check to be sure */
         if (param.internalBitDepth <= 8)
         {
-            if (vps.ptl.onePictureOnlyConstraintFlag)
+            if (param.bEnableSCC)
+                vps.ptl.profileIdc[0] = Profile::MAINSCC;
+            else if (vps.ptl.onePictureOnlyConstraintFlag)
                 vps.ptl.profileIdc[0] = Profile::MAINSTILLPICTURE;
             else if (vps.ptl.intraConstraintFlag)
                 vps.ptl.profileIdc[0] = Profile::MAINREXT; /* Main Intra */
@@ -94,7 +130,9 @@ void determineLevel(const x265_param &param, VPS& vps)
         else if (param.internalBitDepth <= 10)
         {
             /* note there is no 10bit still picture profile */
-            if (vps.ptl.intraConstraintFlag)
+            if (param.bEnableSCC)
+                vps.ptl.profileIdc[0] = Profile::MAINSCC;
+            else if (vps.ptl.intraConstraintFlag)
                 vps.ptl.profileIdc[0] = Profile::MAINREXT; /* Main10 Intra */
             else
                 vps.ptl.profileIdc[0] = Profile::MAIN10;
@@ -114,6 +152,11 @@ void determineLevel(const x265_param &param, VPS& vps)
 #endif
 
     /* determine which profiles are compatible with this stream */
+    if (vps.ptl.profileIdc[0] == Profile::MAINSCC)
+    {
+        vps.ptl.onePictureOnlyConstraintFlag = false;
+        vps.ptl.intraConstraintFlag = param.keyframeMax <= 1 || vps.ptl.onePictureOnlyConstraintFlag;
+    }
 
     memset(vps.ptl.profileCompatibilityFlag, 0, sizeof(vps.ptl.profileCompatibilityFlag));
     vps.ptl.profileCompatibilityFlag[vps.ptl.profileIdc[0]] = true;
@@ -128,6 +171,8 @@ void determineLevel(const x265_param &param, VPS& vps)
     }
     else if (vps.ptl.profileIdc[0] == Profile::MAINREXT)
         vps.ptl.profileCompatibilityFlag[Profile::MAINREXT] = true;
+    else if (vps.ptl.profileIdc[0] == Profile::MAINSCC)
+        vps.ptl.profileCompatibilityFlag[Profile::MAINSCC] = true;
 
     uint32_t lumaSamples = param.sourceWidth * param.sourceHeight;
     uint32_t samplesPerSec = (uint32_t)(lumaSamples * ((double)param.fpsNum / param.fpsDenom));
@@ -232,7 +277,23 @@ void determineLevel(const x265_param &param, VPS& vps)
         break;
     }
 
-    static const char *profiles[] = { "None", "Main", "Main 10", "Main Still Picture", "RExt" };
+    x265_param m_param = param;
+#define CHECK(expr, msg) check_failed |= _confirm(&m_param, expr, msg)
+    int check_failed = 0; /* abort if there is a fatal configuration problem */
+
+    if (vps.ptl.profileIdc[0] == Profile::MAINSCC)
+    {
+        CHECK(vps.ptl.lowerBitRateConstraintFlag == false && vps.ptl.intraConstraintFlag == false, "The lowerBitRateConstraint flag cannot be false when intraConstraintFlag is false");
+        CHECK(param.bEnableSCC && !(vps.ptl.profileIdc[0] == Profile::MAINSCC), "UseIntraBlockCopy must not be enabled unless the SCC profile is being used.");
+        CHECK(vps.ptl.intraConstraintFlag, "intra constraint flag must be 0 for SCC profiles");
+        CHECK(vps.ptl.onePictureOnlyConstraintFlag, "one-picture-only constraint flag shall be 0 for SCC profiles");
+        const uint32_t bitDepthIdx = (vps.ptl.bitDepthConstraint == 8 ? 0 : (vps.ptl.bitDepthConstraint == 10 ? 1 : (vps.ptl.bitDepthConstraint == 12 ? 2 : (vps.ptl.bitDepthConstraint == 16 ? 3 : 4))));
+        const uint32_t chromaFormatIdx = uint32_t(vps.ptl.chromaFormatConstraint);
+        const bool bValidProfile = (bitDepthIdx > 2 || chromaFormatIdx > 3) ? false : (validSCCProfileNames[0][bitDepthIdx][chromaFormatIdx] != NONE);
+        CHECK(!bValidProfile, "Invalid intra constraint flag, bit depth constraint flag and chroma format constraint flag combination for a RExt profile");
+    }
+
+    static const char* profiles[] = { "None", "Main", "Main 10", "Main Still Picture", "RExt", "", "", "", "", "Main Scc" };
     static const char *tiers[]    = { "Main", "High" };
 
     char profbuf[64];
@@ -292,6 +353,25 @@ void determineLevel(const x265_param &param, VPS& vps)
         if (vps.ptl.intraConstraintFlag && !bStillPicture)
             strcat(profbuf, " Intra");
     }
+
+    if (vps.ptl.profileIdc[0] == Profile::MAINSCC)
+    {
+        if (param.internalCsp == X265_CSP_I420)
+        {
+            if (vps.ptl.bitDepthConstraint <= 8)
+                strcpy(profbuf, "Main Scc");
+            else if (vps.ptl.bitDepthConstraint <= 10)
+                strcpy(profbuf, "Main 10 Scc");
+        }
+        else if (param.internalCsp == X265_CSP_I444)
+        {
+            if (vps.ptl.bitDepthConstraint <= 8)
+                strcpy(profbuf, "Main 4:4:4 Scc");
+            else if (vps.ptl.bitDepthConstraint <= 10)
+                strcpy(profbuf, "Main 4:4:4 10 Scc");
+        }
+    }
+
     x265_log(&param, X265_LOG_INFO, "%s profile, Level-%s (%s tier)\n",
              profbuf, levels[i].name, tiers[vps.ptl.tierFlag]);
 }
@@ -535,7 +615,8 @@ int x265_param_apply_profile(x265_param *param, const char *profile)
     if (!strcmp(profile, "main") || !strcmp(profile, "main-intra") ||
         !strcmp(profile, "main10") || !strcmp(profile, "main10-intra") ||
         !strcmp(profile, "main12") || !strcmp(profile, "main12-intra") ||
-        !strcmp(profile, "mainstillpicture") || !strcmp(profile, "msp"))
+        !strcmp(profile, "mainstillpicture") || !strcmp(profile, "msp") ||
+        !strcmp(profile, "main-scc") || !strcmp(profile, "main10-scc"))
     {
         if (param->internalCsp != X265_CSP_I420)
         {
@@ -558,7 +639,8 @@ int x265_param_apply_profile(x265_param *param, const char *profile)
              !strcmp(profile, "main444-intra") || !strcmp(profile, "main444-stillpicture") ||
              !strcmp(profile, "main444-10") || !strcmp(profile, "main444-10-intra") ||
              !strcmp(profile, "main444-12") || !strcmp(profile, "main444-12-intra") ||
-             !strcmp(profile, "main444-16-intra") || !strcmp(profile, "main444-16-stillpicture"))
+             !strcmp(profile, "main444-16-intra") || !strcmp(profile, "main444-16-stillpicture") ||
+             !strcmp(profile, "main444-scc") || !strcmp(profile, "main444-10-scc"))
     {
         /* any color space allowed */
     }
