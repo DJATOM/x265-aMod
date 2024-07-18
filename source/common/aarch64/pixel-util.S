@@ -1795,55 +1795,56 @@ endfunc
 function PFX(quant_neon)
     mov             w9, #1
     lsl             w9, w9, w4
-    dup             v0.2s, w9
+    dup             v0.4s, w9
     neg             w9, w4
     dup             v1.4s, w9
     add             w9, w9, #8
     dup             v2.4s, w9
     dup             v3.4s, w5
+    movi            v31.2d, #0
 
-    lsr             w6, w6, #2
-    eor             v4.16b, v4.16b, v4.16b
-    eor             w10, w10, w10
-    eor             v17.16b, v17.16b, v17.16b
+    lsr             w7, w6, #3
+    movi            v4.2d, #0
 
 .Loop_quant:
 
-    ld1             {v18.4h}, [x0], #8
-    ld1             {v7.4s}, [x1], #16
-    sxtl            v6.4s, v18.4h
+    ld1             {v18.8h}, [x0], #16
+    ld1             {v20.4s, v21.4s}, [x1], #32
 
-    cmlt            v5.4s, v6.4s, #0
+    sabdl           v6.4s, v18.4h, v31.4h
+    sabdl2          v26.4s, v18.8h, v31.8h
 
-    abs             v6.4s, v6.4s
-
-
-    mul             v6.4s, v6.4s, v7.4s
+    mul             v6.4s, v6.4s, v20.4s
+    mul             v26.4s, v26.4s, v21.4s
 
     add             v7.4s, v6.4s, v3.4s
+    add             v27.4s, v26.4s, v3.4s
     sshl            v7.4s, v7.4s, v1.4s
+    sshl            v27.4s, v27.4s, v1.4s
 
-    mls             v6.4s, v7.4s, v0.s[0]
+    mls             v6.4s, v7.4s, v0.4s
+    mls             v26.4s, v27.4s, v0.4s
     sshl            v16.4s, v6.4s, v2.4s
-    st1             {v16.4s}, [x2], #16
+    sshl            v17.4s, v26.4s, v2.4s
+    st1             {v16.4s, v17.4s}, [x2], #32
 
     // numsig
-    cmeq            v16.4s, v7.4s, v17.4s
-    add             v4.4s, v4.4s, v16.4s
-    add             w10, w10, #4
+    uzp1            v7.8h, v7.8h, v27.8h
+    cmeq            v16.8h, v7.8h, #0
+    add             v4.8h, v4.8h, v16.8h
 
     // level *= sign
+    cmlt            v5.8h, v18.8h, #0
     eor             v16.16b, v7.16b, v5.16b
-    sub             v16.4s, v16.4s, v5.4s
-    sqxtn           v5.4h, v16.4s
-    st1             {v5.4h}, [x3], #8
+    sub             v5.8h, v16.8h, v5.8h
+    st1             {v5.8h}, [x3], #16
 
-    subs            w6, w6, #1
-    b.ne             .Loop_quant
+    subs            w7, w7, #1
+    b.ne            .Loop_quant
 
-    addv            s4, v4.4s
-    mov             w9, v4.s[0]
-    add             w0, w10, w9
+    saddlv          s4, v4.8h
+    fmov            w9, s4
+    add             w0, w6, w9
     ret
 endfunc
 
