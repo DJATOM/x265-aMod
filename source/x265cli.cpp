@@ -382,6 +382,7 @@ namespace X265_NS {
         H0("   --format                      Format of the input video 0 : normal, 1 : side-by-side, 2 : over-under  Default %d\n", param->format);
         H0("   --multiview-config            Configuration file for Multiview Encoding\n");
 #endif
+        H0("   --scc <integer>               Enable screen content coding. 0: Diabled, 1:Intrablockcopy fast search with 1x2 CTUs search range, 2: Intrablockcopy Full search. Default %d\n", param->bEnableSCC);
 #ifdef SVT_HEVC
         H0("   --[no]svt                     Enable SVT HEVC encoder %s\n", OPT(param->bEnableSvtHevc));
         H0("   --[no-]svt-hme                Enable Hierarchial motion estimation(HME) in SVT HEVC encoder \n");

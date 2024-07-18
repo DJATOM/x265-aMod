@@ -409,6 +409,9 @@ void x265_param_default(x265_param* param)
     param->format = 0;
 
     param->numLayers = 1;
+
+    /* SCC */
+    param->bEnableSCC = 0;
 }
 
 int x265_param_default_preset(x265_param* param, const char* preset, const char* tune)
@@ -1473,6 +1476,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
             p->numViews = atoi(value);
         }
 #endif
+        OPT("scc") p->bEnableSCC = atoi(value);
         else
             return X265_PARAM_BAD_NAME;
     }
@@ -2397,6 +2401,7 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     s += sprintf(s, " num-views=%d", p->numViews);
     s += sprintf(s, " format=%d", p->format);
 #endif
+    s += sprintf(s, "scc=%d", p->bEnableSCC);
     BOOL(p->bEnableSBRC, "sbrc");
 #undef BOOL
     return buf;
@@ -2927,6 +2932,7 @@ void x265_copy_params(x265_param* dst, x265_param* src)
     dst->format = src->format;
 #endif
     dst->numLayers = src->numLayers;
+    dst->bEnableSCC = src->bEnableSCC;
 
     if (src->videoSignalTypePreset) dst->videoSignalTypePreset = strdup(src->videoSignalTypePreset);
     else dst->videoSignalTypePreset = NULL;

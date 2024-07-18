@@ -2310,6 +2310,9 @@ typedef struct x265_param
     int      format;
 
     int      numLayers;
+
+    /*Screen Content Coding*/
+    int     bEnableSCC;
 } x265_param;
 
 /* x265_param_alloc:
