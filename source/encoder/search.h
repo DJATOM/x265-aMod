@@ -290,6 +290,11 @@ public:
 
     int             m_ibcEnabled;
 
+    int             m_numBVs = 0;
+    int             m_numBV16s = 0;
+    MV              m_BVs[64];
+    uint32_t        m_lastCandCost;
+    MV              tempLastIntraBCMv[2] = { 0,0 };
 #if DETAILED_CU_STATS
     /* Accumulate CU statistics separately for each frame encoder */
     CUStats         m_stats[X265_MAX_FRAME_THREADS];
@@ -332,6 +337,23 @@ public:
     void checkDQPForSplitPred(Mode& mode, const CUGeom& cuGeom);
 
     MV getLowresMV(const CUData& cu, const PredictionUnit& pu, int list, int ref);
+
+    bool      predIntraBCSearch(Mode& intraBCMode, const CUGeom& cuGeom, bool bChromaMC, PartSize ePartSize, bool testOnlyPred, bool bUse1DSearchFor8x8);
+    void      intraBlockCopyEstimate(Mode& intraBCMode, const CUGeom& cuGeom, int puIdx, MV* pred, MV& mv, uint32_t& cost, bool testOnlyPred, bool bUse1DSearchFor8x8);
+    void      setIntraSearchRange(Mode& intraBCMode, MV& pred, int puIdx, int roiWidth, int roiHeight, MV& searchRangeLT, MV& searchRangeRB);
+    void      intraPatternSearch(Mode& intraBCMode, const CUGeom& cuGeom, int puIdx, uint32_t partAddr, pixel* refY, int refStride, MV* searchRangeLT, MV* searchRangeRB,
+        MV& mv, uint32_t& cost, int roiwidth, int roiheight, bool testOnlyPred, bool bUse1DSearchFor8x8);
+    bool      isValidIntraBCSearchArea(CUData* cu, int predX, int predY, int roiWidth, int roiHeight, int partOffset);
+    bool      isBlockVectorValid(int xPos, int yPos, int width, int height, CUData* pcCU,
+        int xStartInCU, int yStartInCU, int xBv, int yBv, int ctuSize);
+    void      intraBCSearchMVCandUpdate(uint32_t sad, int x, int y, uint32_t* sadBestCand, MV* cMVCand);
+    void      updateBVMergeCandLists(int roiWidth, int roiHeight, MV* mvCand);
+    int       intraBCSearchMVChromaRefine(Mode& intraBCMode, const CUGeom& cuGeom, int roiWidth, int roiHeight, int cuPelX, int cuPelY, uint32_t* sadBestCand, MV* cMVCand,
+        uint32_t partOffset, int puIdx);
+    static    uint32_t mergeCandLists(MV* dst, uint32_t dn, MV* src, uint32_t sn, bool isSrcQuarPel);
+    uint32_t  getSAD(pixel* ref, int refStride, const pixel* curr, int currStride, int width, int height);
+    bool      predMixedIntraBCInterSearch(Mode& intraBCMode, const CUGeom& cuGeom, bool bChromaMC, PartSize ePartSize, bool testOnlyPred, MV* iMVCandList = (0, 0));
+    void      restrictBipredMergeCand(CUData* cu, uint32_t puIdx, MVField(*mvFieldNeighbours)[2], uint8_t* interDirNeighbours, int numValidMergeCand);
 
     class PME : public BondedTaskGroup
     {

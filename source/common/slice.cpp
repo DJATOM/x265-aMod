@@ -55,12 +55,28 @@ void Slice::createInterLayerReferencePictureSet(PicList& picList, PicList& refPi
 
 void Slice::setRefPicList(PicList& picList, PicList& refPicSetInterLayer0, PicList& refPicSetInterLayer1, int sLayerId)
 {
+    bool checkNumPocTotalCurr = m_param->bEnableSCC ? false : true;
     if (m_sliceType == I_SLICE)
     {
         memset(m_refFrameList, 0, sizeof(m_refFrameList));
         memset(m_refReconPicList, 0, sizeof(m_refReconPicList));
         memset(m_refPOCList, 0, sizeof(m_refPOCList));
         m_numRefIdx[1] = m_numRefIdx[0] = 0;
+
+        if (!checkNumPocTotalCurr)
+        {
+            if (m_rps.numberOfPictures == 0)
+            {
+                Frame* prevPic = picList.getPOC(max(0, m_poc - 1));
+                if (prevPic->m_poc != max(0, m_poc - 1))
+                {
+                    prevPic = picList.getPOC(m_poc);
+                }
+                m_lastEncPic = prevPic;
+            }
+            return;
+        }
+
         return;
     }
 
@@ -71,6 +87,17 @@ void Slice::setRefPicList(PicList& picList, PicList& refPicSetInterLayer0, PicLi
         memset(m_refReconPicList, 0, sizeof(m_refReconPicList));
         memset(m_refPOCList, 0, sizeof(m_refPOCList));
         m_numRefIdx[0] = 1;
+    }
+
+    if (!checkNumPocTotalCurr && m_rps.numberOfPictures == 0)
+    {
+        Frame* prevPic = picList.getPOC(max(0, m_poc - 1));
+        if (prevPic->m_poc != max(0, m_poc - 1))
+        {
+            prevPic = picList.getPOC(m_poc);
+
+        }
+        m_lastEncPic = prevPic;
     }
 
     Frame* refPic = NULL;
@@ -224,6 +251,32 @@ void Slice::disableWeights()
                 wp.inputWeight = 1;
                 wp.inputOffset = 0;
             }
+}
+
+bool Slice::isOnlyCurrentPictureAsReference() const
+{
+    if (m_sliceType == I_SLICE)
+    {
+        return true;
+    }
+
+    for (int i = 0; i < m_numRefIdx[0]; i++)
+    {
+        if (m_refFrameList[0][i]->m_poc != m_poc)
+        {
+            return false;
+        }
+    }
+
+    for (int i = 0; i < m_numRefIdx[1]; i++)
+    {
+        if (m_refFrameList[1][i]->m_poc != m_poc)
+        {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 /* Sorts the deltaPOC and Used by current values in the RPS based on the

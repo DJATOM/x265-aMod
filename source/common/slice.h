@@ -403,6 +403,9 @@ public:
     int         m_fieldNum;
     Frame*      m_mcstfRefFrameList[2][MAX_MCSTF_TEMPORAL_WINDOW_LENGTH];
 
+    Frame*      m_lastEncPic;
+    bool        m_bLMvdL1Zero;
+
     Slice()
     {
         m_lastIDR = 0;
@@ -426,6 +429,8 @@ public:
 #if ENABLE_MULTIVIEW
     void createInterLayerReferencePictureSet(PicList& picList, PicList& refPicSetInterLayer0, PicList& refPicSetInterLayer1);
 #endif
+
+    bool isOnlyCurrentPictureAsReference() const;
 
     bool getRapPicFlag() const
     {

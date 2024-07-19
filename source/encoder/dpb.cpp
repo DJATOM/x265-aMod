@@ -325,6 +325,48 @@ void DPB::prepareEncode(Frame *newFrame)
         slice->m_colRefIdx = 0;
     }
 
+
+    bool bGPBcheck = false;
+    if (slice->m_sliceType == B_SLICE)
+    {
+        if (slice->m_param->bEnableSCC)
+        {
+            if (slice->m_numRefIdx[0] - 1 == slice->m_numRefIdx[1])
+            {
+                bGPBcheck = true;
+                for (int i = 0; i < slice->m_numRefIdx[1]; i++)
+                {
+                    if (slice->m_refPOCList[1][i] != slice->m_refPOCList[0][i])
+                    {
+                        bGPBcheck = false;
+                        break;
+                    }
+                }
+            }
+        }
+        else if (slice->m_numRefIdx[0] == slice->m_numRefIdx[1])
+        {
+            bGPBcheck = true;
+            int i;
+            for (i = 0; i < slice->m_numRefIdx[1]; i++)
+            {
+                if (slice->m_refPOCList[1][i] != slice->m_refPOCList[0][i])
+                {
+                    bGPBcheck = false;
+                    break;
+                }
+            }
+        }
+    }
+    if (bGPBcheck)
+    {
+        slice->m_bLMvdL1Zero = true;
+    }
+    else
+    {
+        slice->m_bLMvdL1Zero = false;
+    }
+
     // Disable Loopfilter in bound area, because we will do slice-parallelism in future
     slice->m_sLFaseFlag = (newFrame->m_param->maxSlices > 1) ? false : ((SLFASE_CONSTANT & (1 << (pocCurr % 31))) > 0);
 

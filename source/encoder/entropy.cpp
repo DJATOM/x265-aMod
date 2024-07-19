@@ -1037,7 +1037,7 @@ void Entropy::codeSliceHeader(const Slice& slice, FrameData& encData, uint32_t s
     }
 
     if (slice.isInterB())
-        WRITE_FLAG(0, "mvd_l1_zero_flag");
+        WRITE_FLAG(slice.m_bLMvdL1Zero, "mvd_l1_zero_flag");
 
     if (slice.m_sps->bTemporalMVPEnabled)
     {
