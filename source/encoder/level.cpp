@@ -178,7 +178,7 @@ void determineLevel(const x265_param &param, VPS& vps)
     uint32_t samplesPerSec = (uint32_t)(lumaSamples * ((double)param.fpsNum / param.fpsDenom));
     uint32_t bitrate = param.rc.vbvMaxBitrate ? param.rc.vbvMaxBitrate : param.rc.bitrate;
 
-    const uint32_t MaxDpbPicBuf = 6;
+    const uint32_t MaxDpbPicBuf = !!param.bEnableSCC ? 7 : 6;
     vps.ptl.levelIdc = Level::NONE;
     vps.ptl.tierFlag = Level::MAIN;
 
@@ -388,7 +388,7 @@ bool enforceLevel(x265_param& param, VPS& vps)
     for (uint32_t i = 0; i < vps.maxTempSubLayers; i++)
     {
         vps.numReorderPics[i] = (i == 0) ? ((param.bBPyramid && param.bframes > 1) ? 2 : !!param.bframes) : i;
-        vps.maxDecPicBuffering[i] = X265_MIN(MAX_NUM_REF, X265_MAX(vps.numReorderPics[i] + 2, (uint32_t)param.maxNumReferences) + 1);
+        vps.maxDecPicBuffering[i] = X265_MIN(MAX_NUM_REF, X265_MAX(vps.numReorderPics[i] + 2, (uint32_t)param.maxNumReferences) + 1) + !!param.bEnableSCC;
     }
 
     if (!!param.bEnableTemporalSubLayers)
@@ -504,7 +504,7 @@ bool enforceLevel(x265_param& param, VPS& vps)
     }
 
     /* The value of sps_max_dec_pic_buffering_minus1[ HighestTid ] + 1 shall be less than or equal to MaxDpbSize */
-    const uint32_t MaxDpbPicBuf = 6;
+    const uint32_t MaxDpbPicBuf = !!param.bEnableSCC ? 7 : 6;
     uint32_t maxDpbSize = MaxDpbPicBuf;
     if (!param.uhdBluray) /* Do not change MaxDpbPicBuf for UHD-Bluray */
     {
@@ -519,8 +519,7 @@ bool enforceLevel(x265_param& param, VPS& vps)
     int savedRefCount = param.maxNumReferences;
     while (vps.maxDecPicBuffering[vps.maxTempSubLayers - 1] > maxDpbSize && param.maxNumReferences > 1)
     {
-        param.maxNumReferences--;
-        vps.maxDecPicBuffering[vps.maxTempSubLayers - 1] = X265_MIN(MAX_NUM_REF, X265_MAX(vps.numReorderPics[vps.maxTempSubLayers - 1] + 1, (uint32_t)param.maxNumReferences) + 1);
+        vps.maxDecPicBuffering[vps.maxTempSubLayers - 1] = X265_MIN(MAX_NUM_REF, X265_MAX(vps.numReorderPics[vps.maxTempSubLayers - 1] + 1, (uint32_t)param.maxNumReferences) + 1 + !!param.bEnableSCC);
     }
     if (param.maxNumReferences != savedRefCount)
         x265_log(&param, X265_LOG_WARNING, "Lowering max references to %d to meet level requirement\n", param.maxNumReferences);

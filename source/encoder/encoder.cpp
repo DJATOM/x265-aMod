@@ -624,7 +624,7 @@ int Encoder::getRefFrameList(PicYuv** l0, PicYuv** l1, int sliceType, int poc, i
         {
             for (int j = 0; j < framePtr->m_encData->m_slice->m_numRefIdx[0]; j++)    // check only for --ref=n number of frames.
             {
-                if (framePtr->m_encData->m_slice->m_refFrameList[0][j] && framePtr->m_encData->m_slice->m_refFrameList[0][j]->m_reconPic != NULL)
+                if (framePtr->m_encData->m_slice->m_refFrameList[0][j] && framePtr->m_encData->m_slice->m_refFrameList[0][j]->m_reconPic[0] != NULL)
                 {
                     int l0POC = framePtr->m_encData->m_slice->m_refFrameList[0][j]->m_poc;
                     pocL0[j] = l0POC;
@@ -634,19 +634,19 @@ int Encoder::getRefFrameList(PicYuv** l0, PicYuv** l1, int sliceType, int poc, i
                         while (l0Fp->m_reconRowFlag[l0Fp->m_numRows - 1].get() == 0)
                             l0Fp->m_reconRowFlag[l0Fp->m_numRows - 1].waitForChange(0); /* If recon is not ready, current frame encoder has to wait. */
                     }
-                    l0[j] = l0Fp->m_reconPic;
+                    l0[j] = l0Fp->m_reconPic[0];
                 }
             }
             for (int j = 0; j < framePtr->m_encData->m_slice->m_numRefIdx[1]; j++)    // check only for --ref=n number of frames.
             {
-                if (framePtr->m_encData->m_slice->m_refFrameList[1][j] && framePtr->m_encData->m_slice->m_refFrameList[1][j]->m_reconPic != NULL)
+                if (framePtr->m_encData->m_slice->m_refFrameList[1][j] && framePtr->m_encData->m_slice->m_refFrameList[1][j]->m_reconPic[0] != NULL)
                 {
                     int l1POC = framePtr->m_encData->m_slice->m_refFrameList[1][j]->m_poc;
                     pocL1[j] = l1POC;
                     Frame* l1Fp = m_dpb->m_picList.getPOC(l1POC, 0);
                     while (l1Fp->m_reconRowFlag[l1Fp->m_numRows - 1].get() == 0)
                         l1Fp->m_reconRowFlag[l1Fp->m_numRows - 1].waitForChange(0); /* If recon is not ready, current frame encoder has to wait. */
-                    l1[j] = l1Fp->m_reconPic;
+                    l1[j] = l1Fp->m_reconPic[0];
                 }
             }
         }
@@ -1974,7 +1974,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture** pic_out)
                     x265_free_analysis_data(m_param, &outFrame->m_analysisData);
                 if (pic_out[sLayer])
                 {
-                    PicYuv* recpic = outFrame->m_reconPic;
+                    PicYuv* recpic = outFrame->m_reconPic[0];
                     pic_out[sLayer]->poc = slice->m_poc;
                     pic_out[sLayer]->bitDepth = X265_DEPTH;
                     pic_out[sLayer]->userData = outFrame->m_userData;
@@ -2330,15 +2330,15 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture** pic_out)
             {
                 int padX = m_param->maxCUSize + 32;
                 int padY = m_param->maxCUSize + 16;
-                uint32_t numCuInHeight = (frameEnc[0]->m_encData->m_reconPic->m_picHeight + m_param->maxCUSize - 1) / m_param->maxCUSize;
+                uint32_t numCuInHeight = (frameEnc[0]->m_encData->m_reconPic[0]->m_picHeight + m_param->maxCUSize - 1) / m_param->maxCUSize;
                 int maxHeight = numCuInHeight * m_param->maxCUSize;
                 for (int i = 0; i < INTEGRAL_PLANE_NUM; i++)
                 {
-                    frameEnc[0]->m_encData->m_meBuffer[i] = X265_MALLOC(uint32_t, frameEnc[0]->m_reconPic->m_stride * (maxHeight + (2 * padY)));
+                    frameEnc[0]->m_encData->m_meBuffer[i] = X265_MALLOC(uint32_t, frameEnc[0]->m_reconPic[0]->m_stride * (maxHeight + (2 * padY)));
                     if (frameEnc[0]->m_encData->m_meBuffer[i])
                     {
-                        memset(frameEnc[0]->m_encData->m_meBuffer[i], 0, sizeof(uint32_t)* frameEnc[0]->m_reconPic->m_stride * (maxHeight + (2 * padY)));
-                        frameEnc[0]->m_encData->m_meIntegral[i] = frameEnc[0]->m_encData->m_meBuffer[i] + frameEnc[0]->m_encData->m_reconPic->m_stride * padY + padX;
+                        memset(frameEnc[0]->m_encData->m_meBuffer[i], 0, sizeof(uint32_t)* frameEnc[0]->m_reconPic[0]->m_stride * (maxHeight + (2 * padY)));
+                        frameEnc[0]->m_encData->m_meIntegral[i] = frameEnc[0]->m_encData->m_meBuffer[i] + frameEnc[0]->m_encData->m_reconPic[0]->m_stride * padY + padX;
                     }
                     else
                         x265_log(m_param, X265_LOG_ERROR, "SEA motion search: POC %d Integral buffer[%d] unallocated\n", frameEnc[0]->m_poc, i);
@@ -3072,7 +3072,7 @@ void Encoder::fetchStats(x265_stats *stats, size_t statsSizeBytes, int layer)
 
 void Encoder::finishFrameStats(Frame* curFrame, FrameEncoder *curEncoder, x265_frame_stats* frameStats, int inPoc, int layer)
 {
-    PicYuv* reconPic = curFrame->m_reconPic;
+    PicYuv* reconPic = curFrame->m_reconPic[0];
     uint64_t bits = curEncoder->m_accessUnitBits[layer];
 
     //===== calculate PSNR =====

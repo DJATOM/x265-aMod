@@ -256,7 +256,7 @@ static void restoreOrigLosslessYuv(const CUData* cu, Frame& frame, uint32_t absP
     const int size = cu->m_log2CUSize[absPartIdx] - 2;
     const uint32_t cuAddr = cu->m_cuAddr;
 
-    PicYuv* reconPic = frame.m_reconPic;
+    PicYuv* reconPic = frame.m_reconPic[0];
     PicYuv* fencPic  = frame.m_fencPic;
 
     pixel* dst = reconPic->getLumaAddr(cuAddr, absPartIdx);
@@ -337,7 +337,7 @@ void FrameFilter::ParallelFilter::processSaoCTU(SAOParam *saoParam, int col)
 
         uint32_t cuAddr = m_rowAddr + col;
         const CUData* ctu = m_encData->getPicCTU(cuAddr);
-        assert(m_frameFilter->m_frame->m_reconPic == m_encData->m_reconPic);
+        assert(m_frameFilter->m_frame->m_reconPic[0] == m_encData->m_reconPic[0]);
         origCUSampleRestoration(ctu, cuGeoms[ctuGeomMap[cuAddr]], *m_frameFilter->m_frame);
     }
 }
@@ -352,7 +352,7 @@ void FrameFilter::ParallelFilter::processPostCu(int col) const
     if ((col != 0) & (col != m_frameFilter->m_numCols - 1) & (m_row != 0) & (m_row != m_frameFilter->m_numRows - 1))
         return;
 
-    PicYuv *reconPic = m_frameFilter->m_frame->m_reconPic;
+    PicYuv *reconPic = m_frameFilter->m_frame->m_reconPic[0];
     const uint32_t lineStartCUAddr = m_rowAddr + col;
     const int realH = getCUHeight();
     const int realW = m_frameFilter->getCUWidth(col);
@@ -441,7 +441,7 @@ void FrameFilter::ParallelFilter::processTasks(int /*workerThreadId*/)
     SAOParam* saoParam = m_encData->m_saoParam;
     const CUGeom* cuGeoms = m_frameFilter->m_frameEncoder->m_cuGeoms;
     const uint32_t* ctuGeomMap = m_frameFilter->m_frameEncoder->m_ctuGeomMap;
-    PicYuv* reconPic = m_encData->m_reconPic;
+    PicYuv* reconPic = m_encData->m_reconPic[0];
     const int colStart = m_lastCol.get();
     const int numCols = m_frameFilter->m_numCols;
     // TODO: Waiting previous row finish or simple clip on it?
@@ -653,7 +653,7 @@ void FrameFilter::processRow(int row, int layer)
 
 void FrameFilter::processPostRow(int row, int layer)
 {
-    PicYuv *reconPic = m_frame->m_reconPic;
+    PicYuv *reconPic = m_frame->m_reconPic[0];
     const uint32_t numCols = m_frame->m_encData->m_slice->m_sps->numCuInWidth;
     const uint32_t lineStartCUAddr = row * numCols;
 
@@ -737,7 +737,7 @@ void FrameFilter::computeMEIntegral(int row)
             }
         }
 
-        int stride = (int)m_frame->m_reconPic->m_stride;
+        int stride = (int)m_frame->m_reconPic[0]->m_stride;
         int padX = m_param->maxCUSize + 32;
         int padY = m_param->maxCUSize + 16;
         int numCuInHeight = m_frame->m_encData->m_slice->m_sps->numCuInHeight;
@@ -763,7 +763,7 @@ void FrameFilter::computeMEIntegral(int row)
 
         for (int y = startRow; y < height; y++)
         {
-            pixel    *pix = m_frame->m_reconPic->m_picOrg[0] + y * stride - padX;
+            pixel    *pix = m_frame->m_reconPic[0]->m_picOrg[0] + y * stride - padX;
             uint32_t *sum32x32 = m_frame->m_encData->m_meIntegral[0] + (y + 1) * stride - padX;
             uint32_t *sum32x24 = m_frame->m_encData->m_meIntegral[1] + (y + 1) * stride - padX;
             uint32_t *sum32x8 = m_frame->m_encData->m_meIntegral[2] + (y + 1) * stride - padX;

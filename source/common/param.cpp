@@ -1476,7 +1476,12 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
             p->numViews = atoi(value);
         }
 #endif
-        OPT("scc") p->bEnableSCC = atoi(value);
+        OPT("scc")
+        {
+            p->bEnableSCC = atoi(value);
+            if (p->bEnableSCC)
+                p->bEnableWeightedPred = false;
+        }
         else
             return X265_PARAM_BAD_NAME;
     }

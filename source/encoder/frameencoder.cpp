@@ -591,7 +591,7 @@ void FrameEncoder::compressFrame(int layer)
             WeightParam *w = NULL;
             if ((bUseWeightP || bUseWeightB) && slice->m_weightPredTable[l][ref][0].wtPresent)
                 w = slice->m_weightPredTable[l][ref];
-            slice->m_refReconPicList[l][ref] = slice->m_refFrameList[l][ref]->m_reconPic;
+            slice->m_refReconPicList[l][ref] = slice->m_refFrameList[l][ref]->m_reconPic[0];
             m_mref[l][ref].init(slice->m_refReconPicList[l][ref], w, *m_param);
         }
         if (m_param->analysisSave && (bUseWeightP || bUseWeightB))
@@ -988,7 +988,7 @@ void FrameEncoder::compressFrame(int layer)
 
     if (m_param->maxSlices > 1)
     {
-        PicYuv *reconPic = m_frame[layer]->m_reconPic;
+        PicYuv *reconPic = m_frame[layer]->m_reconPic[0];
         uint32_t height = reconPic->m_picHeight;
         initDecodedPictureHashSEI(0, 0, height, layer);
     } 
@@ -1252,7 +1252,7 @@ void FrameEncoder::compressFrame(int layer)
 
 void FrameEncoder::initDecodedPictureHashSEI(int row, int cuAddr, int height, int layer)
 {
-    PicYuv *reconPic = m_frame[layer]->m_reconPic;
+    PicYuv *reconPic = m_frame[layer]->m_reconPic[0];
     uint32_t width = reconPic->m_picWidth;	
     intptr_t stride = reconPic->m_stride;
     uint32_t maxCUHeight = m_param->maxCUSize;
@@ -2263,7 +2263,7 @@ void FrameEncoder::readModel(FilmGrainCharacteristics* m_filmGrain, FILE* filmgr
 void FrameEncoder::vmafFrameLevelScore()
 {
     PicYuv *fenc = m_frame->m_fencPic;
-    PicYuv *recon = m_frame->m_reconPic;
+    PicYuv *recon = m_frame->m_reconPic[0];
 
     x265_vmaf_framedata *vmafframedata = (x265_vmaf_framedata*)x265_malloc(sizeof(x265_vmaf_framedata));
     if (!vmafframedata)

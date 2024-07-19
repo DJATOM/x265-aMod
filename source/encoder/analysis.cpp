@@ -271,7 +271,7 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
         {
             /* In RD Level 0/1, copy source pixels into the reconstructed block so
              * they are available for intra predictions */
-            m_modeDepth[0].fencYuv.copyToPicYuv(*m_frame->m_reconPic, ctu.m_cuAddr, 0);
+            m_modeDepth[0].fencYuv.copyToPicYuv(*m_frame->m_reconPic[0], ctu.m_cuAddr, 0);
 
             compressInterCU_rd0_4(ctu, cuGeom, qp);
 
@@ -508,7 +508,7 @@ void Analysis::qprdRefine(const CUData& parentCTU, const CUGeom& cuGeom, int32_t
 
     /* Copy best data to encData CTU and recon */
     md.bestMode->cu.copyToPic(depth);
-    md.bestMode->reconYuv.copyToPicYuv(*m_frame->m_reconPic, parentCTU.m_cuAddr, cuGeom.absPartIdx);
+    md.bestMode->reconYuv.copyToPicYuv(*m_frame->m_reconPic[0], parentCTU.m_cuAddr, cuGeom.absPartIdx);
 }
 
 uint64_t Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t qp)
@@ -816,7 +816,10 @@ uint64_t Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom
     /* Copy best data to encData CTU and recon */
     md.bestMode->cu.copyToPic(depth);
     if (md.bestMode != &md.pred[PRED_SPLIT])
-        md.bestMode->reconYuv.copyToPicYuv(*m_frame->m_reconPic, parentCTU.m_cuAddr, cuGeom.absPartIdx);
+    {
+        for (int i = 0; i < !!m_param->bEnableSCC + 1; i++)
+            md.bestMode->reconYuv.copyToPicYuv(*m_frame->m_reconPic[i], parentCTU.m_cuAddr, cuGeom.absPartIdx);
+    }
 
     return md.bestMode->rdCost;
 }
@@ -1292,7 +1295,7 @@ uint32_t Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& c
 
     /* Copy best data to encData CTU and recon */
     md.bestMode->cu.copyToPic(depth);
-    md.bestMode->reconYuv.copyToPicYuv(*m_frame->m_reconPic, cuAddr, cuGeom.absPartIdx);
+    md.bestMode->reconYuv.copyToPicYuv(*m_frame->m_reconPic[0], cuAddr, cuGeom.absPartIdx);
 
     return refMask;
 }
@@ -1310,14 +1313,14 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
     if (m_param->searchMethod == X265_SEA)
     {
         int numPredDir = m_slice->isInterP() ? 1 : 2;
-        int offset = (int)(m_frame->m_reconPic->m_cuOffsetY[parentCTU.m_cuAddr] + m_frame->m_reconPic->m_buOffsetY[cuGeom.absPartIdx]);
+        int offset = (int)(m_frame->m_reconPic[0]->m_cuOffsetY[parentCTU.m_cuAddr] + m_frame->m_reconPic[0]->m_buOffsetY[cuGeom.absPartIdx]);
         for (int list = 0; list < numPredDir; list++)
             for (int i = 0; i < m_frame->m_encData->m_slice->m_numRefIdx[list]; i++)
                 for (int planes = 0; planes < INTEGRAL_PLANE_NUM; planes++)
                     m_modeDepth[depth].fencYuv.m_integral[list][i][planes] = m_frame->m_encData->m_slice->m_refFrameList[list][i]->m_encData->m_meIntegral[planes] + offset;
     }
 
-    PicYuv& reconPic = *m_frame->m_reconPic;
+    PicYuv& reconPic = *m_frame->m_reconPic[0];
     SplitData splitCUData;
 
     bool bHEVCBlockAnalysis = (m_param->bAnalysisType == AVC_INFO && cuGeom.numPartitions > 16);
@@ -2026,7 +2029,7 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
     if (m_param->searchMethod == X265_SEA)
     {
         int numPredDir = m_slice->isInterP() ? 1 : 2;
-        int offset = (int)(m_frame->m_reconPic->m_cuOffsetY[parentCTU.m_cuAddr] + m_frame->m_reconPic->m_buOffsetY[cuGeom.absPartIdx]);
+        int offset = (int)(m_frame->m_reconPic[0]->m_cuOffsetY[parentCTU.m_cuAddr] + m_frame->m_reconPic[0]->m_buOffsetY[cuGeom.absPartIdx]);
         for (int list = 0; list < numPredDir; list++)
             for (int i = 0; i < m_frame->m_encData->m_slice->m_numRefIdx[list]; i++)
                 for (int planes = 0; planes < INTEGRAL_PLANE_NUM; planes++)
@@ -2708,7 +2711,8 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
 
         /* Copy best data to encData CTU and recon */
         md.bestMode->cu.copyToPic(depth);
-        md.bestMode->reconYuv.copyToPicYuv(*m_frame->m_reconPic, parentCTU.m_cuAddr, cuGeom.absPartIdx);
+        for (int i = 0; i < !!m_param->bEnableSCC + 1; i++)
+            md.bestMode->reconYuv.copyToPicYuv(*m_frame->m_reconPic[i], parentCTU.m_cuAddr, cuGeom.absPartIdx);
     }
     else
     {
@@ -2994,7 +2998,7 @@ void Analysis::recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t q
 
         /* Copy best data to encData CTU and recon */
         md.bestMode->cu.copyToPic(depth);
-        md.bestMode->reconYuv.copyToPicYuv(*m_frame->m_reconPic, parentCTU.m_cuAddr, cuGeom.absPartIdx);
+        md.bestMode->reconYuv.copyToPicYuv(*m_frame->m_reconPic[0], parentCTU.m_cuAddr, cuGeom.absPartIdx);
     }
     if (m_param->bDynamicRefine && bDecidedDepth)
         trainCU(parentCTU, cuGeom, *md.bestMode, td);
@@ -3580,7 +3584,7 @@ void Analysis::checkBidir2Nx2N(Mode& inter2Nx2N, Mode& bidir2Nx2N, const CUGeom&
 {
     CUData& cu = bidir2Nx2N.cu;
 
-    if (cu.isBipredRestriction() || inter2Nx2N.bestME[0][0].cost == MAX_UINT || inter2Nx2N.bestME[0][1].cost == MAX_UINT)
+    if ((cu.is8x8BipredRestriction(inter2Nx2N.bestME[0][0].mv, inter2Nx2N.bestME[0][1].mv, inter2Nx2N.bestME[0][0].ref, inter2Nx2N.bestME[0][1].ref) ? (cu.m_cuDepth[0] == 3) : cu.isBipredRestriction()) || inter2Nx2N.bestME[0][0].cost == MAX_UINT || inter2Nx2N.bestME[0][1].cost == MAX_UINT)
     {
         bidir2Nx2N.sa8dCost = MAX_INT64;
         bidir2Nx2N.rdCost = MAX_INT64;

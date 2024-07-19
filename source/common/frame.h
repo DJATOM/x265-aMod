@@ -81,7 +81,7 @@ public:
     /* These two items will be NULL until the Frame begins to be encoded, at which point
      * it will be assigned a FrameData instance, which comes with a reconstructed image PicYuv */
     FrameData*             m_encData;
-    PicYuv*                m_reconPic;
+    PicYuv*                m_reconPic[2];
 
     /* Data associated with x265_picture */
     PicYuv*                m_fencPic;

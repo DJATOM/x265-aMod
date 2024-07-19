@@ -267,7 +267,7 @@ void SAO::startSlice(Frame* frame, Entropy& initState)
 // CTU-based SAO process without slice granularity
 void SAO::applyPixelOffsets(int addr, int typeIdx, int plane)
 {
-    PicYuv* reconPic = m_frame->m_reconPic;
+    PicYuv* reconPic = m_frame->m_reconPic[0];
     pixel* rec = reconPic->getPlaneAddr(plane, addr);
     intptr_t stride = plane ? reconPic->m_strideC : reconPic->m_stride;
     uint32_t picWidth  = m_param->sourceWidth;
@@ -565,7 +565,7 @@ void SAO::applyPixelOffsets(int addr, int typeIdx, int plane)
 /* Process SAO unit */
 void SAO::generateLumaOffsets(SaoCtuParam* ctuParam, int idxY, int idxX)
 {
-    PicYuv* reconPic = m_frame->m_reconPic;
+    PicYuv* reconPic = m_frame->m_reconPic[0];
     intptr_t stride = reconPic->m_stride;
     int ctuWidth = m_param->maxCUSize;
     int ctuHeight = m_param->maxCUSize;
@@ -625,7 +625,7 @@ void SAO::generateLumaOffsets(SaoCtuParam* ctuParam, int idxY, int idxX)
 /* Process SAO unit (Chroma only) */
 void SAO::generateChromaOffsets(SaoCtuParam* ctuParam[3], int idxY, int idxX)
 {
-    PicYuv* reconPic = m_frame->m_reconPic;
+    PicYuv* reconPic = m_frame->m_reconPic[0];
     intptr_t stride = reconPic->m_strideC;
     int ctuWidth  = m_param->maxCUSize;
     int ctuHeight = m_param->maxCUSize;
@@ -729,7 +729,7 @@ void SAO::generateChromaOffsets(SaoCtuParam* ctuParam[3], int idxY, int idxX)
 void SAO::calcSaoStatsCTU(int addr, int plane)
 {
     Slice* slice = m_frame->m_encData->m_slice;
-    const PicYuv* reconPic = m_frame->m_reconPic;
+    const PicYuv* reconPic = m_frame->m_reconPic[0];
     const CUData* cu = m_frame->m_encData->getPicCTU(addr);
     const pixel* fenc0 = m_frame->m_fencPic->getPlaneAddr(plane, addr);
     const pixel* rec0  = reconPic->getPlaneAddr(plane, addr);
@@ -916,7 +916,7 @@ void SAO::calcSaoStatsCu_BeforeDblk(Frame* frame, int idxX, int idxY)
 
     int x, y;
     const CUData* cu = frame->m_encData->getPicCTU(addr);
-    const PicYuv* reconPic = m_frame->m_reconPic;
+    const PicYuv* reconPic = m_frame->m_reconPic[0];
     const pixel* fenc;
     const pixel* rec;
     intptr_t stride = reconPic->m_stride;

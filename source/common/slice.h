@@ -405,6 +405,7 @@ public:
 
     Frame*      m_lastEncPic;
     bool        m_bLMvdL1Zero;
+    bool        m_bTemporalMvp;
 
     Slice()
     {
@@ -421,6 +422,7 @@ public:
         m_rpsIdx = -1;
         m_chromaQpOffset[0] = m_chromaQpOffset[1] = 0;
         m_fieldNum = 0;
+        m_bTemporalMvp = false;
     }
 
     void disableWeights();

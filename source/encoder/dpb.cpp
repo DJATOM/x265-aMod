@@ -53,8 +53,8 @@ DPB::~DPB()
         FrameData* next = m_frameDataFreeList->m_freeListNext;
         m_frameDataFreeList->destroy();
 
-        m_frameDataFreeList->m_reconPic->destroy();
-        delete m_frameDataFreeList->m_reconPic;
+        m_frameDataFreeList->m_reconPic[0]->destroy();
+        delete m_frameDataFreeList->m_reconPic[0];
 
         delete m_frameDataFreeList;
         m_frameDataFreeList = next;
@@ -132,7 +132,8 @@ void DPB::recycleUnreferenced()
                 curFrame->m_prevCtuInfoChange = NULL;
             }
             curFrame->m_encData = NULL;
-            curFrame->m_reconPic = NULL;
+            for (int i = 0; i < !!curFrame->m_param->bEnableSCC + 1; i++)
+                curFrame->m_reconPic[i] = NULL;
         }
     }
 }
@@ -206,7 +207,8 @@ void DPB::prepareEncode(Frame *newFrame)
     // Do decoding refresh marking if any
     decodingRefreshMarking(pocCurr, slice->m_nalUnitType, layer);
 
-    computeRPS(pocCurr, newFrame->m_tempLayer, slice->isIRAP(), &slice->m_rps, slice->m_sps->maxDecPicBuffering[newFrame->m_tempLayer], layer);
+    uint32_t maxDecBuffer = (slice->m_sps->maxDecPicBuffering[newFrame->m_tempLayer] >= 8 && slice->m_param->bEnableSCC) ? 7 : slice->m_sps->maxDecPicBuffering[newFrame->m_tempLayer];
+    computeRPS(pocCurr, newFrame->m_tempLayer, slice->isIRAP(), &slice->m_rps, maxDecBuffer, layer);
     bool isTSAPic = ((slice->m_nalUnitType == 2) || (slice->m_nalUnitType == 3)) ? true : false;
     // Mark pictures in m_piclist as unreferenced if they are not included in RPS
     applyReferencePictureSet(&slice->m_rps, pocCurr, newFrame->m_tempLayer, isTSAPic, layer);
@@ -365,6 +367,15 @@ void DPB::prepareEncode(Frame *newFrame)
     else
     {
         slice->m_bLMvdL1Zero = false;
+    }
+
+    if (!slice->isIntra() && slice->m_param->bEnableTemporalMvp)
+    {
+        const Frame* colPic = slice->m_refFrameList[slice->isInterB() && !slice->m_colFromL0Flag][slice->m_colRefIdx];
+        if (colPic->m_poc == slice->m_poc)
+            slice->m_bTemporalMvp = false;
+        else
+            slice->m_bTemporalMvp = true;
     }
 
     // Disable Loopfilter in bound area, because we will do slice-parallelism in future

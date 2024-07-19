@@ -997,7 +997,7 @@ void Entropy::codeSliceHeader(const Slice& slice, FrameData& encData, uint32_t s
         }
 
         if (slice.m_sps->bTemporalMVPEnabled)
-            WRITE_FLAG(1, "slice_temporal_mvp_enable_flag");
+            WRITE_FLAG(slice.m_bTemporalMvp, "slice_temporal_mvp_enable_flag");
     }
     const SAOParam *saoParam = encData.m_saoParam;
     if (slice.m_bUseSao)
@@ -1039,7 +1039,7 @@ void Entropy::codeSliceHeader(const Slice& slice, FrameData& encData, uint32_t s
     if (slice.isInterB())
         WRITE_FLAG(slice.m_bLMvdL1Zero, "mvd_l1_zero_flag");
 
-    if (slice.m_sps->bTemporalMVPEnabled)
+    if (slice.m_bTemporalMvp)
     {
         if (slice.m_sliceType == B_SLICE)
             WRITE_FLAG(slice.m_colFromL0Flag, "collocated_from_l0_flag");

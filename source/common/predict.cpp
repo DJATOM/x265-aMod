@@ -112,10 +112,20 @@ void Predict::motionCompensation(const CUData& cu, const PredictionUnit& pu, Yuv
         }
         else
         {
-            if (bLuma)
-                predInterLumaPixel(pu, predYuv, *cu.m_slice->m_refReconPicList[0][refIdx0], mv0);
-            if (bChroma)
-                predInterChromaPixel(pu, predYuv, *cu.m_slice->m_refReconPicList[0][refIdx0], mv0);
+            if (!!cu.m_slice->m_param->bEnableSCC && refIdx0 == (cu.m_slice->m_numRefIdx[0] - 1))
+            {
+                if (bLuma)
+                    predInterLumaPixel(pu, predYuv, *cu.m_slice->m_refFrameList[0][refIdx0]->m_reconPic[1], mv0);
+                if (bChroma)
+                    predInterChromaPixel(pu, predYuv, *cu.m_slice->m_refFrameList[0][refIdx0]->m_reconPic[1], mv0);
+            }
+            else
+            {
+                if (bLuma)
+                    predInterLumaPixel(pu, predYuv, *cu.m_slice->m_refReconPicList[0][refIdx0], mv0);
+                if (bChroma)
+                    predInterChromaPixel(pu, predYuv, *cu.m_slice->m_refReconPicList[0][refIdx0], mv0);
+            }
         }
     }
     else
@@ -174,12 +184,18 @@ void Predict::motionCompensation(const CUData& cu, const PredictionUnit& pu, Yuv
 
             if (bLuma)
             {
-                predInterLumaShort(pu, m_predShortYuv[0], *cu.m_slice->m_refReconPicList[0][refIdx0], mv0);
+                if (!!cu.m_slice->m_param->bEnableSCC && refIdx0 == (cu.m_slice->m_numRefIdx[0] - 1))
+                    predInterLumaShort(pu, m_predShortYuv[0], *cu.m_slice->m_refFrameList[0][refIdx0]->m_reconPic[1], mv0);
+                else
+                    predInterLumaShort(pu, m_predShortYuv[0], *cu.m_slice->m_refReconPicList[0][refIdx0], mv0);
                 predInterLumaShort(pu, m_predShortYuv[1], *cu.m_slice->m_refReconPicList[1][refIdx1], mv1);
             }
             if (bChroma)
             {
-                predInterChromaShort(pu, m_predShortYuv[0], *cu.m_slice->m_refReconPicList[0][refIdx0], mv0);
+                if (!!cu.m_slice->m_param->bEnableSCC && refIdx0 == (cu.m_slice->m_numRefIdx[0] - 1))
+                    predInterChromaShort(pu, m_predShortYuv[0], *cu.m_slice->m_refFrameList[0][refIdx0]->m_reconPic[1], mv0);
+                else
+                    predInterChromaShort(pu, m_predShortYuv[0], *cu.m_slice->m_refReconPicList[0][refIdx0], mv0);
                 predInterChromaShort(pu, m_predShortYuv[1], *cu.m_slice->m_refReconPicList[1][refIdx1], mv1);
             }
 
@@ -206,10 +222,20 @@ void Predict::motionCompensation(const CUData& cu, const PredictionUnit& pu, Yuv
             }
             else
             {
-                if (bLuma)
-                    predInterLumaPixel(pu, predYuv, *cu.m_slice->m_refReconPicList[0][refIdx0], mv0);
-                if (bChroma)
-                    predInterChromaPixel(pu, predYuv, *cu.m_slice->m_refReconPicList[0][refIdx0], mv0);
+                if (!!cu.m_slice->m_param->bEnableSCC && refIdx0 == (cu.m_slice->m_numRefIdx[0] - 1))
+                {
+                    if (bLuma)
+                        predInterLumaPixel(pu, predYuv, *cu.m_slice->m_refFrameList[0][refIdx0]->m_reconPic[1], mv0);
+                    if (bChroma)
+                        predInterChromaPixel(pu, predYuv, *cu.m_slice->m_refFrameList[0][refIdx0]->m_reconPic[1], mv0);
+                }
+                else
+                {
+                    if (bLuma)
+                        predInterLumaPixel(pu, predYuv, *cu.m_slice->m_refReconPicList[0][refIdx0], mv0);
+                    if (bChroma)
+                        predInterChromaPixel(pu, predYuv, *cu.m_slice->m_refReconPicList[0][refIdx0], mv0);
+                }
             }
         }
         else
@@ -602,7 +628,7 @@ void Predict::initAdiPattern(const CUData& cu, const CUGeom& cuGeom, uint32_t pu
     int tuSize = 1 << intraNeighbors.log2TrSize;
     int tuSize2 = tuSize << 1;
 
-    PicYuv* reconPic = cu.m_encData->m_reconPic;
+    PicYuv* reconPic = cu.m_encData->m_reconPic[0];
     pixel* adiOrigin = reconPic->getLumaAddr(cu.m_cuAddr, cuGeom.absPartIdx + puAbsPartIdx);
     intptr_t picStride = reconPic->m_stride;
 
@@ -651,7 +677,7 @@ void Predict::initAdiPattern(const CUData& cu, const CUGeom& cuGeom, uint32_t pu
 
 void Predict::initAdiPatternChroma(const CUData& cu, const CUGeom& cuGeom, uint32_t puAbsPartIdx, const IntraNeighbors& intraNeighbors, uint32_t chromaId)
 {
-    PicYuv* reconPic = cu.m_encData->m_reconPic;
+    PicYuv* reconPic = cu.m_encData->m_reconPic[0];
     const pixel* adiOrigin = reconPic->getChromaAddr(chromaId, cu.m_cuAddr, cuGeom.absPartIdx + puAbsPartIdx);
     intptr_t picStride = reconPic->m_strideC;
 

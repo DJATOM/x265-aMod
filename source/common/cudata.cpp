@@ -1595,7 +1595,7 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MV
                 return maxNumMergeCand;
         }
     }
-    if (m_slice->m_sps->bTemporalMVPEnabled)
+    if (m_slice->m_bTemporalMvp)
     {
         uint32_t partIdxRB = deriveRightBottomIdx(puIdx);
         MV colmv;
@@ -1822,9 +1822,9 @@ int CUData::getPMV(InterNeighbourMV* neighbours, uint32_t picList, uint32_t refI
     // Get the collocated candidate. At this step, either the first candidate
     // was found or its value is 0.
 #if ENABLE_MULTIVIEW
-    if (m_slice->m_param->numViews > 1)
+    if (m_slice->m_param->numViews > 1 || !!m_slice->m_param->bEnableSCC)
     {
-        if (m_slice->m_sps->bTemporalMVPEnabled && num < 2)
+        if (m_slice->m_bTemporalMvp && num < 2)
         {
             int refId = refIdx;
             uint32_t absPartAddr = m_absIdxInCTU + absPartIdx;
@@ -1915,7 +1915,7 @@ void CUData::getNeighbourMV(uint32_t puIdx, uint32_t absPartIdx, InterNeighbourM
     getInterNeighbourMV(neighbours + MD_ABOVE,      partIdxRT, MD_ABOVE);
     getInterNeighbourMV(neighbours + MD_ABOVE_LEFT, partIdxLT, MD_ABOVE_LEFT);
 
-    if (m_slice->m_sps->bTemporalMVPEnabled && !(m_slice->m_param->numViews > 1))
+    if (m_slice->m_bTemporalMvp && !(!!m_slice->m_param->bEnableSCC || m_slice->m_param->numViews > 1))
     {
         uint32_t absPartAddr = m_absIdxInCTU + absPartIdx;
         uint32_t partIdxRB = deriveRightBottomIdx(puIdx);
