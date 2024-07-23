@@ -58,7 +58,7 @@ static void lowPassDct8_c(const int16_t* src, int16_t* dst, intptr_t srcStride)
     }
 
     // replace first coef with total block average
-    dst[0] = totalSum << 1;
+    dst[0] = totalSum >> (-1 + (X265_DEPTH - 8));
 }
 
 static void lowPassDct16_c(const int16_t* src, int16_t* dst, intptr_t srcStride)
@@ -83,7 +83,7 @@ static void lowPassDct16_c(const int16_t* src, int16_t* dst, intptr_t srcStride)
     {
         memcpy(&dst[i * 16], &coef[i * 8], 8 * sizeof(int16_t));
     }
-    dst[0] = static_cast<int16_t>(totalSum >> 1);
+    dst[0] = static_cast<int16_t>(totalSum >> (1 + (X265_DEPTH - 8)));
 }
 
 static void lowPassDct32_c(const int16_t* src, int16_t* dst, intptr_t srcStride)
@@ -108,7 +108,7 @@ static void lowPassDct32_c(const int16_t* src, int16_t* dst, intptr_t srcStride)
     {
         memcpy(&dst[i * 32], &coef[i * 16], 16 * sizeof(int16_t));
     }
-    dst[0] = static_cast<int16_t>(totalSum >> 3);
+    dst[0] = static_cast<int16_t>(totalSum >> (3 + (X265_DEPTH - 8)));
 }
 
 namespace X265_NS {
