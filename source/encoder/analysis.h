@@ -119,6 +119,7 @@ public:
     bool      m_modeFlag[2];
     bool      m_checkMergeAndSkipOnly[2];
 
+    IBC       m_ibc;
     Analysis();
 
     bool create(ThreadLocalData* tld);
@@ -170,12 +171,12 @@ protected:
     void qprdRefine(const CUData& parentCTU, const CUGeom& cuGeom, int32_t qp, int32_t lqp);
 
     /* full analysis for an I-slice CU */
-    uint64_t compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t qp);
+    uint64_t compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t qp, IBC &ibc);
 
     /* full analysis for a P or B slice CU */
     uint32_t compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeom, int32_t qp);
     SplitData compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGeom, int32_t qp);
-    SplitData compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGeom, int32_t qp);
+    SplitData compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGeom, int32_t qp, IBC& ibc);
 
     void recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t qp, int32_t origqp = -1);
 
@@ -190,7 +191,7 @@ protected:
     void checkBidir2Nx2N(Mode& inter2Nx2N, Mode& bidir2Nx2N, const CUGeom& cuGeom);
 
     void checkRDCostIntraBCMerge2Nx2N(Mode& merge, const CUGeom& cuGeom);
-    void checkIntraBC_rd5_6(Mode& intraBCMode, const CUGeom& cuGeom, PartSize ePartSize, bool testOnlyPred, bool bUse1DSearchFor8x8, MV lastIntraBCMv[2], MV* iMVCandList = (0, 0));
+    void checkIntraBC_rd5_6(Mode& intraBCMode, const CUGeom& cuGeom, PartSize ePartSize, bool testOnlyPred, bool bUse1DSearchFor8x8, MV* iMVCandList ,IBC& ibc);
 
     /* encode current bestMode losslessly, pick best RD cost */
     void tryLossless(const CUGeom& cuGeom);

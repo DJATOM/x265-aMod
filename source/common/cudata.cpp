@@ -325,7 +325,7 @@ void CUData::initCTU(const Frame& frame, uint32_t cuAddr, int qp, uint32_t first
 }
 
 // initialize Sub partition
-void CUData::initSubCU(const CUData& ctu, const CUGeom& cuGeom, int qp)
+void CUData::initSubCU(const CUData& ctu, const CUGeom& cuGeom, int qp, MV lastIntraBCMv[2])
 {
     m_absIdxInCTU   = cuGeom.absPartIdx;
     m_encData       = ctu.m_encData;
@@ -362,6 +362,12 @@ void CUData::initSubCU(const CUData& ctu, const CUGeom& cuGeom, int qp)
     /* initialize the remaining CU data in one memset */
     memset(m_predMode, 0, (ctu.m_chromaFormat == X265_CSP_I400 ? BytesPerPartition - 13 : BytesPerPartition - 9) * m_numPartitions);
     memset(m_distortion, 0, m_numPartitions * sizeof(sse_t));
+
+    if (lastIntraBCMv)
+    {
+        for (int i = 0; i < 2; i++)
+            m_lastIntraBCMv[i] = lastIntraBCMv[i];
+    }
 }
 
 /* Copy the results of a sub-part (split) CU to the parent CU */

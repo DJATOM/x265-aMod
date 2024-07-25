@@ -223,6 +223,9 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
     }
     ProfileCUScope(ctu, totalCTUTime, totalCTUs);
 
+    memset(m_ibc.m_BVs, 0, sizeof(m_ibc.m_BVs));
+    memset(m_ibc.m_lastIntraBCMv, 0, sizeof(m_ibc.m_lastIntraBCMv));
+    m_ibc.m_numBV16s = 0; m_ibc.m_numBVs = 0;
     if (m_slice->m_sliceType == I_SLICE || (m_param->bEnableSCC && (m_slice->m_numRefIdx[0] == 1) && m_slice->m_refPOCList[0][0] == m_slice->m_poc))
     {
         x265_analysis_intra_data* intraDataCTU = m_frame->m_analysisData.intraData;
@@ -233,7 +236,7 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
             memcpy(ctu.m_partSize, &intraDataCTU->partSizes[ctu.m_cuAddr * numPartition], sizeof(char) * numPartition);
             memcpy(ctu.m_chromaIntraDir, &intraDataCTU->chromaModes[ctu.m_cuAddr * numPartition], sizeof(uint8_t) * numPartition);
         }
-        compressIntraCU(ctu, cuGeom, qp);
+        compressIntraCU(ctu, cuGeom, qp, m_ibc);
     }
     else
     {
@@ -266,7 +269,7 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
         if (m_param->bIntraRefresh && m_slice->m_sliceType == P_SLICE &&
             ctu.m_cuPelX / m_param->maxCUSize >= frame.m_encData->m_pir.pirStartCol
             && ctu.m_cuPelX / m_param->maxCUSize < frame.m_encData->m_pir.pirEndCol)
-            compressIntraCU(ctu, cuGeom, qp);
+            compressIntraCU(ctu, cuGeom, qp, m_ibc);
         else if (!m_param->rdLevel)
         {
             /* In RD Level 0/1, copy source pixels into the reconstructed block so
@@ -304,7 +307,7 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
         else if (m_param->rdLevel <= 4)
             compressInterCU_rd0_4(ctu, cuGeom, qp);
         else
-            compressInterCU_rd5_6(ctu, cuGeom, qp);
+            compressInterCU_rd5_6(ctu, cuGeom, qp, m_ibc);
     }
 
     if (m_param->bEnableRdRefine || m_param->bOptCUDeltaQP)
@@ -511,20 +514,11 @@ void Analysis::qprdRefine(const CUData& parentCTU, const CUGeom& cuGeom, int32_t
     md.bestMode->reconYuv.copyToPicYuv(*m_frame->m_reconPic[0], parentCTU.m_cuAddr, cuGeom.absPartIdx);
 }
 
-uint64_t Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t qp)
+uint64_t Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t qp, IBC& ibc)
 {
     uint32_t depth = cuGeom.depth;
     ModeDepth& md = m_modeDepth[depth];
     md.bestMode = NULL;
-
-    MV lastIntraBCMv[2];
-    for (int i = 0; i < 2; i++)
-    {
-        if (depth == 0)
-            lastIntraBCMv[i] = parentCTU.m_lastIntraBCMv[i];
-        else
-            lastIntraBCMv[i] = tempLastIntraBCMv[i];
-    }
 
     MV iMVCandList[4][10];
     memset(iMVCandList, 0, sizeof(MV) * 4 * 10);
@@ -584,13 +578,13 @@ uint64_t Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom
         double intracost = MAX_DOUBLE;
         if (m_param->bEnableSCC)
         {
-            md.pred[PRED_MERGE_IBC].cu.initSubCU(parentCTU, cuGeom, qp);
+            md.pred[PRED_MERGE_IBC].cu.initSubCU(parentCTU, cuGeom, qp, ibc.m_lastIntraBCMv);
             checkRDCostIntraBCMerge2Nx2N(md.pred[PRED_MERGE_IBC], cuGeom);
 
             if (!bSkipIntraBlockCopySearch)
             {
-                md.pred[PRED_IBC_2Nx2N].cu.initSubCU(parentCTU, cuGeom, qp);
-                checkIntraBC_rd5_6(md.pred[PRED_IBC_2Nx2N], cuGeom, SIZE_2Nx2N, false, bUse1DSearchFor8x8, tempLastIntraBCMv, &MV(0, 0));
+                md.pred[PRED_IBC_2Nx2N].cu.initSubCU(parentCTU, cuGeom, qp, ibc.m_lastIntraBCMv);
+                checkIntraBC_rd5_6(md.pred[PRED_IBC_2Nx2N], cuGeom, SIZE_2Nx2N, false, bUse1DSearchFor8x8, &MV(0, 0), ibc);
                 checkBestMode(md.pred[PRED_IBC_2Nx2N], depth);
 
                 if (intraBlockCopyFastSearch)
@@ -602,13 +596,13 @@ uint64_t Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom
                         double dTH3 = max(66 * m_rdCost.m_lambda, 800.0);
 
 
-                        md.pred[PRED_IBC_Nx2N].cu.initSubCU(parentCTU, cuGeom, qp);
-                        checkIntraBC_rd5_6(md.pred[PRED_IBC_Nx2N], cuGeom, SIZE_Nx2N, false, bUse1DSearchFor8x8, tempLastIntraBCMv, &MV(0, 0));
+                        md.pred[PRED_IBC_Nx2N].cu.initSubCU(parentCTU, cuGeom, qp, ibc.m_lastIntraBCMv);
+                        checkIntraBC_rd5_6(md.pred[PRED_IBC_Nx2N], cuGeom, SIZE_Nx2N, false, bUse1DSearchFor8x8, &MV(0, 0), ibc);
                         checkBestMode(md.pred[PRED_IBC_Nx2N], depth);
                         intracost = min(intracost, md.pred[PRED_IBC_Nx2N].rdCost);
 
-                        md.pred[PRED_IBC_2NxN].cu.initSubCU(parentCTU, cuGeom, qp);
-                        checkIntraBC_rd5_6(md.pred[PRED_IBC_2NxN], cuGeom, SIZE_2NxN, false, bUse1DSearchFor8x8, tempLastIntraBCMv, &MV(0, 0));
+                        md.pred[PRED_IBC_2NxN].cu.initSubCU(parentCTU, cuGeom, qp, ibc.m_lastIntraBCMv);
+                        checkIntraBC_rd5_6(md.pred[PRED_IBC_2NxN], cuGeom, SIZE_2NxN, false, bUse1DSearchFor8x8, &MV(0, 0), ibc);
                         checkBestMode(md.pred[PRED_IBC_2NxN], depth);
                         intracost = min(intracost, md.pred[PRED_IBC_2NxN].rdCost);
                     }
@@ -616,11 +610,11 @@ uint64_t Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom
                 else
                 {
                     md.pred[PRED_IBC_2NxN].cu.initSubCU(parentCTU, cuGeom, qp);
-                    checkIntraBC_rd5_6(md.pred[PRED_IBC_2NxN], cuGeom, SIZE_2NxN, false, bUse1DSearchFor8x8, tempLastIntraBCMv, &MV(0, 0));
+                    checkIntraBC_rd5_6(md.pred[PRED_IBC_2NxN], cuGeom, SIZE_2NxN, false, bUse1DSearchFor8x8, &MV(0, 0), ibc);
                     checkBestMode(md.pred[PRED_IBC_2NxN], depth);
 
                     md.pred[PRED_IBC_Nx2N].cu.initSubCU(parentCTU, cuGeom, qp);
-                    checkIntraBC_rd5_6(md.pred[PRED_IBC_Nx2N], cuGeom, SIZE_Nx2N, false, bUse1DSearchFor8x8, tempLastIntraBCMv, &MV(0, 0));
+                    checkIntraBC_rd5_6(md.pred[PRED_IBC_Nx2N], cuGeom, SIZE_Nx2N, false, bUse1DSearchFor8x8, &MV(0, 0), ibc);
                     checkBestMode(md.pred[PRED_IBC_Nx2N], depth);
                 }
             }
@@ -746,12 +740,9 @@ uint64_t Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom
                 if (m_slice->m_pps->bUseDQP && nextDepth <= m_slice->m_pps->maxCuDQPDepth)
                     nextQP = setLambdaFromQP(parentCTU, calculateQpforCuSize(parentCTU, childGeom));
 
-                for (int i = 0; i < 2; i++)
-                    tempLastIntraBCMv[i] = lastIntraBCMv[i];
-
                 if (m_param->bEnableSplitRdSkip)
                 {
-                    curCost += compressIntraCU(parentCTU, childGeom, nextQP);
+                    curCost += compressIntraCU(parentCTU, childGeom, nextQP, ibc);
                     if (m_modeDepth[depth].bestMode && curCost > m_modeDepth[depth].bestMode->rdCost)
                     {
                         skipSplitCheck = 1;
@@ -759,13 +750,13 @@ uint64_t Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom
                     }
                 }
                 else
-                    compressIntraCU(parentCTU, childGeom, nextQP);
+                    compressIntraCU(parentCTU, childGeom, nextQP, ibc);
 
                 if (nd.bestMode->cu.m_lastIntraBCMv[0].x != 0 || nd.bestMode->cu.m_lastIntraBCMv[0].y != 0)
                 {
                     for (int i = 0; i < 2; i++)
                     {
-                        lastIntraBCMv[i] = nd.bestMode->cu.m_lastIntraBCMv[i];
+                        ibc.m_lastIntraBCMv[i] = nd.bestMode->cu.m_lastIntraBCMv[i];
                     }
                 }
 
@@ -1303,7 +1294,7 @@ uint32_t Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& c
 SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGeom, int32_t qp)
 {
     if (parentCTU.m_vbvAffected && calculateQpforCuSize(parentCTU, cuGeom, 1))
-        return compressInterCU_rd5_6(parentCTU, cuGeom, qp);
+        return compressInterCU_rd5_6(parentCTU, cuGeom, qp, m_ibc);
 
     uint32_t depth = cuGeom.depth;
     uint32_t cuAddr = parentCTU.m_cuAddr;
@@ -2004,7 +1995,7 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
     return splitCUData;
 }
 
-SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGeom, int32_t qp)
+SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGeom, int32_t qp, IBC& ibc)
 {
     if (parentCTU.m_vbvAffected && !calculateQpforCuSize(parentCTU, cuGeom, 1))
         return compressInterCU_rd0_4(parentCTU, cuGeom, qp);
@@ -2014,14 +2005,6 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
     md.bestMode = NULL;
 
     Mode* interBest; // store the best modes in inter prediction
-    MV lastIntraBCMv[2];
-    for (int i = 0; i < 2; i++)
-    {
-        if (depth == 0)
-            lastIntraBCMv[i] = parentCTU.m_lastIntraBCMv[i];
-        else
-            lastIntraBCMv[i] = tempLastIntraBCMv[i];
-    }
 
     MV iMVCandList[4][10];
     memset(iMVCandList, 0, sizeof(MV) * 4 * 10);
@@ -2196,7 +2179,7 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
             interBest = md.bestMode;
             if (m_param->bEnableSCC)
             {
-                md.pred[PRED_MERGE_IBC].cu.initSubCU(parentCTU, cuGeom, qp);
+                md.pred[PRED_MERGE_IBC].cu.initSubCU(parentCTU, cuGeom, qp, ibc.m_lastIntraBCMv);
                 checkRDCostIntraBCMerge2Nx2N(md.pred[PRED_MERGE_IBC], cuGeom);
             }
 
@@ -2236,15 +2219,12 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
                     if (m_slice->m_pps->bUseDQP && nextDepth <= m_slice->m_pps->maxCuDQPDepth)
                         nextQP = setLambdaFromQP(parentCTU, calculateQpforCuSize(parentCTU, childGeom));
 
-                    for (int i = 0; i < 2; i++)
-                        tempLastIntraBCMv[i] = lastIntraBCMv[i];
-
-                    splitData[subPartIdx] = compressInterCU_rd5_6(parentCTU, childGeom, nextQP);
+                    splitData[subPartIdx] = compressInterCU_rd5_6(parentCTU, childGeom, nextQP, ibc);
 
                     if (nd.bestMode->cu.m_lastIntraBCMv[0].x != 0 || nd.bestMode->cu.m_lastIntraBCMv[0].y != 0)
                     {
                         for (int i = 0; i < 2; i++)
-                            lastIntraBCMv[i] = nd.bestMode->cu.m_lastIntraBCMv[i];
+                            ibc.m_lastIntraBCMv[i] = nd.bestMode->cu.m_lastIntraBCMv[i];
                     }
 
                     // Save best CU and pred data for this sub CU
@@ -2488,8 +2468,8 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
 
                     if (!bSkipIntraBlockCopySearch)
                     {
-                        md.pred[PRED_IBC_2Nx2N].cu.initSubCU(parentCTU, cuGeom, qp);
-                        checkIntraBC_rd5_6(md.pred[PRED_IBC_2Nx2N], cuGeom, SIZE_2Nx2N, false, bUse1DSearchFor8x8, tempLastIntraBCMv, &MV(0, 0));
+                        md.pred[PRED_IBC_2Nx2N].cu.initSubCU(parentCTU, cuGeom, qp, ibc.m_lastIntraBCMv);
+                        checkIntraBC_rd5_6(md.pred[PRED_IBC_2Nx2N], cuGeom, SIZE_2Nx2N, false, bUse1DSearchFor8x8, &MV(0, 0), ibc);
                         checkBestMode(md.pred[PRED_IBC_2Nx2N], depth);
 
                         if (intraBlockCopyFastSearch)
@@ -2500,12 +2480,12 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
                                 double dTH2 = max(60 * m_rdCost.m_lambda, 56.0);
                                 double dTH3 = max(66 * m_rdCost.m_lambda, 800.0);
 
-                                md.pred[PRED_IBC_Nx2N].cu.initSubCU(parentCTU, cuGeom, qp);
-                                checkIntraBC_rd5_6(md.pred[PRED_IBC_Nx2N], cuGeom, SIZE_Nx2N, false, bUse1DSearchFor8x8, tempLastIntraBCMv, (iMVCandList[SIZE_Nx2N] + 8));
+                                md.pred[PRED_IBC_Nx2N].cu.initSubCU(parentCTU, cuGeom, qp, ibc.m_lastIntraBCMv);
+                                checkIntraBC_rd5_6(md.pred[PRED_IBC_Nx2N], cuGeom, SIZE_Nx2N, false, bUse1DSearchFor8x8, (iMVCandList[SIZE_Nx2N] + 8), ibc);
                                 checkBestMode(md.pred[PRED_IBC_Nx2N], depth);
                                 intracost = min(intracost, md.pred[PRED_IBC_Nx2N].rdCost);
 
-                                md.pred[PRED_MIXED_IBC_NX2N].cu.initSubCU(parentCTU, cuGeom, qp);
+                                md.pred[PRED_MIXED_IBC_NX2N].cu.initSubCU(parentCTU, cuGeom, qp, ibc.m_lastIntraBCMv);
                                 bValid = predMixedIntraBCInterSearch(md.pred[PRED_MIXED_IBC_NX2N], cuGeom, m_csp != X265_CSP_I400 && m_frame->m_fencPic->m_picCsp != X265_CSP_I400, SIZE_Nx2N, false, iMVCandList[SIZE_Nx2N]);
                                 if (bValid)
                                     encodeResAndCalcRdInterCU(md.pred[PRED_MIXED_IBC_NX2N], cuGeom);
@@ -2513,12 +2493,12 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
                                     md.pred[PRED_MIXED_IBC_NX2N].rdCost = UINT64_MAX;
                                 checkBestMode(md.pred[PRED_MIXED_IBC_NX2N], depth);
 
-                                md.pred[PRED_IBC_2NxN].cu.initSubCU(parentCTU, cuGeom, qp);
-                                checkIntraBC_rd5_6(md.pred[PRED_IBC_2NxN], cuGeom, SIZE_2NxN, false, bUse1DSearchFor8x8, tempLastIntraBCMv, (iMVCandList[SIZE_2NxN] + 8));
+                                md.pred[PRED_IBC_2NxN].cu.initSubCU(parentCTU, cuGeom, qp, ibc.m_lastIntraBCMv);
+                                checkIntraBC_rd5_6(md.pred[PRED_IBC_2NxN], cuGeom, SIZE_2NxN, false, bUse1DSearchFor8x8, (iMVCandList[SIZE_2NxN] + 8), ibc);
                                 checkBestMode(md.pred[PRED_IBC_2NxN], depth);
                                 intracost = min(intracost, md.pred[PRED_IBC_2NxN].rdCost);
 
-                                md.pred[PRED_MIXED_IBC_2NXN].cu.initSubCU(parentCTU, cuGeom, qp);
+                                md.pred[PRED_MIXED_IBC_2NXN].cu.initSubCU(parentCTU, cuGeom, qp, ibc.m_lastIntraBCMv);
                                 bValid = predMixedIntraBCInterSearch(md.pred[PRED_MIXED_IBC_2NXN], cuGeom, m_csp != X265_CSP_I400 && m_frame->m_fencPic->m_picCsp != X265_CSP_I400, SIZE_2NxN, false, iMVCandList[SIZE_2NxN]);
                                 if (bValid)
                                     encodeResAndCalcRdInterCU(md.pred[PRED_MIXED_IBC_2NXN], cuGeom);
@@ -2530,11 +2510,11 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
                         else // full search
                         {
                             md.pred[PRED_IBC_2NxN].cu.initSubCU(parentCTU, cuGeom, qp);
-                            checkIntraBC_rd5_6(md.pred[PRED_IBC_2NxN], cuGeom, SIZE_2NxN, false, bUse1DSearchFor8x8, tempLastIntraBCMv, &MV(0, 0));
+                            checkIntraBC_rd5_6(md.pred[PRED_IBC_2NxN], cuGeom, SIZE_2NxN, false, bUse1DSearchFor8x8, &MV(0, 0), ibc);
                             checkBestMode(md.pred[PRED_IBC_2NxN], depth);
 
                             md.pred[PRED_IBC_Nx2N].cu.initSubCU(parentCTU, cuGeom, qp);
-                            checkIntraBC_rd5_6(md.pred[PRED_IBC_Nx2N], cuGeom, SIZE_Nx2N, false, bUse1DSearchFor8x8, tempLastIntraBCMv, &MV(0, 0));
+                            checkIntraBC_rd5_6(md.pred[PRED_IBC_Nx2N], cuGeom, SIZE_Nx2N, false, bUse1DSearchFor8x8, &MV(0, 0), ibc);
                             checkBestMode(md.pred[PRED_IBC_Nx2N], depth);
                         }
                     }
@@ -2794,7 +2774,7 @@ void Analysis::recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t q
         if (parentCTU.isIntra(cuGeom.absPartIdx) && m_refineLevel < 2)
         {
             if (m_param->intraRefine == 4)
-                compressIntraCU(parentCTU, cuGeom, qp);
+                compressIntraCU(parentCTU, cuGeom, qp, m_ibc);
             else
             {
                 bool reuseModes = !((m_param->intraRefine == 3) ||
@@ -2913,7 +2893,7 @@ void Analysis::recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t q
                 if (parentCTU.m_skipFlag[list][cuGeom.absPartIdx] == 1 && cuGeom.numPartitions <= 16)
                     m_checkMergeAndSkipOnly[list] = true;
             }
-            m_param->rdLevel > 4 ? compressInterCU_rd5_6(parentCTU, cuGeom, qp) : compressInterCU_rd0_4(parentCTU, cuGeom, qp);
+            m_param->rdLevel > 4 ? compressInterCU_rd5_6(parentCTU, cuGeom, qp, m_ibc) : compressInterCU_rd0_4(parentCTU, cuGeom, qp);
             for (int list = 0; list < m_slice->isInterB() + 1; list++)
             {
                 m_modeFlag[list] = false;
@@ -2930,7 +2910,7 @@ void Analysis::recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t q
                 m_evaluateInter = 1;
             else
                 bDecidedDepth = true;
-            m_param->rdLevel > 4 ? compressInterCU_rd5_6(parentCTU, cuGeom, qp) : compressInterCU_rd0_4(parentCTU, cuGeom, qp);
+            m_param->rdLevel > 4 ? compressInterCU_rd5_6(parentCTU, cuGeom, qp, m_ibc) : compressInterCU_rd0_4(parentCTU, cuGeom, qp);
             m_evaluateInter = 0;
         }
     }
@@ -2963,7 +2943,7 @@ void Analysis::recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t q
                 int lamdaQP = (m_param->analysisLoadReuseLevel >= 7) ? nextQP : lqp;
 
                 if (split)
-                    m_param->rdLevel > 4 ? compressInterCU_rd5_6(parentCTU, childGeom, nextQP) : compressInterCU_rd0_4(parentCTU, childGeom, nextQP);
+                    m_param->rdLevel > 4 ? compressInterCU_rd5_6(parentCTU, childGeom, nextQP, m_ibc) : compressInterCU_rd0_4(parentCTU, childGeom, nextQP);
                 else
                     qprdRefine(parentCTU, childGeom, nextQP, lamdaQP);
 
@@ -3554,7 +3534,7 @@ void Analysis::checkInter_rd5_6(Mode& interMode, const CUGeom& cuGeom, PartSize 
     }
 }
 
-void Analysis::checkIntraBC_rd5_6(Mode& intraBCMode, const CUGeom& cuGeom, PartSize ePartSize, bool testOnlyPred, bool bUse1DSearchFor8x8, MV lastIntraBCMv[2], MV* iMVCandList)
+void Analysis::checkIntraBC_rd5_6(Mode& intraBCMode, const CUGeom& cuGeom, PartSize ePartSize, bool testOnlyPred, bool bUse1DSearchFor8x8, MV* iMVCandList, IBC& ibc)
 {
     intraBCMode.initCosts();
     intraBCMode.cu.setPartSizeSubParts(ePartSize);
@@ -3562,9 +3542,9 @@ void Analysis::checkIntraBC_rd5_6(Mode& intraBCMode, const CUGeom& cuGeom, PartS
     intraBCMode.cu.setLumaIntraDirSubParts(DC_IDX, 0, cuGeom.depth);
     intraBCMode.cu.setChromIntraDirSubParts(DC_IDX, 0, cuGeom.depth);
     for (int i = 0; i < 2; i++)
-        intraBCMode.cu.m_lastIntraBCMv[i] = lastIntraBCMv[i];
+        intraBCMode.cu.m_lastIntraBCMv[i] = ibc.m_lastIntraBCMv[i];
 
-    bool bValid = predIntraBCSearch(intraBCMode, cuGeom, m_csp != X265_CSP_I400 && m_frame->m_fencPic->m_picCsp != X265_CSP_I400, ePartSize, testOnlyPred, bUse1DSearchFor8x8);
+    bool bValid = predIntraBCSearch(intraBCMode, cuGeom, m_csp != X265_CSP_I400 && m_frame->m_fencPic->m_picCsp != X265_CSP_I400, ePartSize, testOnlyPred, bUse1DSearchFor8x8, ibc);
     if (bValid)
         encodeResAndCalcRdInterCU(intraBCMode, cuGeom);
     else

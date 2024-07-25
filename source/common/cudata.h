@@ -37,6 +37,7 @@ class FrameData;
 class Slice;
 struct TUEntropyCodingParameters;
 struct CUDataMemPool;
+struct IBC;
 
 enum PartSize
 {
@@ -118,6 +119,14 @@ struct InterNeighbourMV
     // associated to the PMV, and the fifth bit is the list associated to the PMV.
     // if both reference indices are -1, then unifiedRef is also -1
     union { int16_t refIdx[2]; int32_t unifiedRef; };
+};
+
+struct IBC
+{
+    int             m_numBVs;
+    int             m_numBV16s;
+    MV              m_BVs[64];
+    MV              m_lastIntraBCMv[2];
 };
 
 typedef void(*cucopy_t)(uint8_t* dst, uint8_t* src); // dst and src are aligned to MIN(size, 32)
@@ -240,7 +249,7 @@ public:
     static void calcCTUGeoms(uint32_t ctuWidth, uint32_t ctuHeight, uint32_t maxCUSize, uint32_t minCUSize, CUGeom cuDataArray[CUGeom::MAX_GEOMS]);
 
     void     initCTU(const Frame& frame, uint32_t cuAddr, int qp, uint32_t firstRowInSlice, uint32_t lastRowInSlice, uint32_t lastCUInSlice);
-    void     initSubCU(const CUData& ctu, const CUGeom& cuGeom, int qp);
+    void     initSubCU(const CUData& ctu, const CUGeom& cuGeom, int qp, MV lastIntraBCMv[2] = 0);
     void     initLosslessCU(const CUData& cu, const CUGeom& cuGeom);
 
     void     copyPartFrom(const CUData& cu, const CUGeom& childGeom, uint32_t subPartIdx);

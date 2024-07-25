@@ -315,8 +315,7 @@ void Frame::destroy()
         X265_FREE(m_isSubSampled);
     }
 
-    int numVersion = !!m_param->bEnableSCC ? 2 : 1;
-    for (int i = 0; i < numVersion; i++)
+    for (int i = 0; i < !!m_param->bEnableSCC + 1; i++)
     {
         if (m_reconPic[i])
         {

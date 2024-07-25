@@ -172,6 +172,9 @@ bool Search::initSearch(const x265_param& param, ScalingList& scalingList)
     CHECKED_MALLOC(m_tsResidual, int16_t, MAX_TS_SIZE * MAX_TS_SIZE);
     CHECKED_MALLOC(m_tsRecon,    pixel,   MAX_TS_SIZE * MAX_TS_SIZE);
 
+    m_numBVs = 0;
+    m_numBV16s = 0;
+
     return ok;
 
 fail:
@@ -2771,15 +2774,15 @@ int Search::intraBCSearchMVChromaRefine(Mode& intraBCMode,
     return bestCandIdx;
 }
 
-void Search::updateBVMergeCandLists(int roiWidth, int roiHeight, MV* mvCand)
+void Search::updateBVMergeCandLists(int roiWidth, int roiHeight, MV* mvCand, IBC& ibc)
 {
     if (roiWidth + roiHeight > 8)
     {
-        m_numBVs = mergeCandLists(m_BVs, m_numBVs, mvCand, CHROMA_REFINEMENT_CANDIDATES, false);
+        ibc.m_numBVs = mergeCandLists(ibc.m_BVs, ibc.m_numBVs, mvCand, CHROMA_REFINEMENT_CANDIDATES, false);
 
         if (roiWidth + roiHeight == 32)
         {
-            m_numBV16s = m_numBVs;
+            ibc.m_numBV16s = ibc.m_numBVs;
         }
     }
 }
@@ -2954,7 +2957,7 @@ bool Search::isValidIntraBCSearchArea(CUData* cu, int predX, int predY, int roiW
 }
 
 void Search::intraPatternSearch(Mode& intraBCMode, const CUGeom& cuGeom, int puIdx, uint32_t partAddr, pixel* refY, int refStride, MV* searchRangeLT, MV* searchRangeRB,
-    MV& mv, uint32_t& cost, int roiWidth, int roiHeight, bool testOnlyPred, bool bUse1DSearchFor8x8)
+    MV& mv, uint32_t& cost, int roiWidth, int roiHeight, bool testOnlyPred, bool bUse1DSearchFor8x8, IBC& ibc)
 {
     const int   srchRngHorLeft = searchRangeLT->x;
     const int   srchRngHorRight = searchRangeRB->x;
@@ -3021,22 +3024,21 @@ void Search::intraPatternSearch(Mode& intraBCMode, const CUGeom& cuGeom, int puI
         }
 
         if (roiWidth > 8 || roiHeight > 8)
-            m_numBVs = 0;
+            ibc.m_numBVs = 0;
         else if (roiWidth + roiHeight == 16)
-            m_numBVs = m_numBV16s;
+            ibc.m_numBVs = ibc.m_numBV16s;
         if (testOnlyPred)
-            m_numBVs = 0;
+            ibc.m_numBVs = 0;
 
         MV  mvPredEncOnly[16];
         int nbPreds = 0;
-
         cu.getIntraBCMVPsEncOnly(partAddr, mvPredEncOnly, nbPreds, puIdx);
-        m_numBVs = mergeCandLists(m_BVs, m_numBVs, mvPredEncOnly, nbPreds, true);
+        ibc.m_numBVs = mergeCandLists(ibc.m_BVs, ibc.m_numBVs, mvPredEncOnly, nbPreds, true);
 
-        for (uint32_t cand = 0; cand < m_numBVs; cand++)
+        for (uint32_t cand = 0; cand < ibc.m_numBVs; cand++)
         {
-            int xPred = m_BVs[cand].x >> 2;
-            int yPred = m_BVs[cand].y >> 2;
+            int xPred = ibc.m_BVs[cand].x >> 2;
+            int yPred = ibc.m_BVs[cand].y >> 2;
             if (!(xPred == 0 && yPred == 0) && !((yPred < srTop) || (yPred > srBottom)) && !((xPred < srLeft) || (xPred > srRight)))
             {
                 int tempY = yPred + relCUPelY + roiHeight - 1;
@@ -3058,7 +3060,7 @@ void Search::intraPatternSearch(Mode& intraBCMode, const CUGeom& cuGeom, int puI
 
                 if (validCand)
                 {
-                    sad = m_me.mvcost(m_BVs[cand]);
+                    sad = m_me.mvcost(ibc.m_BVs[cand]);
 
                     refSrch = refY + yPred * refStride + xPred;
 
@@ -3118,7 +3120,7 @@ void Search::intraPatternSearch(Mode& intraBCMode, const CUGeom& cuGeom, int puI
                 mv.set(bestX, bestY);
                 cost = sadBest;
 
-                updateBVMergeCandLists(roiWidth, roiHeight, MVCand);
+                updateBVMergeCandLists(roiWidth, roiHeight, MVCand, ibc);
                 return;
             }
         }
@@ -3155,7 +3157,7 @@ void Search::intraPatternSearch(Mode& intraBCMode, const CUGeom& cuGeom, int puI
                 mv.set(bestX, bestY);
                 cost = sadBest;
 
-                updateBVMergeCandLists(roiWidth, roiHeight, MVCand);
+                updateBVMergeCandLists(roiWidth, roiHeight, MVCand, ibc);
                 return;
             }
         }
@@ -3174,7 +3176,7 @@ void Search::intraPatternSearch(Mode& intraBCMode, const CUGeom& cuGeom, int puI
             mv.set(bestX, bestY);
             cost = sadBest;
 
-            updateBVMergeCandLists(roiWidth, roiHeight, MVCand);
+            updateBVMergeCandLists(roiWidth, roiHeight, MVCand, ibc);
             return;
         }
 
@@ -3238,7 +3240,7 @@ void Search::intraPatternSearch(Mode& intraBCMode, const CUGeom& cuGeom, int puI
                 mv.set(bestX, bestY);
                 cost = sadBest;
 
-                updateBVMergeCandLists(roiWidth, roiHeight, MVCand);
+                updateBVMergeCandLists(roiWidth, roiHeight, MVCand, ibc);
                 return;
             }
 
@@ -3299,7 +3301,7 @@ void Search::intraPatternSearch(Mode& intraBCMode, const CUGeom& cuGeom, int puI
                         mv.set(bestX, bestY);
                         cost = sadBest;
 
-                        updateBVMergeCandLists(roiWidth, roiHeight, MVCand);
+                        updateBVMergeCandLists(roiWidth, roiHeight, MVCand, ibc);
                         return;
                     }
                 }
@@ -3319,7 +3321,7 @@ void Search::intraPatternSearch(Mode& intraBCMode, const CUGeom& cuGeom, int puI
                 mv.set(bestX, bestY);
                 cost = sadBest;
 
-                updateBVMergeCandLists(roiWidth, roiHeight, MVCand);
+                updateBVMergeCandLists(roiWidth, roiHeight, MVCand, ibc);
                 return;
             }
 
@@ -3383,7 +3385,7 @@ void Search::intraPatternSearch(Mode& intraBCMode, const CUGeom& cuGeom, int puI
                         mv.set(bestX, bestY);
                         cost = sadBest;
 
-                        updateBVMergeCandLists(roiWidth, roiHeight, MVCand);
+                        updateBVMergeCandLists(roiWidth, roiHeight, MVCand, ibc);
                         return;
                     }
                 }
@@ -3453,7 +3455,7 @@ void Search::intraPatternSearch(Mode& intraBCMode, const CUGeom& cuGeom, int puI
     mv.set(bestX, bestY);
     cost = sadBest;
 
-    updateBVMergeCandLists(roiWidth, roiHeight, MVCand);
+    updateBVMergeCandLists(roiWidth, roiHeight, MVCand, ibc);
 
 }
 
@@ -3518,7 +3520,7 @@ void Search::setIntraSearchRange(Mode& intraBCMode, MV& pred, int puIdx, int roi
 
 }
 
-void Search::intraBlockCopyEstimate(Mode& intraBCMode, const CUGeom& cuGeom, int puIdx, MV* pred, MV& mv, uint32_t& cost, bool testOnlyPred, bool bUse1DSearchFor8x8)
+void Search::intraBlockCopyEstimate(Mode& intraBCMode, const CUGeom& cuGeom, int puIdx, MV* pred, MV& mv, uint32_t& cost, bool testOnlyPred, bool bUse1DSearchFor8x8, IBC& ibc)
 {
     uint32_t         partAddr;
     int              roiWidth;
@@ -3558,10 +3560,10 @@ void Search::intraBlockCopyEstimate(Mode& intraBCMode, const CUGeom& cuGeom, int
 
     m_me.setMVP(predictors);
 
-    intraPatternSearch(intraBCMode, cuGeom, puIdx, partAddr, refY, strideY, &searchRangeLT, &searchRangeRB, mv, cost, roiWidth, roiHeight, testOnlyPred, bUse1DSearchFor8x8);
+    intraPatternSearch(intraBCMode, cuGeom, puIdx, partAddr, refY, strideY, &searchRangeLT, &searchRangeRB, mv, cost, roiWidth, roiHeight, testOnlyPred, bUse1DSearchFor8x8, ibc);
 }
 
-bool Search::predIntraBCSearch(Mode& intraBCMode, const CUGeom& cuGeom, bool bChromaMC, PartSize ePartSize, bool testOnlyPred, bool bUse1DSearchFor8x8)
+bool Search::predIntraBCSearch(Mode& intraBCMode, const CUGeom& cuGeom, bool bChromaMC, PartSize ePartSize, bool testOnlyPred, bool bUse1DSearchFor8x8, IBC& ibc)
 {
     MV zeroMv(0, 0);
     CUData& cu = intraBCMode.cu;
@@ -3596,7 +3598,7 @@ bool Search::predIntraBCSearch(Mode& intraBCMode, const CUGeom& cuGeom, bool bCh
         MVField mvField;
         uint32_t cost;
         mv.set(0, 0);
-        intraBlockCopyEstimate(intraBCMode, cuGeom, puIdx, mvPred, mv, cost, testOnlyPred, bUse1DSearchFor8x8);
+        intraBlockCopyEstimate(intraBCMode, cuGeom, puIdx, mvPred, mv, cost, testOnlyPred, bUse1DSearchFor8x8, ibc);
 
         bestME->mv.set(mv.x << 2, mv.y << 2);
         bestME->cost = cost;
