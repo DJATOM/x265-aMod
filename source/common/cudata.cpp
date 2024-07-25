@@ -2346,7 +2346,7 @@ bool CUData::getColMVPIBC(int ctuRsAddr, int partUnitIdx, MV& rcMv)
     CUData* colCU = m_encData->getPicCTU(ctuRsAddr);
     MVField tempMv;
     colCU->getMvField(colCU, absPartAddr, 0, tempMv);
-    if (&tempMv == NULL)
+    if (tempMv.refIdx == REF_NOT_VALID)
         return false;
 
     rcMv = tempMv.mv;
@@ -2354,14 +2354,11 @@ bool CUData::getColMVPIBC(int ctuRsAddr, int partUnitIdx, MV& rcMv)
     return true;
 }
 
-void CUData::getIntraBCMVPsEncOnly(uint32_t tabsPartIdx, MV* MvPred, int& nbPred, int puIdx)
+void CUData::getIntraBCMVPsEncOnly(uint32_t absPartIdx, MV* MvPred, int& nbPred, int puIdx)
 {
     uint32_t        tempPartIdx;
     uint32_t        left, above;
-    PartSize        ePartSize = (PartSize)m_partSize[tabsPartIdx];
-    const MVField* mvField;
     MVField         tempMvField;
-    uint32_t        absPartIdx;
 
     int width, height;
     getPartIndexAndSize(puIdx, absPartIdx, width, height);
@@ -2515,7 +2512,7 @@ void CUData::getIntraBCMVPsEncOnly(uint32_t tabsPartIdx, MV* MvPred, int& nbPred
 
 void CUData::roundMergeCandidates(MVField(*pcMvFieldNeighbours)[2], int iCount) const
 {
-    if (0) //m_pcSlice->getUseIntegerMv()
+    if (m_slice->m_useIntegerMv)
     {
         for (int i = 0; i < iCount; i++)
         {

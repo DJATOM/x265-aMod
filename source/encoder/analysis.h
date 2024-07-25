@@ -128,7 +128,6 @@ public:
     Mode& compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, const Entropy& initialContext);
     int32_t loadTUDepth(CUGeom cuGeom, CUData parentCTU);
 
-    static int CalculateMinimumHVLumaActivity(const CUGeom& cuGeom, const uint32_t uiAbsPartIdx, Yuv ppcOrigYuv);
 protected:
     /* Analysis data for save/load mode, writes/reads data based on absPartIdx */
     x265_analysis_inter_data*  m_reuseInterDataCTU;
@@ -186,12 +185,12 @@ protected:
 
     /* measure inter options */
     void checkInter_rd0_4(Mode& interMode, const CUGeom& cuGeom, PartSize partSize, uint32_t refmask[2]);
-    void checkInter_rd5_6(Mode& interMode, const CUGeom& cuGeom, PartSize partSize, uint32_t refmask[2]);
+    void checkInter_rd5_6(Mode& interMode, const CUGeom& cuGeom, PartSize partSize, uint32_t refmask[2], MV* iMVCandList = NULL);
 
     void checkBidir2Nx2N(Mode& inter2Nx2N, Mode& bidir2Nx2N, const CUGeom& cuGeom);
 
     void checkRDCostIntraBCMerge2Nx2N(Mode& merge, const CUGeom& cuGeom);
-    void checkIntraBC_rd5_6(Mode& intraBCMode, const CUGeom& cuGeom, PartSize ePartSize, bool testOnlyPred, bool bUse1DSearchFor8x8, MV* iMVCandList ,IBC& ibc);
+    void checkIntraBC_rd5_6(Mode& intraBCMode, const CUGeom& cuGeom, PartSize ePartSize, bool testOnlyPred, bool bUse1DSearchFor8x8, IBC& ibc, MV* iMVCandList = NULL);
 
     /* encode current bestMode losslessly, pick best RD cost */
     void tryLossless(const CUGeom& cuGeom);

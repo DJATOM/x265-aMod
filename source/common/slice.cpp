@@ -67,8 +67,8 @@ void Slice::setRefPicList(PicList& picList, PicList& refPicSetInterLayer0, PicLi
         {
             if (m_rps.numberOfPictures == 0)
             {
-                Frame* prevPic = picList.getPOC(max(0, m_poc - 1));
-                if (prevPic->m_poc != max(0, m_poc - 1))
+                Frame* prevPic = picList.getPOC(X265_MAX(0, m_poc - 1));
+                if (prevPic->m_poc != X265_MAX(0, m_poc - 1))
                 {
                     prevPic = picList.getPOC(m_poc);
                 }
@@ -91,8 +91,8 @@ void Slice::setRefPicList(PicList& picList, PicList& refPicSetInterLayer0, PicLi
 
     if (!checkNumPocTotalCurr && m_rps.numberOfPictures == 0)
     {
-        Frame* prevPic = picList.getPOC(max(0, m_poc - 1));
-        if (prevPic->m_poc != max(0, m_poc - 1))
+        Frame* prevPic = picList.getPOC(X265_MAX(0, m_poc - 1));
+        if (prevPic->m_poc != X265_MAX(0, m_poc - 1))
         {
             prevPic = picList.getPOC(m_poc);
 

@@ -316,7 +316,7 @@ public:
     void     encodeIntraInInter(Mode& intraMode, const CUGeom& cuGeom);
 
     // estimation inter prediction (non-skip)
-    void     predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChromaMC, uint32_t masks[2]);
+    void      predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChromaMC, uint32_t masks[2], MV* iMVCandList = NULL);
     void     searchMV(Mode& interMode, int list, int ref, MV& outmv, MV mvp[3], int numMvc, MV* mvc);
     // encode residual and compute rd-cost for inter mode
     void     encodeResAndCalcRdInterCU(Mode& interMode, const CUGeom& cuGeom);
@@ -350,8 +350,8 @@ public:
         uint32_t partOffset, int puIdx);
     static    uint32_t mergeCandLists(MV* dst, uint32_t dn, MV* src, uint32_t sn, bool isSrcQuarPel);
     uint32_t  getSAD(pixel* ref, int refStride, const pixel* curr, int currStride, int width, int height);
-    bool      predMixedIntraBCInterSearch(Mode& intraBCMode, const CUGeom& cuGeom, bool bChromaMC, PartSize ePartSize, bool testOnlyPred, MV* iMVCandList = (0, 0));
-    void      restrictBipredMergeCand(CUData* cu, uint32_t puIdx, MVField(*mvFieldNeighbours)[2], uint8_t* interDirNeighbours, int numValidMergeCand);
+    bool      predMixedIntraBCInterSearch(Mode& intraBCMode, const CUGeom& cuGeom, bool bChromaMC, PartSize ePartSize, MV* iMVCandList);
+    void      restrictBipredMergeCand(CUData* cu, uint32_t puIdx, MVField(*mvFieldNeighbours)[2], uint8_t* interDirNeighbours, uint32_t numValidMergeCand);
 
     class PME : public BondedTaskGroup
     {

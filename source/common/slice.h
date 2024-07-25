@@ -403,9 +403,10 @@ public:
     int         m_fieldNum;
     Frame*      m_mcstfRefFrameList[2][MAX_MCSTF_TEMPORAL_WINDOW_LENGTH];
 
-    Frame*      m_lastEncPic;
+    Frame* m_lastEncPic;
     bool        m_bLMvdL1Zero;
     bool        m_bTemporalMvp;
+    bool        m_useIntegerMv;
 
     Slice()
     {
@@ -423,6 +424,8 @@ public:
         m_chromaQpOffset[0] = m_chromaQpOffset[1] = 0;
         m_fieldNum = 0;
         m_bTemporalMvp = false;
+        m_lastEncPic = NULL;
+        m_useIntegerMv = false;
     }
 
     void disableWeights();

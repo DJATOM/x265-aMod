@@ -2186,7 +2186,7 @@ void Search::searchMV(Mode& interMode, int list, int ref, MV& outmv, MV mvp[3], 
     }
 }
 /* find the best inter prediction for each PU of specified mode */
-void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChromaMC, uint32_t refMasks[2])
+void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChromaMC, uint32_t refMasks[2], MV* iMVCandList)
 {
     ProfileCUScope(interMode.cu, motionEstimationElapsedTime, countMotionEstimate);
 
@@ -2472,6 +2472,11 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
 
                     /* Refine MVP selection, updates: mvpIdx, bits, cost */
                     mvp = checkBestMVP(amvp, outmv, mvpIdx, bits, cost);
+
+                    if (list <= 1 && ref <= 1 && (cu.m_partSize[0] == SIZE_2NxN || cu.m_partSize[0] == SIZE_Nx2N) && (1 << cu.m_log2CUSize[0]) <= 16)
+                    {
+                        iMVCandList[4 * list + 2 * ref + puIdx] = outmv;
+                    }
 
                     if (cost < bestME[list].cost)
                     {
@@ -2822,7 +2827,7 @@ uint32_t Search::mergeCandLists(MV* dst, uint32_t dn, MV* src, uint32_t sn, bool
         {
             TempMv <<= 2;
         }
-        for (int j = 0; j < dn; j++)
+        for (uint32_t j = 0; j < dn; j++)
         {
             if (TempMv == dst[j])
             {
@@ -2840,7 +2845,7 @@ uint32_t Search::mergeCandLists(MV* dst, uint32_t dn, MV* src, uint32_t sn, bool
     return dn;
 }
 
-void Search::restrictBipredMergeCand(CUData* cu, uint32_t puIdx, MVField(*mvFieldNeighbours)[2], uint8_t* interDirNeighbours, int numValidMergeCand)
+void Search::restrictBipredMergeCand(CUData* cu, uint32_t puIdx, MVField(*mvFieldNeighbours)[2], uint8_t* interDirNeighbours, uint32_t numValidMergeCand)
 {
     {
         for (uint32_t mergeCand = 0; mergeCand < numValidMergeCand; ++mergeCand)
@@ -2954,6 +2959,7 @@ bool Search::isValidIntraBCSearchArea(CUData* cu, int predX, int predY, int roiW
     {
         return false;
     }
+    return true;
 }
 
 void Search::intraPatternSearch(Mode& intraBCMode, const CUGeom& cuGeom, int puIdx, uint32_t partAddr, pixel* refY, int refStride, MV* searchRangeLT, MV* searchRangeRB,
@@ -2977,7 +2983,6 @@ void Search::intraPatternSearch(Mode& intraBCMode, const CUGeom& cuGeom, int puI
     int         bestX = 0;
     int         bestY = 0;
     pixel* refSrch;
-    pixel* origPic;
 
     int         bestCandIdx = 0;
     uint32_t    partOffset = 0;
@@ -2997,6 +3002,7 @@ void Search::intraPatternSearch(Mode& intraBCMode, const CUGeom& cuGeom, int puI
     const int chromaROIWidthInPixels = roiWidth;
     const int chromaROIHeightInPixels = roiHeight;
     bool fastsearch = (m_param->bEnableSCC == 1) ? true : false;
+    bool  isFullFrameSearchrangeEnabled = false; // disabled by default
 
     if (fastsearch)
     {
@@ -3005,7 +3011,7 @@ void Search::intraPatternSearch(Mode& intraBCMode, const CUGeom& cuGeom, int puI
         const uint32_t picWidth = m_slice->m_sps->picWidthInLumaSamples;
         const uint32_t picHeight = m_slice->m_sps->picHeightInLumaSamples;
 
-        if (1)//full frame search
+        if (isFullFrameSearchrangeEnabled)//full frame search
         {
             srLeft = -1 * cuPelX;
             srTop = -1 * cuPelY;
@@ -3013,11 +3019,11 @@ void Search::intraPatternSearch(Mode& intraBCMode, const CUGeom& cuGeom, int puI
             srRight = picWidth - cuPelX - roiWidth;
             srBottom = lcuHeight - cuPelY % lcuHeight - roiHeight;
 
-            if (cuPelX + srRight + roiWidth > picWidth)
+            if (cuPelX + srRight + roiWidth > (int)picWidth)
             {
                 srRight = picWidth % lcuWidth - cuPelX % lcuWidth - roiWidth;
             }
-            if (cuPelY + srBottom + roiHeight > picHeight)
+            if (cuPelY + srBottom + roiHeight > (int)picHeight)
             {
                 srBottom = picHeight % lcuHeight - cuPelY % lcuHeight - roiHeight;
             }
@@ -3035,7 +3041,7 @@ void Search::intraPatternSearch(Mode& intraBCMode, const CUGeom& cuGeom, int puI
         cu.getIntraBCMVPsEncOnly(partAddr, mvPredEncOnly, nbPreds, puIdx);
         ibc.m_numBVs = mergeCandLists(ibc.m_BVs, ibc.m_numBVs, mvPredEncOnly, nbPreds, true);
 
-        for (uint32_t cand = 0; cand < ibc.m_numBVs; cand++)
+        for (int cand = 0; cand < ibc.m_numBVs; cand++)
         {
             int xPred = ibc.m_BVs[cand].x >> 2;
             int yPred = ibc.m_BVs[cand].y >> 2;
@@ -3045,13 +3051,13 @@ void Search::intraPatternSearch(Mode& intraBCMode, const CUGeom& cuGeom, int puI
                 int tempX = xPred + relCUPelX + roiWidth - 1;
                 bool validCand = isValidIntraBCSearchArea(&cu, xPred, yPred, chromaROIWidthInPixels, chromaROIHeightInPixels, partOffset);
 
-                if ((tempX >= (int)lcuWidth) && (tempY >= 0) && 1)
+                if ((tempX >= (int)lcuWidth) && (tempY >= 0) && isFullFrameSearchrangeEnabled)
                     validCand = false;
 
                 if ((tempX >= 0) && (tempY >= 0))
                 {
                     int tempRasterIdx = (tempY / 4) * cu.s_numPartInCUSize + (tempX / 4);
-                    int tempZscanIdx = g_rasterToZscan[tempRasterIdx];
+                    uint32_t tempZscanIdx = g_rasterToZscan[tempRasterIdx];
                     if (tempZscanIdx >= cu.m_absIdxInCTU)
                     {
                         validCand = false;
@@ -3063,9 +3069,6 @@ void Search::intraPatternSearch(Mode& intraBCMode, const CUGeom& cuGeom, int puI
                     sad = m_me.mvcost(ibc.m_BVs[cand]);
 
                     refSrch = refY + yPred * refStride + xPred;
-
-                    const pixel* curr = intraBCMode.fencYuv->getLumaAddr(partAddr);
-                    intptr_t currStride = intraBCMode.fencYuv->m_size;
 
                     sad += m_me.bufSAD(refSrch, refStride);
                     if (sad > sadBestCand[CHROMA_REFINEMENT_CANDIDATES - 1])
@@ -3089,8 +3092,8 @@ void Search::intraPatternSearch(Mode& intraBCMode, const CUGeom& cuGeom, int puI
         }
 
         const int boundY = (0 - roiHeight - puPelOffsetY);
-        int lowY = ((cu.m_partSize[partAddr] == SCM_S0067_IBC_FULL_1D_SEARCH_FOR_PU) && 1)
-            ? -cuPelY : max(srchRngVerTop, 0 - cuPelY);
+        int lowY = ((cu.m_partSize[partAddr] == SCM_S0067_IBC_FULL_1D_SEARCH_FOR_PU) && isFullFrameSearchrangeEnabled)
+            ? -cuPelY : X265_MAX(srchRngVerTop, 0 - cuPelY);
         for (int y = boundY; y >= lowY; y--)
         {
             if (!isValidIntraBCSearchArea(&cu, 0, y, chromaROIWidthInPixels, chromaROIHeightInPixels, partOffset))
@@ -3102,8 +3105,6 @@ void Search::intraPatternSearch(Mode& intraBCMode, const CUGeom& cuGeom, int puI
 
             refSrch = refY + y * refStride;
 
-            const pixel* curr = intraBCMode.fencYuv->getLumaAddr(partAddr);
-            intptr_t currStride = intraBCMode.fencYuv->m_size;
             sad += m_me.bufSAD(refSrch, refStride);
             if (sad > sadBestCand[CHROMA_REFINEMENT_CANDIDATES - 1])
             {
@@ -3125,8 +3126,8 @@ void Search::intraPatternSearch(Mode& intraBCMode, const CUGeom& cuGeom, int puI
             }
         }
 
-        const int boundX = ((cu.m_partSize[partAddr] == SCM_S0067_IBC_FULL_1D_SEARCH_FOR_PU) && 1)
-            ? -cuPelX : max(srchRngHorLeft, -cuPelX);
+        const int boundX = ((cu.m_partSize[partAddr] == SCM_S0067_IBC_FULL_1D_SEARCH_FOR_PU) && isFullFrameSearchrangeEnabled)
+            ? -cuPelX : X265_MAX(srchRngHorLeft, -cuPelX);
         for (int x = 0 - roiWidth - puPelOffsetX; x >= boundX; --x)
         {
             if (!isValidIntraBCSearchArea(&cu, x, 0, chromaROIWidthInPixels, chromaROIHeightInPixels, partOffset))
@@ -3137,9 +3138,6 @@ void Search::intraPatternSearch(Mode& intraBCMode, const CUGeom& cuGeom, int puI
             sad = m_me.mvcost(MV(x, 0));
 
             refSrch = refY + x;
-
-            const pixel* curr = intraBCMode.fencYuv->getLumaAddr(partAddr);
-            intptr_t currStride = intraBCMode.fencYuv->m_size;
             sad += m_me.bufSAD(refSrch, refStride);
 
             if (sad > sadBestCand[CHROMA_REFINEMENT_CANDIDATES - 1])
@@ -3180,20 +3178,20 @@ void Search::intraPatternSearch(Mode& intraBCMode, const CUGeom& cuGeom, int puI
             return;
         }
 
-        if (cuGeom.depth > 2 && bUse1DSearchFor8x8)
+        if (cuGeom.depth > 2 && !bUse1DSearchFor8x8)
         {
-            for (int y = max(srchRngVerTop, -cuPelY); y <= srchRngVerBottom; y += 2)
+            for (int y = X265_MAX(srchRngVerTop, -cuPelY); y <= srchRngVerBottom; y += 2)
             {
-                if ((y == 0) || ((int)(cuPelY + y + roiHeight) >= picHeight))
+                if ((y == 0) || ((int)(cuPelY + y + roiHeight) >= (int)picHeight))
                 {
                     continue;
                 }
 
                 int tempY = y + relCUPelY + roiHeight - 1;
 
-                for (int x = max(srchRngHorLeft, -cuPelX); x <= srchRngHorRight; x++)
+                for (int x = X265_MAX(srchRngHorLeft, -cuPelX); x <= srchRngHorRight; x++)
                 {
-                    if ((x == 0) || ((int)(cuPelX + x + roiWidth) >= picWidth))
+                    if ((x == 0) || ((int)(cuPelX + x + roiWidth) >= (int)picWidth))
                     {
                         continue;
                     }
@@ -3203,7 +3201,7 @@ void Search::intraPatternSearch(Mode& intraBCMode, const CUGeom& cuGeom, int puI
                     if ((tempX >= 0) && (tempY >= 0))
                     {
                         int iTempRasterIdx = (tempY / 4) * cu.s_numPartInCUSize + (tempX / 4);
-                        int iTempZscanIdx = g_rasterToZscan[iTempRasterIdx];
+                        uint32_t iTempZscanIdx = g_rasterToZscan[iTempRasterIdx];
                         if (iTempZscanIdx >= cu.m_absIdxInCTU)
                         {
                             continue;
@@ -3218,9 +3216,6 @@ void Search::intraPatternSearch(Mode& intraBCMode, const CUGeom& cuGeom, int puI
                     sad = m_me.mvcost(MV(x, y));
 
                     refSrch = refY + y * refStride + x;
-
-                    const pixel* curr = intraBCMode.fencYuv->getLumaAddr(partAddr);
-                    intptr_t currStride = intraBCMode.fencYuv->m_size;
                     sad += m_me.bufSAD(refSrch, refStride);
 
                     intraBCSearchMVCandUpdate(sad, x, y, sadBestCand, MVCand);
@@ -3244,18 +3239,18 @@ void Search::intraPatternSearch(Mode& intraBCMode, const CUGeom& cuGeom, int puI
                 return;
             }
 
-            for (int y = (max(srchRngVerTop, -cuPelY) + 1); y <= srchRngVerBottom; y += 2)
+            for (int y = (X265_MAX(srchRngVerTop, -cuPelY) + 1); y <= srchRngVerBottom; y += 2)
             {
-                if ((y == 0) || ((int)(cuPelY + y + roiHeight) >= picHeight))
+                if ((y == 0) || ((int)(cuPelY + y + roiHeight) >= (int)picHeight))
                 {
                     continue;
                 }
 
                 int tempY = y + relCUPelY + roiHeight - 1;
 
-                for (int x = max(srchRngHorLeft, -cuPelX); x <= srchRngHorRight; x += 2)
+                for (int x = X265_MAX(srchRngHorLeft, -cuPelX); x <= srchRngHorRight; x += 2)
                 {
-                    if ((x == 0) || ((int)(cuPelX + x + roiWidth) >= picWidth))
+                    if ((x == 0) || ((int)(cuPelX + x + roiWidth) >= (int)picWidth))
                     {
                         continue;
                     }
@@ -3265,7 +3260,7 @@ void Search::intraPatternSearch(Mode& intraBCMode, const CUGeom& cuGeom, int puI
                     if ((tempX >= 0) && (tempY >= 0))
                     {
                         int tempRasterIdx = (tempY / 4) * cu.s_numPartInCUSize + (tempX / 4);
-                        int tempZscanIdx = g_rasterToZscan[tempRasterIdx];
+                        uint32_t tempZscanIdx = g_rasterToZscan[tempRasterIdx];
                         if (tempZscanIdx >= cu.m_absIdxInCTU)
                         {
                             continue;
@@ -3280,9 +3275,6 @@ void Search::intraPatternSearch(Mode& intraBCMode, const CUGeom& cuGeom, int puI
                     sad = m_me.mvcost(MV(x, y));
 
                     refSrch = refY + y * refStride + x;
-
-                    const pixel* curr = intraBCMode.fencYuv->getLumaAddr(partAddr);
-                    intptr_t currStride = intraBCMode.fencYuv->m_size;
                     sad += m_me.bufSAD(refSrch, refStride);
 
                     if (sad > sadBestCand[CHROMA_REFINEMENT_CANDIDATES - 1])
@@ -3328,19 +3320,19 @@ void Search::intraPatternSearch(Mode& intraBCMode, const CUGeom& cuGeom, int puI
             tempSadBest = sadBestCand[0];
 
 
-            for (int y = (max(srchRngVerTop, -cuPelY) + 1); y <= srchRngVerBottom; y += 2)
+            for (int y = (X265_MAX(srchRngVerTop, -cuPelY) + 1); y <= srchRngVerBottom; y += 2)
             {
-                if ((y == 0) || ((int)(cuPelY + y + roiHeight) >= picHeight))
+                if ((y == 0) || ((int)(cuPelY + y + roiHeight) >= (int)picHeight))
                 {
                     continue;
                 }
 
                 int tempY = y + relCUPelY + roiHeight - 1;
 
-                for (int x = (max(srchRngHorLeft, -cuPelX) + 1); x <= srchRngHorRight; x += 2)
+                for (int x = (X265_MAX(srchRngHorLeft, -cuPelX) + 1); x <= srchRngHorRight; x += 2)
                 {
 
-                    if ((x == 0) || ((int)(cuPelX + x + roiWidth) >= picWidth))
+                    if ((x == 0) || ((int)(cuPelX + x + roiWidth) >= (int)picWidth))
                     {
                         continue;
                     }
@@ -3350,7 +3342,7 @@ void Search::intraPatternSearch(Mode& intraBCMode, const CUGeom& cuGeom, int puI
                     if ((tempX >= 0) && (tempY >= 0))
                     {
                         int tempRasterIdx = (tempY / 4) * cu.s_numPartInCUSize + (tempX / 4);
-                        int tempZscanIdx = g_rasterToZscan[tempRasterIdx];
+                        uint32_t tempZscanIdx = g_rasterToZscan[tempRasterIdx];
                         if (tempZscanIdx >= cu.m_absIdxInCTU)
                         {
                             continue;
@@ -3365,9 +3357,6 @@ void Search::intraPatternSearch(Mode& intraBCMode, const CUGeom& cuGeom, int puI
                     sad = m_me.mvcost(MV(x, y));
 
                     refSrch = refY + y * refStride + x;
-
-                    const pixel* curr = intraBCMode.fencYuv->getLumaAddr(partAddr);
-                    intptr_t currStride = intraBCMode.fencYuv->m_size;
                     sad += m_me.bufSAD(refSrch, refStride);
                     if (sad > sadBestCand[CHROMA_REFINEMENT_CANDIDATES - 1])
                     {
@@ -3400,7 +3389,7 @@ void Search::intraPatternSearch(Mode& intraBCMode, const CUGeom& cuGeom, int puI
 
         for (int y = srchRngVerBottom; y >= srchRngVerTop; y--)
         {
-            if (((int)(cuPelY + y) < 0) || ((int)(cuPelY + y + roiHeight) >= picHeight))
+            if (((int)(cuPelY + y) < 0) || ((int)(cuPelY + y + roiHeight) >= (int)picHeight))
             {
                 refY -= refStride;
                 continue;
@@ -3409,7 +3398,7 @@ void Search::intraPatternSearch(Mode& intraBCMode, const CUGeom& cuGeom, int puI
             for (int x = srchRngHorLeft; x <= srchRngHorRight; x++)
             {
 
-                if (((int)(cuPelX + x) < 0) || ((int)(cuPelX + x + roiWidth) >= picWidth))
+                if (((int)(cuPelX + x) < 0) || ((int)(cuPelX + x + roiWidth) >= (int)picWidth))
                 {
                     continue;
                 }
@@ -3419,7 +3408,7 @@ void Search::intraPatternSearch(Mode& intraBCMode, const CUGeom& cuGeom, int puI
                 if ((tempX >= 0) && (tempY >= 0))
                 {
                     int iTempRasterIdx = (tempY / 4) * cu.s_numPartInCUSize + (tempX / 4);
-                    int iTempZscanIdx = g_rasterToZscan[iTempRasterIdx];
+                    uint32_t iTempZscanIdx = g_rasterToZscan[iTempRasterIdx];
                     if (iTempZscanIdx >= cu.m_absIdxInCTU)
                     {
                         continue;
@@ -3477,8 +3466,8 @@ void Search::setIntraSearchRange(Mode& intraBCMode, MV& pred, int puIdx, int roi
 
     const uint32_t picWidth = m_slice->m_sps->picWidthInLumaSamples;
     const uint32_t picHeight = m_slice->m_sps->picHeightInLumaSamples;
-
-    if (cu.m_cuDepth[0] == 2 && cu.m_partSize[0] == SIZE_2Nx2N && m_param->bEnableSCC == 2)// full frame search
+    bool  isFullFrameSearchrangeEnabled = false; // disabled by default
+    if (cu.m_cuDepth[0] == 2 && cu.m_partSize[0] == SIZE_2Nx2N && isFullFrameSearchrangeEnabled)// full frame search
     {
         srLeft = -1 * cuPelX;
         srTop = -1 * cuPelY;
@@ -3488,7 +3477,14 @@ void Search::setIntraSearchRange(Mode& intraBCMode, MV& pred, int puIdx, int roi
     }
     else
     {
-        uint32_t maxXsr = cuPelX % lcuWidth;
+        const uint32_t searchWidthInCTUs = cu.m_cuDepth[0] == 3 ? 1 : (isFullFrameSearchrangeEnabled) ? -1 : 1;
+        uint32_t width = 0, maxWidth = searchWidthInCTUs * lcuWidth;
+        for (const CUData* pTestCU = cu.m_cuLeft;
+            width < maxWidth && pTestCU != NULL && pTestCU->m_slice != NULL;
+            pTestCU = pTestCU->m_cuLeft, width += lcuWidth)
+        {
+        }
+        uint32_t maxXsr = (cuPelX % lcuWidth) + X265_MIN(maxWidth, width);
         uint32_t maxYsr = cuPelY % lcuHeight;
 
         if (cu.m_chromaFormat == X265_CSP_I420 || cu.m_chromaFormat == X265_CSP_I422) maxXsr &= ~0x4;
@@ -3532,25 +3528,7 @@ void Search::intraBlockCopyEstimate(Mode& intraBCMode, const CUGeom& cuGeom, int
     const MV predictors = *pred;
 
     CUData& cu = intraBCMode.cu;
-    const Yuv* fencYuv = intraBCMode.fencYuv;
     cu.getPartIndexAndSize(puIdx, partAddr, roiWidth, roiHeight);
-
-    /* calculate the location of upper-left corner pixel and size of the current PU */
-    int xP, yP, nPSW, nPSH;
-
-    int cuSize = 1 << cu.m_log2CUSize[0];
-    int partMode = cu.m_partSize[0];
-
-    int tmp = partTable[partMode][puIdx][0];
-    nPSW = ((tmp >> 4) * cuSize) >> 2;
-    nPSH = ((tmp & 0xF) * cuSize) >> 2;
-
-    tmp = partTable[partMode][puIdx][1];
-    xP = ((tmp >> 4) * cuSize) >> 2;
-    yP = ((tmp & 0xF) * cuSize) >> 2;
-
-    assert(nPSW == roiWidth);
-    assert(nPSH == roiHeight);
 
     int ref = m_slice->m_numRefIdx[0] - 1;
     pixel* refY = m_slice->m_refFrameList[0][ref]->m_reconPic[1]->getLumaAddr(cu.m_cuAddr, cu.m_absIdxInCTU + partAddr);
@@ -3570,10 +3548,12 @@ bool Search::predIntraBCSearch(Mode& intraBCMode, const CUGeom& cuGeom, bool bCh
     Yuv* predYuv = &intraBCMode.predYuv;
     Yuv& tmpPredYuv = m_rqt[cuGeom.depth].tmpPredYuv;
     int  numPart = cu.getNumPartInter(0);
+    int log2ParallelMergeLevelMinus2 = 0;
 
+    // 12 mv candidates including lowresMV
     MV mvc[(MD_ABOVE_LEFT + 1) * 2 + 2];
 
-    if (m_param->bEnableSCC == 1 && cuGeom.depth < 1) // fast search
+    if (m_param->bEnableSCC == 1 && (1 << cu.m_log2CUSize[0]) > SCM_S0067_MAX_CAND_SIZE) // fast search
         return false;
 
     uint32_t totalCost = 0;
@@ -3583,19 +3563,17 @@ bool Search::predIntraBCSearch(Mode& intraBCMode, const CUGeom& cuGeom, bool bCh
         uint32_t partAddr = 0;
         MotionData* bestME = intraBCMode.bestME[puIdx];
         PredictionUnit pu(cu, cuGeom, puIdx);
-        MV  mv, mvd, mvPred[2];
+        MV  mv, mvPred[2];
         cu.getPartIndexAndSize(puIdx, pu.puAbsPartIdx, width, height);
         partAddr = pu.puAbsPartIdx;
-        bool bChromaMC = 1;
         m_me.setSourcePU(*intraBCMode.fencYuv, pu.ctuAddr, pu.cuAbsPartIdx, pu.puAbsPartIdx, pu.width, pu.height, m_param->searchMethod, m_param->subpelRefine, bChromaMC);
 
         cu.getNeighbourMV(puIdx, pu.puAbsPartIdx, intraBCMode.interNeighbours);
-        int numMvc = cu.getPMV(intraBCMode.interNeighbours, 0, m_slice->m_numRefIdx[0] - 1, intraBCMode.amvpCand[0][m_slice->m_numRefIdx[0] - 1], mvc);
+        cu.getPMV(intraBCMode.interNeighbours, 0, m_slice->m_numRefIdx[0] - 1, intraBCMode.amvpCand[0][m_slice->m_numRefIdx[0] - 1], mvc, puIdx, pu.puAbsPartIdx);
 
         mvPred[0].set(intraBCMode.amvpCand[0][m_slice->m_numRefIdx[0] - 1][0].x >> 2, intraBCMode.amvpCand[0][m_slice->m_numRefIdx[0] - 1][0].y >> 2);
         mvPred[1].set(intraBCMode.amvpCand[0][m_slice->m_numRefIdx[0] - 1][1].x >> 2, intraBCMode.amvpCand[0][m_slice->m_numRefIdx[0] - 1][1].y >> 2);
 
-        MVField mvField;
         uint32_t cost;
         mv.set(0, 0);
         intraBlockCopyEstimate(intraBCMode, cuGeom, puIdx, mvPred, mv, cost, testOnlyPred, bUse1DSearchFor8x8, ibc);
@@ -3612,7 +3590,6 @@ bool Search::predIntraBCSearch(Mode& intraBCMode, const CUGeom& cuGeom, bool bCh
             return false;
         }
 
-        uint32_t depth = cu.m_cuDepth[0];
         int bitsAMVPBest, bitsAMVPTemp, bitsMergeTemp;
         int distAMVPBest, distMergeTemp;
         int costAMVPBest, costMergeBest, costMergeTemp;
@@ -3639,7 +3616,6 @@ bool Search::predIntraBCSearch(Mode& intraBCMode, const CUGeom& cuGeom, bool bCh
             yStartInCU = 0;
         }
         const pixel* currStart;
-        pixel* curr;
         pixel* ref;
         int currStride, refStride;
         distAMVPBest = 0;
@@ -3649,10 +3625,10 @@ bool Search::predIntraBCSearch(Mode& intraBCMode, const CUGeom& cuGeom, bool bCh
         cu.setPUMv(0, cMvQuaterPixl, pu.puAbsPartIdx, puIdx);
         cu.setPURefIdx(0, (int8_t)m_slice->m_numRefIdx[0] - 1, pu.puAbsPartIdx, puIdx);
         cu.setPUMv(1, MV(0, 0), pu.puAbsPartIdx, puIdx);
-        cu.setPURefIdx(1, -1, pu.puAbsPartIdx, puIdx);
+        cu.setPURefIdx(1, REF_NOT_VALID, pu.puAbsPartIdx, puIdx);
         cu.setPUInterDir(1, pu.puAbsPartIdx, puIdx);
         motionCompensation(cu, pu, tmpPredYuv, 1, 1);
-
+        int temp;
         for (uint32_t ch = TEXT_LUMA; ch < MAX_NUM_COMPONENT; ch++)
         {
             int tempHeight, tempWidth;
@@ -3660,10 +3636,9 @@ bool Search::predIntraBCSearch(Mode& intraBCMode, const CUGeom& cuGeom, bool bCh
             {
                 tempHeight = height;
                 tempWidth = width;
-                currStart = intraBCMode.fencYuv->getLumaAddr(partAddr);
-                currStride = intraBCMode.fencYuv->m_size;
                 ref = tmpPredYuv.getLumaAddr(partAddr);
                 refStride = tmpPredYuv.m_size;
+                distAMVPBest += m_me.bufSAD(ref, refStride);
             }
             else
             {
@@ -3674,25 +3649,21 @@ bool Search::predIntraBCSearch(Mode& intraBCMode, const CUGeom& cuGeom, bool bCh
                 currStride = intraBCMode.fencYuv->m_csize;
                 ref = tmpPredYuv.getChromaAddr(ch, partAddr);
                 refStride = tmpPredYuv.m_csize;
+                distAMVPBest += getSAD(ref, refStride, currStart, currStride, tempWidth, tempHeight);
             }
-            distAMVPBest += getSAD(ref, refStride, currStart, currStride, tempWidth, tempHeight);
         }
 
         mvPred[0].set(intraBCMode.amvpCand[0][m_slice->m_numRefIdx[0] - 1][0].x >> 2, intraBCMode.amvpCand[0][m_slice->m_numRefIdx[0] - 1][0].y >> 2);
         mvPred[1].set(intraBCMode.amvpCand[0][m_slice->m_numRefIdx[0] - 1][1].x >> 2, intraBCMode.amvpCand[0][m_slice->m_numRefIdx[0] - 1][1].y >> 2);
 
-        MV check;
         for (mvpIdxTemp = 0; mvpIdxTemp < AMVP_NUM_CANDS; mvpIdxTemp++)
         {
-            if (!(mvPred[mvpIdxTemp].x == check.x >> 2))
+            m_me.setMVP(mvPred[mvpIdxTemp]);
+            bitsAMVPTemp = m_me.bitcost(mv, mvPred[mvpIdxTemp]);
+            if (bitsAMVPTemp < bitsAMVPBest)
             {
-                m_me.setMVP(mvPred[mvpIdxTemp]);
-                bitsAMVPTemp = m_me.bitcost(mv, mvPred[mvpIdxTemp]);
-                if (bitsAMVPTemp < bitsAMVPBest)
-                {
-                    bitsAMVPBest = bitsAMVPTemp;
-                    mvpIdxBest = mvpIdxTemp;
-                }
+                bitsAMVPBest = bitsAMVPTemp;
+                mvpIdxBest = mvpIdxTemp;
             }
         }
 
@@ -3711,7 +3682,7 @@ bool Search::predIntraBCSearch(Mode& intraBCMode, const CUGeom& cuGeom, bool bCh
 
         if (ePartSize != SIZE_2Nx2N)
         {
-            if (0 && ePartSize != SIZE_2Nx2N && cu.m_cuDepth[0] >= 3)
+            if (log2ParallelMergeLevelMinus2 && ePartSize != SIZE_2Nx2N && cu.m_cuDepth[0] >= 3)
             {
                 cu.setPartSizeSubParts(SIZE_2Nx2N);
                 if (puIdx == 0)
@@ -3744,15 +3715,14 @@ bool Search::predIntraBCSearch(Mode& intraBCMode, const CUGeom& cuGeom, bool bCh
                 {
                     continue;
                 }
-                bitsMergeTemp = mrgIdxTemp == m_param->maxNumMergeCand ? mrgIdxTemp : mrgIdxTemp + 1;
-                bitsMergeTemp = getTUBits(mrgIdxTemp, m_param->maxNumMergeCand);
+                bitsMergeTemp = mrgIdxTemp == (int)m_param->maxNumMergeCand ? mrgIdxTemp : mrgIdxTemp + 1;
 
                 distMergeTemp = 0;
 
                 cu.setPUMv(0, cMvFieldNeighbours[mrgIdxTemp][0].mv, pu.puAbsPartIdx, puIdx);
                 cu.setPURefIdx(0, (int8_t)(m_slice->m_numRefIdx[0] - 1), pu.puAbsPartIdx, puIdx);
                 cu.setPUMv(1, MV(0, 0), pu.puAbsPartIdx, puIdx);
-                cu.setPURefIdx(1, -1, pu.puAbsPartIdx, puIdx);
+                cu.setPURefIdx(1, REF_NOT_VALID, pu.puAbsPartIdx, puIdx);
                 cu.setPUInterDir(1, pu.puAbsPartIdx, puIdx);
                 motionCompensation(cu, pu, tmpPredYuv, 1, 1);
 
@@ -3763,10 +3733,9 @@ bool Search::predIntraBCSearch(Mode& intraBCMode, const CUGeom& cuGeom, bool bCh
                     {
                         tempHeight = height;
                         tempWidth = width;
-                        currStart = intraBCMode.fencYuv->getLumaAddr(partAddr);
-                        currStride = intraBCMode.fencYuv->m_size;
                         ref = tmpPredYuv.getLumaAddr(partAddr);
                         refStride = tmpPredYuv.m_size;
+                        distMergeTemp += m_me.bufSAD(ref, refStride);
                     }
                     else
                     {
@@ -3777,9 +3746,8 @@ bool Search::predIntraBCSearch(Mode& intraBCMode, const CUGeom& cuGeom, bool bCh
                         currStride = intraBCMode.fencYuv->m_csize;
                         ref = tmpPredYuv.getChromaAddr(ch, partAddr);
                         refStride = tmpPredYuv.m_csize;
+                        distMergeTemp += getSAD(ref, refStride, currStart, currStride, tempWidth, tempHeight);
                     }
-                    distMergeTemp += getSAD(ref, refStride, currStart, currStride, tempWidth, tempHeight);
-
                 }
                 costMergeTemp = distMergeTemp + m_rdCost.getCost(bitsMergeTemp);
 
@@ -3792,13 +3760,12 @@ bool Search::predIntraBCSearch(Mode& intraBCMode, const CUGeom& cuGeom, bool bCh
         }
         if (costAMVPBest < costMergeBest)
         {
-            MV zeroMv(0, 0);
             MV tempmv((mv.x << 2), (mv.y << 2));
             MVField mvField[2];
             mvField[0].mv = tempmv;
             mvField[0].refIdx = m_slice->m_numRefIdx[0] - 1;   // the current picture is at the last position of list0
             mvField[1].mv = zeroMv;
-            mvField[1].refIdx = -1;
+            mvField[1].refIdx = REF_NOT_VALID;
 
             cu.m_mergeFlag[pu.puAbsPartIdx] = false;
             cu.setPUInterDir(1, pu.puAbsPartIdx, puIdx);  // list 0 prediction
@@ -3819,12 +3786,12 @@ bool Search::predIntraBCSearch(Mode& intraBCMode, const CUGeom& cuGeom, bool bCh
         }
         else
         {
-            MV mv(cMvFieldNeighbours[mrgIdxBest][0].mv.x, cMvFieldNeighbours[mrgIdxBest][0].mv.y);
+            MV MV(cMvFieldNeighbours[mrgIdxBest][0].mv.x, cMvFieldNeighbours[mrgIdxBest][0].mv.y);
             MVField mvField[2];
-            mvField[0].mv = mv;
+            mvField[0].mv = MV;
             mvField[0].refIdx = cu.m_slice->m_numRefIdx[0] - 1;   // the current picture is at the last position of list0
             mvField[1].mv = zeroMv;
-            mvField[1].refIdx = -1;
+            mvField[1].refIdx = REF_NOT_VALID;
 
             cu.m_mergeFlag[pu.puAbsPartIdx] = true;
             cu.m_mvpIdx[0][pu.puAbsPartIdx] = (uint8_t)mrgIdxBest; /* merge candidate ID is stored in L0 MVP idx */
@@ -3859,21 +3826,17 @@ bool Search::predIntraBCSearch(Mode& intraBCMode, const CUGeom& cuGeom, bool bCh
     return true;
 }
 
-bool Search::predMixedIntraBCInterSearch(Mode& intraBCMixedMode, const CUGeom& cuGeom, bool bChromaMC, PartSize ePartSize, bool testOnlyPred, MV* iMvCandList)
+bool Search::predMixedIntraBCInterSearch(Mode& intraBCMixedMode, const CUGeom& cuGeom, bool bChromaMC, PartSize ePartSize, MV* iMvCandList)
 {
     intraBCMixedMode.initCosts();
     intraBCMixedMode.cu.setPartSizeSubParts(ePartSize);
     intraBCMixedMode.cu.setPredModeSubParts(MODE_INTER);
     CUData& cu = intraBCMixedMode.cu;
-    uint32_t depth = cuGeom.depth;
     int numComb = 2;
     int numPart = 2;
     uint32_t cost[2] = { 0,0 };
     uint32_t maxCost = UINT32_MAX;
 
-    MVField  cMvFieldNeighbours[MRG_MAX_NUM_CANDS][2]; // double length for mv of both lists
-    uint8_t  uhInterDirNeighbours[MRG_MAX_NUM_CANDS];
-    int      numValidMergeCand[2] = { MRG_MAX_NUM_CANDS, MRG_MAX_NUM_CANDS };
     int      numPredDir = m_slice->isInterP() ? 1 : 2;
     MV       cMvZero(0, 0);
 
@@ -3887,14 +3850,14 @@ bool Search::predMixedIntraBCInterSearch(Mode& intraBCMixedMode, const CUGeom& c
     bool isIBCMergeMode[2] = { false, false };
     MVField cMRGMvField[2][2];
     MVField cMRGMvFieldIBC[2][2];
-
+    int log2ParallelMergeLevelMinus2 = 0;
     // 12 mv candidates including lowresMV
     MV mvc[(MD_ABOVE_LEFT + 1) * 2 + 2];
 
     Yuv* predYuv = &intraBCMixedMode.predYuv;
     Yuv& tmpPredYuv = m_rqt[cuGeom.depth].tmpPredYuv;
 
-    for (int combo = 0; combo < numComb; combo++)
+    for (int combo = 0; combo < numComb; combo++) // number of combination
     {
         for (int partIdx = 0; partIdx < numPart; ++partIdx)
         {
@@ -3906,7 +3869,6 @@ bool Search::predMixedIntraBCInterSearch(Mode& intraBCMixedMode, const CUGeom& c
 
             MV mvPred[2];
             MV bvPred[2];
-            uint32_t   biPDistTemp = UINT32_MAX;
             if ((combo == 0 && partIdx == 0) || (combo == 1 && partIdx == 1)) // intraBC
             {
                 MV cMv = iMvCandList[8 + partIdx];
@@ -3918,12 +3880,16 @@ bool Search::predMixedIntraBCInterSearch(Mode& intraBCMixedMode, const CUGeom& c
                 }
 
                 cu.getNeighbourMV(partIdx, pu.puAbsPartIdx, intraBCMixedMode.interNeighbours);
-                int numMvc = cu.getPMV(intraBCMixedMode.interNeighbours, 0, m_slice->m_numRefIdx[0] - 1, intraBCMixedMode.amvpCand[0][m_slice->m_numRefIdx[0] - 1], mvc);
+                cu.getPMV(intraBCMixedMode.interNeighbours, 0, m_slice->m_numRefIdx[0] - 1, intraBCMixedMode.amvpCand[0][m_slice->m_numRefIdx[0] - 1], mvc, partIdx, pu.puAbsPartIdx);
 
                 bvPred[0] = intraBCMixedMode.amvpCand[0][m_slice->m_numRefIdx[0] - 1][0];
                 bvPred[1] = intraBCMixedMode.amvpCand[0][m_slice->m_numRefIdx[0] - 1][1];
                 bvPred[0] >>= 2;
                 bvPred[1] >>= 2;
+
+                /////////////////////////////////////////////////////////////
+                // ibc merge
+                // choose one MVP and compare with merge mode
 
                 int bitsAMVPBest, bitsAMVPTemp, bitsMergeTemp;
                 int distAMVPBest, distMergeTemp;
@@ -3952,16 +3918,14 @@ bool Search::predMixedIntraBCInterSearch(Mode& intraBCMixedMode, const CUGeom& c
                 }
                 const pixel* currStart;
                 int currStride;
-                pixel* pCurr;
                 int refStride;
-                pixel* pRef;
                 distAMVPBest = 0;
                 pixel* ref;
 
                 cu.setPUMv(0, cMv, pu.puAbsPartIdx, partIdx);
                 cu.setPURefIdx(0, (int8_t)m_slice->m_numRefIdx[0] - 1, pu.puAbsPartIdx, partIdx);
                 cu.setPUMv(1, MV(0, 0), pu.puAbsPartIdx, partIdx);
-                cu.setPURefIdx(1, -1, pu.puAbsPartIdx, partIdx);
+                cu.setPURefIdx(1, REF_NOT_VALID, pu.puAbsPartIdx, partIdx);
                 cu.setPUInterDir(1, pu.puAbsPartIdx, partIdx);
                 motionCompensation(cu, pu, tmpPredYuv, 1, 1);
 
@@ -3972,10 +3936,9 @@ bool Search::predMixedIntraBCInterSearch(Mode& intraBCMixedMode, const CUGeom& c
                     {
                         tempHeight = dummyHeight;
                         tempWidth = dummyWidth;
-                        currStart = intraBCMixedMode.fencYuv->getLumaAddr(partAddr);
-                        currStride = intraBCMixedMode.fencYuv->m_size;
                         ref = tmpPredYuv.getLumaAddr(partAddr);
                         refStride = tmpPredYuv.m_size;
+                        distAMVPBest += m_me.bufSAD(ref, refStride);
                     }
                     else
                     {
@@ -3986,22 +3949,19 @@ bool Search::predMixedIntraBCInterSearch(Mode& intraBCMixedMode, const CUGeom& c
                         currStride = intraBCMixedMode.fencYuv->m_csize;
                         ref = tmpPredYuv.getChromaAddr(ch, partAddr);
                         refStride = tmpPredYuv.m_csize;
+                        distAMVPBest += getSAD(ref, refStride, currStart, currStride, tempWidth, tempHeight);
                     }
-                    distAMVPBest += getSAD(ref, refStride, currStart, currStride, tempWidth, tempHeight);
                 }
 
                 MV check;
                 for (mvpIdxTemp = 0; mvpIdxTemp < AMVP_NUM_CANDS; mvpIdxTemp++)
                 {
-                    if (!(mvPred[mvpIdxTemp].x == check.x >> 2))
+                    m_me.setMVP(bvPred[mvpIdxTemp]);
+                    bitsAMVPTemp = m_me.bitcost(cMv >> 2, bvPred[mvpIdxTemp]);
+                    if (bitsAMVPTemp < bitsAMVPBest)
                     {
-                        m_me.setMVP(bvPred[mvpIdxTemp]);
-                        bitsAMVPTemp = m_me.bitcost(cMv >> 2, bvPred[mvpIdxTemp]);
-                        if (bitsAMVPTemp < bitsAMVPBest)
-                        {
-                            bitsAMVPBest = bitsAMVPTemp;
-                            mvpIdxBest = mvpIdxTemp;
-                        }
+                        bitsAMVPBest = bitsAMVPTemp;
+                        mvpIdxBest = mvpIdxTemp;
                     }
                 }
 
@@ -4014,7 +3974,7 @@ bool Search::predMixedIntraBCInterSearch(Mode& intraBCMixedMode, const CUGeom& c
 
                 if (ePartSize != SIZE_2Nx2N)
                 {
-                    if (0 && ePartSize != SIZE_2Nx2N && cu.m_cuDepth[0] >= 3)
+                    if (log2ParallelMergeLevelMinus2 && ePartSize != SIZE_2Nx2N && cu.m_cuDepth[0] >= 3)
                     {
                         cu.setPartSizeSubParts(SIZE_2Nx2N);
                         if (partIdx == 0)
@@ -4047,13 +4007,13 @@ bool Search::predMixedIntraBCInterSearch(Mode& intraBCMixedMode, const CUGeom& c
                         {
                             continue;
                         }
-                        bitsMergeTemp = mrgIdxTemp == m_param->maxNumMergeCand ? mrgIdxTemp : mrgIdxTemp + 1;
-                        distMergeTemp = 0;
+                        bitsMergeTemp = mrgIdxTemp == (int)m_param->maxNumMergeCand ? mrgIdxTemp : mrgIdxTemp + 1;
 
+                        distMergeTemp = 0;
                         cu.setPUMv(0, cMvFieldNeighboursIBC[mrgIdxTemp][0].mv, pu.puAbsPartIdx, partIdx);
                         cu.setPURefIdx(0, (int8_t)(m_slice->m_numRefIdx[0] - 1), pu.puAbsPartIdx, partIdx);
                         cu.setPUMv(1, MV(0, 0), pu.puAbsPartIdx, partIdx);
-                        cu.setPURefIdx(1, -1, pu.puAbsPartIdx, partIdx);
+                        cu.setPURefIdx(1, REF_NOT_VALID, pu.puAbsPartIdx, partIdx);
                         cu.setPUInterDir(1, pu.puAbsPartIdx, partIdx);
                         motionCompensation(cu, pu, tmpPredYuv, 1, 1);
 
@@ -4064,10 +4024,9 @@ bool Search::predMixedIntraBCInterSearch(Mode& intraBCMixedMode, const CUGeom& c
                             {
                                 tempHeight = dummyHeight;
                                 tempWidth = dummyWidth;
-                                currStart = intraBCMixedMode.fencYuv->getLumaAddr(partAddr);
-                                currStride = intraBCMixedMode.fencYuv->m_size;
                                 ref = tmpPredYuv.getLumaAddr(partAddr);
                                 refStride = tmpPredYuv.m_size;
+                                distMergeTemp += m_me.bufSAD(ref, refStride);
                             }
                             else
                             {
@@ -4078,8 +4037,8 @@ bool Search::predMixedIntraBCInterSearch(Mode& intraBCMixedMode, const CUGeom& c
                                 currStride = intraBCMixedMode.fencYuv->m_csize;
                                 ref = tmpPredYuv.getChromaAddr(ch, partAddr);
                                 refStride = tmpPredYuv.m_csize;
+                                distMergeTemp += getSAD(ref, refStride, currStart, currStride, tempWidth, tempHeight);
                             }
-                            distMergeTemp += getSAD(ref, refStride, currStart, currStride, tempWidth, tempHeight);
                         }
                         costMergeTemp = distMergeTemp + m_rdCost.getCost(bitsMergeTemp);
 
@@ -4102,7 +4061,7 @@ bool Search::predMixedIntraBCInterSearch(Mode& intraBCMixedMode, const CUGeom& c
                     mvField[0].mv = mv;
                     mvField[0].refIdx = m_slice->m_numRefIdx[0] - 1;   // the current picture is at the last position of list0
                     mvField[1].mv = cMvZero;
-                    mvField[1].refIdx = -1;
+                    mvField[1].refIdx = REF_NOT_VALID;
                     cMRGMvFieldIBC[combo][0] = mvField[0];
                     cMRGMvFieldIBC[combo][1] = mvField[1];
                 }
@@ -4123,9 +4082,10 @@ bool Search::predMixedIntraBCInterSearch(Mode& intraBCMixedMode, const CUGeom& c
                 {
                     cu.setPUMv(0, iMvCandList[8 + partIdx], pu.puAbsPartIdx, partIdx);
                     cu.setPURefIdx(0, (int8_t)(m_slice->m_numRefIdx[0] - 1), pu.puAbsPartIdx, partIdx);
-                    cu.setPURefIdx(1, -1, pu.puAbsPartIdx, partIdx);
+                    cu.setPURefIdx(1, REF_NOT_VALID, pu.puAbsPartIdx, partIdx);
                 }
                 // ibc merge
+                /////////////////////////////////////////////////////////////
             }
             else // is inter PU
             {
@@ -4133,21 +4093,19 @@ bool Search::predMixedIntraBCInterSearch(Mode& intraBCMixedMode, const CUGeom& c
                 uint32_t  costInterBest = UINT32_MAX;
                 const pixel* currStart;
                 int currStride;
-                pixel* pCurr;
                 pixel* ref;
                 int refStride;
                 MergeData merge;
                 memset(&merge, 0, sizeof(merge));
-
                 for (int refList = 0; refList < numPredDir; refList++)
                 {
                     uint32_t numRef = refList ? ((m_slice->m_numRefIdx[1] > 1) ? 2 : 1) : ((m_slice->m_numRefIdx[0] - 1 > 1) ? 2 : 1);
-                    for (int refIdx = 0; refIdx < numRef; refIdx++)
+                    for (uint32_t refIdx = 0; refIdx < numRef; refIdx++)
                     {
                         MV cMv = iMvCandList[4 * refList + 2 * refIdx + partIdx];
 
                         cu.getNeighbourMV(partIdx, pu.puAbsPartIdx, intraBCMixedMode.interNeighbours);
-                        int numMvc = cu.getPMV(intraBCMixedMode.interNeighbours, refList, refIdx, intraBCMixedMode.amvpCand[refList][refIdx], mvc);
+                        cu.getPMV(intraBCMixedMode.interNeighbours, refList, refIdx, intraBCMixedMode.amvpCand[refList][refIdx], mvc, partIdx, pu.puAbsPartIdx);
                         int mvpIdx;
 
                         uint32_t  tempCost0 = 0;
@@ -4171,7 +4129,7 @@ bool Search::predMixedIntraBCInterSearch(Mode& intraBCMixedMode, const CUGeom& c
                         bitsTemp += getTUBits(refIdx, numRef);
 
                         m_me.setMVP(mvPred[mvpIdx]);
-                        if (0) //UseIntegerMv
+                        if (cu.m_slice->m_useIntegerMv)
                         {
                             cu.setPUMv(refList, (cMv >> 2) << 2, pu.puAbsPartIdx, partIdx);
                         }
@@ -4191,10 +4149,9 @@ bool Search::predMixedIntraBCInterSearch(Mode& intraBCMixedMode, const CUGeom& c
                             {
                                 tempHeight = dummyHeight;
                                 tempWidth = dummyWidth;
-                                currStart = intraBCMixedMode.fencYuv->getLumaAddr(partAddr);
-                                currStride = intraBCMixedMode.fencYuv->m_size;
                                 ref = tmpPredYuv.getLumaAddr(partAddr);
                                 refStride = tmpPredYuv.m_size;
+                                costInterTemp += m_me.bufSAD(ref, refStride);
                             }
                             else
                             {
@@ -4205,15 +4162,15 @@ bool Search::predMixedIntraBCInterSearch(Mode& intraBCMixedMode, const CUGeom& c
                                 currStride = intraBCMixedMode.fencYuv->m_csize;
                                 ref = tmpPredYuv.getChromaAddr(ch, partAddr);
                                 refStride = tmpPredYuv.m_csize;
+                                costInterTemp += getSAD(ref, refStride, currStart, currStride, tempWidth, tempHeight);
                             }
-                            costInterTemp += getSAD(ref, refStride, currStart, currStride, tempWidth, tempHeight);
 
                             if (costInterTemp >= costInterBest)
                             {
                                 break;
                             }
                         }
-                        cu.setPURefIdx(refList, -1, pu.puAbsPartIdx, partIdx);
+                        cu.setPURefIdx(refList, REF_NOT_VALID, pu.puAbsPartIdx, partIdx);
 
                         costInterTemp += m_me.bitcost(cMv, mvPred[mvpIdx]);
                         costInterTemp += m_rdCost.getCost(bitsTemp);
@@ -4227,7 +4184,7 @@ bool Search::predMixedIntraBCInterSearch(Mode& intraBCMixedMode, const CUGeom& c
                             cMvPredCand[combo][partIdx] = mvPred[mvpIdx];
                         }
                     }
-                }
+                } // end RefIdx and RefList search
 
                 uint32_t MRGInterDir = 0;
                 uint32_t MRGIndex = 0;
@@ -4241,8 +4198,8 @@ bool Search::predMixedIntraBCInterSearch(Mode& intraBCMixedMode, const CUGeom& c
                 cMRGMvField[combo][0] = merge.mvField[0];
                 cMRGMvField[combo][1] = merge.mvField[1];
                 MRGIndex = merge.index;
-                cu.setPURefIdx(0, -1, pu.puAbsPartIdx, partIdx);
-                cu.setPURefIdx(1, -1, pu.puAbsPartIdx, partIdx);
+                cu.setPURefIdx(0, REF_NOT_VALID, pu.puAbsPartIdx, partIdx);
+                cu.setPURefIdx(1, REF_NOT_VALID, pu.puAbsPartIdx, partIdx);
 
                 if (MRGCost < costInterBest)
                 {
@@ -4265,7 +4222,7 @@ bool Search::predMixedIntraBCInterSearch(Mode& intraBCMixedMode, const CUGeom& c
                 {
                     int refListOpt = bestInterDir[combo];
                     int refIdxOpt = bestRefIdx[combo];
-                    if (0) //UseIntegerMv
+                    if (cu.m_slice->m_useIntegerMv)
                     {
                         cu.setPUMv(refListOpt, (iMvCandList[partIdx + 2 * refIdxOpt + 4 * refListOpt] >> 2) << 2, pu.puAbsPartIdx, partIdx);
                     }
@@ -4274,7 +4231,7 @@ bool Search::predMixedIntraBCInterSearch(Mode& intraBCMixedMode, const CUGeom& c
                         cu.setPUMv(refListOpt, iMvCandList[partIdx + 2 * refIdxOpt + 4 * refListOpt], pu.puAbsPartIdx, partIdx);
                     }
                     cu.setPURefIdx(refListOpt, refIdxOpt, pu.puAbsPartIdx, partIdx);
-                    cu.setPURefIdx(1 - refListOpt, -1, pu.puAbsPartIdx, partIdx);
+                    cu.setPURefIdx(1 - refListOpt, REF_NOT_VALID, pu.puAbsPartIdx, partIdx);
                     cu.setPUInterDir(1 + refListOpt, pu.puAbsPartIdx, partIdx);
                     cu.m_mvpIdx[refListOpt][pu.puAbsPartIdx] = bestInterMvpIdx[combo];
                 }
@@ -4318,7 +4275,7 @@ bool Search::predMixedIntraBCInterSearch(Mode& intraBCMixedMode, const CUGeom& c
             cu.m_mvd[0][partAddr] = cMvd;
             cu.m_mvpIdx[0][partAddr] = bestIBCMvpIdx[0];
             cu.setPURefIdx(0, m_slice->m_numRefIdx[0] - 1, partAddr, partIdx);
-            cu.setPURefIdx(1, -1, partAddr, partIdx);
+            cu.setPURefIdx(1, REF_NOT_VALID, partAddr, partIdx);
             cu.setPUInterDir(1, partAddr, partIdx);  // list 0 prediction
         }
 
@@ -4336,14 +4293,13 @@ bool Search::predMixedIntraBCInterSearch(Mode& intraBCMixedMode, const CUGeom& c
             cu.setPURefIdx(1, cMRGMvField[0][1].refIdx, partAddr, partIdx);
 
             cu.m_mvd[0][partAddr] = cMvZero;
-
             cu.m_mvd[1][partAddr] = cMvZero;
         }
         else
         {
             int refListOpt = bestInterDir[0];
             int refIdxOpt = bestRefIdx[0];
-            if (0) //UseIntegerMv
+            if (cu.m_slice->m_useIntegerMv)
             {
                 cMvd.set(((iMvCandList[1 + 2 * refIdxOpt + 4 * refListOpt].x >> 2) - (cMvPredCand[0][1].x >> 2)), ((iMvCandList[1 + 2 * refIdxOpt + 4 * refListOpt].y >> 2) - (cMvPredCand[0][1].y >> 2)));
                 cu.setPUMv(refListOpt, (iMvCandList[1 + 2 * refIdxOpt + 4 * refListOpt] >> 2) << 2, partAddr, partIdx);
@@ -4355,7 +4311,7 @@ bool Search::predMixedIntraBCInterSearch(Mode& intraBCMixedMode, const CUGeom& c
             }
             cu.m_mvd[refListOpt][partAddr] = cMvd;
             cu.setPURefIdx(refListOpt, refIdxOpt, partAddr, partIdx);
-            cu.setPURefIdx(1 - refListOpt, -1, partAddr, partIdx);
+            cu.setPURefIdx(1 - refListOpt, REF_NOT_VALID, partAddr, partIdx);
             cu.setPUInterDir(1 + refListOpt, partAddr, partIdx);
             cu.m_mergeFlag[partAddr] = false;
             cu.m_mvpIdx[refListOpt][partAddr] = bestInterMvpIdx[0];
@@ -4386,7 +4342,7 @@ bool Search::predMixedIntraBCInterSearch(Mode& intraBCMixedMode, const CUGeom& c
         {
             int refListOpt = bestInterDir[1];
             int refIdxOpt = bestRefIdx[1];
-            if (0)//UseIntegerMv
+            if (cu.m_slice->m_useIntegerMv)
             {
                 cMvd.set((iMvCandList[2 * refIdxOpt + 4 * refListOpt].x >> 2) - (cMvPredCand[1][0].x >> 2), (iMvCandList[2 * refIdxOpt + 4 * refListOpt].y >> 2) - (cMvPredCand[1][0].y >> 2));
                 cu.setPUMv(refListOpt, (iMvCandList[2 * refIdxOpt + 4 * refListOpt] >> 2) << 2, partAddr, partIdx);
@@ -4398,7 +4354,7 @@ bool Search::predMixedIntraBCInterSearch(Mode& intraBCMixedMode, const CUGeom& c
             }
             cu.m_mvd[refListOpt][partAddr] = cMvd;
             cu.setPURefIdx(refListOpt, refIdxOpt, partAddr, partIdx);
-            cu.setPURefIdx(1 - refListOpt, -1, partAddr, partIdx);
+            cu.setPURefIdx(1 - refListOpt, REF_NOT_VALID, partAddr, partIdx);
             cu.setPUInterDir(1 + refListOpt, partAddr, partIdx);
             cu.m_mergeFlag[partAddr] = false;
             cu.m_mvpIdx[refListOpt][partAddr] = bestInterMvpIdx[1];
@@ -4429,7 +4385,7 @@ bool Search::predMixedIntraBCInterSearch(Mode& intraBCMixedMode, const CUGeom& c
             cu.m_mvd[0][partAddr] = cMvd;
             cu.m_mvpIdx[0][partAddr] = bestIBCMvpIdx[1];
             cu.setPURefIdx(0, m_slice->m_numRefIdx[0] - 1, partAddr, partIdx);
-            cu.setPURefIdx(1, -1, partAddr, partIdx);
+            cu.setPURefIdx(1, REF_NOT_VALID, partAddr, partIdx);
             cu.setPUInterDir(1, partAddr, partIdx);  // list 0 prediction
         }
     }
