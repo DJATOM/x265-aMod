@@ -629,7 +629,9 @@ int Encoder::getRefFrameList(PicYuv** l0, PicYuv** l1, int sliceType, int poc, i
                     int l0POC = framePtr->m_encData->m_slice->m_refFrameList[0][j]->m_poc;
                     pocL0[j] = l0POC;
                     Frame* l0Fp = m_dpb->m_picList.getPOC(l0POC, 0);
+#if ENABLE_SCC_EXT
                     if (l0POC != poc)
+#endif
                     {
                         while (l0Fp->m_reconRowFlag[l0Fp->m_numRows - 1].get() == 0)
                             l0Fp->m_reconRowFlag[l0Fp->m_numRows - 1].waitForChange(0); /* If recon is not ready, current frame encoder has to wait. */
@@ -3716,11 +3718,13 @@ void Encoder::initPPS(PPS *pps)
     }
 #endif
 
+#if ENABLE_SCC_EXT
     if (m_param->bEnableSCC)
     {
         pps->profileIdc = Profile::MAINSCC;
         pps->pps_extension_flag = true;
     }
+#endif
 }
 
 void Encoder::configureZone(x265_param *p, x265_param *zone)

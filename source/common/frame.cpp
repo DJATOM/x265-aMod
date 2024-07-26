@@ -37,7 +37,7 @@ Frame::Frame()
     m_reconColCount = NULL;
     m_countRefEncoders = 0;
     m_encData = NULL;
-    for (int i = 0; i < 2; i++)
+    for (int i = 0; i < NUM_RECON_VERSION; i++)
         m_reconPic[i] = NULL;
     m_quantOffsets = NULL;
     m_next = NULL;
@@ -211,7 +211,7 @@ bool Frame::allocEncodeData(x265_param *param, const SPS& sps)
         m_reconPic[i] = new PicYuv;
         m_encData->m_reconPic[i] = m_reconPic[i];
     }
-    bool ok = m_encData->create(*param, sps, m_fencPic->m_picCsp) && m_reconPic[0]->create(param) && (!!param->bEnableSCC ? (!!param->bEnableSCC && m_reconPic[1]->create(param)) : 1);
+    bool ok = m_encData->create(*param, sps, m_fencPic->m_picCsp) && m_reconPic[0]->create(param) && (param->bEnableSCC ? (param->bEnableSCC && m_reconPic[1]->create(param)) : 1);
     if (ok)
     {
         /* initialize right border of m_reconPicYuv as SAO may read beyond the
@@ -243,9 +243,8 @@ bool Frame::allocEncodeData(x265_param *param, const SPS& sps)
 void Frame::reinit(const SPS& sps)
 {
     m_bChromaExtended = false;
-    m_reconPic[0] = m_encData->m_reconPic[0];
-    if (!!m_param->bEnableSCC)
-        m_reconPic[1] = m_encData->m_reconPic[1];
+    for (int i = 0; i < !!m_param->bEnableSCC + 1; i++)
+        m_reconPic[i] = m_encData->m_reconPic[i];
     m_encData->reinit(sps);
 }
 

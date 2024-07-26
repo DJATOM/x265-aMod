@@ -63,6 +63,7 @@ void Slice::setRefPicList(PicList& picList, PicList& refPicSetInterLayer0, PicLi
         memset(m_refPOCList, 0, sizeof(m_refPOCList));
         m_numRefIdx[1] = m_numRefIdx[0] = 0;
 
+#if ENABLE_SCC_EXT
         if (!checkNumPocTotalCurr)
         {
             if (m_rps.numberOfPictures == 0)
@@ -76,10 +77,12 @@ void Slice::setRefPicList(PicList& picList, PicList& refPicSetInterLayer0, PicLi
             }
             return;
         }
+#endif
 
         return;
     }
 
+#if ENABLE_SCC_EXT
     /*Reset the number of references for I-slice marked as P-slice*/
     if (m_param->bEnableSCC && m_sliceType != m_origSliceType)
     {
@@ -99,6 +102,7 @@ void Slice::setRefPicList(PicList& picList, PicList& refPicSetInterLayer0, PicLi
         }
         m_lastEncPic = prevPic;
     }
+#endif
 
     Frame* refPic = NULL;
     Frame* refPicSetStCurr0[MAX_NUM_REF];
@@ -141,8 +145,10 @@ void Slice::setRefPicList(PicList& picList, PicList& refPicSetInterLayer0, PicLi
     int numPocTotalCurr = numPocStCurr0 + numPocStCurr1 + numPocLtCurr;
 #endif
 
+#if ENABLE_SCC_EXT
     if (m_param->bEnableSCC)
         numPocTotalCurr++;
+#endif
 
     int cIdx = 0;
     for (i = 0; i < numPocStCurr0; i++, cIdx++)
@@ -166,8 +172,10 @@ void Slice::setRefPicList(PicList& picList, PicList& refPicSetInterLayer0, PicLi
             rpsCurrList0[cIdx] = refPicSetInterLayer1.getPOC(m_poc, 0);
 #endif
 
+#if ENABLE_SCC_EXT
     if (m_param->bEnableSCC)
         rpsCurrList0[cIdx++] = picList.getPOC(m_poc);
+#endif
 
     X265_CHECK(cIdx == numPocTotalCurr, "RPS index check fail\n");
 
@@ -195,8 +203,10 @@ void Slice::setRefPicList(PicList& picList, PicList& refPicSetInterLayer0, PicLi
                 rpsCurrList1[cIdx] = refPicSetInterLayer0.getPOC(m_poc, 0);
 #endif
 
+#if  ENABLE_SCC_EXT
         if (m_param->bEnableSCC)
             rpsCurrList1[cIdx++] = picList.getPOC(m_poc);
+#endif
 
         X265_CHECK(cIdx == numPocTotalCurr, "RPS index check fail\n");
     }
@@ -211,10 +221,12 @@ void Slice::setRefPicList(PicList& picList, PicList& refPicSetInterLayer0, PicLi
 #endif
     }
 
+#if  ENABLE_SCC_EXT
     if (m_param->bEnableSCC && numPocTotalCurr > m_numRefIdx[0])
     {
         m_refFrameList[0][m_numRefIdx[0] - 1] = picList.getPOC(m_poc);
     }
+#endif
 
     if (m_sliceType != B_SLICE)
     {
@@ -253,6 +265,7 @@ void Slice::disableWeights()
             }
 }
 
+#if  ENABLE_SCC_EXT
 bool Slice::isOnlyCurrentPictureAsReference() const
 {
     if (m_sliceType == I_SLICE)
@@ -278,6 +291,7 @@ bool Slice::isOnlyCurrentPictureAsReference() const
 
     return true;
 }
+#endif
 
 /* Sorts the deltaPOC and Used by current values in the RPS based on the
  * deltaPOC values.  deltaPOC values are sorted with -ve values before the +ve

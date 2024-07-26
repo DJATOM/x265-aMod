@@ -492,8 +492,10 @@ void weightAnalyse(Slice& slice, Frame& frame, x265_param& param)
         chromaDenom = weights[1].log2WeightDenom;
 
         int numIdx = slice.m_numRefIdx[list];
+#if ENABLE_SCC_EXT
         if (!list && param.bEnableSCC)
             numIdx--;
+#endif
 
         /* reset weight states */
         for (int ref = 1; ref < numIdx; ref++)

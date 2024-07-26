@@ -605,6 +605,11 @@ if(ENABLE_MULTIVIEW)
     add_definitions(-DENABLE_MULTIVIEW)
 endif()
 
+option(ENABLE_SCC_EXT "Enable screen content coding extension in HEVC" OFF)
+if(ENABLE_SCC_EXT)
+    add_definitions(-DENABLE_SCC_EXT)
+endif()
+
 add_subdirectory(encoder)
 add_subdirectory(common)
 

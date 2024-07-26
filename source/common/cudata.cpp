@@ -290,8 +290,10 @@ void CUData::initCTU(const Frame& frame, uint32_t cuAddr, int qp, uint32_t first
     m_bFirstRowInSlice = (uint8_t)firstRowInSlice;
     m_bLastRowInSlice  = (uint8_t)lastRowInSlice;
     m_bLastCuInSlice   = (uint8_t)lastCuInSlice;
+#if ENABLE_SCC_EXT
     m_lastIntraBCMv[0].set(0, 0);
     m_lastIntraBCMv[1].set(0, 0);
+#endif
 
     /* sequential memsets */
     m_partSet((uint8_t*)m_qp, (uint8_t)qp);
@@ -363,11 +365,13 @@ void CUData::initSubCU(const CUData& ctu, const CUGeom& cuGeom, int qp, MV lastI
     memset(m_predMode, 0, (ctu.m_chromaFormat == X265_CSP_I400 ? BytesPerPartition - 13 : BytesPerPartition - 9) * m_numPartitions);
     memset(m_distortion, 0, m_numPartitions * sizeof(sse_t));
 
+#if ENABLE_SCC_EXT
     if (lastIntraBCMv)
     {
         for (int i = 0; i < 2; i++)
             m_lastIntraBCMv[i] = lastIntraBCMv[i];
     }
+#endif
 }
 
 /* Copy the results of a sub-part (split) CU to the parent CU */
@@ -423,8 +427,10 @@ void CUData::copyPartFrom(const CUData& subCU, const CUGeom& childGeom, uint32_t
         memcpy(m_trCoeff[1] + tmpC2, subCU.m_trCoeff[1], sizeof(coeff_t) * tmpC);
         memcpy(m_trCoeff[2] + tmpC2, subCU.m_trCoeff[2], sizeof(coeff_t) * tmpC);
     }
+#if ENABLE_SCC_EXT
     for (int i = 0; i < 2; i++)
         m_lastIntraBCMv[i] = subCU.m_lastIntraBCMv[i];
+#endif
 }
 
 /* If a sub-CU part is not present (off the edge of the picture) its depth and
@@ -1601,7 +1607,11 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MV
                 return maxNumMergeCand;
         }
     }
+#if ENABLE_SCC_EXT
     if (m_slice->m_bTemporalMvp)
+#else
+    if (m_slice->m_sps->bTemporalMVPEnabled)
+#endif
     {
         uint32_t partIdxRB = deriveRightBottomIdx(puIdx);
         MV colmv;
@@ -1692,8 +1702,10 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MV
         }
     }
     int numRefIdx0 = m_slice->m_numRefIdx[0];
+#if ENABLE_SCC_EXT
     if (m_slice->m_param->bEnableSCC)
         numRefIdx0--;
+#endif
     int numRefIdx = (isInterB) ? X265_MIN(numRefIdx0, m_slice->m_numRefIdx[1]) : numRefIdx0;
     int r = 0;
     int refcnt = 0;
@@ -1732,7 +1744,7 @@ int CUData::getPMV(InterNeighbourMV* neighbours, uint32_t picList, uint32_t refI
     bool validDirect[MD_ABOVE_LEFT + 1];
     bool validIndirect[MD_ABOVE_LEFT + 1];
 
-#if ENABLE_MULTIVIEW
+#if (ENABLE_MULTIVIEW || ENABLE_SCC_EXT)
     if (m_slice->m_param->numViews > 1 || m_slice->m_param->bEnableSCC)
     {
         // Left candidate.
@@ -1827,8 +1839,8 @@ int CUData::getPMV(InterNeighbourMV* neighbours, uint32_t picList, uint32_t refI
 
     // Get the collocated candidate. At this step, either the first candidate
     // was found or its value is 0.
-#if ENABLE_MULTIVIEW
-    if (m_slice->m_param->numViews > 1 || !!m_slice->m_param->bEnableSCC)
+#if ENABLE_MULTIVIEW || ENABLE_SCC_EXT
+    if (m_slice->m_param->numViews > 1 || m_slice->m_param->bEnableSCC)
     {
         if (m_slice->m_bTemporalMvp && num < 2)
         {
@@ -1921,7 +1933,7 @@ void CUData::getNeighbourMV(uint32_t puIdx, uint32_t absPartIdx, InterNeighbourM
     getInterNeighbourMV(neighbours + MD_ABOVE,      partIdxRT, MD_ABOVE);
     getInterNeighbourMV(neighbours + MD_ABOVE_LEFT, partIdxLT, MD_ABOVE_LEFT);
 
-    if (m_slice->m_bTemporalMvp && !(!!m_slice->m_param->bEnableSCC || m_slice->m_param->numViews > 1))
+    if (m_slice->m_bTemporalMvp && !(m_slice->m_param->bEnableSCC || m_slice->m_param->numViews > 1))
     {
         uint32_t absPartAddr = m_absIdxInCTU + absPartIdx;
         uint32_t partIdxRB = deriveRightBottomIdx(puIdx);
@@ -2059,7 +2071,7 @@ bool CUData::getIndirectPMV(MV& outMV, InterNeighbourMV *neighbours, uint32_t pi
             int neibRefPOC = m_slice->m_refPOCList[picList][partRefIdx];
             MV mvp = neighbours->mv[picList];
 
-#if ENABLE_MULTIVIEW
+#if ENABLE_MULTIVIEW || ENABLE_SCC_EXT
             if ((curRefPOC == curPOC) == (neibRefPOC == curPOC))
             {
                 if (curRefPOC == curPOC)
@@ -2107,7 +2119,7 @@ bool CUData::getColMVP(MV& outMV, int& outRefIdx, int picList, int cuAddr, int p
     int curRefPOC = m_slice->m_refPOCList[picList][outRefIdx];
     int curPOC = m_slice->m_poc;
 
-#if ENABLE_MULTIVIEW
+#if ENABLE_MULTIVIEW || ENABLE_SCC_EXT
     if ((colPOC == colRefPOC) != (curPOC == curRefPOC))
         return false;
     else if (curRefPOC == curPOC)
@@ -2268,7 +2280,7 @@ void CUData::calcCTUGeoms(uint32_t ctuWidth, uint32_t ctuHeight, uint32_t maxCUS
     }
 }
 
-
+#if ENABLE_SCC_EXT
 bool CUData::getDerivedBV(uint32_t absPartIdx, const MV& currentMv, MV& derivedMv, uint32_t width, uint32_t height)
 {
     const int   ctuWidth = m_slice->m_param->maxCUSize;
@@ -2564,3 +2576,4 @@ bool CUData::is8x8BipredRestriction(MV mvL0, MV mvL1, int iRefIdxL0, int iRefIdx
     }
     return b8x8BiPredRestricted;
 }
+#endif

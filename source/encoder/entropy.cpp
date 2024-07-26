@@ -599,6 +599,7 @@ void Entropy::codeSPS(const SPS& sps, const ScalingList& scalingList, const Prof
     }
 #endif
 
+#if ENABLE_SCC_EXT
     if (ptl.profileIdc[0] == Profile::MAINSCC)
     {
         bool sps_extension_flags[NUM_EXTENSION_FLAGS] = { false };
@@ -610,6 +611,7 @@ void Entropy::codeSPS(const SPS& sps, const ScalingList& scalingList, const Prof
         WRITE_CODE(0, 2, "motion_vector_resolution_control_idc");
         WRITE_FLAG(0, "intra_boundary_filter_disabled_flag");
     }
+#endif
 }
 
 void Entropy::codePPS( const PPS& pps, bool filerAcross, int iPPSInitQpMinus26, int layer)
@@ -680,6 +682,7 @@ void Entropy::codePPS( const PPS& pps, bool filerAcross, int iPPSInitQpMinus26, 
 #endif
 
 
+#if ENABLE_SCC_EXT
     if (pps.profileIdc == Profile::MAINSCC)
     {
         bool pps_extension_flags[NUM_EXTENSION_FLAGS] = { false };
@@ -690,6 +693,7 @@ void Entropy::codePPS( const PPS& pps, bool filerAcross, int iPPSInitQpMinus26, 
         WRITE_FLAG(0, "adaptive_colour_trans_flag");
         WRITE_FLAG(0, "palette_predictor_initializer_flag");
     }
+#endif
 }
 
 void Entropy::codeProfileTier(const ProfileTierLevel& ptl, int maxTempSubLayers, int layer)
@@ -997,7 +1001,11 @@ void Entropy::codeSliceHeader(const Slice& slice, FrameData& encData, uint32_t s
         }
 
         if (slice.m_sps->bTemporalMVPEnabled)
+#if ENABLE_SCC_EXT
             WRITE_FLAG(slice.m_bTemporalMvp, "slice_temporal_mvp_enable_flag");
+#else
+            WRITE_FLAG(1, "slice_temporal_mvp_enable_flag");
+#endif
     }
     const SAOParam *saoParam = encData.m_saoParam;
     if (slice.m_bUseSao)
@@ -1037,9 +1045,17 @@ void Entropy::codeSliceHeader(const Slice& slice, FrameData& encData, uint32_t s
     }
 
     if (slice.isInterB())
+#if ENABLE_SCC_EXT
         WRITE_FLAG(slice.m_bLMvdL1Zero, "mvd_l1_zero_flag");
+#else
+        WRITE_FLAG(0, "mvd_l1_zero_flag");
+#endif
 
+#if ENABLE_SCC_EXT
     if (slice.m_bTemporalMvp)
+#else
+    if (slice.m_sps->bTemporalMVPEnabled)
+#endif
     {
         if (slice.m_sliceType == B_SLICE)
             WRITE_FLAG(slice.m_colFromL0Flag, "collocated_from_l0_flag");
@@ -1726,8 +1742,10 @@ void Entropy::codePredWeightTable(const Slice& slice)
         {
             for (int ref = 0; ref < slice.m_numRefIdx[list]; ref++)
             {
+#if ENABLE_SCC_EXT
                 if (slice.m_poc == slice.m_refPOCList[list][ref])
                     continue;
+#endif
                 wp = slice.m_weightPredTable[list][ref];
                 if (!bDenomCoded)
                 {
@@ -1748,8 +1766,10 @@ void Entropy::codePredWeightTable(const Slice& slice)
             {
                 for (int ref = 0; ref < slice.m_numRefIdx[list]; ref++)
                 {
+#if ENABLE_SCC_EXT
                     if (slice.m_poc == slice.m_refPOCList[list][ref])
                         continue;
+#endif
                     wp = slice.m_weightPredTable[list][ref];
                     WRITE_FLAG(!!wp[1].wtPresent, "chroma_weight_lX_flag");
                     totalSignalledWeightFlags += 2 * wp[1].wtPresent;
@@ -1758,8 +1778,10 @@ void Entropy::codePredWeightTable(const Slice& slice)
 
             for (int ref = 0; ref < slice.m_numRefIdx[list]; ref++)
             {
+#if ENABLE_SCC_EXT
                 if (slice.m_poc == slice.m_refPOCList[list][ref])
                     continue;
+#endif
                 wp = slice.m_weightPredTable[list][ref];
                 if (wp[0].wtPresent)
                 {

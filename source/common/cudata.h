@@ -37,7 +37,9 @@ class FrameData;
 class Slice;
 struct TUEntropyCodingParameters;
 struct CUDataMemPool;
+#if ENABLE_SCC_EXT
 struct IBC;
+#endif
 
 enum PartSize
 {
@@ -241,7 +243,9 @@ public:
     uint32_t*       m_collectCUVariance;
     uint32_t*       m_collectCUCount;
 
+#if ENABLE_SCC_EXT
     MV              m_lastIntraBCMv[2];
+#endif
 
     CUData();
 
@@ -322,12 +326,14 @@ public:
     const CUData* getPUAboveRightAdi(uint32_t& arPartUnitIdx, uint32_t curPartUnitIdx, uint32_t partUnitOffset) const;
     const CUData* getPUBelowLeftAdi(uint32_t& blPartUnitIdx, uint32_t curPartUnitIdx, uint32_t partUnitOffset) const;
 
+#if ENABLE_SCC_EXT
     void getIntraBCMVPsEncOnly(uint32_t absPartIdx, MV* MvPred, int& nbPred, int puIdx);
     bool getDerivedBV(uint32_t absPartIdx, const MV& currentMv, MV& derivedMv, uint32_t width, uint32_t height);
     bool isIntraBC(const CUData* cu, uint32_t absPartIdx) const;
     bool getColMVPIBC(int ctuRsAddr, int partUnitIdx, MV& rcMv);
     void roundMergeCandidates(MVField(*candMvField)[2], int iCount) const;
     bool is8x8BipredRestriction(MV mvL0, MV mvL1, int iRefIdxL0, int iRefIdxL1) const;
+#endif
 
 protected:
 

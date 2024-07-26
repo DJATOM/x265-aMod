@@ -654,6 +654,7 @@ typedef enum
 #define MAX_LAYERS              1
 #endif
 
+#if ENABLE_SCC_EXT
 /* SCC Extension Options */
 #define SCC_EXT_IDX               3
 #define NUM_EXTENSION_FLAGS       8
@@ -661,6 +662,10 @@ typedef enum
 #define CHROMA_REFINEMENT_CANDIDATES  8
 #define SCM_S0067_IBC_FULL_1D_SEARCH_FOR_PU  2 ///< Do full horizontal/vertical search for Nx2N
 #define SCM_S0067_MAX_CAND_SIZE  32 ///< 32 or 64, 16 by default
+#define NUM_RECON_VERSION          2
+#else
+#define NUM_RECON_VERSION          1
+#endif
 
 #define X265_IPRATIO_STRENGTH   1.43
 
@@ -2374,7 +2379,9 @@ static const char * const x265_profile_names[] = {
 
     "main444-16-intra", "main444-16-stillpicture", /* Not Supported! */
 
+#if ENABLE_SCC_EXT
     "main-scc", "main10-scc", "main444-scc", "main444-10-scc", /* Screen content coding */
+#endif
     0
 };
 

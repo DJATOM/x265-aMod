@@ -1476,12 +1476,14 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
             p->numViews = atoi(value);
         }
 #endif
+#if ENABLE_SCC_EXT
         OPT("scc")
         {
             p->bEnableSCC = atoi(value);
             if (p->bEnableSCC)
                 p->bEnableWeightedPred = false;
         }
+#endif
         else
             return X265_PARAM_BAD_NAME;
     }
@@ -1965,6 +1967,9 @@ int x265_check_params(x265_param* param)
     CHECK((param->numViews > 1) && (param->internalBitDepth != 8), "BitDepthConstraint must be 8 for Multiview main profile");
     CHECK((param->numViews > 1 && param->rc.rateControlMode != X265_RC_CQP), "Multiview encode supported only with CQP mode");
 #endif
+#if ENABLE_SCC_EXT
+    CHECK(!!param->bEnableSCC&& param->rdLevel != 6, "Enabling scc extension in x265 requires rdlevel of 6 ");
+#endif
     return check_failed;
 }
 
@@ -2406,7 +2411,9 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     s += sprintf(s, " num-views=%d", p->numViews);
     s += sprintf(s, " format=%d", p->format);
 #endif
+#if ENABLE_SCC_EXT
     s += sprintf(s, "scc=%d", p->bEnableSCC);
+#endif
     BOOL(p->bEnableSBRC, "sbrc");
 #undef BOOL
     return buf;
@@ -2937,7 +2944,9 @@ void x265_copy_params(x265_param* dst, x265_param* src)
     dst->format = src->format;
 #endif
     dst->numLayers = src->numLayers;
+#if ENABLE_SCC_EXT
     dst->bEnableSCC = src->bEnableSCC;
+#endif
 
     if (src->videoSignalTypePreset) dst->videoSignalTypePreset = strdup(src->videoSignalTypePreset);
     else dst->videoSignalTypePreset = NULL;

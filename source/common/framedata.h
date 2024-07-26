@@ -115,7 +115,7 @@ public:
     const x265_param* m_param;
 
     FrameData*     m_freeListNext;
-    PicYuv*        m_reconPic[2];
+    PicYuv*        m_reconPic[NUM_RECON_VERSION];
     bool           m_bHasReferences;   /* used during DPB/RPS updates */
     int            m_frameEncoderID;   /* the ID of the FrameEncoder encoding this frame */
     JobProvider*   m_jobProvider;

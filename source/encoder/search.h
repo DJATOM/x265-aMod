@@ -288,11 +288,14 @@ public:
 
     bool            m_vertRestriction;
 
+#if ENABLE_SCC_EXT
     int             m_ibcEnabled;
     int             m_numBVs;
     int             m_numBV16s;
     MV              m_BVs[64];
     uint32_t        m_lastCandCost;
+#endif
+
 #if DETAILED_CU_STATS
     /* Accumulate CU statistics separately for each frame encoder */
     CUStats         m_stats[X265_MAX_FRAME_THREADS];
@@ -336,6 +339,7 @@ public:
 
     MV getLowresMV(const CUData& cu, const PredictionUnit& pu, int list, int ref);
 
+#if ENABLE_SCC_EXT
     bool      predIntraBCSearch(Mode& intraBCMode, const CUGeom& cuGeom, bool bChromaMC, PartSize ePartSize, bool testOnlyPred, bool bUse1DSearchFor8x8, IBC& ibc);
     void      intraBlockCopyEstimate(Mode& intraBCMode, const CUGeom& cuGeom, int puIdx, MV* pred, MV& mv, uint32_t& cost, bool testOnlyPred, bool bUse1DSearchFor8x8, IBC& ibc);
     void      setIntraSearchRange(Mode& intraBCMode, MV& pred, int puIdx, int roiWidth, int roiHeight, MV& searchRangeLT, MV& searchRangeRB);
@@ -352,6 +356,7 @@ public:
     uint32_t  getSAD(pixel* ref, int refStride, const pixel* curr, int currStride, int width, int height);
     bool      predMixedIntraBCInterSearch(Mode& intraBCMode, const CUGeom& cuGeom, bool bChromaMC, PartSize ePartSize, MV* iMVCandList);
     void      restrictBipredMergeCand(CUData* cu, uint32_t puIdx, MVField(*mvFieldNeighbours)[2], uint8_t* interDirNeighbours, uint32_t numValidMergeCand);
+#endif
 
     class PME : public BondedTaskGroup
     {

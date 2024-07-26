@@ -2923,4 +2923,20 @@ Multiview Encode Options
 
 **CLI_ONLY**
 
+
+Screen Content Coding Options
+===================
+.. option:: --scc <integer>
+
+    Enable screen content coding support in x265. Default disabled.
+    This option can be enabled only when ENABLE_SCC_EXT is set during the make of x265.
+    SCC enables intrablockcopy in CTU analysis which can be enabled in two modes [1-2].
+    Mode 1- Does limited search,faster than mode 2
+    Mode 2- Does full and exhaustive search
+
+    Note : Enabling SCC will disable weight prediction.
+           Enabling SCC expects rd-level of 6.
+
+    **CLI_ONLY**
+
 .. vim: noet

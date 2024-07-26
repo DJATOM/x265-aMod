@@ -76,7 +76,9 @@ bool Search::initSearch(const x265_param& param, ScalingList& scalingList)
     m_param = &param;
     m_bFrameParallel = param.frameNumThreads > 1;
     m_numLayers = g_log2Size[param.maxCUSize] - 2;
+#if ENABLE_SCC_EXT
     m_ibcEnabled = param.bEnableSCC;
+#endif
 
     m_rdCost.setPsyRdScale(param.psyRd);
     m_rdCost.setSsimRd(param.bSsimRd);
@@ -172,8 +174,10 @@ bool Search::initSearch(const x265_param& param, ScalingList& scalingList)
     CHECKED_MALLOC(m_tsResidual, int16_t, MAX_TS_SIZE * MAX_TS_SIZE);
     CHECKED_MALLOC(m_tsRecon,    pixel,   MAX_TS_SIZE * MAX_TS_SIZE);
 
+#if ENABLE_SCC_EXT
     m_numBVs = 0;
     m_numBV16s = 0;
+#endif
 
     return ok;
 
@@ -1289,8 +1293,10 @@ void Search::checkIntra(Mode& intraMode, const CUGeom& cuGeom, PartSize partSize
     updateModeCost(intraMode);
     checkDQP(intraMode, cuGeom);
 
-    if (!!m_param->bEnableSCC)
+#if ENABLE_SCC_EXT
+    if (m_param->bEnableSCC)
         intraMode.reconYuv.copyToPicYuv(*m_frame->m_reconPic[1], cu.m_cuAddr, cuGeom.absPartIdx);
+#endif
 }
 
 /* Note that this function does not save the best intra prediction, it must
@@ -1902,7 +1908,22 @@ uint32_t Search::mergeEstimation(CUData& cu, const CUGeom& cuGeom, const Predict
     MVField  candMvField[MRG_MAX_NUM_CANDS][2];
     uint8_t  candDir[MRG_MAX_NUM_CANDS];
     uint32_t numMergeCand = cu.getInterMergeCandidates(pu.puAbsPartIdx, puIdx, candMvField, candDir);
+#if ENABLE_SCC_EXT
     restrictBipredMergeCand(&cu, 0, candMvField, candDir, numMergeCand);
+#else
+    if (cu.isBipredRestriction())
+    {
+        /* do not allow bidir merge candidates if PU is smaller than 8x8, drop L1 reference */
+        for (uint32_t mergeCand = 0; mergeCand < numMergeCand; ++mergeCand)
+        {
+            if (candDir[mergeCand] == 3)
+            {
+                candDir[mergeCand] = 1;
+                candMvField[mergeCand][1].refIdx = REF_NOT_VALID;
+            }
+        }
+    }
+#endif
 
     Yuv& tempYuv = m_rqt[cuGeom.depth].tmpPredYuv;
 
@@ -1931,10 +1952,12 @@ uint32_t Search::mergeEstimation(CUData& cu, const CUGeom& cuGeom, const Predict
                 continue;
         }
 
+#if ENABLE_SCC_EXT
         if ((candDir[mergeCand] == 1 || candDir[mergeCand] == 3) && (m_slice->m_refPOCList[0][candMvField[mergeCand][0].refIdx] == m_slice->m_poc))
         {
             continue;
         }
+#endif
         cu.m_mv[0][pu.puAbsPartIdx] = candMvField[mergeCand][0].mv;
         cu.m_refIdx[0][pu.puAbsPartIdx] = (int8_t)candMvField[mergeCand][0].refIdx;
         cu.m_mv[1][pu.puAbsPartIdx] = candMvField[mergeCand][1].mv;
@@ -2014,9 +2037,11 @@ int Search::selectMVP(const CUData& cu, const PredictionUnit& pu, const MV amvp[
                 continue;
         }
         cu.clipMv(mvCand);
-        if (!!m_slice->m_param->bEnableSCC && !list && ref == m_slice->m_numRefIdx[0] - 1)
+#if ENABLE_SCC_EXT
+        if (m_slice->m_param->bEnableSCC && !list && ref == m_slice->m_numRefIdx[0] - 1)
             predInterLumaPixel(pu, tmpPredYuv, *m_slice->m_refFrameList[list][ref]->m_reconPic[1], mvCand);
         else
+#endif
             predInterLumaPixel(pu, tmpPredYuv, *m_slice->m_refReconPicList[list][ref], mvCand);
         costs[i] = m_me.bufSAD(tmpPredYuv.getLumaAddr(pu.puAbsPartIdx), tmpPredYuv.m_size);
     }
@@ -2089,8 +2114,10 @@ void Search::singleMotionEstimation(Search& master, Mode& interMode, const Predi
 {
     uint32_t bits = master.m_listSelBits[list] + MVP_IDX_BITS;
     int numIdx = m_slice->m_numRefIdx[list];
+#if ENABLE_SCC_EXT
     if (!list && m_ibcEnabled)
         numIdx--;
+#endif
     bits += getTUBits(ref, numIdx);
 
     MotionData* bestME = interMode.bestME[part];
@@ -2252,8 +2279,10 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
                 }
                 uint32_t bits = m_listSelBits[list] + MVP_IDX_BITS;
                 int numIdx = m_slice->m_numRefIdx[list];
+#if ENABLE_SCC_EXT
                 if (!list && m_ibcEnabled)
                     numIdx--;
+#endif
                 bits += getTUBits(ref, numIdx);
 
                 int numMvc = cu.getPMV(interMode.interNeighbours, list, ref, interMode.amvpCand[list][ref], mvc, puIdx, pu.puAbsPartIdx);
@@ -2363,8 +2392,10 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
             {
                 int idx = 0;
                 int numIdx = numRefIdx[list];
+#if ENABLE_SCC_EXT
                 if (!list && m_ibcEnabled)
                     numIdx--;
+#endif
                 for (int ref = 0; ref < numIdx; ref++)
                 {
                     if (!(refMask & (1 << ref)))
@@ -2405,8 +2436,10 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
             for (int list = 0; list < numPredDir; list++)
             {
                 int numIdx = numRefIdx[list];
+#if ENABLE_SCC_EXT
                 if (!list && m_ibcEnabled)
                     numIdx--;
+#endif
                 for (int ref = 0; ref < numIdx; ref++)
                 {
                     ProfileCounter(interMode.cu, totalMotionReferences[cuGeom.depth]);
@@ -2473,10 +2506,12 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
                     /* Refine MVP selection, updates: mvpIdx, bits, cost */
                     mvp = checkBestMVP(amvp, outmv, mvpIdx, bits, cost);
 
+#if ENABLE_SCC_EXT
                     if (list <= 1 && ref <= 1 && (cu.m_partSize[0] == SIZE_2NxN || cu.m_partSize[0] == SIZE_Nx2N) && (1 << cu.m_log2CUSize[0]) <= 16)
                     {
                         iMVCandList[4 * list + 2 * ref + puIdx] = outmv;
                     }
+#endif
 
                     if (cost < bestME[list].cost)
                     {
@@ -2670,6 +2705,7 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
     interMode.sa8dBits += totalmebits;
 }
 
+#if ENABLE_SCC_EXT
 uint32_t Search::getSAD(pixel* ref, int refStride, const pixel* curr, int currStride, int width, int height)
 {
     uint32_t dist = 0;
@@ -4397,6 +4433,7 @@ bool Search::predMixedIntraBCInterSearch(Mode& intraBCMixedMode, const CUGeom& c
 
     return true;
 }
+#endif
 
 void Search::getBlkBits(PartSize cuMode, bool bPSlice, int partIdx, uint32_t lastMode, uint32_t blockBit[3])
 {
@@ -4734,8 +4771,10 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CUGeom& cuGeom)
     updateModeCost(interMode);
     checkDQP(interMode, cuGeom);
 
-    if (!!m_param->bEnableSCC)
+#if ENABLE_SCC_EXT
+    if (m_param->bEnableSCC)
         interMode.reconYuv.copyToPicYuv(*m_frame->m_reconPic[1], cu.m_cuAddr, cuGeom.absPartIdx);
+#endif
 }
 
 void Search::residualTransformQuantInter(Mode& mode, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t tuDepth, const uint32_t depthRange[2])

@@ -366,7 +366,9 @@ static const struct option long_options[] =
     { "multiview-config", required_argument, NULL, 0 },
     { "format", required_argument, NULL, 0 },
 #endif
+#if ENABLE_SCC_EXT
     { "scc",        required_argument, NULL, 0 },
+#endif
 #ifdef SVT_HEVC
     { "svt",     no_argument, NULL, 0 },
     { "no-svt",  no_argument, NULL, 0 },

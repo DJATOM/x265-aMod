@@ -327,7 +327,8 @@ void DPB::prepareEncode(Frame *newFrame)
         slice->m_colRefIdx = 0;
     }
 
-
+    slice->m_bTemporalMvp = slice->m_sps->bTemporalMVPEnabled;
+#if ENABLE_SCC_EXT
     bool bGPBcheck = false;
     if (slice->m_sliceType == B_SLICE)
     {
@@ -377,6 +378,7 @@ void DPB::prepareEncode(Frame *newFrame)
         else
             slice->m_bTemporalMvp = true;
     }
+#endif
 
     // Disable Loopfilter in bound area, because we will do slice-parallelism in future
     slice->m_sLFaseFlag = (newFrame->m_param->maxSlices > 1) ? false : ((SLFASE_CONSTANT & (1 << (pocCurr % 31))) > 0);

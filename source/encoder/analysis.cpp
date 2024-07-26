@@ -223,9 +223,11 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
     }
     ProfileCUScope(ctu, totalCTUTime, totalCTUs);
 
+#if  ENABLE_SCC_EXT
     memset(m_ibc.m_BVs, 0, sizeof(m_ibc.m_BVs));
     memset(m_ibc.m_lastIntraBCMv, 0, sizeof(m_ibc.m_lastIntraBCMv));
     m_ibc.m_numBV16s = 0; m_ibc.m_numBVs = 0;
+#endif
     if (m_slice->m_sliceType == I_SLICE || (m_param->bEnableSCC && (m_slice->m_numRefIdx[0] == 1) && m_slice->m_refPOCList[0][0] == m_slice->m_poc))
     {
         x265_analysis_intra_data* intraDataCTU = m_frame->m_analysisData.intraData;
@@ -573,6 +575,7 @@ uint64_t Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom
             checkBestMode(md.pred[PRED_INTRA_NxN], depth);
         }
 
+#if ENABLE_SCC_EXT
         bool intraBlockCopyFastSearch = (m_param->bEnableSCC == 1) ? true : false, bUse1DSearchFor8x8 = false;
         if (m_param->bEnableSCC)
         {
@@ -607,6 +610,7 @@ uint64_t Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom
                 checkBestMode(md.pred[PRED_IBC_Nx2N], depth);
             }
         }
+#endif
 
         if (m_bTryLossless)
             tryLossless(cuGeom);
@@ -615,6 +619,7 @@ uint64_t Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom
             addSplitFlagCost(*md.bestMode, cuGeom.depth);
     }
 
+#if ENABLE_SCC_EXT
     // If Intra BC keep last coded Mv
     if (md.bestMode && md.bestMode->cu.isInter(0))
     {
@@ -697,6 +702,7 @@ uint64_t Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom
             }
         }
     } // is inter
+#endif
 
     // stop recursion if we reach the depth of previous analysis decision
     mightSplit &= !(bAlreadyDecided && bDecidedDepth) || split;
@@ -739,6 +745,7 @@ uint64_t Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom
                 else
                     compressIntraCU(parentCTU, childGeom, nextQP, ibc);
 
+#if ENABLE_SCC_EXT
                 if (nd.bestMode->cu.m_lastIntraBCMv[0].x != 0 || nd.bestMode->cu.m_lastIntraBCMv[0].y != 0)
                 {
                     for (int i = 0; i < 2; i++)
@@ -746,6 +753,7 @@ uint64_t Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom
                         ibc.m_lastIntraBCMv[i] = nd.bestMode->cu.m_lastIntraBCMv[i];
                     }
                 }
+#endif
 
                 // Save best CU and pred data for this sub CU
                 splitCU->copyPartFrom(nd.bestMode->cu, childGeom, subPartIdx);
@@ -2163,12 +2171,14 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
             checkInter_rd5_6(md.pred[PRED_2Nx2N], cuGeom, SIZE_2Nx2N, refMasks);
             checkBestMode(md.pred[PRED_2Nx2N], cuGeom.depth);
 
+#if ENABLE_SCC_EXT
             interBest = md.bestMode;
             if (m_param->bEnableSCC)
             {
                 md.pred[PRED_MERGE_IBC].cu.initSubCU(parentCTU, cuGeom, qp, ibc.m_lastIntraBCMv);
                 checkRDCostIntraBCMerge2Nx2N(md.pred[PRED_MERGE_IBC], cuGeom);
             }
+#endif
 
             if (m_param->recursionSkipMode == RDCOST_BASED_RSKIP && depth && m_modeDepth[depth - 1].bestMode)
                 skipRecursion = md.bestMode && !md.bestMode->cu.getQtRootCbf(0);
@@ -2208,11 +2218,13 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
 
                     splitData[subPartIdx] = compressInterCU_rd5_6(parentCTU, childGeom, nextQP, ibc);
 
+#if ENABLE_SCC_EXT
                     if (nd.bestMode->cu.m_lastIntraBCMv[0].x != 0 || nd.bestMode->cu.m_lastIntraBCMv[0].y != 0)
                     {
                         for (int i = 0; i < 2; i++)
                             ibc.m_lastIntraBCMv[i] = nd.bestMode->cu.m_lastIntraBCMv[i];
                     }
+#endif
 
                     // Save best CU and pred data for this sub CU
                     splitIntra |= nd.bestMode->cu.isIntra(0);
@@ -2447,6 +2459,7 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
                     }
                 }
 
+#if ENABLE_SCC_EXT
                 if (m_param->bEnableSCC)
                 {
                     bool intraBlockCopyFastSearch = (m_param->bEnableSCC == 1) ? true : false, bUse1DSearchFor8x8 = false, bValid;
@@ -2494,6 +2507,7 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
                         checkBestMode(md.pred[PRED_IBC_Nx2N], depth);
                     }
                 }
+#endif
 
                 if ((m_slice->m_sliceType != B_SLICE || m_param->bIntraInBFrames) && (cuGeom.log2CUSize != MAX_LOG2_CU_SIZE) && !((m_param->bCTUInfo & 4) && bCtuInfoCheck))
                 {
@@ -2518,6 +2532,7 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
                 }
             }
 
+#if ENABLE_SCC_EXT
             // If Intra BC keep last coded Mv
             if (md.bestMode->cu.isInter(0))
             {
@@ -2600,6 +2615,7 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
                     }
                 }
             } // is inter
+#endif
 
             if ((md.bestMode->cu.isInter(0) && !(md.bestMode->cu.m_mergeFlag[0] && md.bestMode->cu.m_partSize[0] == SIZE_2Nx2N)) && (m_frame->m_fencPic->m_picCsp == X265_CSP_I400 && m_csp != X265_CSP_I400))
             {
@@ -2650,7 +2666,7 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
             else
             {
                 /* use best merge/inter mode, in case of intra use 2Nx2N inter references */
-                CUData& cu = md.bestMode->cu.isIntra(0) ? md.pred[PRED_2Nx2N].cu : interBest->cu;
+                CUData& cu = md.bestMode->cu.isIntra(0) ? md.pred[PRED_2Nx2N].cu : (m_param->bEnableSCC ? interBest->cu : md.bestMode->cu);
                 uint32_t numPU = cu.getNumPartInter(0);
                 for (uint32_t puIdx = 0, subPartIdx = 0; puIdx < numPU; puIdx++, subPartIdx += cu.getPUOffset(puIdx, 0))
                     splitCUData.splitRefs |= cu.getBestRefIdx(subPartIdx);
@@ -3196,7 +3212,9 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CUGeom& cuGe
     MVField candMvField[MRG_MAX_NUM_CANDS][2]; // double length for mv of both lists
     uint8_t candDir[MRG_MAX_NUM_CANDS];
     uint32_t numMergeCand = merge.cu.getInterMergeCandidates(0, 0, candMvField, candDir);
+#if ENABLE_SCC_EXT
     restrictBipredMergeCand(&merge.cu, 0, candMvField, candDir, numMergeCand);
+#endif
 
     PredictionUnit pu(merge.cu, cuGeom, 0);
 
@@ -3252,10 +3270,12 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CUGeom& cuGe
             candMvField[i][0].mv.x > maxSafeMv)
             // skip merge candidates which reference beyond safe reference area
             continue;
+#if ENABLE_SCC_EXT
         if ((candDir[i] == 1 || candDir[i] == 3) && (m_slice->m_refPOCList[0][candMvField[i][0].refIdx] == m_slice->m_poc))
         {
             continue;
         }
+#endif
         tempPred->cu.m_mvpIdx[0][0] = (uint8_t)i;    /* merge candidate ID is stored in L0 MVP idx */
         tempPred->cu.m_interDir[0] = candDir[i];
         tempPred->cu.m_mv[0][0] = candMvField[i][0].mv;
@@ -3320,6 +3340,7 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CUGeom& cuGe
     }
 }
 
+#if ENABLE_SCC_EXT
 void Analysis::checkRDCostIntraBCMerge2Nx2N(Mode& mergeIBC, const CUGeom& cuGeom)
 {
     mergeIBC.initCosts();
@@ -3386,6 +3407,7 @@ void Analysis::checkRDCostIntraBCMerge2Nx2N(Mode& mergeIBC, const CUGeom& cuGeom
     checkBestMode(mergeIBC, depth);
     checkDQP(mergeIBC, cuGeom);
 }
+#endif
 
 void Analysis::checkInter_rd0_4(Mode& interMode, const CUGeom& cuGeom, PartSize partSize, uint32_t refMask[2])
 {
@@ -3509,6 +3531,7 @@ void Analysis::checkInter_rd5_6(Mode& interMode, const CUGeom& cuGeom, PartSize 
     }
 }
 
+#if ENABLE_SCC_EXT
 void Analysis::checkIntraBC_rd5_6(Mode& intraBCMode, const CUGeom& cuGeom, PartSize ePartSize, bool testOnlyPred, bool bUse1DSearchFor8x8, IBC& ibc, MV* iMVCandList)
 {
     intraBCMode.initCosts();
@@ -3534,12 +3557,17 @@ void Analysis::checkIntraBC_rd5_6(Mode& intraBCMode, const CUGeom& cuGeom, PartS
         iMVCandList[1] = intraBCMode.cu.m_mv[0][partAddr];
     }
 }
+#endif
 
 void Analysis::checkBidir2Nx2N(Mode& inter2Nx2N, Mode& bidir2Nx2N, const CUGeom& cuGeom)
 {
     CUData& cu = bidir2Nx2N.cu;
 
+#if ENABLE_SCC_EXT
     if ((cu.is8x8BipredRestriction(inter2Nx2N.bestME[0][0].mv, inter2Nx2N.bestME[0][1].mv, inter2Nx2N.bestME[0][0].ref, inter2Nx2N.bestME[0][1].ref) ? (cu.m_cuDepth[0] == 3) : cu.isBipredRestriction()) || inter2Nx2N.bestME[0][0].cost == MAX_UINT || inter2Nx2N.bestME[0][1].cost == MAX_UINT)
+#else
+    if (cu.isBipredRestriction() || inter2Nx2N.bestME[0][0].cost == MAX_UINT || inter2Nx2N.bestME[0][1].cost == MAX_UINT)
+#endif
     {
         bidir2Nx2N.sa8dCost = MAX_INT64;
         bidir2Nx2N.rdCost = MAX_INT64;
@@ -4175,8 +4203,10 @@ int Analysis::findSameContentRefCount(const CUData& parentCTU, const CUGeom& cuG
         for (int i = 0; i < m_frame->m_encData->m_slice->m_numRefIdx[list]; i++)
         {
             int refPoc = m_frame->m_encData->m_slice->m_refFrameList[list][i]->m_poc;
+#if ENABLE_SCC_EXT
             if (refPoc == m_curPoc)
                 continue;
+#endif
             int refPrevChange = m_frame->m_encData->m_slice->m_refFrameList[list][i]->m_addOnPrevChange[parentCTU.m_cuAddr][cuGeom.absPartIdx];
             if ((refPoc < prevChange && refPoc < m_curPoc) || (refPoc > m_curPoc && prevChange < m_curPoc && refPrevChange > m_curPoc) || ((refPoc == prevChange) && (m_additionalCtuInfo[cuGeom.absPartIdx] == CTU_INFO_CHANGE)))
                 sameContentRef++;    /* Content changed */

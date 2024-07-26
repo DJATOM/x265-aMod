@@ -75,12 +75,14 @@ public:
         PRED_nRx2N,
         PRED_INTRA_NxN, /* 4x4 intra PU blocks for 8x8 CU */
         PRED_LOSSLESS,  /* lossless encode of best mode */
+#if ENABLE_SCC_EXT
         PRED_IBC_2Nx2N,
         PRED_IBC_Nx2N,
         PRED_IBC_2NxN,
         PRED_MIXED_IBC_NX2N,
         PRED_MIXED_IBC_2NXN,
         PRED_MERGE_IBC,
+#endif
         MAX_PRED_TYPES
     };
 
@@ -170,7 +172,7 @@ protected:
     void qprdRefine(const CUData& parentCTU, const CUGeom& cuGeom, int32_t qp, int32_t lqp);
 
     /* full analysis for an I-slice CU */
-    uint64_t compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t qp, IBC &ibc);
+    uint64_t compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t qp, IBC& ibc);
 
     /* full analysis for a P or B slice CU */
     uint32_t compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeom, int32_t qp);
@@ -189,8 +191,10 @@ protected:
 
     void checkBidir2Nx2N(Mode& inter2Nx2N, Mode& bidir2Nx2N, const CUGeom& cuGeom);
 
+#if ENABLE_SCC_EXT
     void checkRDCostIntraBCMerge2Nx2N(Mode& merge, const CUGeom& cuGeom);
     void checkIntraBC_rd5_6(Mode& intraBCMode, const CUGeom& cuGeom, PartSize ePartSize, bool testOnlyPred, bool bUse1DSearchFor8x8, IBC& ibc, MV* iMVCandList = NULL);
+#endif
 
     /* encode current bestMode losslessly, pick best RD cost */
     void tryLossless(const CUGeom& cuGeom);

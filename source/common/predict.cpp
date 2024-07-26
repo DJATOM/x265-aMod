@@ -112,7 +112,8 @@ void Predict::motionCompensation(const CUData& cu, const PredictionUnit& pu, Yuv
         }
         else
         {
-            if (!!cu.m_slice->m_param->bEnableSCC && refIdx0 == (cu.m_slice->m_numRefIdx[0] - 1))
+#if ENABLE_SCC_EXT
+            if (cu.m_slice->m_param->bEnableSCC && refIdx0 == (cu.m_slice->m_numRefIdx[0] - 1))
             {
                 if (bLuma)
                     predInterLumaPixel(pu, predYuv, *cu.m_slice->m_refFrameList[0][refIdx0]->m_reconPic[1], mv0);
@@ -120,6 +121,7 @@ void Predict::motionCompensation(const CUData& cu, const PredictionUnit& pu, Yuv
                     predInterChromaPixel(pu, predYuv, *cu.m_slice->m_refFrameList[0][refIdx0]->m_reconPic[1], mv0);
             }
             else
+#endif
             {
                 if (bLuma)
                     predInterLumaPixel(pu, predYuv, *cu.m_slice->m_refReconPicList[0][refIdx0], mv0);
@@ -184,17 +186,21 @@ void Predict::motionCompensation(const CUData& cu, const PredictionUnit& pu, Yuv
 
             if (bLuma)
             {
-                if (!!cu.m_slice->m_param->bEnableSCC && refIdx0 == (cu.m_slice->m_numRefIdx[0] - 1))
+#if ENABLE_SCC_EXT
+                if (cu.m_slice->m_param->bEnableSCC && refIdx0 == (cu.m_slice->m_numRefIdx[0] - 1))
                     predInterLumaShort(pu, m_predShortYuv[0], *cu.m_slice->m_refFrameList[0][refIdx0]->m_reconPic[1], mv0);
                 else
+#endif
                     predInterLumaShort(pu, m_predShortYuv[0], *cu.m_slice->m_refReconPicList[0][refIdx0], mv0);
                 predInterLumaShort(pu, m_predShortYuv[1], *cu.m_slice->m_refReconPicList[1][refIdx1], mv1);
             }
             if (bChroma)
             {
-                if (!!cu.m_slice->m_param->bEnableSCC && refIdx0 == (cu.m_slice->m_numRefIdx[0] - 1))
+#if ENABLE_SCC_EXT
+                if (cu.m_slice->m_param->bEnableSCC && refIdx0 == (cu.m_slice->m_numRefIdx[0] - 1))
                     predInterChromaShort(pu, m_predShortYuv[0], *cu.m_slice->m_refFrameList[0][refIdx0]->m_reconPic[1], mv0);
                 else
+#endif
                     predInterChromaShort(pu, m_predShortYuv[0], *cu.m_slice->m_refReconPicList[0][refIdx0], mv0);
                 predInterChromaShort(pu, m_predShortYuv[1], *cu.m_slice->m_refReconPicList[1][refIdx1], mv1);
             }
@@ -222,7 +228,8 @@ void Predict::motionCompensation(const CUData& cu, const PredictionUnit& pu, Yuv
             }
             else
             {
-                if (!!cu.m_slice->m_param->bEnableSCC && refIdx0 == (cu.m_slice->m_numRefIdx[0] - 1))
+#if ENABLE_SCC_EXT
+                if (cu.m_slice->m_param->bEnableSCC && refIdx0 == (cu.m_slice->m_numRefIdx[0] - 1))
                 {
                     if (bLuma)
                         predInterLumaPixel(pu, predYuv, *cu.m_slice->m_refFrameList[0][refIdx0]->m_reconPic[1], mv0);
@@ -230,6 +237,7 @@ void Predict::motionCompensation(const CUData& cu, const PredictionUnit& pu, Yuv
                         predInterChromaPixel(pu, predYuv, *cu.m_slice->m_refFrameList[0][refIdx0]->m_reconPic[1], mv0);
                 }
                 else
+#endif
                 {
                     if (bLuma)
                         predInterLumaPixel(pu, predYuv, *cu.m_slice->m_refReconPicList[0][refIdx0], mv0);

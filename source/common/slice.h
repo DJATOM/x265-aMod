@@ -403,10 +403,12 @@ public:
     int         m_fieldNum;
     Frame*      m_mcstfRefFrameList[2][MAX_MCSTF_TEMPORAL_WINDOW_LENGTH];
 
-    Frame* m_lastEncPic;
+#if  ENABLE_SCC_EXT
+    Frame*      m_lastEncPic;
     bool        m_bLMvdL1Zero;
-    bool        m_bTemporalMvp;
     bool        m_useIntegerMv;
+#endif
+    bool        m_bTemporalMvp;
 
     Slice()
     {
@@ -423,9 +425,11 @@ public:
         m_rpsIdx = -1;
         m_chromaQpOffset[0] = m_chromaQpOffset[1] = 0;
         m_fieldNum = 0;
-        m_bTemporalMvp = false;
+#if  ENABLE_SCC_EXT
         m_lastEncPic = NULL;
         m_useIntegerMv = false;
+#endif
+        m_bTemporalMvp = false;
     }
 
     void disableWeights();
@@ -435,7 +439,9 @@ public:
     void createInterLayerReferencePictureSet(PicList& picList, PicList& refPicSetInterLayer0, PicList& refPicSetInterLayer1);
 #endif
 
+#if  ENABLE_SCC_EXT
     bool isOnlyCurrentPictureAsReference() const;
+#endif
 
     bool getRapPicFlag() const
     {
