@@ -172,12 +172,20 @@ protected:
     void qprdRefine(const CUData& parentCTU, const CUGeom& cuGeom, int32_t qp, int32_t lqp);
 
     /* full analysis for an I-slice CU */
-    uint64_t compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t qp, IBC& ibc);
+#if ENABLE_SCC_EXT
+    uint64_t compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t qp, IBC* ibc = NULL);
+#else
+    uint64_t compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t qp);
+#endif
 
     /* full analysis for a P or B slice CU */
     uint32_t compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeom, int32_t qp);
     SplitData compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGeom, int32_t qp);
-    SplitData compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGeom, int32_t qp, IBC& ibc);
+#if ENABLE_SCC_EXT
+    SplitData compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGeom, int32_t qp, IBC* ibc = NULL);
+#else
+    SplitData compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGeom, int32_t qp);
+#endif
 
     void recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t qp, int32_t origqp = -1);
 
