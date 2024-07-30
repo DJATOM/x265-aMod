@@ -27,12 +27,12 @@
 
 using namespace X265_NS;
 
-InputFile* InputFile::open(InputFileInfo& info, bool bForceY4m, bool alpha)
+InputFile* InputFile::open(InputFileInfo& info, bool bForceY4m, bool alpha, int format)
 {
     const char * s = strrchr(info.filename, '.');
 
     if (bForceY4m || (s && !strcmp(s, ".y4m")))
         return new Y4MInput(info, alpha);
     else
-        return new YUVInput(info, alpha);
+        return new YUVInput(info, alpha, format);
 }

@@ -63,7 +63,7 @@ protected:
 
 public:
 
-    YUVInput(InputFileInfo& info, bool alpha);
+    YUVInput(InputFileInfo& info, bool alpha, int format);
 
     virtual ~YUVInput();
     void release();

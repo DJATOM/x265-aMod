@@ -379,6 +379,7 @@ namespace X265_NS {
 #endif
 #if ENABLE_MULTIVIEW
         H0("   --num-views                   Number of Views for Multiview Encoding. Default %d\n", param->numViews);
+        H0("   --format                      Format of the input video 0 : normal, 1 : side-by-side, 2 : over-under  Default %d\n", param->format);
         H0("   --multiview-config            Configuration file for Multiview Encoding\n");
 #endif
 #ifdef SVT_HEVC
@@ -864,7 +865,7 @@ namespace X265_NS {
         }
 #endif
         InputFileInfo info[MAX_VIEWS];
-        for (int i = 0; i < param->numViews; i++)
+        for (int i = 0; i < param->numViews - !!param->format; i++)
         {
             info[i].filename = inputfn[i];
             info[i].depth = inputBitDepth;
@@ -879,7 +880,7 @@ namespace X265_NS {
             info[i].frameCount = 0;
             getParamAspectRatio(param, info[i].sarWidth, info[i].sarHeight);
 
-            this->input[i] = InputFile::open(info[i], this->bForceY4m, param->numScalableLayers > 1);
+            this->input[i] = InputFile::open(info[i], this->bForceY4m, param->numScalableLayers > 1, param->format);
             if (!this->input[i] || this->input[i]->isFail())
             {
                 x265_log_file(param, X265_LOG_ERROR, "unable to open input file <%s>\n", inputfn[i]);
@@ -957,11 +958,11 @@ namespace X265_NS {
             else
                 sprintf(buf + p, " frames %u - %d of %d", this->seek, this->seek + this->framesToBeEncoded - 1, info[0].frameCount);
 
-            for (int view = 0; view < param->numViews; view++)
+            for (int view = 0; view < param->numViews - !!param->format; view++)
                 general_log(param, input[view]->getName(), X265_LOG_INFO, "%s\n", buf);
         }
 
-        for (int view = 0; view < param->numViews; view++)
+        for (int view = 0; view < param->numViews - !!param->format; view++)
             this->input[view]->startReader();
 
         if (reconfn[0])
@@ -982,7 +983,7 @@ namespace X265_NS {
                 }
             }
 #endif
-            for (int i = 0; i < param->numLayers; i++)
+            for (int i = 0; i < param->numLayers - !!param->format; i++)
             {
                 this->recon[i] = ReconFile::open(reconfn[i], param->sourceWidth, param->sourceHeight, reconFileBitDepth,
                     param->fpsNum, param->fpsDenom, param->internalCsp, param->sourceBitDepth);
@@ -1387,6 +1388,7 @@ namespace X265_NS {
 #define OPT(STR) else if (!strcmp(name, STR))
                     if (0);
                     OPT("num-views") param->numViews = x265_atoi(optarg, bError);
+                    OPT("format") param->format = x265_atoi(optarg, bError);
                     if (param->numViews > 1)
                     {
                         if (0);
@@ -1419,9 +1421,9 @@ namespace X265_NS {
             }
             linenum++;
         }
-        if (numInput != param->numViews)
+        if (numInput != (param->format ? 1 : param->numViews))
         {
-            x265_log(NULL, X265_LOG_WARNING, "Input file missing for given number of views<%d>\n", param->numViews);
+            x265_log(NULL, X265_LOG_WARNING, "Number of Input files does not match with the given format <%d>\n", param->format);
             if (api)
                 api->param_free(param);
             exit(1);

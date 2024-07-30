@@ -494,6 +494,7 @@ typedef struct x265_picture
     int    width;
 
     int   layerID;
+    int    format;
 } x265_picture;
 
 typedef enum
@@ -2304,6 +2305,7 @@ typedef struct x265_param
 
     /*Multi View Encoding*/
     int      numViews;
+    int      format;
 
     int      numLayers;
 } x265_param;

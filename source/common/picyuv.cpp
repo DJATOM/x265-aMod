@@ -321,10 +321,13 @@ void PicYuv::copyFromPicture(const x265_picture& pic, const x265_param& param, i
 #else /* Case for (X265_DEPTH == 8) */
             // TODO: Does we need this path? may merge into above in future
         {
-            if (isBase)
+            if (isBase || param.numViews > 1)
             {
+                int offsetX, offsetY;
+                offsetX = (!isBase && pic.format == 1 ? width : 0);
+                offsetY = (!isBase && pic.format == 2 ? width * height : 0);
                 pixel *yPixel = m_picOrg[0];
-                uint8_t *yChar = (uint8_t*)pic.planes[0];
+                uint8_t* yChar = (uint8_t*)pic.planes[0] + offsetX + offsetY;
 
                 for (int r = 0; r < height; r++)
                 {
@@ -336,11 +339,14 @@ void PicYuv::copyFromPicture(const x265_picture& pic, const x265_param& param, i
 
                 if (param.internalCsp != X265_CSP_I400)
                 {
+                    offsetX = offsetX >> m_hChromaShift;
+                    offsetY = offsetY >> (m_hChromaShift * 2);
+
                     pixel *uPixel = m_picOrg[1];
                     pixel *vPixel = m_picOrg[2];
 
-                    uint8_t *uChar = (uint8_t*)pic.planes[1];
-                    uint8_t *vChar = (uint8_t*)pic.planes[2];
+                    uint8_t* uChar = (uint8_t*)pic.planes[1] + offsetX + offsetY;
+                    uint8_t* vChar = (uint8_t*)pic.planes[2] + offsetX + offsetY;
 
                     for (int r = 0; r < height >> m_vChromaShift; r++)
                     {

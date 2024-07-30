@@ -406,6 +406,7 @@ void x265_param_default(x265_param* param)
 
     /* Multi-View Encoding*/
     param->numViews = 1;
+    param->format = 1;
 
     param->numLayers = 1;
 }
@@ -1464,6 +1465,8 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         }
 #endif
 #if ENABLE_MULTIVIEW
+        OPT("format")
+            p->format = atoi(value);
         OPT("num-views")
         {
             p->numViews = atoi(value);
@@ -2389,6 +2392,7 @@ char *x265_param2string(x265_param* p, int padx, int pady)
 #endif
 #if ENABLE_MULTIVIEW
     s += sprintf(s, " num-views=%d", p->numViews);
+    s += sprintf(s, " format=%d", p->format);
 #endif
     BOOL(p->bEnableSBRC, "sbrc");
 #undef BOOL
@@ -2917,6 +2921,7 @@ void x265_copy_params(x265_param* dst, x265_param* src)
 #endif
 #if ENABLE_MULTIVIEW
     dst->numViews = src->numViews;
+    dst->format = src->format;
 #endif
     dst->numLayers = src->numLayers;
 

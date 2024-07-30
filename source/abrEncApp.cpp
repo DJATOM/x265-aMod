@@ -558,6 +558,7 @@ ret:
             pic->planes[1] = srcPic->planes[1];
             pic->planes[2] = srcPic->planes[2];
             pic->planes[3] = srcPic->planes[3];
+            pic->format = srcPic->format;
             if (isAbrLoad)
                 pic->analysisData = *analysisData;
             return true;
@@ -1150,9 +1151,10 @@ ret:
                 read = m_parentEnc->m_parent->m_picIdxReadCnt[m_id][writeIdx].waitForChange(read);
             }
 
-            for (int view = 0; view < m_parentEnc->m_param->numViews; view++)
+            for (int view = 0; view < m_parentEnc->m_param->numViews - !!m_parentEnc->m_param->format; view++)
             {
                 x265_picture* dest = m_parentEnc->m_parent->m_inputPicBuffer[view][writeIdx];
+                src->format = m_parentEnc->m_param->format;
                 if (m_input[view]->readPicture(*src))
                 {
                     dest->poc = src->poc;
@@ -1169,20 +1171,22 @@ ret:
                     dest->stride[0] = src->stride[0];
                     dest->stride[1] = src->stride[1];
                     dest->stride[2] = src->stride[2];
+                    dest->format = src->format;
 
                     if (!dest->planes[0])
                         dest->planes[0] = X265_MALLOC(char, dest->framesize);
 
                     memcpy(dest->planes[0], src->planes[0], src->framesize * sizeof(char));
-                    dest->planes[1] = (char*)dest->planes[0] + src->stride[0] * src->height;
-                    dest->planes[2] = (char*)dest->planes[1] + src->stride[1] * (src->height >> x265_cli_csps[src->colorSpace].height[1]);
+                    int height = (src->height * (src->format == 2 ? 2 : 1));
+                    dest->planes[1] = (char*)dest->planes[0] + src->stride[0] * height;
+                    dest->planes[2] = (char*)dest->planes[1] + src->stride[1] * (height >> x265_cli_csps[src->colorSpace].height[1]);
 #if ENABLE_ALPHA
                     if (m_parentEnc->m_param->numScalableLayers > 1)
                     {
                         dest->planes[3] = (char*)dest->planes[2] + src->stride[2] * (src->height >> x265_cli_csps[src->colorSpace].height[2]);
                     }
 #endif
-                    if (view == m_parentEnc->m_param->numViews - 1)
+                    if (view == m_parentEnc->m_param->numViews - 1 - !!m_parentEnc->m_param->format)
                         m_parentEnc->m_parent->m_picWriteCnt[m_id].incr();
                 }
                 else

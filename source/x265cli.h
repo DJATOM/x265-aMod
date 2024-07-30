@@ -364,6 +364,7 @@ static const struct option long_options[] =
 #if ENABLE_MULTIVIEW
     { "num-views", required_argument, NULL, 0 },
     { "multiview-config", required_argument, NULL, 0 },
+    { "format", required_argument, NULL, 0 },
 #endif
 #ifdef SVT_HEVC
     { "svt",     no_argument, NULL, 0 },

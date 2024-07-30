@@ -1701,11 +1701,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture** pic_out)
             }
 
             /* Copy input picture into a Frame and PicYuv, send to lookahead */
-#if ENABLE_ALPHA
-            inFrame[layer]->m_fencPic->copyFromPicture(*inputPic[layer], *m_param, m_sps.conformanceWindow.rightOffset, m_sps.conformanceWindow.bottomOffset, !layer);
-#else
-            inFrame[layer]->m_fencPic->copyFromPicture(*inputPic[layer], *m_param, m_sps.conformanceWindow.rightOffset, m_sps.conformanceWindow.bottomOffset);
-#endif
+            inFrame[layer]->m_fencPic->copyFromPicture(*inputPic[!m_param->format ? layer : 0], *m_param, m_sps.conformanceWindow.rightOffset, m_sps.conformanceWindow.bottomOffset, !layer);
 
             inFrame[layer]->m_poc = (!layer) ? (++m_pocLast) : m_pocLast;
             inFrame[layer]->m_userData = inputPic[0]->userData;
