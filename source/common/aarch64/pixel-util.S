@@ -1854,41 +1854,43 @@ function PFX(nquant_neon)
     dup             v0.4s, w12             // q0= -qbits
     dup             v1.4s, w4              // add
 
-    lsr             w5, w5, #2
+    lsr             w6, w5, #3
     movi            v4.4s, #0              // v4= accumulate numsig
-    mov             x4, #0
-    movi            v22.4s, #0
+    movi            v5.2d, #0              // v5= zero-vector for SABDL(2)
 
 .Loop_nquant:
-    ld1             {v16.4h}, [x0], #8
-    sub             w5, w5, #1
-    sxtl            v19.4s, v16.4h         // v19 = coef[blockpos]
+    ld1             {v16.8h}, [x0], #16
+    sub             w6, w6, #1
 
-    cmlt            v18.4s, v19.4s, #0     // v18 = sign
+    sabdl           v17.4s, v16.4h, v5.4h  // v17 = level=abs(coef[blockpos])
+    sabdl2          v18.4s, v16.8h, v5.8h  // v18 = level=abs(coef[blockpos])
 
-    abs             v19.4s, v19.4s         // v19 = level=abs(coef[blockpos])
-    ld1             {v20.4s}, [x1], #16    // v20 = quantCoeff[blockpos]
-    mul             v19.4s, v19.4s, v20.4s // v19 = tmplevel = abs(level) * quantCoeff[blockpos];
+    ld1             {v19.4s, v20.4s}, [x1], #32   // v19, v20 = quantCoeff[blockpos]
+    mul             v17.4s, v17.4s, v19.4s // v17 = tmplevel = abs(level) * quantCoeff[blockpos];
+    mul             v18.4s, v18.4s, v20.4s // v18 = tmplevel = abs(level) * quantCoeff[blockpos];
 
-    add             v20.4s, v19.4s, v1.4s  // v20 = tmplevel+add
-    sshl            v20.4s, v20.4s, v0.4s  // v20 = level =(tmplevel+add) >> qbits
+    add             v19.4s, v17.4s, v1.4s  // v20 = tmplevel+add
+    add             v20.4s, v18.4s, v1.4s  // v21 = tmplevel+add
+    sshl            v19.4s, v19.4s, v0.4s  // v20 = level =(tmplevel+add) >> qbits
+    sshl            v20.4s, v20.4s, v0.4s  // v21 = level =(tmplevel+add) >> qbits
 
     // numsig
-    cmeq            v21.4s, v20.4s, v22.4s
-    add             v4.4s, v4.4s, v21.4s
-    add             x4, x4, #4
+    uzp1            v19.8h, v19.8h, v20.8h
+    cmeq            v20.8h, v19.8h, #0
+    add             v4.8h, v4.8h, v20.8h
 
-    eor             v21.16b, v20.16b, v18.16b
-    sub             v21.4s, v21.4s, v18.4s
-    sqxtn           v16.4h, v21.4s
-    abs             v17.4h, v16.4h
-    st1             {v17.4h}, [x2], #8
+    // level *= sign
+    cmlt            v16.8h, v16.8h, #0
+    eor             v19.16b, v19.16b, v16.16b
+    sub             v19.8h, v19.8h, v16.8h
+    abs             v19.8h, v19.8h
+    st1             {v19.8h}, [x2], #16
 
-    cbnz            w5, .Loop_nquant
+    cbnz            w6, .Loop_nquant
 
-    uaddlv          d4, v4.4s
-    fmov            x12, d4
-    add             x0, x4, x12
+    saddlv          s4, v4.8h
+    fmov            w9, s4
+    add             w0, w5, w9
     ret
 endfunc
 
