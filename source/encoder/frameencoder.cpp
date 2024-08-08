@@ -614,6 +614,48 @@ void FrameEncoder::compressFrame(int layer)
 
     m_rce.newQp = qp;
 
+    if (!!layer && m_top->m_lookahead->m_bAdaptiveQuant)
+    {
+        int ncu;
+        if (m_param->rc.qgSize == 8)
+            ncu = m_top->m_rateControl->m_ncu * 4;
+        else
+            ncu = m_top->m_rateControl->m_ncu;
+        for (int i = 0; i < ncu; i++)
+        {
+            m_frame[layer]->m_lowres.qpCuTreeOffset[i] = m_frame[0]->m_lowres.qpCuTreeOffset[i];
+            m_frame[layer]->m_lowres.qpAqOffset[i] = m_frame[0]->m_lowres.qpAqOffset[i];
+        }
+
+        m_frame[layer]->m_encData->m_avgQpAq = m_frame[0]->m_encData->m_avgQpAq;
+        m_frame[layer]->m_encData->m_avgQpRc = m_frame[0]->m_encData->m_avgQpRc;
+        if (!!m_param->rc.hevcAq)
+        {
+            for (uint32_t d = 0; d < 4; d++)
+            {
+                int ctuSizeIdx = 6 - g_log2Size[m_param->maxCUSize];
+                int aqDepth = g_log2Size[m_param->maxCUSize] - g_log2Size[m_param->rc.qgSize];
+                if (!aqLayerDepth[ctuSizeIdx][aqDepth][d])
+                    continue;
+                PicQPAdaptationLayer* pcAQLayer0 = &m_frame[0]->m_lowres.pAQLayer[d];
+                PicQPAdaptationLayer* pcAQLayer1 = &m_frame[layer]->m_lowres.pAQLayer[d];
+                const uint32_t aqPartWidth = m_frame[0]->m_lowres.pAQLayer[d].aqPartWidth;
+                const uint32_t aqPartHeight = m_frame[0]->m_lowres.pAQLayer[d].aqPartHeight;
+                double* pcQP0 = pcAQLayer0->dQpOffset;
+                double* pcCuTree0 = pcAQLayer0->dCuTreeOffset;
+                double* pcQP1 = pcAQLayer1->dQpOffset;
+                double* pcCuTree1 = pcAQLayer1->dCuTreeOffset;
+                for (uint32_t y = 0; y < m_frame[0]->m_fencPic->m_picHeight; y += aqPartHeight)
+                {
+                    for (uint32_t x = 0; x < m_frame[0]->m_fencPic->m_picWidth; x += aqPartWidth, pcQP0++, pcCuTree0++, pcQP1++, pcCuTree1++)
+                    {
+                        *pcQP1 = *pcQP0;
+                        *pcCuTree1 = *pcCuTree0;
+                    }
+                }
+            }
+        }
+    }
     if (m_param->bEnableTemporalFilter)
     {
         m_frameEncTF->m_QP = qp;
@@ -1551,7 +1593,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld, int layer
         const uint32_t bLastCuInSlice = (bLastRowInSlice & (col == numCols - 1)) ? 1 : 0;
         ctu->initCTU(*m_frame[layer], cuAddr, slice->m_sliceQp, bFirstRowInSlice, bLastRowInSlice, bLastCuInSlice);
 
-        if (bIsVbv)
+        if (!layer && bIsVbv)
         {
             if (col == 0 && !m_param->bEnableWavefront)
             {
@@ -1719,7 +1761,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld, int layer
         curEncData.m_cuStat[cuAddr].totalBits = best.totalBits;
         x265_emms();
 
-        if (bIsVbv)
+        if (!layer && bIsVbv)
         {   
             // Update encoded bits, satdCost, baseQP for each CU if tune grain is disabled
             FrameData::RCStatCU& cuStat = curEncData.m_cuStat[cuAddr];    
@@ -1904,7 +1946,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld, int layer
      * after half the frame is encoded, but after this initial period we update
      * after refLagRows (the number of rows reference frames must have completed
      * before referencees may begin encoding) */
-    if (m_param->rc.rateControlMode == X265_RC_ABR || bIsVbv)
+    if ((!layer) && (m_param->rc.rateControlMode == X265_RC_ABR || bIsVbv))
     {
         uint32_t rowCount = 0;
         uint32_t maxRows = m_sliceBaseRow[sliceId + 1] - m_sliceBaseRow[sliceId];
