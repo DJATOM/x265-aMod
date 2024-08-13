@@ -58,7 +58,7 @@ static void lowPassDct8_c(const int16_t* src, int16_t* dst, intptr_t srcStride)
     }
 
     // replace first coef with total block average
-    dst[0] = totalSum >> (-1 + (X265_DEPTH - 8));
+    dst[0] = (X265_DEPTH == 8) ? (totalSum << 1) : (totalSum >> ((X265_DEPTH - 9)));
 }
 
 static void lowPassDct16_c(const int16_t* src, int16_t* dst, intptr_t srcStride)
