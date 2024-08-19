@@ -2132,6 +2132,9 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
                     md.pred[PRED_2Nx2N].cu.initSubCU(parentCTU, cuGeom, qp);
                     checkInter_rd5_6(md.pred[PRED_2Nx2N], cuGeom, SIZE_2Nx2N, refMasks);
                     checkBestMode(md.pred[PRED_2Nx2N], cuGeom.depth);
+#if ENABLE_SCC_EXT
+                    interBest = md.bestMode;
+#endif
                 }
                 mightSplit &= !bDecidedDepth;
             }
@@ -2153,6 +2156,9 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
 
                     if (m_param->recursionSkipMode && depth && m_modeDepth[depth - 1].bestMode)
                         skipRecursion = md.bestMode && !md.bestMode->cu.getQtRootCbf(0);
+#if ENABLE_SCC_EXT
+                    interBest = md.bestMode;
+#endif
                 }
                 if (m_param->analysisLoadReuseLevel > 4 && m_reusePartSize[cuGeom.absPartIdx] == SIZE_2Nx2N)
                     skipRectAmp = true && !!md.bestMode;
@@ -2177,6 +2183,9 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
 
                     if (m_param->recursionSkipMode && depth && m_modeDepth[depth - 1].bestMode)
                         skipRecursion = md.bestMode && !md.bestMode->cu.getQtRootCbf(0);
+#if ENABLE_SCC_EXT
+                    interBest = md.bestMode;
+#endif
                 }
             }
         }

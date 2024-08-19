@@ -2507,7 +2507,7 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
                     mvp = checkBestMVP(amvp, outmv, mvpIdx, bits, cost);
 
 #if ENABLE_SCC_EXT
-                    if (list <= 1 && ref <= 1 && (cu.m_partSize[0] == SIZE_2NxN || cu.m_partSize[0] == SIZE_Nx2N) && (1 << cu.m_log2CUSize[0]) <= 16)
+                    if (m_param->bEnableSCC && (list <= 1 && ref <= 1 && (cu.m_partSize[0] == SIZE_2NxN || cu.m_partSize[0] == SIZE_Nx2N) && (1 << cu.m_log2CUSize[0]) <= 16))
                     {
                         iMVCandList[4 * list + 2 * ref + puIdx] = outmv;
                     }
