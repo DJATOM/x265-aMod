@@ -18,16 +18,6 @@ namespace
 {
 using namespace X265_NS;
 
-// First two columns of the 4x4 dct transform matrix, duplicated to 4x4 to allow
-// processing two lines at once.
-const int32_t t8_even[4][4] =
-{
-    { 64,  64, 64,  64 },
-    { 83,  36, 83,  36 },
-    { 64, -64, 64, -64 },
-    { 36, -83, 36, -83 },
-};
-
 static int16x8_t rev16(const int16x8_t a)
 {
     static const uint8x16_t tbl = {14, 15, 12, 13, 10, 11, 8, 9, 6, 7, 4, 5, 2, 3, 0, 1};

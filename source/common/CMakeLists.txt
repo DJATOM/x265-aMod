@@ -104,7 +104,7 @@ if(ENABLE_ASSEMBLY AND (ARM64 OR CROSS_COMPILE_ARM64))
     endif()
 
     set(C_SRCS_NEON asm-primitives.cpp pixel-prim.h pixel-prim.cpp filter-prim.h filter-prim.cpp dct-prim.h dct-prim.cpp loopfilter-prim.cpp loopfilter-prim.h intrapred-prim.cpp arm64-utils.cpp arm64-utils.h fun-decls.h sao-prim.cpp  mem-neon.h)
-    set(C_SRCS_SVE sao-prim-sve.cpp)
+    set(C_SRCS_SVE sao-prim-sve.cpp dct-prim-sve.cpp)
     set(C_SRCS_SVE2 sao-prim-sve2.cpp)
     enable_language(ASM)
 
