@@ -18,22 +18,6 @@ namespace
 {
 using namespace X265_NS;
 
-static int16x8_t rev16(const int16x8_t a)
-{
-    static const uint8x16_t tbl = {14, 15, 12, 13, 10, 11, 8, 9, 6, 7, 4, 5, 2, 3, 0, 1};
-    const int8x16_t a_s8 = vreinterpretq_s8_s16(a);
-
-    return vreinterpretq_s16_s8(vqtbx1q_s8(a_s8, a_s8, tbl));
-}
-
-static int32x4_t rev32(const int32x4_t a)
-{
-    static const uint8x16_t tbl = {12, 13, 14, 15, 8, 9, 10, 11, 4, 5, 6, 7, 0, 1, 2, 3};
-    const int8x16_t a_s8 = vreinterpretq_s8_s32(a);
-
-    return vreinterpretq_s32_s8(vqtbx1q_s8(a_s8, a_s8, tbl));
-}
-
 static void transpose_4x4x16(int16x4_t &x0, int16x4_t &x1, int16x4_t &x2, int16x4_t &x3)
 {
     int32x2_t s0, s1, s2, s3;
