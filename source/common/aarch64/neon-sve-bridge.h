@@ -40,6 +40,11 @@
  * remainder of the vector is unused - this approach is still beneficial when
  * compared to a Neon-only implementation. */
 
+static inline int32x4_t x265_vld1sh_s32(const int16_t *ptr)
+{
+    return svget_neonq_s32(svld1sh_s32(svptrue_pat_b32(SV_VL4), ptr));
+}
+
 static inline int64x2_t x265_sdotq_s16(int64x2_t acc, int16x8_t x, int16x8_t y)
 {
     return svget_neonq_s64(svdot_s64(svset_neonq_s64(svundef_s64(), acc),
