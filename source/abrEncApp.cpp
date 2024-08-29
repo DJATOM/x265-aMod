@@ -676,9 +676,11 @@ ret:
 
                     if (m_cliopt.framesToBeEncoded && inFrameCount >= m_cliopt.framesToBeEncoded)
                         pic_in[view] = NULL;
-                    else if (readPicture(pic_in[view], view) && view == m_param->numViews - 1)
-                        inFrameCount++;
-                    else if (!pic_in[view])
+                    else if (readPicture(pic_in[view], view)){
+                        if(view == m_param->numViews - 1)
+                            inFrameCount++;
+                    }
+                    else
                         pic_in[view] = NULL;
                     if (pic_in[view])
                     {
@@ -763,6 +765,7 @@ ret:
 
                         if (bDolbyVisionRPU)
                         {
+
                             if (m_param->bField && m_param->interlaceMode)
                             {
                                 if (m_cliopt.rpuParser(&picField1) > 0)
