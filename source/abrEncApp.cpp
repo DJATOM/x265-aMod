@@ -921,7 +921,10 @@ ret:
             {
                 general_log(m_param, NULL, X265_LOG_INFO, "aborted at input frame %d, output frame %d in %s\n",
                     m_cliopt.seek + inFrameCount, stats.encodedPictureCount, profileName);
-                m_input->stopReader(); // signal to stop requesting new frames if reader uses any prefetching algo
+
+                for (int view = 0; view < m_param->numViews; view++) {
+                    m_input[view]->stopReader(); // signal to stop requesting new frames if reader uses any prefetching algo
+                }
             }
 
             api->param_free(m_param);
